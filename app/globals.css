@@ -1,26 +1,227 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+   Vitrine — "plaqueta de museu" em modo escuro.
+   O app é dark-only (modo claro está fora de escopo), então a paleta vive em
+   :root e é repetida em .dark para que as variantes dark: do shadcn valham.
+--------------------------------------------------------------------------- */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+  --font-mono: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  --font-heading: var(--font-fraunces);
+
+  /* superfícies da vitrine */
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-surface: var(--surface);
+  --color-surface-hi: var(--surface-hi);
+  --color-line: var(--border);
+  --color-line-hi: var(--border-hi);
+
+  /* texto */
+  --color-ink: var(--ink);
+  --color-faint: var(--faint);
+
+  /* acento roxo */
+  --color-brand: var(--brand);
+  --color-brand-dim: var(--brand-dim);
+  --color-brand-wash: var(--brand-wash);
+  --color-brand-glow: var(--brand-glow);
+  --color-danger: var(--danger);
+
+  /* tokens semânticos do shadcn */
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+  --radius-3xl: 22px;
+  --radius-4xl: 26px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root,
+.dark {
+  --bg: #131315;
+  --bg-soft: #171719;
+  --surface: #1d1d20;
+  --surface-hi: #232327;
+  --border: #2b2b31;
+  --border-hi: #3a3a42;
+
+  --ink: #ececef;
+  --faint: #6e6e78;
+
+  --brand: #b98cc2;
+  --brand-dim: #8e6c96;
+  --brand-wash: rgb(185 140 194 / 0.14);
+  --brand-glow: rgb(185 140 194 / 0.3);
+  --danger: #c97b7b;
+
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: #1a1220;
+  --secondary: var(--surface-hi);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-hi);
+  --muted-foreground: #9a9aa4;
+  --accent: var(--surface-hi);
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --input: var(--border);
+  --ring: var(--brand-dim);
+
+  --radius: 10px;
+  --content-width: 1180px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-weight: 400;
+  }
+
+  ::selection {
+    background: var(--brand-wash);
+    color: var(--ink);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--brand-dim);
+    outline-offset: 2px;
+  }
+
+  /* barra de rolagem discreta, no tom da vitrine */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-hi) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-hi);
+    border: 3px solid var(--bg);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* largura máxima do conteúdo */
+  .shell {
+    width: 100%;
+    max-width: var(--content-width);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  /* rótulo de plaqueta de museu */
+  .plaque {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* nome próprio: app, página, categoria, item, números grandes */
+  .display {
+    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  /* luz de vitrine: o brilho roxo atrás de toda imagem de item */
+  .showcase-glow {
+    position: absolute;
+    inset: 12% 10% 6%;
+    z-index: 0;
+    background: var(--brand-glow);
+    filter: blur(28px);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  /* card padrão da vitrine */
+  .vitrine-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition:
+      border-color 160ms ease,
+      transform 160ms ease,
+      background-color 160ms ease;
+  }
+  .vitrine-card:hover {
+    border-color: var(--border-hi);
+    transform: translateY(-2px);
+  }
+
+  /* ações que só aparecem no hover do card */
+  .card-actions {
+    opacity: 0;
+    transition: opacity 140ms ease;
+  }
+  .group\/card:hover .card-actions,
+  .group\/card:focus-within .card-actions {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .vitrine-card:hover {
+    transform: none;
+  }
 }
