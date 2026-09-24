@@ -18,8 +18,6 @@ import { imageDisplayOf } from "@/lib/domain/view"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
 
-export type { BackupPayload, ImportSummary } from "@/lib/backup/import"
-
 const profileSchema = z.object({
   displayName: z.string().trim().max(80, "Nome muito longo."),
   username: z
