@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { supabaseAnonKey, supabaseUrl } from "./env"
 
 /** Rotas que não exigem sessão. */
-const PUBLIC_PREFIXES = ["/login", "/auth"]
+const PUBLIC_PREFIXES = ["/login", "/auth", "/demo"]
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some(

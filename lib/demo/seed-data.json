@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "exportedAt": "2026-09-24T00:00:00.000Z",
+  "folders": [
+    { "id": "cultura", "name": "Cultura", "parentId": null },
+    { "id": "telas-paginas", "name": "Telas e Páginas", "parentId": "cultura" },
+    { "id": "consumo", "name": "Consumo", "parentId": null }
+  ],
+  "categories": [
+    {
+      "id": "restaurantes",
+      "name": "Restaurantes",
+      "icon": "🍽️",
+      "color": "#8FC9A6",
+      "folderId": "consumo",
+      "estrutura": [
+        { "id": "visitas", "nome": "Visitas", "tipo": "int" },
+        { "id": "atendimento", "nome": "Atendimento", "tipo": "star" },
+        { "id": "comida", "nome": "Comida", "tipo": "star" },
+        { "id": "espera", "nome": "Tempo de Espera", "tipo": "time" },
+        { "id": "pedido", "nome": "Pedido", "tipo": "str" },
+        { "id": "local", "nome": "Localização", "tipo": "str" }
+      ]
+    },
+    {
+      "id": "filmes",
+      "name": "Filmes",
+      "icon": "🎬",
+      "color": "#B98CC2",
+      "folderId": "telas-paginas",
+      "estrutura": [
+        { "id": "diretor", "nome": "Diretor", "tipo": "str" },
+        { "id": "ano", "nome": "Ano", "tipo": "int" },
+        { "id": "duracao", "nome": "Duração", "tipo": "time" },
+        { "id": "genero", "nome": "Gênero", "tipo": "select", "opcoes": ["Ação", "Drama", "Comédia", "Terror", "Ficção Científica", "Animação"] },
+        { "id": "onde", "nome": "Onde assisti", "tipo": "str" }
+      ]
+    },
+    {
+      "id": "livros",
+      "name": "Livros",
+      "icon": "📚",
+      "color": "#D6C08A",
+      "folderId": "telas-paginas",
+      "estrutura": [
+        { "id": "autor", "nome": "Autor", "tipo": "str" },
+        { "id": "paginas", "nome": "Páginas", "tipo": "int" },
+        { "id": "publicacao", "nome": "Ano de Publicação", "tipo": "int" },
+        { "id": "status", "nome": "Status", "tipo": "select", "opcoes": ["Lendo", "Lido", "Quero ler", "Abandonado"] },
+        { "id": "conclusao", "nome": "Data de Conclusão", "tipo": "date" }
+      ]
+    },
+    {
+      "id": "jogos",
+      "name": "Jogos",
+      "icon": "🎮",
+      "color": "#8FB3C9",
+      "folderId": "cultura",
+      "estrutura": [
+        { "id": "plataforma", "nome": "Plataforma", "tipo": "select", "opcoes": ["PC", "PlayStation", "Xbox", "Switch", "Mobile"] },
+        { "id": "horas", "nome": "Horas Jogadas", "tipo": "int" },
+        { "id": "desenvolvedora", "nome": "Desenvolvedora", "tipo": "str" },
+        { "id": "ano", "nome": "Ano", "tipo": "int" },
+        { "id": "status", "nome": "Status", "tipo": "select", "opcoes": ["Jogando", "Zerado", "Platinado", "Abandonado"] }
+      ]
+    },
+    {
+      "id": "vinhos",
+      "name": "Vinhos",
+      "icon": "🍷",
+      "color": "#C97B7B",
+      "folderId": "consumo",
+      "estrutura": [
+        { "id": "tipo", "nome": "Tipo", "tipo": "select", "opcoes": ["Tinto", "Branco", "Rosé", "Espumante"] },
+        { "id": "uva", "nome": "Uva", "tipo": "str" },
+        { "id": "safra", "nome": "Safra", "tipo": "int" },
+        { "id": "harmonizacao", "nome": "Harmonização", "tipo": "str" },
+        { "id": "onde", "nome": "Onde comprei", "tipo": "str" }
+      ]
+    }
+  ],
+  "entries": [
+    { "categoryId": "restaurantes", "name": "Kinoshita", "rating": 4.5, "imageUrl": "https://picsum.photos/id/1015/800/1000", "imageDisplay": { "x": 30, "y": 40, "zoom": 1.6 }, "customFields": { "visitas": 3, "atendimento": 4, "comida": 5, "espera": 90, "pedido": "Omakase", "local": "Liberdade, SP" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "restaurantes", "name": "Mocotó", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 2, "atendimento": 4, "comida": 4.5, "espera": 45, "pedido": "Feijoada", "local": "Vila Medeiros, SP" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "restaurantes", "name": "Bar da Dona Onça", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 1, "atendimento": 3, "comida": 4, "espera": 30, "pedido": "Sarapatel", "local": "Centro, SP" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
+    { "categoryId": "restaurantes", "name": "Fasano", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 1, "atendimento": 5, "comida": 5, "espera": 10, "pedido": "Risoto", "local": "Jardins, SP" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Caro", "color": "#D6C08A" }] },
+    { "categoryId": "restaurantes", "name": "Xian Cozinha Nortista", "rating": 4, "imageUrl": "https://picsum.photos/id/1016/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 4, "atendimento": 4, "comida": 4, "espera": 20, "pedido": "Tacacá", "local": "Pinheiros, SP" }, "tags": [{ "name": "Baratinho", "color": "#8FB3C9" }] },
+    { "categoryId": "restaurantes", "name": "Coco Bambu", "rating": 3, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 1, "atendimento": 3, "comida": 3.5, "espera": 60, "pedido": "Camarão", "local": "Moema, SP" }, "tags": [{ "name": "Decepção", "color": "#C97B7B" }] },
+    { "categoryId": "restaurantes", "name": "A Casa do Porco", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 2, "atendimento": 4.5, "comida": 5, "espera": 40, "pedido": "Porco à moda", "local": "Centro, SP" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "restaurantes", "name": "Attimo", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 1, "atendimento": 4, "comida": 4, "espera": 15, "pedido": "Massa", "local": "Itaim Bibi, SP" }, "tags": [{ "name": "Caro", "color": "#D6C08A" }] },
+    { "categoryId": "restaurantes", "name": "Ramen Aizome", "rating": 4.5, "imageUrl": "https://picsum.photos/id/1018/800/1000", "imageDisplay": { "x": 70, "y": 60, "zoom": 2 }, "customFields": { "visitas": 5, "atendimento": 4, "comida": 5, "espera": 25, "pedido": "Shoyu ramen", "local": "Liberdade, SP" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }, { "name": "Baratinho", "color": "#8FB3C9" }] },
+    { "categoryId": "restaurantes", "name": "Bráz Pizzaria", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 6, "atendimento": 4, "comida": 4.5, "espera": 35, "pedido": "Marguerita", "local": "Vila Mariana, SP" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }] },
+
+    { "categoryId": "filmes", "name": "Cidade de Deus", "rating": 5, "imageUrl": "https://picsum.photos/id/1019/800/1000", "imageDisplay": { "x": 25, "y": 35, "zoom": 1.7 }, "customFields": { "diretor": "Fernando Meirelles", "ano": 2002, "duracao": 130, "genero": "Drama", "onde": "Cinema" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Clássico", "color": "#9A9AA4" }] },
+    { "categoryId": "filmes", "name": "Interestelar", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Christopher Nolan", "ano": 2014, "duracao": 169, "genero": "Ficção Científica", "onde": "Streaming" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "filmes", "name": "Não Olhe Para Cima", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Adam McKay", "ano": 2021, "duracao": 138, "genero": "Comédia", "onde": "Streaming" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "filmes", "name": "Corra!", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Jordan Peele", "ano": 2017, "duracao": 104, "genero": "Terror", "onde": "Streaming" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "filmes", "name": "Divertida Mente 2", "rating": 4, "imageUrl": "https://picsum.photos/id/1020/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Kelsey Mann", "ano": 2024, "duracao": 96, "genero": "Animação", "onde": "Cinema" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "filmes", "name": "Duna", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Denis Villeneuve", "ano": 2021, "duracao": 155, "genero": "Ficção Científica", "onde": "Cinema" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
+    { "categoryId": "filmes", "name": "Barbie", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Greta Gerwig", "ano": 2023, "duracao": 114, "genero": "Comédia", "onde": "Cinema" }, "tags": [{ "name": "Decepção", "color": "#C97B7B" }] },
+    { "categoryId": "filmes", "name": "O Poderoso Chefão", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Francis Ford Coppola", "ano": 1972, "duracao": 175, "genero": "Drama", "onde": "DVD" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }, { "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "filmes", "name": "Vingadores: Ultimato", "rating": 4, "imageUrl": "https://picsum.photos/id/1021/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Russo Brothers", "ano": 2019, "duracao": 181, "genero": "Ação", "onde": "Cinema" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "filmes", "name": "Coringa", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "diretor": "Todd Phillips", "ano": 2019, "duracao": 122, "genero": "Drama", "onde": "Streaming" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
+
+    { "categoryId": "livros", "name": "Dom Casmurro", "rating": 5, "imageUrl": "https://picsum.photos/id/1024/800/1000", "imageDisplay": { "x": 35, "y": 25, "zoom": 1.5 }, "customFields": { "autor": "Machado de Assis", "paginas": 256, "publicacao": 1899, "status": "Lido", "conclusao": "2024-03-10" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }, { "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "livros", "name": "Duna", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "Frank Herbert", "paginas": 688, "publicacao": 1965, "status": "Lido", "conclusao": "2024-05-02" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "livros", "name": "O Hobbit", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "J.R.R. Tolkien", "paginas": 310, "publicacao": 1937, "status": "Lido", "conclusao": "2023-11-20" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
+    { "categoryId": "livros", "name": "Sapiens", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "Yuval Noah Harari", "paginas": 464, "publicacao": 2011, "status": "Lido", "conclusao": "2024-01-15" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "livros", "name": "1984", "rating": 5, "imageUrl": "https://picsum.photos/id/1025/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "George Orwell", "paginas": 328, "publicacao": 1949, "status": "Lido", "conclusao": "2023-08-30" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }, { "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "livros", "name": "O Nome do Vento", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "Patrick Rothfuss", "paginas": 662, "publicacao": 2007, "status": "Lendo" }, "tags": [] },
+    { "categoryId": "livros", "name": "A Revolução dos Bichos", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "George Orwell", "paginas": 152, "publicacao": 1945, "status": "Lido", "conclusao": "2023-09-10" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }] },
+    { "categoryId": "livros", "name": "Neuromancer", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "William Gibson", "paginas": 320, "publicacao": 1984, "status": "Abandonado" }, "tags": [{ "name": "Decepção", "color": "#C97B7B" }] },
+    { "categoryId": "livros", "name": "Cem Anos de Solidão", "rating": null, "imageUrl": "https://picsum.photos/id/1027/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "Gabriel García Márquez", "paginas": 448, "publicacao": 1967, "status": "Quero ler" }, "tags": [] },
+    { "categoryId": "livros", "name": "O Pequeno Príncipe", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "autor": "Antoine de Saint-Exupéry", "paginas": 96, "publicacao": 1943, "status": "Lido", "conclusao": "2022-12-25" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }, { "name": "Presente", "color": "#B08A6A" }] },
+
+    { "categoryId": "jogos", "name": "The Legend of Zelda: Tears of the Kingdom", "rating": 5, "imageUrl": "https://picsum.photos/id/1029/800/1000", "imageDisplay": { "x": 60, "y": 30, "zoom": 1.8 }, "customFields": { "plataforma": "Switch", "horas": 120, "desenvolvedora": "Nintendo", "ano": 2023, "status": "Zerado" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "jogos", "name": "Elden Ring", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "PC", "horas": 200, "desenvolvedora": "FromSoftware", "ano": 2022, "status": "Platinado" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "jogos", "name": "Hollow Knight", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "PC", "horas": 60, "desenvolvedora": "Team Cherry", "ano": 2017, "status": "Zerado" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "jogos", "name": "FIFA 24", "rating": 3, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "PlayStation", "horas": 40, "desenvolvedora": "EA Sports", "ano": 2023, "status": "Jogando" }, "tags": [{ "name": "Baratinho", "color": "#8FB3C9" }] },
+    { "categoryId": "jogos", "name": "God of War Ragnarök", "rating": 5, "imageUrl": "https://picsum.photos/id/1035/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "PlayStation", "horas": 45, "desenvolvedora": "Santa Monica Studio", "ano": 2022, "status": "Zerado" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "jogos", "name": "Stardew Valley", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "PC", "horas": 150, "desenvolvedora": "ConcernedApe", "ano": 2016, "status": "Jogando" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
+    { "categoryId": "jogos", "name": "Cyberpunk 2077", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "PC", "horas": 70, "desenvolvedora": "CD Projekt Red", "ano": 2020, "status": "Zerado" }, "tags": [{ "name": "Decepção", "color": "#C97B7B" }] },
+    { "categoryId": "jogos", "name": "Minecraft", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "PC", "horas": 500, "desenvolvedora": "Mojang", "ano": 2011, "status": "Jogando" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }] },
+    { "categoryId": "jogos", "name": "Animal Crossing: New Horizons", "rating": 4, "imageUrl": "https://picsum.photos/id/1039/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "Switch", "horas": 300, "desenvolvedora": "Nintendo", "ano": 2020, "status": "Jogando" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
+    { "categoryId": "jogos", "name": "Hades", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "plataforma": "Switch", "horas": 55, "desenvolvedora": "Supergiant Games", "ano": 2020, "status": "Platinado" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Recomendo", "color": "#8FC9A6" }] },
+
+    { "categoryId": "vinhos", "name": "Miolo Reserva", "rating": 4, "imageUrl": "https://picsum.photos/id/1040/800/1000", "imageDisplay": { "x": 40, "y": 65, "zoom": 1.6 }, "customFields": { "tipo": "Tinto", "uva": "Cabernet Sauvignon", "safra": 2020, "harmonizacao": "Carnes vermelhas", "onde": "Empório" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "vinhos", "name": "Salton Brut", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Espumante", "uva": "Chardonnay", "safra": 2021, "harmonizacao": "Aperitivo", "onde": "Supermercado" }, "tags": [{ "name": "Baratinho", "color": "#8FB3C9" }] },
+    { "categoryId": "vinhos", "name": "Casillero del Diablo", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Tinto", "uva": "Carménère", "safra": 2019, "harmonizacao": "Massas", "onde": "Empório" }, "tags": [{ "name": "Baratinho", "color": "#8FB3C9" }, { "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "vinhos", "name": "Chandon Réserve", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Espumante", "uva": "Pinot Noir", "safra": 2022, "harmonizacao": "Queijos", "onde": "Presente" }, "tags": [{ "name": "Presente", "color": "#B08A6A" }, { "name": "Favorito", "color": "#B98CC2" }] },
+    { "categoryId": "vinhos", "name": "Don Guerino Rosé", "rating": 3, "imageUrl": "https://picsum.photos/id/1041/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Rosé", "uva": "Merlot", "safra": 2021, "harmonizacao": "Saladas", "onde": "Vinícola" }, "tags": [{ "name": "Decepção", "color": "#C97B7B" }] },
+    { "categoryId": "vinhos", "name": "Terrazas de los Andes", "rating": 4.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Tinto", "uva": "Malbec", "safra": 2020, "harmonizacao": "Churrasco", "onde": "Importadora" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "vinhos", "name": "Casa Valduga 130", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Branco", "uva": "Chardonnay", "safra": 2022, "harmonizacao": "Peixes", "onde": "Vinícola" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
+    { "categoryId": "vinhos", "name": "Cono Sur Bicicleta", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Tinto", "uva": "Pinot Noir", "safra": 2021, "harmonizacao": "Aves", "onde": "Supermercado" }, "tags": [{ "name": "Baratinho", "color": "#8FB3C9" }] },
+    { "categoryId": "vinhos", "name": "Miolo Cuvée Tradição", "rating": 4, "imageUrl": "https://picsum.photos/id/1043/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Espumante", "uva": "Riesling", "safra": 2020, "harmonizacao": "Sobremesas", "onde": "Empório" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }] },
+    { "categoryId": "vinhos", "name": "Luigi Bosca Reserva", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Tinto", "uva": "Malbec", "safra": 2018, "harmonizacao": "Cordeiro", "onde": "Importadora" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Caro", "color": "#D6C08A" }] }
+  ]
+}

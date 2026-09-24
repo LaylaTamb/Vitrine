@@ -72,6 +72,9 @@ export function translateError(error: unknown): string {
   if (text.includes("jwt expired") || text.includes("pgrst301") || text.includes("session_expired")) {
     return "Sua sessão expirou. Faça login de novo."
   }
+  if (text.includes("demo_indisponivel")) {
+    return "O modo demonstração está indisponível no momento. Tente de novo em instantes."
+  }
 
   // ---- banco -------------------------------------------------------------
   if (code === "23505" || text.includes("duplicate key")) {

@@ -6,7 +6,7 @@ import { Wordmark } from "@/components/layout/wordmark"
 import { displayNameOf } from "@/lib/queries/session"
 import type { Profile } from "@/lib/domain/types"
 
-export function Navbar({ profile }: { profile: Profile | null }) {
+export function Navbar({ profile, isDemo = false }: { profile: Profile | null; isDemo?: boolean }) {
   return (
     <header
       className="sticky top-0 z-40 border-b border-line"
@@ -21,7 +21,7 @@ export function Navbar({ profile }: { profile: Profile | null }) {
           <Link href="/" className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-brand-dim">
             <Wordmark />
           </Link>
-          <NavLinks />
+          <NavLinks hideUsers={isDemo} />
         </div>
 
         {profile ? (

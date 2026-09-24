@@ -29,6 +29,13 @@ export default async function LoginPage({
         <div className="rounded-xl border border-line bg-surface p-6">
           <LoginForm initialError={error} next={next} />
         </div>
+
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          Só quer dar uma olhada?{" "}
+          <a href="/demo" className="text-foreground underline underline-offset-2 hover:text-brand">
+            Testar sem conta
+          </a>
+        </p>
       </div>
     </main>
   )

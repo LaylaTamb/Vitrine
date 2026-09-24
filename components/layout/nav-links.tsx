@@ -12,12 +12,13 @@ const LINKS = [
   { href: "/usuarios", label: "Pessoas" },
 ]
 
-export function NavLinks() {
+export function NavLinks({ hideUsers = false }: { hideUsers?: boolean }) {
   const pathname = usePathname()
+  const links = hideUsers ? LINKS.filter((link) => link.href !== "/usuarios") : LINKS
 
   return (
     <nav className="hidden items-center gap-1 md:flex">
-      {LINKS.map((link) => {
+      {links.map((link) => {
         const active =
           link.href === "/"
             ? pathname === "/" || pathname.startsWith("/categoria")
