@@ -79,7 +79,7 @@ export function CollectionsView({
   const [categoryEditor, setCategoryEditor] = useState<{
     open: boolean
     initial: CategoryEditorValue
-  }>({ open: false, initial: { name: "", icon: null, estrutura: [] } })
+  }>({ open: false, initial: { name: "", icon: null, color: null, estrutura: [] } })
   const [moveTarget, setMoveTarget] = useState<MoveTargetState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
 
@@ -208,7 +208,7 @@ export function CollectionsView({
                   onClick={() =>
                     setCategoryEditor({
                       open: true,
-                      initial: { name: "", icon: null, estrutura: [] },
+                      initial: { name: "", icon: null, color: null, estrutura: [] },
                     })
                   }
                 >
@@ -264,7 +264,7 @@ export function CollectionsView({
           action={
             <Button
               onClick={() =>
-                setCategoryEditor({ open: true, initial: { name: "", icon: null, estrutura: [] } })
+                setCategoryEditor({ open: true, initial: { name: "", icon: null, color: null, estrutura: [] } })
               }
             >
               <Plus className="size-4" /> Nova categoria
@@ -348,6 +348,7 @@ export function CollectionsView({
                           id: item.id,
                           name: item.category.name,
                           icon: item.category.icon,
+                          color: item.category.color,
                           estrutura: item.category.estrutura,
                         },
                       })
@@ -370,7 +371,7 @@ export function CollectionsView({
                   onClick={() =>
                     setCategoryEditor({
                       open: true,
-                      initial: { name: "", icon: null, estrutura: [] },
+                      initial: { name: "", icon: null, color: null, estrutura: [] },
                     })
                   }
                   className="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-line bg-transparent text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground"

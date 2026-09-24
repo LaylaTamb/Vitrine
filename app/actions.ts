@@ -7,6 +7,7 @@ import { z } from "zod"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import { FIELD_TYPES } from "@/lib/domain/types"
 import { parseEstrutura } from "@/lib/domain/fields"
+import { normalizeCategoryColor } from "@/lib/domain/tags"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
 
@@ -185,12 +186,14 @@ export async function deleteFolderAction(input: { id: string }): Promise<ActionR
 const categorySchema = z.object({
   name: z.string().trim().min(1, "Dê um nome à categoria.").max(80, "Nome muito longo."),
   icon: z.string().trim().max(4, "O ícone é um emoji só.").nullable(),
+  color: z.string().nullable(),
   estrutura: estruturaSchema,
 })
 
 export async function createCategoryAction(input: {
   name: string
   icon: string | null
+  color: string | null
   folderId: string | null
   estrutura: unknown
 }): Promise<ActionResult<{ id: string }>> {
@@ -216,6 +219,7 @@ export async function createCategoryAction(input: {
       owner_id: user.id,
       name: parsed.data.name,
       icon: parsed.data.icon || null,
+      color: normalizeCategoryColor(parsed.data.color),
       folder_id: parsed.data.folderId,
       estrutura: parsed.data.estrutura,
       display_order,
@@ -232,6 +236,7 @@ export async function updateCategoryAction(input: {
   id: string
   name: string
   icon: string | null
+  color: string | null
   estrutura: unknown
   /** Ids de campo removidos cujos valores devem sair dos itens. */
   removedFieldIds?: string[]
@@ -248,6 +253,7 @@ export async function updateCategoryAction(input: {
     .update({
       name: parsed.data.name,
       icon: parsed.data.icon || null,
+      color: normalizeCategoryColor(parsed.data.color),
       estrutura: parsed.data.estrutura,
     })
     .eq("id", parsed.data.id)

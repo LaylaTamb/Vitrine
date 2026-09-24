@@ -8,7 +8,7 @@ import { Stars } from "@/components/entry/stars"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EntryView } from "@/lib/domain/types"
-import { cn } from "@/lib/utils"
+import { categoryTintVars, cn } from "@/lib/utils"
 
 export function EntryCard({
   view,
@@ -19,6 +19,7 @@ export function EntryCard({
   selecting,
   selected,
   onToggleSelect,
+  categoryColor,
 }: {
   view: EntryView
   canEdit: boolean
@@ -28,6 +29,7 @@ export function EntryCard({
   selecting?: boolean
   selected?: boolean
   onToggleSelect?: (event: React.MouseEvent) => void
+  categoryColor?: string | null
 }) {
   return (
     <div
@@ -35,6 +37,7 @@ export function EntryCard({
         "group/card vitrine-card relative p-2",
         selected && "border-brand-dim bg-surface-hi"
       )}
+      style={categoryTintVars(categoryColor)}
     >
       {selectable ? (
         <label
@@ -95,7 +98,6 @@ export function EntryCard({
         <div className="relative">
           <EntryImage
             imageUrl={view.imageUrl}
-            imagePosition={view.imagePosition}
             imageTransform={view.imageTransform}
             initial={view.initial}
           />

@@ -1,10 +1,11 @@
 "use client"
 
-import { Pencil, Plus, Tags, Trash2 } from "lucide-react"
+import { ListPlus, Pencil, Plus, Tags, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { createTagAction, deleteTagAction, updateTagAction } from "@/app/tags/actions"
+import { ApplyTagDialog } from "@/components/tag/apply-tag-dialog"
 import { ColorPalette } from "@/components/tag/color-palette"
 import { EmptyState } from "@/components/layout/empty-state"
 import { PageHeader } from "@/components/layout/page-header"
@@ -22,12 +23,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { itemCount } from "@/lib/domain/format"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
+import type { Tag } from "@/lib/domain/types"
 import type { TagWithUsage } from "@/lib/queries/tags"
 
 export function TagsView({ tags }: { tags: TagWithUsage[] }) {
   const [editing, setEditing] = useState<TagWithUsage | null>(null)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<TagWithUsage | null>(null)
+  const [applying, setApplying] = useState<Tag | null>(null)
 
   const [name, setName] = useState("")
   const [color, setColor] = useState<string>(DEFAULT_TAG_COLOR)
@@ -56,8 +59,11 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
       return
     }
     toast.success(editing ? "Tag atualizada." : "Tag criada.")
+    const wasCreating = !editing
     setEditing(null)
     setCreating(false)
+    // Recém-criada: já emenda no diálogo de aplicar a itens.
+    if (wasCreating && result.data) setApplying(result.data)
   }
 
   return (
@@ -104,6 +110,15 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
               </span>
 
               <span className="card-actions flex shrink-0 items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setApplying(tag)}
+                  title={`Aplicar ${tag.name} a itens`}
+                  aria-label={`Aplicar ${tag.name} a itens`}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
+                >
+                  <ListPlus className="size-3.5" />
+                </button>
                 <button
                   type="button"
                   onClick={() => setEditing(tag)}
@@ -210,6 +225,14 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
           }
           toast.success("Tag excluída.")
           setDeleting(null)
+        }}
+      />
+
+      <ApplyTagDialog
+        tag={applying}
+        open={applying !== null}
+        onOpenChange={(open) => {
+          if (!open) setApplying(null)
         }}
       />
     </>

@@ -16,6 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers"
+import { X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -25,6 +26,7 @@ import {
   updateCategoryAction,
 } from "@/app/actions"
 import { FieldRow } from "@/components/category/field-row"
+import { ColorPalette } from "@/components/tag/color-palette"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -54,6 +56,7 @@ export interface CategoryEditorValue {
   id?: string
   name: string
   icon: string | null
+  color: string | null
   estrutura: Estrutura
 }
 
@@ -80,6 +83,7 @@ export function CategoryEditor({
   const [tab, setTab] = useState<"visual" | "json">("visual")
   const [name, setName] = useState(initial.name)
   const [icon, setIcon] = useState(initial.icon ?? "")
+  const [color, setColor] = useState<string | null>(initial.color)
   const [fields, setFields] = useState<Estrutura>(initial.estrutura)
   const [jsonText, setJsonText] = useState(() => serializeEstrutura(initial.estrutura))
   const [jsonError, setJsonError] = useState<string | null>(null)
@@ -115,6 +119,7 @@ export function CategoryEditor({
     setTab("visual")
     setName(current.name)
     setIcon(current.icon ?? "")
+    setColor(current.color)
     setFields(current.estrutura)
     setJsonText(serializeEstrutura(current.estrutura))
     setJsonError(null)
@@ -251,12 +256,14 @@ export function CategoryEditor({
           id: initial.id!,
           name: name.trim(),
           icon: icon.trim() || null,
+          color,
           estrutura,
           removedFieldIds,
         })
       : await createCategoryAction({
           name: name.trim(),
           icon: icon.trim() || null,
+          color,
           folderId,
           estrutura,
         })
@@ -335,6 +342,31 @@ export function CategoryEditor({
                   className="text-center"
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="plaque block">Cor (opcional)</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  title="Sem cor"
+                  aria-label="Sem cor"
+                  aria-pressed={color === null}
+                  onClick={() => setColor(null)}
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-line text-faint transition-transform",
+                    color === null
+                      ? "ring-2 ring-white ring-offset-2 ring-offset-[var(--bg-soft)]"
+                      : "hover:scale-110"
+                  )}
+                >
+                  <X className="size-3.5" />
+                </button>
+                <ColorPalette value={color ?? ""} onChange={setColor} />
+              </div>
+              <p className="text-xs leading-relaxed text-faint">
+                Tinge o card dos itens desta categoria — o brilho e a borda ficam nessa cor.
+              </p>
             </div>
 
             <p className="rounded-lg border border-brand-dim/40 bg-brand-wash px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">

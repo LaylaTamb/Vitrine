@@ -175,21 +175,22 @@
     font-weight: 400;
   }
 
-  /* luz de vitrine: o brilho roxo atrás de toda imagem de item */
+  /* luz de vitrine: o brilho atrás de toda imagem de item — roxo por padrão,
+     ou a cor da categoria quando `--tint-glow` chega via categoryTintVars() */
   .showcase-glow {
     position: absolute;
     inset: 12% 10% 6%;
     z-index: 0;
-    background: var(--brand-glow);
+    background: var(--tint-glow, var(--brand-glow));
     filter: blur(28px);
     opacity: 0.5;
     pointer-events: none;
   }
 
-  /* card padrão da vitrine */
+  /* card padrão da vitrine — idem: `--tint-*` tinge com a cor da categoria */
   .vitrine-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--tint-wash, var(--surface));
+    border: 1px solid var(--tint-border, var(--border));
     border-radius: var(--radius);
     transition:
       border-color 160ms ease,
@@ -197,7 +198,7 @@
       background-color 160ms ease;
   }
   .vitrine-card:hover {
-    border-color: var(--border-hi);
+    border-color: var(--tint-border-hi, var(--border-hi));
     transform: translateY(-2px);
   }
 

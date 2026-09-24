@@ -34,7 +34,7 @@ import { formatDateBR, formatDecimal, formatMinutes, formatRating, plural } from
 import { migrateCustomFields } from "./migrate"
 import { computeStats } from "./stats"
 import type { Category, Entry, Estrutura, Folder, Tag } from "./types"
-import { toView } from "./view"
+import { imageTransformOf, toView } from "./view"
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -274,8 +274,7 @@ describe("toView", () => {
   it("resolve imagem, nota e inicial", () => {
     expect(view.initial).toBe("K")
     expect(view.hasImage).toBe(true)
-    expect(view.imagePosition).toBe("30.00% 70.00%")
-    expect(view.imageTransform).toBe("scale(1.250)")
+    expect(view.imageTransform).toBe("translate(5.00%, -5.00%) scale(1.250)")
     expect(view.ratingLabel).toBe("4,5")
     expect(view.ratingPercent).toBe("90%")
     expect(view.hasRating).toBe(true)
@@ -312,10 +311,31 @@ describe("toView", () => {
     expect(vazio.ratingLabel).toBe("—")
     expect(vazio.ratingPercent).toBe("0%")
     expect(vazio.hasImage).toBe(false)
-    expect(vazio.imagePosition).toBe("50.00% 50.00%")
-    expect(vazio.imageTransform).toBe("scale(1.000)")
+    expect(vazio.imageTransform).toBe("translate(0.00%, 0.00%) scale(1.000)")
     expect(vazio.extras).toEqual([])
     expect(vazio.summary).toBe("")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// imageTransformOf — o pan tem que cobrir 0–100% de verdade nos dois eixos
+// ---------------------------------------------------------------------------
+
+describe("imageTransformOf", () => {
+  it("sem zoom, não há para onde deslizar", () => {
+    expect(imageTransformOf({ x: 0, y: 100, zoom: 1 })).toBe(
+      "translate(0.00%, 0.00%) scale(1.000)"
+    )
+  })
+
+  it("no zoom máximo, os extremos do slider alcançam o fim do respiro", () => {
+    // slack = (3-1)/2 = 1 → 100% de deslocamento possível em cada eixo.
+    expect(imageTransformOf({ x: 100, y: 0, zoom: 3 })).toBe(
+      "translate(-100.00%, 100.00%) scale(3.000)"
+    )
+    expect(imageTransformOf({ x: 0, y: 100, zoom: 3 })).toBe(
+      "translate(100.00%, -100.00%) scale(3.000)"
+    )
   })
 })
 
@@ -417,6 +437,7 @@ describe("filtro geral", () => {
     owner_id: "u1",
     name: "Restaurantes",
     icon: "🍽️",
+    color: null,
     folder_id: null,
     display_order: 0,
     created_at: "2024-01-01T00:00:00Z",
@@ -591,9 +612,9 @@ describe("coleções", () => {
     { id: "f4", owner_id: "u1", name: "Cinema", parent_folder_id: null, display_order: 1, created_at: "" },
   ]
   const categories: Category[] = [
-    { id: "c1", owner_id: "u1", name: "Restaurantes", icon: null, folder_id: "f2", display_order: 0, estrutura: [], created_at: "" },
-    { id: "c2", owner_id: "u1", name: "Receitas", icon: null, folder_id: "f3", display_order: 0, estrutura: [], created_at: "" },
-    { id: "c3", owner_id: "u1", name: "Filmes", icon: null, folder_id: null, display_order: 0, estrutura: [], created_at: "" },
+    { id: "c1", owner_id: "u1", name: "Restaurantes", icon: null, color: null, folder_id: "f2", display_order: 0, estrutura: [], created_at: "" },
+    { id: "c2", owner_id: "u1", name: "Receitas", icon: null, color: null, folder_id: "f3", display_order: 0, estrutura: [], created_at: "" },
+    { id: "c3", owner_id: "u1", name: "Filmes", icon: null, color: null, folder_id: null, display_order: 0, estrutura: [], created_at: "" },
   ]
   const counts = new Map([
     ["c1", 30],

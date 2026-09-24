@@ -8,7 +8,7 @@ import { Stars } from "@/components/entry/stars"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EntryView } from "@/lib/domain/types"
-import { cn } from "@/lib/utils"
+import { categoryTintVars, cn } from "@/lib/utils"
 
 /** O item no modo lista: miniatura 1:1, nome, resumo, tags e a nota à direita. */
 export function EntryRow({
@@ -20,6 +20,7 @@ export function EntryRow({
   selecting,
   selected,
   onToggleSelect,
+  categoryColor,
 }: {
   view: EntryView
   canEdit: boolean
@@ -29,6 +30,7 @@ export function EntryRow({
   selecting?: boolean
   selected?: boolean
   onToggleSelect?: (event: React.MouseEvent) => void
+  categoryColor?: string | null
 }) {
   return (
     <div
@@ -36,6 +38,7 @@ export function EntryRow({
         "group/card vitrine-card flex items-center gap-3 p-2",
         selected && "border-brand-dim bg-surface-hi"
       )}
+      style={categoryTintVars(categoryColor)}
     >
       {selectable ? (
         <label
@@ -62,7 +65,6 @@ export function EntryRow({
       >
         <EntryImage
           imageUrl={view.imageUrl}
-          imagePosition={view.imagePosition}
           imageTransform={view.imageTransform}
           initial={view.initial}
           ratio="1 / 1"

@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label"
 import { formatRating } from "@/lib/domain/format"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { EntryView, Estrutura, Tag } from "@/lib/domain/types"
-import { imagePositionOf, imageTransformOf } from "@/lib/domain/view"
+import { imageTransformOf } from "@/lib/domain/view"
 
 const DEFAULT_FRAMING = { x: 50, y: 50, zoom: 1 }
 
@@ -178,7 +178,6 @@ export function EntryForm({
               {imageUrl.trim() ? (
                 <EntryImage
                   imageUrl={imageUrl.trim()}
-                  imagePosition={imagePositionOf(framing)}
                   imageTransform={imageTransformOf(framing)}
                   initial={(name.trim()[0] ?? "?").toUpperCase()}
                   eager

@@ -19,3 +19,14 @@ export function normalizeTagColor(value: unknown): string {
     ? text
     : DEFAULT_TAG_COLOR
 }
+
+/**
+ * Cor de categoria: mesma paleta das tags, mas nula é uma opção válida (sem
+ * cor — visual padrão). Qualquer valor fora da paleta também vira nulo, em
+ * vez de cair num roxo padrão como as tags fazem.
+ */
+export function normalizeCategoryColor(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null
+  const text = String(value).toUpperCase()
+  return TAG_COLORS.some((color) => color.value.toUpperCase() === text) ? text : null
+}

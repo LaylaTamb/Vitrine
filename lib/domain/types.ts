@@ -65,6 +65,8 @@ export interface Category {
   owner_id: string
   name: string
   icon: string | null
+  /** Cor de acento (uma das `TAG_COLORS`) — tinge o card dos itens. `null` = sem cor. */
+  color: string | null
   folder_id: string | null
   display_order: number
   estrutura: Estrutura
@@ -124,9 +126,7 @@ export interface EntryView {
   initial: string
   imageUrl: string | null
   hasImage: boolean
-  /** `object-position`, ex.: "50.00% 50.00%" */
-  imagePosition: string
-  /** `transform`, ex.: "scale(1.000)" */
+  /** `transform`, ex.: "translate(0.00%, 0.00%) scale(1.000)" */
   imageTransform: string
   /** O enquadramento cru, para os sliders do formulário. */
   imageX: number

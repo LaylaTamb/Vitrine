@@ -319,6 +319,7 @@ export function CategoryView({
                     key={item.id}
                     view={item}
                     canEdit={canEdit}
+                    categoryColor={category.color}
                     selectable={canEdit}
                     selecting={selecting}
                     selected={selected.includes(item.id)}
@@ -334,6 +335,7 @@ export function CategoryView({
                     key={item.id}
                     view={item}
                     canEdit={canEdit}
+                    categoryColor={category.color}
                     selectable={canEdit}
                     selecting={selecting}
                     selected={selected.includes(item.id)}
@@ -369,6 +371,7 @@ export function CategoryView({
               id: category.id,
               name: category.name,
               icon: category.icon,
+              color: category.color,
               estrutura: category.estrutura,
             }}
           />

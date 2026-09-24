@@ -63,11 +63,11 @@ export default async function EntryPage({
         <div>
           <EntryImage
             imageUrl={view.imageUrl}
-            imagePosition={view.imagePosition}
             imageTransform={view.imageTransform}
             initial={view.initial}
             initialSize="6rem"
             eager
+            tint={category.color}
           />
         </div>
 

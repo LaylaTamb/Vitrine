@@ -54,16 +54,24 @@ export function imageDisplayOf(display: unknown): Required<ImageDisplay> {
   return normalizeImageDisplay(display)
 }
 
-/** `object-position` a partir do enquadramento salvo. */
-export function imagePositionOf(display: unknown): string {
-  const { x, y } = normalizeImageDisplay(display)
-  return `${x.toFixed(2)}% ${y.toFixed(2)}%`
-}
-
-/** `transform` a partir do enquadramento salvo. */
+/**
+ * `transform` a partir do enquadramento salvo.
+ *
+ * `object-position` sozinho não dava: o curso de pan que ele permite depende
+ * de quanto a imagem original "sobra" do card com `object-fit: cover`, então
+ * uma imagem já próxima da proporção do card mal se move. Aqui a imagem fica
+ * sempre centrada (`object-position` no padrão do navegador, 50% 50%) e todo
+ * o enquadramento vem de escalar e depois transladar: a translação é a
+ * transformação MAIS externa (a última da lista), então o deslocamento final
+ * na tela é exatamente `translate()`, sem depender do zoom. Isso garante que
+ * x/y = 0–100 sempre cobre 100% do respiro aberto pelo zoom, nos dois eixos.
+ */
 export function imageTransformOf(display: unknown): string {
-  const { zoom } = normalizeImageDisplay(display)
-  return `scale(${zoom.toFixed(3)})`
+  const { x, y, zoom } = normalizeImageDisplay(display)
+  const slack = (zoom - 1) / 2
+  const tx = -((x - 50) / 50) * slack * 100
+  const ty = -((y - 50) / 50) * slack * 100
+  return `translate(${tx.toFixed(2)}%, ${ty.toFixed(2)}%) scale(${zoom.toFixed(3)})`
 }
 
 /** Largura do recorte da fileira de estrelas: 3,5 estrelas → "70%". */
@@ -149,7 +157,6 @@ export function toView(
     initial: (name.trim()[0] ?? "?").toUpperCase(),
     imageUrl: entry.image_url || null,
     hasImage: Boolean(entry.image_url),
-    imagePosition: imagePositionOf(entry.image_display),
     imageTransform: imageTransformOf(entry.image_display),
     imageX: framing.x,
     imageY: framing.y,
