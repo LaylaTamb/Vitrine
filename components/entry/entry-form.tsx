@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DEFAULT_CURRENCY } from "@/lib/domain/fields"
 import { formatRating } from "@/lib/domain/format"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { EntryView, Estrutura, Tag } from "@/lib/domain/types"
@@ -379,6 +380,27 @@ export function EntryForm({
                               </option>
                             ))}
                           </select>
+                        ) : field.tipo === "currency" ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="flex h-9 shrink-0 items-center rounded-md border border-line bg-bg-soft px-2 text-sm text-muted-foreground">
+                              {field.moeda ?? DEFAULT_CURRENCY}
+                            </span>
+                            <Input
+                              id={`field-${field.id}`}
+                              inputMode="decimal"
+                              placeholder="0,00"
+                              value={values[field.id] ?? ""}
+                              onChange={(event) => setValue(field.id, event.target.value)}
+                            />
+                          </div>
+                        ) : field.tipo === "decimal" ? (
+                          <Input
+                            id={`field-${field.id}`}
+                            inputMode="decimal"
+                            placeholder="0,00"
+                            value={values[field.id] ?? ""}
+                            onChange={(event) => setValue(field.id, event.target.value)}
+                          />
                         ) : (
                           <Input
                             id={`field-${field.id}`}

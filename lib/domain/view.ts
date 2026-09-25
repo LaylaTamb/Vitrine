@@ -3,8 +3,8 @@
  * nenhum componente precisar calcular nada na hora de renderizar.
  */
 
-import { formatDateBR, formatMinutes, formatRating } from "./format"
-import { parseCustomFields, parseEstrutura } from "./fields"
+import { formatDateBR, formatDecimal, formatMinutes, formatRating } from "./format"
+import { DEFAULT_CURRENCY, parseCustomFields, parseEstrutura } from "./fields"
 import {
   DEFAULT_IMAGE_DISPLAY,
   type CustomFields,
@@ -30,6 +30,10 @@ export function formatFieldValue(field: FieldDef, value: FieldValue): string {
       return formatDateBR(String(value))
     case "int":
       return String(Math.trunc(Number(value)))
+    case "decimal":
+      return formatDecimal(Number(value), 2)
+    case "currency":
+      return `${field.moeda ?? DEFAULT_CURRENCY} ${formatDecimal(Number(value), 2)}`
     default:
       return String(value)
   }

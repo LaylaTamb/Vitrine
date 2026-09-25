@@ -44,8 +44,21 @@ export function GlobalFilterView({
   tags: Tag[]
 }) {
   const [filter, setFilter] = useState<GlobalFilter>(EMPTY_GLOBAL_FILTER)
+  // Campos escolhidos manualmente para aparecer no filtro — todo campo de
+  // toda categoria de uma vez sobrecarregava a barra lateral.
+  const [activeFieldKeys, setActiveFieldKeys] = useState<string[]>([])
 
   const unified = useMemo(() => unifyFields(categories), [categories])
+  const activeFields = useMemo(
+    () => activeFieldKeys.map((key) => unified.find((field) => field.key === key)).filter(
+      (field): field is UnifiedField => Boolean(field)
+    ),
+    [activeFieldKeys, unified]
+  )
+  const availableFields = useMemo(
+    () => unified.filter((field) => !activeFieldKeys.includes(field.key)),
+    [unified, activeFieldKeys]
+  )
   const filtered = useMemo(
     () => applyGlobalFilter(views, filter, unified),
     [views, filter, unified]
@@ -63,6 +76,25 @@ export function GlobalFilterView({
     }))
   }
 
+  function addActiveField(key: string) {
+    if (!key || activeFieldKeys.includes(key)) return
+    setActiveFieldKeys((current) => [...current, key])
+  }
+
+  function removeActiveField(key: string) {
+    setActiveFieldKeys((current) => current.filter((item) => item !== key))
+    setFilter((current) => {
+      const fields = { ...current.fields }
+      delete fields[key]
+      return { ...current, fields }
+    })
+  }
+
+  function clearAll() {
+    setFilter(EMPTY_GLOBAL_FILTER)
+    setActiveFieldKeys([])
+  }
+
   return (
     <>
       <PageHeader
@@ -75,15 +107,18 @@ export function GlobalFilterView({
         }
         actions={
           active ? (
-            <Button variant="outline" size="lg" onClick={() => setFilter(EMPTY_GLOBAL_FILTER)}>
+            <Button variant="outline" size="lg" onClick={clearAll}>
               <X className="size-4" /> Limpar tudo
             </Button>
           ) : null
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
-        <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
+      {/* `lg:overflow-y-auto` + `max-h` separam a rolagem da barra lateral da
+          rolagem dos itens — sem isso os dois se moviam juntos, e uma barra
+          lateral alta empurrava os itens pra fora da tela. */}
+      <div className="grid gap-6 lg:grid-cols-[18rem_1fr] lg:items-start">
+        <aside className="space-y-5 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
           <div className="space-y-3 rounded-xl border border-line bg-surface p-4">
             <p className="plaque">Sempre valem</p>
 
@@ -153,14 +188,49 @@ export function GlobalFilterView({
           {unified.length > 0 ? (
             <div className="space-y-4 rounded-xl border border-line bg-surface p-4">
               <p className="plaque">Campos das categorias</p>
-              {unified.map((field) => (
-                <FieldControl
-                  key={field.key}
-                  field={field}
-                  value={filter.fields[field.key] ?? EMPTY_FIELD_FILTER}
-                  onChange={(patch) => setField(field.key, patch)}
-                />
-              ))}
+
+              {availableFields.length > 0 ? (
+                <select
+                  value=""
+                  onChange={(event) => addActiveField(event.target.value)}
+                  aria-label="Adicionar campo ao filtro"
+                  className="h-9 w-full rounded-md border border-dashed border-line bg-bg-soft px-2 text-sm text-muted-foreground outline-none focus-visible:border-brand-dim"
+                >
+                  <option value="">+ Adicionar campo…</option>
+                  {availableFields.map((field) => (
+                    <option key={field.key} value={field.key}>
+                      {field.label}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+
+              {activeFields.length === 0 ? (
+                <p className="text-xs text-faint">
+                  Escolha acima um campo das suas categorias para filtrar por ele.
+                </p>
+              ) : (
+                activeFields.map((field) => (
+                  <div key={field.key} className="flex items-start gap-1.5">
+                    <div className="min-w-0 flex-1">
+                      <FieldControl
+                        field={field}
+                        value={filter.fields[field.key] ?? EMPTY_FIELD_FILTER}
+                        onChange={(patch) => setField(field.key, patch)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeActiveField(field.key)}
+                      title={`Tirar ${field.label} do filtro`}
+                      aria-label={`Tirar ${field.label} do filtro`}
+                      className="mt-5 shrink-0 rounded p-1 text-faint transition-colors hover:bg-surface-hi hover:text-danger"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           ) : null}
         </aside>
@@ -178,7 +248,7 @@ export function GlobalFilterView({
               title="Nada bateu com o filtro"
               description="Nenhum item do seu acervo passa por esse recorte."
               action={
-                <Button variant="outline" onClick={() => setFilter(EMPTY_GLOBAL_FILTER)}>
+                <Button variant="outline" onClick={clearAll}>
                   Limpar tudo
                 </Button>
               }

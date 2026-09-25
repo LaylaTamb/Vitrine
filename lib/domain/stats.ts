@@ -5,7 +5,7 @@
  * categoria inteira. Quem chama passa o recorte que está na tela.
  */
 
-import { isNumericField } from "./fields"
+import { DEFAULT_CURRENCY, isNumericField } from "./fields"
 import { formatDecimal, formatMinutes, formatRating, itemCount } from "./format"
 import type { EntryView, Estrutura, Tag } from "./types"
 
@@ -67,7 +67,11 @@ export function computeStats(views: EntryView[], estrutura: Estrutura): Stats {
           ? formatMinutes(Math.round(mean))
           : field.tipo === "star"
             ? formatRating(Math.round(mean * 10) / 10)
-            : formatDecimal(mean, 1)
+            : field.tipo === "currency"
+              ? `${field.moeda ?? DEFAULT_CURRENCY} ${formatDecimal(mean, 2)}`
+              : field.tipo === "decimal"
+                ? formatDecimal(mean, 2)
+                : formatDecimal(mean, 1)
       fields.push({
         id: field.id,
         label: field.nome,

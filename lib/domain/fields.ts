@@ -16,6 +16,8 @@ import {
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   star: "Estrelas (0-5)",
   int: "Número inteiro",
+  decimal: "Número com vírgula",
+  currency: "Moeda",
   time: "Duração (minutos)",
   str: "Texto",
   date: "Data",
@@ -23,7 +25,17 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
 }
 
 /** Os tipos que aceitam filtro por faixa e média nas estatísticas. */
-export const NUMERIC_FIELD_TYPES: FieldType[] = ["star", "int", "time"]
+export const NUMERIC_FIELD_TYPES: FieldType[] = ["star", "int", "decimal", "currency", "time"]
+
+/** As moedas que um campo `currency` pode usar. A primeira é o padrão. */
+export const CURRENCY_SYMBOLS = ["R$", "$", "€", "¥"] as const
+export const DEFAULT_CURRENCY: string = CURRENCY_SYMBOLS[0]
+
+/** Aceita só um símbolo da lista; qualquer outra coisa vira o padrão (R$). */
+export function normalizeCurrency(value: unknown): string {
+  const text = String(value ?? "")
+  return (CURRENCY_SYMBOLS as readonly string[]).includes(text) ? text : DEFAULT_CURRENCY
+}
 
 export function isFieldType(value: unknown): value is FieldType {
   return typeof value === "string" && (FIELD_TYPES as readonly string[]).includes(value)
@@ -100,6 +112,10 @@ export function parseEstrutura(raw: unknown): Estrutura {
       field.opcoes = opcoes
     }
 
+    if (candidate.tipo === "currency") {
+      field.moeda = normalizeCurrency(candidate.moeda)
+    }
+
     out.push(field)
   }
 
@@ -142,6 +158,12 @@ export function coerceFieldValue(field: FieldDef, raw: unknown): FieldValue | nu
       const num = Number(text.replace(",", "."))
       if (!Number.isFinite(num)) return null
       return Math.trunc(num)
+    }
+    case "decimal":
+    case "currency": {
+      const num = Number(text.replace(",", "."))
+      if (!Number.isFinite(num)) return null
+      return Math.round(num * 100) / 100
     }
     case "date": {
       const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text)
@@ -228,7 +250,9 @@ export function serializeEstrutura(estrutura: Estrutura): string {
     estrutura.map((field) =>
       field.tipo === "select"
         ? { id: field.id, nome: field.nome, tipo: field.tipo, opcoes: field.opcoes ?? [] }
-        : { id: field.id, nome: field.nome, tipo: field.tipo }
+        : field.tipo === "currency"
+          ? { id: field.id, nome: field.nome, tipo: field.tipo, moeda: field.moeda ?? DEFAULT_CURRENCY }
+          : { id: field.id, nome: field.nome, tipo: field.tipo }
     ),
     null,
     2
@@ -307,6 +331,10 @@ export function parseEstruturaJSON(text: string, previous: Estrutura = []): Estr
         return { ok: false, error: `Campo "${nome}": select precisa de "opcoes".` }
       }
       field.opcoes = opcoes
+    }
+
+    if (candidate.tipo === "currency") {
+      field.moeda = normalizeCurrency(candidate.moeda)
     }
 
     // Preserva o id quando ele já existia; senão gera um novo.

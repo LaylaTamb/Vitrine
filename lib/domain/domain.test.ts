@@ -14,6 +14,7 @@ import {
   coerceFieldValue,
   diffEstrutura,
   newFieldId,
+  normalizeCurrency,
   parseEstrutura,
   parseEstruturaJSON,
   parseOptions,
@@ -34,7 +35,7 @@ import { formatDateBR, formatDecimal, formatMinutes, formatRating, plural } from
 import { migrateCustomFields } from "./migrate"
 import { computeStats } from "./stats"
 import type { Category, Entry, Estrutura, Folder, Tag } from "./types"
-import { imageTransformOf, toView } from "./view"
+import { formatFieldValue, imageTransformOf, toView } from "./view"
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -140,6 +141,30 @@ describe("fields", () => {
     expect(coerceFieldValue(select, "Drive-thru")).toBeNull()
   })
 
+  it("coage decimal e moeda com vírgula, sem truncar", () => {
+    const decimal = { id: "f_dec", nome: "Peso", tipo: "decimal" as const }
+    const currency = { id: "f_cur", nome: "Preço", tipo: "currency" as const, moeda: "€" }
+
+    expect(coerceFieldValue(decimal, "4,25")).toBe(4.25)
+    expect(coerceFieldValue(decimal, "4.2")).toBe(4.2)
+    expect(coerceFieldValue(currency, "49,9")).toBe(49.9)
+    expect(coerceFieldValue(currency, "49,999")).toBe(50) // arredonda em 2 casas
+    expect(coerceFieldValue(currency, "abc")).toBeNull()
+  })
+
+  it("só aceita moeda da lista; qualquer outra coisa vira R$", () => {
+    expect(normalizeCurrency("€")).toBe("€")
+    expect(normalizeCurrency("won")).toBe("R$")
+    expect(normalizeCurrency(undefined)).toBe("R$")
+  })
+
+  it("exibe moeda com o símbolo do campo, e decimal com 2 casas", () => {
+    const currency = { id: "f_cur", nome: "Preço", tipo: "currency" as const, moeda: "$" }
+    const decimal = { id: "f_dec", nome: "Peso", tipo: "decimal" as const }
+    expect(formatFieldValue(currency, 49.9)).toBe("$ 49,9")
+    expect(formatFieldValue(decimal, 4.5)).toBe("4,5")
+  })
+
   it("não grava valor vazio nem campo que saiu da estrutura", () => {
     const values = coerceCustomFields(ESTRUTURA, {
       f_visit: "3",
@@ -190,7 +215,7 @@ describe("fields", () => {
       expect(parseEstruturaJSON('[{"nome":"Modo","tipo":"lista"}]')).toEqual({
         ok: false,
         error:
-          'Campo "Modo": tipo "lista" não existe. Use um destes: star, int, time, str, date, select.',
+          'Campo "Modo": tipo "lista" não existe. Use um destes: star, int, decimal, currency, time, str, date, select.',
       })
       expect(
         parseEstruturaJSON('[{"nome":"Nota","tipo":"int"},{"nome":"Nota","tipo":"str"}]')

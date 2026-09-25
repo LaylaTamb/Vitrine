@@ -5,8 +5,17 @@
  * importa React nem Supabase. É o que os testes cobrem.
  */
 
-/** Os seis tipos de campo que uma categoria pode ter. E só eles. */
-export const FIELD_TYPES = ["star", "int", "time", "str", "date", "select"] as const
+/** Os tipos de campo que uma categoria pode ter. E só eles. */
+export const FIELD_TYPES = [
+  "star",
+  "int",
+  "decimal",
+  "currency",
+  "time",
+  "str",
+  "date",
+  "select",
+] as const
 
 export type FieldType = (typeof FIELD_TYPES)[number]
 
@@ -22,6 +31,8 @@ export interface FieldDef {
   tipo: FieldType
   /** Obrigatório (e não vazio) quando `tipo === "select"`. */
   opcoes?: string[]
+  /** Só quando `tipo === "currency"`: um símbolo de `CURRENCY_SYMBOLS`. */
+  moeda?: string
 }
 
 export type Estrutura = FieldDef[]

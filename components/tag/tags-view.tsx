@@ -26,7 +26,14 @@ import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { Tag } from "@/lib/domain/types"
 import type { TagWithUsage } from "@/lib/queries/tags"
 
-export function TagsView({ tags }: { tags: TagWithUsage[] }) {
+export function TagsView({
+  tags,
+  readOnly = false,
+}: {
+  tags: TagWithUsage[]
+  /** Conta demo: tags são vocabulário do grupo inteiro, não dela pra mexer. */
+  readOnly?: boolean
+}) {
   const [editing, setEditing] = useState<TagWithUsage | null>(null)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<TagWithUsage | null>(null)
@@ -71,11 +78,17 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
       <PageHeader
         label="Vocabulário"
         title="Tags"
-        subtitle="As tags são do grupo inteiro: qualquer pessoa cria, edita e apaga, e a mudança vale para o acervo de todo mundo."
+        subtitle={
+          readOnly
+            ? "As tags são do grupo inteiro — a conta demo pode aplicá-las, mas não criar, editar nem apagar."
+            : "As tags são do grupo inteiro: qualquer pessoa cria, edita e apaga, e a mudança vale para o acervo de todo mundo."
+        }
         actions={
-          <Button size="lg" onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> Nova tag
-          </Button>
+          readOnly ? null : (
+            <Button size="lg" onClick={() => setCreating(true)}>
+              <Plus className="size-4" /> Nova tag
+            </Button>
+          )
         }
       />
 
@@ -85,9 +98,11 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
           title="Nenhuma tag ainda"
           description="Tags atravessam todas as categorias: crie a primeira e comece a cruzar o acervo."
           action={
-            <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> Nova tag
-            </Button>
+            readOnly ? null : (
+              <Button onClick={() => setCreating(true)}>
+                <Plus className="size-4" /> Nova tag
+              </Button>
+            )
           }
         />
       ) : (
@@ -119,24 +134,28 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
                 >
                   <ListPlus className="size-3.5" />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setEditing(tag)}
-                  title={`Editar ${tag.name}`}
-                  aria-label={`Editar ${tag.name}`}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
-                >
-                  <Pencil className="size-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleting(tag)}
-                  title={`Excluir ${tag.name}`}
-                  aria-label={`Excluir ${tag.name}`}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-danger"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                {readOnly ? null : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(tag)}
+                      title={`Editar ${tag.name}`}
+                      aria-label={`Editar ${tag.name}`}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(tag)}
+                      title={`Excluir ${tag.name}`}
+                      aria-label={`Excluir ${tag.name}`}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-danger"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </>
+                )}
               </span>
             </li>
           ))}

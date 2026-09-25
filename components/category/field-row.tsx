@@ -41,6 +41,8 @@ export function FieldRow({
         <p className="truncate text-sm">{field.nome}</p>
         {field.tipo === "select" && field.opcoes?.length ? (
           <p className="truncate text-xs text-faint">{field.opcoes.join(" · ")}</p>
+        ) : field.tipo === "currency" ? (
+          <p className="truncate text-xs text-faint">{field.moeda}</p>
         ) : null}
       </div>
 

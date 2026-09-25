@@ -12,7 +12,12 @@ import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
 
 const uuid = z.uuid("Identificador inválido.")
-const fieldId = z.string().regex(/^f_[a-z0-9]{6}$/, "Identificador de campo inválido.")
+// O app sempre gera `f_` + 6 alfanuméricos (`newFieldId()`), mas categoria
+// importada (`lib/backup/import.ts`) pode trazer id legível tipo "visitas" —
+// de propósito, pra dar pra escrever o JSON à mão. A validação aqui não pode
+// ser mais estrita que `parseEstrutura`, que já aceita qualquer string não
+// vazia, senão editar a estrutura de uma categoria importada nunca salva.
+const fieldId = z.string().trim().min(1, "Identificador de campo inválido.").max(80)
 
 const estruturaSchema = z.array(
   z.object({
@@ -20,6 +25,7 @@ const estruturaSchema = z.array(
     nome: z.string().trim().min(1, "Dê um nome ao campo."),
     tipo: z.enum(FIELD_TYPES),
     opcoes: z.array(z.string()).optional(),
+    moeda: z.string().optional(),
   })
 )
 

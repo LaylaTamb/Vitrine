@@ -40,6 +40,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
+  CURRENCY_SYMBOLS,
+  DEFAULT_CURRENCY,
   FIELD_TYPE_LABELS,
   diffEstrutura,
   newFieldId,
@@ -91,6 +93,7 @@ export function CategoryEditor({
   const [newType, setNewType] = useState<FieldType>("str")
   const [newName, setNewName] = useState("")
   const [newOptions, setNewOptions] = useState("")
+  const [newCurrency, setNewCurrency] = useState<string>(DEFAULT_CURRENCY)
   const [fieldError, setFieldError] = useState<string | null>(null)
 
   const [pending, setPending] = useState(false)
@@ -126,6 +129,7 @@ export function CategoryEditor({
     setFieldError(null)
     setNewName("")
     setNewOptions("")
+    setNewCurrency(DEFAULT_CURRENCY)
     setNewType("str")
     setImpact(null)
   }, [open])
@@ -142,10 +146,12 @@ export function CategoryEditor({
       nome: newName.trim(),
       tipo: newType,
       ...(newType === "select" ? { opcoes } : {}),
+      ...(newType === "currency" ? { moeda: newCurrency } : {}),
     }
     setFields([...fields, field])
     setNewName("")
     setNewOptions("")
+    setNewCurrency(DEFAULT_CURRENCY)
     setFieldError(null)
   }
 
@@ -445,6 +451,28 @@ export function CategoryEditor({
                       onChange={(event) => setNewOptions(event.target.value)}
                       placeholder="Opções separadas por vírgula: Salão, Delivery"
                     />
+                  ) : null}
+
+                  {newType === "currency" ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="plaque shrink-0">Moeda</span>
+                      {CURRENCY_SYMBOLS.map((symbol) => (
+                        <button
+                          key={symbol}
+                          type="button"
+                          onClick={() => setNewCurrency(symbol)}
+                          aria-pressed={newCurrency === symbol}
+                          className={cn(
+                            "h-8 min-w-9 rounded-md border px-2 text-sm transition-colors",
+                            newCurrency === symbol
+                              ? "border-brand-dim bg-brand-wash text-foreground"
+                              : "border-line text-muted-foreground hover:border-line-hi hover:text-foreground"
+                          )}
+                        >
+                          {symbol}
+                        </button>
+                      ))}
+                    </div>
                   ) : null}
 
                   {fieldError ? <p className="text-xs text-danger">{fieldError}</p> : null}

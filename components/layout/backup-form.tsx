@@ -14,7 +14,7 @@ import { plural } from "@/lib/domain/format"
  * usam. Importar cola (ou sobe) um `.json` no mesmo formato e sempre cria
  * estrutura nova — nunca mistura com o que já existe.
  */
-export function BackupForm() {
+export function BackupForm({ hideImport = false }: { hideImport?: boolean }) {
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [json, setJson] = useState("")
@@ -85,41 +85,43 @@ export function BackupForm() {
         </Button>
       </div>
 
-      <div className="space-y-1.5">
-        <span className="plaque block">Importar</span>
-        <p className="text-xs leading-relaxed text-faint">
-          Cole o JSON abaixo, ou suba o arquivo. Sempre cria categorias novas — nunca mistura com o
-          que você já tem. Nome repetido ganha um sufixo.
-        </p>
-        <Textarea
-          value={json}
-          onChange={(event) => setJson(event.target.value)}
-          placeholder='{ "categories": [...], "entries": [...] }'
-          spellCheck={false}
-          rows={8}
-          className="font-mono text-xs leading-relaxed"
-        />
-        <div className="flex items-center gap-2 pt-1">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            className="hidden"
-            onChange={handleFilePick}
+      {hideImport ? null : (
+        <div className="space-y-1.5">
+          <span className="plaque block">Importar</span>
+          <p className="text-xs leading-relaxed text-faint">
+            Cole o JSON abaixo, ou suba o arquivo. Sempre cria categorias novas — nunca mistura com
+            o que você já tem. Nome repetido ganha um sufixo.
+          </p>
+          <Textarea
+            value={json}
+            onChange={(event) => setJson(event.target.value)}
+            placeholder='{ "categories": [...], "entries": [...] }'
+            spellCheck={false}
+            rows={8}
+            className="font-mono text-xs leading-relaxed"
           />
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-          >
-            <Upload className="size-4" /> Escolher arquivo
-          </Button>
-          <Button type="button" onClick={handleImport} disabled={importing || !json.trim()}>
-            {importing ? "Importando…" : "Importar"}
-          </Button>
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleFilePick}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+            >
+              <Upload className="size-4" /> Escolher arquivo
+            </Button>
+            <Button type="button" onClick={handleImport} disabled={importing || !json.trim()}>
+              {importing ? "Importando…" : "Importar"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

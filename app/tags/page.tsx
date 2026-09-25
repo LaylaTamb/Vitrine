@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 
 import { AppShell } from "@/components/layout/app-shell"
 import { TagsView } from "@/components/tag/tags-view"
+import { DEMO_USERNAME } from "@/lib/demo/config"
 import { getMyProfile, requireUser } from "@/lib/queries/session"
 import { getTagsWithUsage } from "@/lib/queries/tags"
 
@@ -14,7 +15,7 @@ export default async function TagsPage() {
 
   return (
     <AppShell profile={profile}>
-      <TagsView tags={tags} />
+      <TagsView tags={tags} readOnly={profile?.username === DEMO_USERNAME} />
     </AppShell>
   )
 }

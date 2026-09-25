@@ -13,10 +13,11 @@ import {
   type BackupPayload,
   type ImportSummary,
 } from "@/lib/backup/import"
+import { DEMO_USERNAME } from "@/lib/demo/config"
 import { parseCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { imageDisplayOf } from "@/lib/domain/view"
 import { createClient } from "@/lib/supabase/server"
-import { requireUser } from "@/lib/queries/session"
+import { getMyProfile, requireUser } from "@/lib/queries/session"
 
 const profileSchema = z.object({
   displayName: z.string().trim().max(80, "Nome muito longo."),
@@ -41,6 +42,15 @@ export async function updateProfileAction(input: {
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const user = await requireUser()
+  const profile = await getMyProfile()
+
+  // Trocar o username escaparia da restrição de leitura da conta demo (ela é
+  // identificada pelo id, mas isso evita a confusão de uma demo "com outro
+  // nome" — e fecha a possibilidade de se passar por um usuário de verdade).
+  if (profile?.username === DEMO_USERNAME && parsed.data.username !== DEMO_USERNAME) {
+    return { ok: false, error: "A conta de demonstração não pode mudar de nome de usuário." }
+  }
+
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -158,10 +168,16 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
 export async function importCollectionAction(input: {
   json: string
 }): Promise<ActionResult<ImportSummary>> {
+  const user = await requireUser()
+  const profile = await getMyProfile()
+
+  if (profile?.username === DEMO_USERNAME) {
+    return { ok: false, error: "Importar não está disponível na conta de demonstração." }
+  }
+
   const parsed = parseBackupJSON(input.json)
   if (!parsed.ok) return parsed
 
-  const user = await requireUser()
   const supabase = await createClient()
 
   const result = await performImport(supabase, user.id, parsed.data)
