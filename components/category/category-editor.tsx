@@ -44,6 +44,7 @@ import {
   DEFAULT_CURRENCY,
   FIELD_TYPE_LABELS,
   diffEstrutura,
+  diffFieldOptions,
   newFieldId,
   parseEstruturaJSON,
   parseOptions,
@@ -51,7 +52,7 @@ import {
   validateField,
 } from "@/lib/domain/fields"
 import { plural } from "@/lib/domain/format"
-import { FIELD_TYPES, type Estrutura, type FieldType } from "@/lib/domain/types"
+import { FIELD_TYPES, type Estrutura, type FieldDef, type FieldType } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
 
 export interface CategoryEditorValue {
@@ -95,6 +96,8 @@ export function CategoryEditor({
   const [newOptions, setNewOptions] = useState("")
   const [newCurrency, setNewCurrency] = useState<string>(DEFAULT_CURRENCY)
   const [fieldError, setFieldError] = useState<string | null>(null)
+  /** Id do campo sendo editado agora — `null` quando o formulário é "adicionar". */
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
 
   const [pending, setPending] = useState(false)
   const [impact, setImpact] = useState<ImpactLine[] | null>(null)
@@ -131,8 +134,27 @@ export function CategoryEditor({
     setNewOptions("")
     setNewCurrency(DEFAULT_CURRENCY)
     setNewType("str")
+    setEditingFieldId(null)
     setImpact(null)
   }, [open])
+
+  function resetFieldForm() {
+    setEditingFieldId(null)
+    setNewName("")
+    setNewOptions("")
+    setNewCurrency(DEFAULT_CURRENCY)
+    setNewType("str")
+    setFieldError(null)
+  }
+
+  function startEditField(field: FieldDef) {
+    setEditingFieldId(field.id)
+    setNewType(field.tipo)
+    setNewName(field.nome)
+    setNewOptions((field.opcoes ?? []).join(", "))
+    setNewCurrency(field.moeda ?? DEFAULT_CURRENCY)
+    setFieldError(null)
+  }
 
   function addField() {
     const opcoes = newType === "select" ? parseOptions(newOptions) : []
@@ -149,14 +171,35 @@ export function CategoryEditor({
       ...(newType === "currency" ? { moeda: newCurrency } : {}),
     }
     setFields([...fields, field])
-    setNewName("")
-    setNewOptions("")
-    setNewCurrency(DEFAULT_CURRENCY)
-    setFieldError(null)
+    resetFieldForm()
+  }
+
+  function saveEditField() {
+    if (!editingFieldId) return
+    const current = fields.find((field) => field.id === editingFieldId)
+    if (!current) return
+
+    const opcoes = current.tipo === "select" ? parseOptions(newOptions) : []
+    const error = validateField(fields, newName, current.tipo, opcoes, editingFieldId)
+    if (error) {
+      setFieldError(error)
+      return
+    }
+
+    const updated: FieldDef = {
+      id: current.id,
+      nome: newName.trim(),
+      tipo: current.tipo,
+      ...(current.tipo === "select" ? { opcoes } : {}),
+      ...(current.tipo === "currency" ? { moeda: newCurrency } : {}),
+    }
+    setFields(fields.map((field) => (field.id === editingFieldId ? updated : field)))
+    resetFieldForm()
   }
 
   function switchTab(next: "visual" | "json") {
     if (next === tab) return
+    resetFieldForm()
     if (next === "json") {
       setJsonText(serializeEstrutura(fields))
       setJsonError(null)
@@ -210,7 +253,8 @@ export function CategoryEditor({
     }
 
     const diff = diffEstrutura(initial.estrutura, estrutura)
-    if (diff.added.length === 0 && diff.removed.length === 0) {
+    const optionsDiff = diffFieldOptions(initial.estrutura, estrutura)
+    if (diff.added.length === 0 && diff.removed.length === 0 && optionsDiff.length === 0) {
       // Só renomeou ou reordenou: com id estável, nada a avisar.
       await persist(estrutura, [])
       return
@@ -220,6 +264,7 @@ export function CategoryEditor({
     const result = await structureImpactAction({
       categoryId: initial.id!,
       fieldIds: diff.removed.map((field) => field.id),
+      fieldOptions: optionsDiff.map((entry) => ({ fieldId: entry.fieldId, options: entry.removed })),
     })
     setPending(false)
 
@@ -230,6 +275,7 @@ export function CategoryEditor({
 
     const total = result.data?.total ?? 0
     const filled = result.data?.filled ?? {}
+    const optionUsage = result.data?.optionUsage ?? {}
 
     if (total === 0) {
       await persist(estrutura, diff.removed.map((field) => field.id))
@@ -249,6 +295,17 @@ export function CategoryEditor({
               : `"${field.nome}": ${plural(count, "item vai perder", "itens vão perder")} permanentemente esse valor.`,
         }
       }),
+      ...optionsDiff.flatMap((entry) =>
+        entry.removed.map((option) => {
+          const count = optionUsage[entry.fieldId]?.[option] ?? 0
+          return {
+            text:
+              count === 0
+                ? `"${entry.nome}": a opção "${option}" sai da lista e nenhum item usava ela.`
+                : `"${entry.nome}": a opção "${option}" sai da lista, mas ${plural(count, "item mantém", "itens mantêm")} esse valor gravado.`,
+          }
+        })
+      ),
     ]
 
     setPendingEstrutura({ estrutura, removedFieldIds: diff.removed.map((field) => field.id) })
@@ -400,9 +457,14 @@ export function CategoryEditor({
                           <FieldRow
                             key={field.id}
                             field={field}
-                            onRemove={() =>
-                              setFields(fields.filter((item) => item.id !== field.id))
+                            editing={editingFieldId === field.id}
+                            onEdit={() =>
+                              editingFieldId === field.id ? resetFieldForm() : startEditField(field)
                             }
+                            onRemove={() => {
+                              setFields(fields.filter((item) => item.id !== field.id))
+                              if (editingFieldId === field.id) resetFieldForm()
+                            }}
                           />
                         ))}
                       </ul>
@@ -414,14 +476,20 @@ export function CategoryEditor({
                   </p>
                 )}
 
-                <div className="space-y-2 rounded-lg border border-line bg-bg-soft p-3">
-                  <p className="plaque">Adicionar campo</p>
+                <div
+                  className={cn(
+                    "space-y-2 rounded-lg border p-3",
+                    editingFieldId ? "border-brand-dim bg-brand-wash" : "border-line bg-bg-soft"
+                  )}
+                >
+                  <p className="plaque">{editingFieldId ? "Editar campo" : "Adicionar campo"}</p>
                   <div className="grid gap-2 sm:grid-cols-[10rem_1fr_auto]">
                     <select
                       value={newType}
                       onChange={(event) => setNewType(event.target.value as FieldType)}
+                      disabled={editingFieldId !== null}
                       aria-label="Tipo do campo"
-                      className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+                      className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim disabled:opacity-60"
                     >
                       {FIELD_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -435,21 +503,37 @@ export function CategoryEditor({
                       onKeyDown={(event) => {
                         if (event.key === "Enter") {
                           event.preventDefault()
-                          addField()
+                          if (editingFieldId) saveEditField()
+                          else addField()
                         }
                       }}
                       placeholder="Nome do campo"
+                      autoFocus={editingFieldId !== null}
                     />
-                    <Button type="button" variant="secondary" onClick={addField}>
-                      Adicionar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={editingFieldId ? saveEditField : addField}
+                        className="flex-1"
+                      >
+                        {editingFieldId ? "Salvar" : "Adicionar"}
+                      </Button>
+                      {editingFieldId ? (
+                        <Button type="button" variant="ghost" size="icon" onClick={resetFieldForm}>
+                          <X className="size-4" />
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
 
                   {newType === "select" ? (
-                    <Input
+                    <Textarea
                       value={newOptions}
                       onChange={(event) => setNewOptions(event.target.value)}
-                      placeholder="Opções separadas por vírgula: Salão, Delivery"
+                      placeholder={"Uma opção por linha, ou separadas por vírgula:\nSalão, Delivery"}
+                      rows={3}
+                      className="text-sm"
                     />
                   ) : null}
 

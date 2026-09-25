@@ -228,11 +228,15 @@ export function validateField(
   return null
 }
 
-/** "Salão, Delivery" → ["Salão", "Delivery"] */
+/**
+ * "Salão, Delivery" → ["Salão", "Delivery"] — vírgula ou quebra de linha,
+ * pode misturar as duas. Lista grande fica mais fácil de digitar uma por
+ * linha do que numa vírgula só.
+ */
 export function parseOptions(raw: string): string[] {
   const seen = new Set<string>()
   const out: string[] = []
-  for (const part of raw.split(",")) {
+  for (const part of raw.split(/[,\n]/)) {
     const value = part.trim()
     if (!value || seen.has(normalizeName(value))) continue
     seen.add(normalizeName(value))
@@ -378,4 +382,33 @@ export function diffEstrutura(before: Estrutura, after: Estrutura): EstruturaDif
   }
 
   return { added, removed, renamed }
+}
+
+export interface OptionsDiffEntry {
+  fieldId: string
+  nome: string
+  removed: string[]
+}
+
+/**
+ * Para campos `select` que continuam existindo (mesmo id, ainda `select`),
+ * quais opções saíram da lista — é o que pode deixar item com um valor que
+ * não é mais escolhível. Campo removido por inteiro não entra aqui: isso já
+ * é coberto por `diffEstrutura`.
+ */
+export function diffFieldOptions(before: Estrutura, after: Estrutura): OptionsDiffEntry[] {
+  const afterById = new Map(after.map((field) => [field.id, field]))
+  const out: OptionsDiffEntry[] = []
+
+  for (const field of before) {
+    if (field.tipo !== "select") continue
+    const next = afterById.get(field.id)
+    if (!next || next.tipo !== "select") continue
+
+    const nextOptions = next.opcoes ?? []
+    const removed = (field.opcoes ?? []).filter((option) => !nextOptions.includes(option))
+    if (removed.length > 0) out.push({ fieldId: field.id, nome: next.nome, removed })
+  }
+
+  return out
 }

@@ -13,6 +13,7 @@ import {
   coerceCustomFields,
   coerceFieldValue,
   diffEstrutura,
+  diffFieldOptions,
   newFieldId,
   normalizeCurrency,
   parseEstrutura,
@@ -193,6 +194,29 @@ describe("fields", () => {
       "Delivery",
       "Balcão",
     ])
+  })
+
+  it("lê opções uma por linha também, e pode misturar com vírgula", () => {
+    expect(parseOptions("Salão\nDelivery\n\nBalcão")).toEqual(["Salão", "Delivery", "Balcão"])
+    expect(parseOptions("Salão, Delivery\nBalcão")).toEqual(["Salão", "Delivery", "Balcão"])
+  })
+
+  it("aponta opção removida de um select que continua existindo", () => {
+    const antes: Estrutura = [
+      { id: "f_modo", nome: "Modo", tipo: "select", opcoes: ["Salão", "Delivery", "Balcão"] },
+      { id: "f_nota", nome: "Nota", tipo: "star" },
+    ]
+    const depois: Estrutura = [
+      { id: "f_modo", nome: "Modo", tipo: "select", opcoes: ["Salão"] },
+      { id: "f_nota", nome: "Nota", tipo: "star" },
+    ]
+    expect(diffFieldOptions(antes, depois)).toEqual([
+      { fieldId: "f_modo", nome: "Modo", removed: ["Delivery", "Balcão"] },
+    ])
+    // campo removido por inteiro não conta aqui — isso é diffEstrutura
+    expect(diffFieldOptions(antes, [antes[1]!])).toEqual([])
+    // nada mudou nas opções
+    expect(diffFieldOptions(antes, antes)).toEqual([])
   })
 
   it("descarta campo torto ao ler a estrutura do banco", () => {
@@ -535,6 +559,22 @@ describe("filtro geral", () => {
       ["Restaurantes", 2],
       ["Bares", 1],
     ])
+  })
+
+  it("filtra por categoria — vazio é 'todas', marcada é só ela", () => {
+    const views = [
+      toView(entry({ id: "a", name: "Restaurante A", category_id: "c1" }), [], tagsById, "Restaurantes"),
+      toView(entry({ id: "b", name: "Bar B", category_id: "c2" }), [], tagsById, "Bares"),
+    ]
+
+    expect(applyGlobalFilter(views, EMPTY_GLOBAL_FILTER, []).map((v) => v.id)).toEqual(["a", "b"])
+
+    const soRestaurantes = applyGlobalFilter(
+      views,
+      { ...EMPTY_GLOBAL_FILTER, categoryIds: ["c1"] },
+      []
+    )
+    expect(soRestaurantes.map((v) => v.id)).toEqual(["a"])
   })
 })
 

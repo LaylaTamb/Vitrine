@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/layout/empty-state"
 import { PageHeader } from "@/components/layout/page-header"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { isNumericField } from "@/lib/domain/fields"
@@ -163,6 +164,34 @@ export function GlobalFilterView({
                 aria-label="Nota máxima"
               />
             </div>
+
+            {categories.length > 1 ? (
+              <div className="space-y-1.5 pt-1">
+                <span className="plaque block">Categorias</span>
+                <div className="space-y-1">
+                  {categories.map((category) => (
+                    <label
+                      key={category.id}
+                      className="flex cursor-pointer items-center gap-2 text-sm"
+                    >
+                      <Checkbox
+                        checked={filter.categoryIds.includes(category.id)}
+                        onCheckedChange={() =>
+                          setFilter((current) => ({
+                            ...current,
+                            categoryIds: current.categoryIds.includes(category.id)
+                              ? current.categoryIds.filter((id) => id !== category.id)
+                              : [...current.categoryIds, category.id],
+                          }))
+                        }
+                      />
+                      {category.icon ? <span aria-hidden>{category.icon}</span> : null}
+                      <span className="truncate">{category.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {tags.length > 0 ? (
               <div className="flex flex-wrap gap-1.5 pt-1">

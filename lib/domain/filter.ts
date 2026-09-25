@@ -231,6 +231,8 @@ export interface GlobalFilter {
   minRating: string
   maxRating: string
   tagIds: string[]
+  /** Vazio = todas. Categoria marcada entra, as outras ficam de fora. */
+  categoryIds: string[]
   /** chave do campo unificado → filtro */
   fields: Record<string, FieldFilter>
 }
@@ -240,6 +242,7 @@ export const EMPTY_GLOBAL_FILTER: GlobalFilter = {
   minRating: "",
   maxRating: "",
   tagIds: [],
+  categoryIds: [],
   fields: {},
 }
 
@@ -256,6 +259,7 @@ export function isGlobalFilterActive(filter: GlobalFilter): boolean {
     filter.minRating.trim() !== "" ||
     filter.maxRating.trim() !== "" ||
     filter.tagIds.length > 0 ||
+    filter.categoryIds.length > 0 ||
     Object.values(filter.fields).some(isFieldFilterActive)
   )
 }
@@ -330,6 +334,10 @@ export function applyGlobalFilter(
 
     if (filter.tagIds.length > 0) {
       if (!view.tags.some((tag) => filter.tagIds.includes(tag.id))) return false
+    }
+
+    if (filter.categoryIds.length > 0 && !filter.categoryIds.includes(view.categoryId)) {
+      return false
     }
 
     for (const field of activeFields) {

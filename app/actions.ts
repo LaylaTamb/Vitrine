@@ -437,34 +437,62 @@ export interface StructureImpact {
   total: number
   /** id do campo → quantos itens têm valor gravado nele */
   filled: Record<string, number>
+  /** id do campo → opção removida → quantos itens têm exatamente esse valor hoje */
+  optionUsage: Record<string, Record<string, number>>
 }
 
+const fieldOptionsCheckSchema = z.array(
+  z.object({ fieldId, options: z.array(z.string()) })
+)
+
 /**
- * Quantos itens existem na categoria e quantos têm valor em cada campo que
- * está sendo removido — é o que o diálogo de confirmação mostra.
+ * Quantos itens existem na categoria, quantos têm valor em cada campo que
+ * está sendo removido, e quantos usam cada opção que está saindo de um
+ * `select` que continua existindo — é o que o diálogo de confirmação mostra.
  */
 export async function structureImpactAction(input: {
   categoryId: string
   fieldIds: string[]
+  /** Campos `select` que continuam existindo, com as opções que saíram da lista. */
+  fieldOptions?: { fieldId: string; options: string[] }[]
 }): Promise<ActionResult<StructureImpact>> {
   const parsed = z
-    .object({ categoryId: uuid, fieldIds: z.array(fieldId) })
+    .object({
+      categoryId: uuid,
+      fieldIds: z.array(fieldId),
+      fieldOptions: fieldOptionsCheckSchema.optional(),
+    })
     .safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
 
-  const [totalResult, ...fieldResults] = await Promise.all([
+  const optionChecks = (parsed.data.fieldOptions ?? []).flatMap((entry) =>
+    entry.options.map((option) => ({ fieldId: entry.fieldId, option }))
+  )
+
+  const [totalResult, fieldResults, optionResults] = await Promise.all([
     supabase
       .from("entries")
       .select("id", { count: "exact", head: true })
       .eq("category_id", parsed.data.categoryId),
-    ...parsed.data.fieldIds.map((id) =>
-      supabase
-        .from("entries")
-        .select("id", { count: "exact", head: true })
-        .eq("category_id", parsed.data.categoryId)
-        .not(`custom_fields->>${id}`, "is", null)
+    Promise.all(
+      parsed.data.fieldIds.map((id) =>
+        supabase
+          .from("entries")
+          .select("id", { count: "exact", head: true })
+          .eq("category_id", parsed.data.categoryId)
+          .not(`custom_fields->>${id}`, "is", null)
+      )
+    ),
+    Promise.all(
+      optionChecks.map(({ fieldId: id, option }) =>
+        supabase
+          .from("entries")
+          .select("id", { count: "exact", head: true })
+          .eq("category_id", parsed.data.categoryId)
+          .eq(`custom_fields->>${id}`, option)
+      )
     ),
   ])
 
@@ -475,5 +503,11 @@ export async function structureImpactAction(input: {
     filled[id] = fieldResults[index]?.count ?? 0
   })
 
-  return ok({ total: totalResult.count ?? 0, filled })
+  const optionUsage: Record<string, Record<string, number>> = {}
+  optionChecks.forEach(({ fieldId: id, option }, index) => {
+    optionUsage[id] ??= {}
+    optionUsage[id][option] = optionResults[index]?.count ?? 0
+  })
+
+  return ok({ total: totalResult.count ?? 0, filled, optionUsage })
 }
