@@ -1,15 +1,17 @@
 "use client"
 
-import { ArrowRightLeft, Tag as TagIcon, TagIcon as TagOff, Trash2, X } from "lucide-react"
-import { useEffect, useState } from "react"
+import {
+  ArrowRightLeft,
+  FolderInput,
+  Tag as TagIcon,
+  TagIcon as TagOff,
+  Trash2,
+  X,
+} from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import {
-  bulkDeleteEntriesAction,
-  bulkMoveEntriesAction,
-  bulkTagAction,
-  movePreviewAction,
-} from "@/app/categoria/[categoryId]/actions"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -22,8 +24,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { moveTargets } from "@/lib/domain/collections"
 import { itemCount, plural } from "@/lib/domain/format"
-import type { Category, Tag } from "@/lib/domain/types"
+import type { Category, EntryFolder, Tag } from "@/lib/domain/types"
+
+const ROOT = "__raiz__"
 
 /**
  * A barra flutuante do modo seleção. Toda ação é otimista do ponto de vista da
@@ -35,14 +40,23 @@ export function BulkBar({
   onClear,
   siblings,
   tags,
+  folders,
+  currentFolderId,
 }: {
   categoryId: string
   selectedIds: string[]
   onClear: () => void
   siblings: Pick<Category, "id" | "name" | "icon">[]
   tags: Tag[]
+  /** Subpastas da categoria — destino do "Mover para pasta". */
+  folders: EntryFolder[]
+  /** Pasta aberta: não aparece como destino (os itens já estão nela). */
+  currentFolderId: string | null
 }) {
+  const { actions } = useVitrine()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [folderOpen, setFolderOpen] = useState(false)
+  const [folderTarget, setFolderTarget] = useState<string>("")
   const [moveOpen, setMoveOpen] = useState(false)
   const [tagMode, setTagMode] = useState<"add" | "remove" | null>(null)
   const [pending, setPending] = useState(false)
@@ -51,6 +65,13 @@ export function BulkBar({
   const [preview, setPreview] = useState<{ dropped: number; kept: number } | null>(null)
 
   const others = siblings.filter((category) => category.id !== categoryId)
+  const folderTargets = useMemo(
+    () =>
+      moveTargets(folders, null, "Raiz da categoria").filter(
+        (target) => target.id !== currentFolderId
+      ),
+    [folders, currentFolderId]
+  )
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -68,7 +89,7 @@ export function BulkBar({
     }
     let cancelled = false
     void (async () => {
-      const result = await movePreviewAction({
+      const result = await actions.movePreview({
         ids: selectedIds,
         categoryId,
         toCategoryId: moveTarget,
@@ -78,7 +99,7 @@ export function BulkBar({
     return () => {
       cancelled = true
     }
-  }, [moveOpen, moveTarget, selectedIds, categoryId])
+  }, [moveOpen, moveTarget, selectedIds, categoryId, actions])
 
   async function run(work: () => Promise<{ ok: boolean; error?: string }>, success: string) {
     setPending(true)
@@ -106,6 +127,11 @@ export function BulkBar({
 
           <span className="mx-1 h-5 w-px bg-line" />
 
+          {folderTargets.length > 0 ? (
+            <Button variant="ghost" size="sm" onClick={() => setFolderOpen(true)} disabled={pending}>
+              <FolderInput className="size-3.5" /> Pasta
+            </Button>
+          ) : null}
           <Button variant="ghost" size="sm" onClick={() => setMoveOpen(true)} disabled={pending}>
             <ArrowRightLeft className="size-3.5" /> Mover
           </Button>
@@ -140,11 +166,69 @@ export function BulkBar({
         description={`${itemCount(selectedIds.length)} ${selectedIds.length === 1 ? "vai ser apagado" : "vão ser apagados"}. Não dá para desfazer.`}
         onConfirm={async () => {
           await run(
-            () => bulkDeleteEntriesAction({ ids: selectedIds, categoryId }),
+            () => actions.bulkDeleteEntries({ ids: selectedIds, categoryId }),
             "Itens excluídos."
           )
         }}
       />
+
+      {/* mover para uma subpasta desta categoria */}
+      <Dialog open={folderOpen} onOpenChange={pending ? undefined : setFolderOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="display text-xl">Mover para pasta</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {itemCount(selectedIds.length)} para outra pasta desta categoria. Nenhum valor se
+              perde.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-1.5 py-2">
+            <Label htmlFor="bulk-folder" className="plaque">
+              Pasta de destino
+            </Label>
+            <select
+              id="bulk-folder"
+              value={folderTarget}
+              onChange={(event) => setFolderTarget(event.target.value)}
+              className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+            >
+              <option value="">Escolha…</option>
+              {folderTargets.map((target) => (
+                <option key={target.id ?? ROOT} value={target.id ?? ROOT}>
+                  {target.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setFolderOpen(false)} disabled={pending}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={pending || !folderTarget}
+              onClick={async () => {
+                const done = await run(
+                  () =>
+                    actions.moveEntriesToFolder({
+                      ids: selectedIds,
+                      categoryId,
+                      folderId: folderTarget === ROOT ? null : folderTarget,
+                    }),
+                  "Itens movidos."
+                )
+                if (done) {
+                  setFolderOpen(false)
+                  setFolderTarget("")
+                }
+              }}
+            >
+              {pending ? "Movendo…" : "Mover"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* mover para outra categoria */}
       <Dialog open={moveOpen} onOpenChange={pending ? undefined : setMoveOpen}>
@@ -152,7 +236,7 @@ export function BulkBar({
           <DialogHeader>
             <DialogTitle className="display text-xl">Mover itens</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              {itemCount(selectedIds.length)} para outra categoria sua.
+              {itemCount(selectedIds.length)} para outra categoria sua. Eles chegam na raiz dela.
             </DialogDescription>
           </DialogHeader>
 
@@ -199,7 +283,7 @@ export function BulkBar({
               onClick={async () => {
                 const done = await run(
                   () =>
-                    bulkMoveEntriesAction({
+                    actions.bulkMoveEntries({
                       ids: selectedIds,
                       categoryId,
                       toCategoryId: moveTarget,
@@ -247,7 +331,7 @@ export function BulkBar({
                     if (!tagMode) return
                     const done = await run(
                       () =>
-                        bulkTagAction({
+                        actions.bulkTag({
                           ids: selectedIds,
                           categoryId,
                           tagId: tag.id,

@@ -14,7 +14,7 @@ import { plural } from "@/lib/domain/format"
  * usam. Importar cola (ou sobe) um `.json` no mesmo formato e sempre cria
  * estrutura nova — nunca mistura com o que já existe.
  */
-export function BackupForm({ hideImport = false }: { hideImport?: boolean }) {
+export function BackupForm() {
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [json, setJson] = useState("")
@@ -85,8 +85,7 @@ export function BackupForm({ hideImport = false }: { hideImport?: boolean }) {
         </Button>
       </div>
 
-      {hideImport ? null : (
-        <div className="space-y-1.5">
+      <div className="space-y-1.5">
           <span className="plaque block">Importar</span>
           <p className="text-xs leading-relaxed text-faint">
             Cole o JSON abaixo, ou suba o arquivo. Sempre cria categorias novas — nunca mistura com
@@ -121,7 +120,6 @@ export function BackupForm({ hideImport = false }: { hideImport?: boolean }) {
             </Button>
           </div>
         </div>
-      )}
     </div>
   )
 }

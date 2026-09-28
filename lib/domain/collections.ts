@@ -5,6 +5,18 @@
 
 import type { Category, Folder } from "./types"
 
+/**
+ * O mínimo que uma pasta precisa ter para virar árvore. Vale tanto para as
+ * pastas das Coleções (`Folder`) quanto para as subpastas de dentro de uma
+ * categoria (`EntryFolder`) — as funções de árvore abaixo servem às duas.
+ */
+export interface TreeFolder {
+  id: string
+  name: string
+  parent_folder_id: string | null
+  display_order: number
+}
+
 export interface FolderTotals {
   /** Categorias diretamente na pasta e em todas as subpastas. */
   categories: number
@@ -15,7 +27,7 @@ export interface FolderTotals {
 }
 
 /** Filhas diretas de uma pasta (`null` = raiz das Coleções). */
-export function foldersOf(folders: Folder[], parentId: string | null): Folder[] {
+export function foldersOf<T extends TreeFolder>(folders: T[], parentId: string | null): T[] {
   return folders
     .filter((folder) => (folder.parent_folder_id ?? null) === parentId)
     .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name, "pt-BR"))
@@ -29,8 +41,8 @@ export function categoriesOf(categories: Category[], folderId: string | null): C
 }
 
 /** Todas as pastas abaixo de uma pasta, em qualquer profundidade. */
-export function descendantFolderIds(folders: Folder[], folderId: string): Set<string> {
-  const byParent = new Map<string | null, Folder[]>()
+export function descendantFolderIds(folders: TreeFolder[], folderId: string): Set<string> {
+  const byParent = new Map<string | null, TreeFolder[]>()
   for (const folder of folders) {
     const key = folder.parent_folder_id ?? null
     const list = byParent.get(key) ?? []
@@ -100,16 +112,16 @@ export function folderTotals(
 }
 
 /** A trilha até a pasta atual: `Coleções / Pai / Filho`. */
-export function breadcrumbOf(folders: Folder[], folderId: string | null): Folder[] {
+export function breadcrumbOf<T extends TreeFolder>(folders: T[], folderId: string | null): T[] {
   if (!folderId) return []
   const byId = new Map(folders.map((folder) => [folder.id, folder]))
-  const trail: Folder[] = []
+  const trail: T[] = []
   const guard = new Set<string>()
   let cursor: string | null = folderId
 
   while (cursor && !guard.has(cursor)) {
     guard.add(cursor)
-    const folder: Folder | undefined = byId.get(cursor)
+    const folder: T | undefined = byId.get(cursor)
     if (!folder) break
     trail.unshift(folder)
     cursor = folder.parent_folder_id ?? null
@@ -119,7 +131,7 @@ export function breadcrumbOf(folders: Folder[], folderId: string | null): Folder
 }
 
 /** Caminho completo de cada pasta, para o `<select>` do diálogo de mover. */
-export function folderPathLabel(folders: Folder[], folderId: string): string {
+export function folderPathLabel(folders: TreeFolder[], folderId: string): string {
   return breadcrumbOf(folders, folderId)
     .map((folder) => folder.name)
     .join("/")
@@ -134,14 +146,18 @@ export interface MoveTarget {
  * Destinos possíveis de um "mover". Uma pasta não pode ir para dentro de si
  * mesma nem de uma descendente — essas opções somem da lista.
  */
-export function moveTargets(folders: Folder[], movingFolderId?: string | null): MoveTarget[] {
+export function moveTargets(
+  folders: TreeFolder[],
+  movingFolderId?: string | null,
+  rootLabel = "Raiz das Coleções"
+): MoveTarget[] {
   const blocked = new Set<string>()
   if (movingFolderId) {
     blocked.add(movingFolderId)
     for (const id of descendantFolderIds(folders, movingFolderId)) blocked.add(id)
   }
 
-  const targets: MoveTarget[] = [{ id: null, label: "Raiz das Coleções" }]
+  const targets: MoveTarget[] = [{ id: null, label: rootLabel }]
   const sorted = [...folders].sort((a, b) =>
     folderPathLabel(folders, a.id).localeCompare(folderPathLabel(folders, b.id), "pt-BR")
   )

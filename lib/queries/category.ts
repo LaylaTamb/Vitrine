@@ -1,7 +1,8 @@
 import { cache } from "react"
 
 import { parseEstrutura } from "@/lib/domain/fields"
-import type { Category, EntryWithTags, Profile, Tag } from "@/lib/domain/types"
+import type { TreeFolder } from "@/lib/domain/collections"
+import type { Category, EntryFolder, EntryWithTags, Profile, Tag } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 
 export interface CategoryPageData {
@@ -11,13 +12,18 @@ export interface CategoryPageData {
   siblings: Pick<Category, "id" | "name" | "icon" | "display_order">[]
   entries: EntryWithTags[]
   tags: Tag[]
+  /** As subpastas desta categoria. */
+  entryFolders: EntryFolder[]
+  /** As pastas das Coleções do dono — a trilha "Coleções › Bebidas › Suco". */
+  collectionFolders: TreeFolder[]
 }
 
 /**
  * Tudo da página de categoria em UMA consulta, usando o embedding do PostgREST:
- * a categoria traz o dono, e o dono traz as categorias irmãs; a categoria traz
- * os itens, e cada item traz os vínculos de tag. As tags do grupo vão em
- * paralelo, porque não dependem de nada disso.
+ * a categoria traz o dono, e o dono traz as categorias irmãs e as pastas das
+ * Coleções; a categoria traz as subpastas e os itens, e cada item traz os
+ * vínculos de tag. As tags do grupo vão em paralelo, porque não dependem de
+ * nada disso.
  */
 export const getCategoryPage = cache(async (categoryId: string): Promise<CategoryPageData> => {
   const supabase = await createClient()
@@ -28,7 +34,9 @@ export const getCategoryPage = cache(async (categoryId: string): Promise<Categor
       .select(
         `*,
          owner:profiles(id, username, display_name, avatar_url, created_at,
-                        categories(id, name, icon, display_order)),
+                        categories(id, name, icon, display_order),
+                        folders(id, name, parent_folder_id, display_order)),
+         entry_folders(*),
          entries(*, entry_tags(tag_id))`
       )
       .eq("id", categoryId)
@@ -44,16 +52,25 @@ export const getCategoryPage = cache(async (categoryId: string): Promise<Categor
   const row = categoryResult.data as
     | (Omit<Category, "estrutura"> & {
         estrutura: unknown
-        owner: (Profile & { categories: Category[] }) | null
+        owner: (Profile & { categories: Category[]; folders: TreeFolder[] }) | null
+        entry_folders: EntryFolder[]
         entries: EntryWithTags[]
       })
     | null
 
   if (!row) {
-    return { category: null, owner: null, siblings: [], entries: [], tags }
+    return {
+      category: null,
+      owner: null,
+      siblings: [],
+      entries: [],
+      tags,
+      entryFolders: [],
+      collectionFolders: [],
+    }
   }
 
-  const { owner, entries, ...category } = row
+  const { owner, entries, entry_folders: entryFolders, ...category } = row
   const siblings = (owner?.categories ?? [])
     .slice()
     .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name, "pt-BR"))
@@ -74,5 +91,7 @@ export const getCategoryPage = cache(async (categoryId: string): Promise<Categor
     siblings,
     entries: entries ?? [],
     tags,
+    entryFolders: entryFolders ?? [],
+    collectionFolders: owner?.folders ?? [],
   }
 })

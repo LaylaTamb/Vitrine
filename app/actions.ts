@@ -2,32 +2,23 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { z } from "zod"
 
+import type { StructureImpact } from "@/lib/actions/contracts"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
-import { FIELD_TYPES } from "@/lib/domain/types"
+import {
+  createCategorySchema,
+  createFolderSchema,
+  idSchema,
+  moveFolderSchema,
+  renameFolderSchema,
+  reorderSchema,
+  structureImpactSchema,
+  updateCategorySchema,
+} from "@/lib/actions/schemas"
 import { parseEstrutura } from "@/lib/domain/fields"
 import { normalizeCategoryColor } from "@/lib/domain/tags"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
-
-const uuid = z.uuid("Identificador inválido.")
-// O app sempre gera `f_` + 6 alfanuméricos (`newFieldId()`), mas categoria
-// importada (`lib/backup/import.ts`) pode trazer id legível tipo "visitas" —
-// de propósito, pra dar pra escrever o JSON à mão. A validação aqui não pode
-// ser mais estrita que `parseEstrutura`, que já aceita qualquer string não
-// vazia, senão editar a estrutura de uma categoria importada nunca salva.
-const fieldId = z.string().trim().min(1, "Identificador de campo inválido.").max(80)
-
-const estruturaSchema = z.array(
-  z.object({
-    id: fieldId,
-    nome: z.string().trim().min(1, "Dê um nome ao campo."),
-    tipo: z.enum(FIELD_TYPES),
-    opcoes: z.array(z.string()).optional(),
-    moeda: z.string().optional(),
-  })
-)
 
 // ---------------------------------------------------------------------------
 // Sessão
@@ -43,11 +34,6 @@ export async function signOutAction() {
 // ---------------------------------------------------------------------------
 // Pastas
 // ---------------------------------------------------------------------------
-
-const createFolderSchema = z.object({
-  name: z.string().trim().min(1, "Dê um nome à pasta.").max(80, "Nome muito longo."),
-  parentFolderId: uuid.nullable(),
-})
 
 async function nextOrder(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -108,9 +94,7 @@ export async function renameFolderAction(input: {
   id: string
   name: string
 }): Promise<ActionResult> {
-  const parsed = z
-    .object({ id: uuid, name: z.string().trim().min(1, "Dê um nome à pasta.").max(80) })
-    .safeParse(input)
+  const parsed = renameFolderSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -128,7 +112,7 @@ export async function moveFolderAction(input: {
   id: string
   targetFolderId: string | null
 }): Promise<ActionResult> {
-  const parsed = z.object({ id: uuid, targetFolderId: uuid.nullable() }).safeParse(input)
+  const parsed = moveFolderSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
   if (parsed.data.targetFolderId === parsed.data.id) {
     return { ok: false, error: "Uma pasta não pode ir para dentro dela mesma." }
@@ -173,7 +157,7 @@ export async function moveFolderAction(input: {
 }
 
 export async function deleteFolderAction(input: { id: string }): Promise<ActionResult> {
-  const parsed = z.object({ id: uuid }).safeParse(input)
+  const parsed = idSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -189,13 +173,6 @@ export async function deleteFolderAction(input: { id: string }): Promise<ActionR
 // Categorias
 // ---------------------------------------------------------------------------
 
-const categorySchema = z.object({
-  name: z.string().trim().min(1, "Dê um nome à categoria.").max(80, "Nome muito longo."),
-  icon: z.string().trim().max(4, "O ícone é um emoji só.").nullable(),
-  color: z.string().nullable(),
-  estrutura: estruturaSchema,
-})
-
 export async function createCategoryAction(input: {
   name: string
   icon: string | null
@@ -203,9 +180,10 @@ export async function createCategoryAction(input: {
   folderId: string | null
   estrutura: unknown
 }): Promise<ActionResult<{ id: string }>> {
-  const parsed = categorySchema
-    .extend({ folderId: uuid.nullable() })
-    .safeParse({ ...input, estrutura: parseEstrutura(input.estrutura) })
+  const parsed = createCategorySchema.safeParse({
+    ...input,
+    estrutura: parseEstrutura(input.estrutura),
+  })
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const user = await requireUser()
@@ -247,9 +225,10 @@ export async function updateCategoryAction(input: {
   /** Ids de campo removidos cujos valores devem sair dos itens. */
   removedFieldIds?: string[]
 }): Promise<ActionResult> {
-  const parsed = categorySchema
-    .extend({ id: uuid, removedFieldIds: z.array(fieldId).optional() })
-    .safeParse({ ...input, estrutura: parseEstrutura(input.estrutura) })
+  const parsed = updateCategorySchema.safeParse({
+    ...input,
+    estrutura: parseEstrutura(input.estrutura),
+  })
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -310,7 +289,7 @@ export async function moveCategoryAction(input: {
   id: string
   targetFolderId: string | null
 }): Promise<ActionResult> {
-  const parsed = z.object({ id: uuid, targetFolderId: uuid.nullable() }).safeParse(input)
+  const parsed = moveFolderSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -325,7 +304,7 @@ export async function moveCategoryAction(input: {
 }
 
 export async function deleteCategoryAction(input: { id: string }): Promise<ActionResult> {
-  const parsed = z.object({ id: uuid }).safeParse(input)
+  const parsed = idSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -339,10 +318,6 @@ export async function deleteCategoryAction(input: { id: string }): Promise<Actio
 // ---------------------------------------------------------------------------
 // Reordenar um nível inteiro
 // ---------------------------------------------------------------------------
-
-const reorderSchema = z.object({
-  items: z.array(z.object({ kind: z.enum(["folder", "category"]), id: uuid })),
-})
 
 /**
  * Grava a ordem do nível inteiro em um upsert por tabela — não um UPDATE por
@@ -433,18 +408,6 @@ export async function reorderLevelAction(input: {
 // Impacto de uma edição de estrutura
 // ---------------------------------------------------------------------------
 
-export interface StructureImpact {
-  total: number
-  /** id do campo → quantos itens têm valor gravado nele */
-  filled: Record<string, number>
-  /** id do campo → opção removida → quantos itens têm exatamente esse valor hoje */
-  optionUsage: Record<string, Record<string, number>>
-}
-
-const fieldOptionsCheckSchema = z.array(
-  z.object({ fieldId, options: z.array(z.string()) })
-)
-
 /**
  * Quantos itens existem na categoria, quantos têm valor em cada campo que
  * está sendo removido, e quantos usam cada opção que está saindo de um
@@ -456,13 +419,7 @@ export async function structureImpactAction(input: {
   /** Campos `select` que continuam existindo, com as opções que saíram da lista. */
   fieldOptions?: { fieldId: string; options: string[] }[]
 }): Promise<ActionResult<StructureImpact>> {
-  const parsed = z
-    .object({
-      categoryId: uuid,
-      fieldIds: z.array(fieldId),
-      fieldOptions: fieldOptionsCheckSchema.optional(),
-    })
-    .safeParse(input)
+  const parsed = structureImpactSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()

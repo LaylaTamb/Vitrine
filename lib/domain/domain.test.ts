@@ -23,19 +23,29 @@ import {
   validateField,
 } from "./fields"
 import {
+  entryFolderTotals,
+  folderSubtree,
+  itemsAt,
+  resolveFolderId,
+} from "./entry-folders"
+import {
   applyCategoryFilter,
   applyGlobalFilter,
+  categoriesInScope,
   EMPTY_CATEGORY_FILTER,
   EMPTY_GLOBAL_FILTER,
+  globalSortOptions,
   groupByCategory,
   isCategoryFilterActive,
+  sortDirLabel,
+  sortGlobalViews,
   tagsPresentIn,
   unifyFields,
 } from "./filter"
 import { formatDateBR, formatDecimal, formatMinutes, formatRating, plural } from "./format"
 import { migrateCustomFields } from "./migrate"
 import { computeStats } from "./stats"
-import type { Category, Entry, Estrutura, Folder, Tag } from "./types"
+import type { Category, Entry, EntryFolder, Estrutura, Folder, Tag } from "./types"
 import { formatFieldValue, imageTransformOf, toView } from "./view"
 
 // ---------------------------------------------------------------------------
@@ -62,6 +72,7 @@ function entry(partial: Partial<Entry> & { id: string; name: string }): Entry {
   return {
     category_id: "c1",
     owner_id: "u1",
+    folder_id: null,
     rating: null,
     image_url: null,
     image_display: {},
@@ -457,17 +468,36 @@ describe("filtro da categoria", () => {
     expect(result.map((v) => v.id)).toEqual(["a"])
   })
 
-  it("combina tags com OR", () => {
+  it("combina tags com E por padrão: o item precisa ter todas", () => {
+    const duas = applyCategoryFilter(views, { ...EMPTY_CATEGORY_FILTER, tagIds: ["t1", "t2"] })
+    expect(duas.map((v) => v.id)).toEqual([])
+
+    const comAmbas = [
+      ...views,
+      toView(
+        { ...entry({ id: "d", name: "Delta" }), entry_tags: [{ tag_id: "t1" }, { tag_id: "t2" }] },
+        ESTRUTURA,
+        tagsById,
+        "Restaurantes"
+      ),
+    ]
+    const result = applyCategoryFilter(comAmbas, { ...EMPTY_CATEGORY_FILTER, tagIds: ["t1", "t2"] })
+    expect(result.map((v) => v.id)).toEqual(["d"])
+  })
+
+  it("combina tags com OU quando o modo pede", () => {
     const result = applyCategoryFilter(views, {
       ...EMPTY_CATEGORY_FILTER,
       tagIds: ["t1", "t2"],
+      mode: "or",
     })
     expect(result.map((v) => v.id).sort()).toEqual(["a", "b"])
   })
 
-  it("sabe quando há filtro ativo — ordenação não conta", () => {
+  it("sabe quando há filtro ativo — ordenação e modo não contam", () => {
     expect(isCategoryFilterActive(EMPTY_CATEGORY_FILTER)).toBe(false)
     expect(isCategoryFilterActive({ ...EMPTY_CATEGORY_FILTER, sort: "name_asc" })).toBe(false)
+    expect(isCategoryFilterActive({ ...EMPTY_CATEGORY_FILTER, mode: "or" })).toBe(false)
     expect(isCategoryFilterActive({ ...EMPTY_CATEGORY_FILTER, query: "x" })).toBe(true)
   })
 
@@ -575,6 +605,177 @@ describe("filtro geral", () => {
       []
     )
     expect(soRestaurantes.map((v) => v.id)).toEqual(["a"])
+  })
+
+  it("com categorias marcadas, os campos vêm só delas", () => {
+    expect(categoriesInScope([restaurantes, bares], []).map((c) => c.id)).toEqual(["c1", "c2"])
+    const scoped = unifyFields(categoriesInScope([restaurantes, bares], ["c2"]))
+    expect(scoped.map((field) => field.label).sort()).toEqual(["Modo", "comida"])
+    expect(scoped.every((field) => field.categories.every((c) => c.categoryId === "c2"))).toBe(true)
+  })
+
+  it("ignora filtro de campo que não está no escopo", () => {
+    const views = [
+      toView(
+        entry({ id: "a", name: "Rest", category_id: "c1", custom_fields: { r_modo: "Delivery" } }),
+        restaurantes.estrutura,
+        tagsById,
+        "Restaurantes"
+      ),
+    ]
+    const modoRest = unifyFields([restaurantes]).find((field) => field.nome === "Modo")!
+    const filter = {
+      ...EMPTY_GLOBAL_FILTER,
+      fields: { [modoRest.key]: { min: "", max: "", value: "Salão" } },
+    }
+    // Com o campo no escopo, a regra vale (e o item não bate)...
+    expect(applyGlobalFilter(views, filter, [modoRest])).toEqual([])
+    // ...fora do escopo, é ignorada.
+    expect(applyGlobalFilter(views, filter, []).map((v) => v.id)).toEqual(["a"])
+  })
+
+  describe("modo E/OU entre tags e campos", () => {
+    const unified = unifyFields([restaurantes, bares])
+    const comida = unified.find((field) => field.nome.toLowerCase() === "comida")!
+    const views = [
+      // tag t1 e comida 5
+      toView(
+        {
+          ...entry({ id: "a", name: "A", category_id: "c1", custom_fields: { r_nota: 5 } }),
+          entry_tags: [{ tag_id: "t1" }],
+        },
+        restaurantes.estrutura,
+        tagsById,
+        "Restaurantes"
+      ),
+      // só a tag t1
+      toView(
+        { ...entry({ id: "b", name: "B", category_id: "c1" }), entry_tags: [{ tag_id: "t1" }] },
+        restaurantes.estrutura,
+        tagsById,
+        "Restaurantes"
+      ),
+      // só comida 5
+      toView(
+        entry({ id: "c", name: "C", category_id: "c2", custom_fields: { b_nota: 5 } }),
+        bares.estrutura,
+        tagsById,
+        "Bares"
+      ),
+      // nada
+      toView(entry({ id: "d", name: "D", category_id: "c2" }), bares.estrutura, tagsById, "Bares"),
+    ]
+    const regras = {
+      ...EMPTY_GLOBAL_FILTER,
+      tagIds: ["t1"],
+      fields: { [comida.key]: { min: "4", max: "", value: "" } },
+    }
+
+    it("E exige a tag e o campo", () => {
+      expect(applyGlobalFilter(views, regras, unified).map((v) => v.id)).toEqual(["a"])
+    })
+
+    it("OU aceita quem bate com qualquer um", () => {
+      const result = applyGlobalFilter(views, { ...regras, mode: "or" }, unified)
+      expect(result.map((v) => v.id)).toEqual(["a", "b", "c"])
+    })
+
+    it("OU não relaxa nome, nota nem categoria", () => {
+      const result = applyGlobalFilter(
+        views,
+        { ...regras, mode: "or", categoryIds: ["c1"] },
+        unified
+      )
+      expect(result.map((v) => v.id)).toEqual(["a", "b"])
+    })
+  })
+
+  describe("ordenação", () => {
+    const unified = unifyFields([restaurantes, bares])
+    const comida = unified.find((field) => field.nome.toLowerCase() === "comida")!
+    const views = [
+      toView(
+        entry({
+          id: "a",
+          name: "Bravo",
+          category_id: "c1",
+          rating: 3,
+          created_at: "2024-01-01T00:00:00Z",
+          custom_fields: { r_nota: 4 },
+        }),
+        restaurantes.estrutura,
+        tagsById,
+        "Restaurantes"
+      ),
+      toView(
+        entry({
+          id: "b",
+          name: "alfa",
+          category_id: "c2",
+          rating: null,
+          created_at: "2024-03-01T00:00:00Z",
+          custom_fields: { b_nota: 2 },
+        }),
+        bares.estrutura,
+        tagsById,
+        "Bares"
+      ),
+      toView(
+        entry({
+          id: "c",
+          name: "Charlie",
+          category_id: "c1",
+          rating: 5,
+          created_at: "2024-02-01T00:00:00Z",
+        }),
+        restaurantes.estrutura,
+        tagsById,
+        "Restaurantes"
+      ),
+    ]
+    const ids = (list: { id: string }[]) => list.map((item) => item.id)
+
+    it("ordena por data, nota e nome nos dois sentidos", () => {
+      expect(ids(sortGlobalViews(views, "recent", "desc", unified))).toEqual(["b", "c", "a"])
+      expect(ids(sortGlobalViews(views, "recent", "asc", unified))).toEqual(["a", "c", "b"])
+      expect(ids(sortGlobalViews(views, "name", "asc", unified))).toEqual(["b", "a", "c"])
+      expect(ids(sortGlobalViews(views, "name", "desc", unified))).toEqual(["c", "a", "b"])
+      // sem nota vai para o fim nos dois sentidos
+      expect(ids(sortGlobalViews(views, "rating", "desc", unified))).toEqual(["c", "a", "b"])
+      expect(ids(sortGlobalViews(views, "rating", "asc", unified))).toEqual(["a", "c", "b"])
+    })
+
+    it("ordena por campo, cruzando categorias, com quem não tem valor no fim", () => {
+      const by = `campo:${comida.key}`
+      expect(ids(sortGlobalViews(views, by, "desc", unified))).toEqual(["a", "b", "c"])
+      expect(ids(sortGlobalViews(views, by, "asc", unified))).toEqual(["b", "a", "c"])
+    })
+
+    it("campo que saiu do escopo cai em mais recentes", () => {
+      expect(ids(sortGlobalViews(views, "campo:nao-existe", "asc", unified))).toEqual([
+        "b",
+        "c",
+        "a",
+      ])
+    })
+
+    it("oferece as opções fixas e uma por campo, com a direção natural", () => {
+      const options = globalSortOptions(unified)
+      expect(options.slice(0, 3).map((option) => option.value)).toEqual(["recent", "rating", "name"])
+      const campo = options.find((option) => option.value === `campo:${comida.key}`)
+      expect(campo).toMatchObject({ kind: "number", defaultDir: "desc" })
+      expect(sortDirLabel("text", "asc")).toBe("A → Z")
+      expect(sortDirLabel("number", "desc")).toBe("maior primeiro")
+    })
+
+    it("agrupar mantém a ordem dentro de cada categoria", () => {
+      const sorted = sortGlobalViews(views, "name", "asc", unified)
+      const groups = groupByCategory(sorted, [restaurantes, bares])
+      expect(groups.map((group) => [group.categoryId, ids(group.views)])).toEqual([
+        ["c1", ["a", "c"]],
+        ["c2", ["b"]],
+      ])
+    })
   })
 })
 
@@ -714,6 +915,61 @@ describe("coleções", () => {
     expect(targets).not.toContain("f1")
     expect(targets).not.toContain("f2")
     expect(targets).not.toContain("f3")
+  })
+
+  it("aceita um rótulo de raiz próprio (subpastas de categoria)", () => {
+    expect(moveTargets(folders, null, "Raiz da categoria")[0]).toEqual({
+      id: null,
+      label: "Raiz da categoria",
+    })
+  })
+})
+
+describe("subpastas de uma categoria", () => {
+  const folder = (id: string, name: string, parent: string | null): EntryFolder => ({
+    id,
+    owner_id: "u1",
+    category_id: "c1",
+    name,
+    parent_folder_id: parent,
+    display_order: 0,
+    created_at: "",
+  })
+  // Suco › Feitos em casa | Marcas › Marca 1
+  const folders = [
+    folder("casa", "Feitos em casa", null),
+    folder("marcas", "Marcas", null),
+    folder("m1", "Marca 1", "marcas"),
+  ]
+  const items = [
+    { id: "i1", folderId: null },
+    { id: "i2", folderId: "casa" },
+    { id: "i3", folderId: "m1" },
+    { id: "i4", folderId: "m1" },
+    { id: "i5", folderId: "marcas" },
+  ]
+
+  it("mostra só os itens soltos no nível aberto", () => {
+    expect(itemsAt(items, null).map((item) => item.id)).toEqual(["i1"])
+    expect(itemsAt(items, "marcas").map((item) => item.id)).toEqual(["i5"])
+  })
+
+  it("conta subpastas diretas e itens em qualquer profundidade", () => {
+    const totals = entryFolderTotals(folders, items)
+    expect(totals.get("marcas")).toEqual({ folders: 1, entries: 3 })
+    expect(totals.get("m1")).toEqual({ folders: 0, entries: 2 })
+    expect(totals.get("casa")).toEqual({ folders: 0, entries: 1 })
+  })
+
+  it("volta para a raiz quando a pasta da URL não existe mais", () => {
+    expect(resolveFolderId(folders, "m1")).toBe("m1")
+    expect(resolveFolderId(folders, "apagada")).toBeNull()
+    expect(resolveFolderId(folders, null)).toBeNull()
+  })
+
+  it("sabe tudo que some junto ao excluir uma pasta", () => {
+    expect([...folderSubtree(folders, "marcas")].sort()).toEqual(["m1", "marcas"])
+    expect(breadcrumbOf(folders, "m1").map((f) => f.name)).toEqual(["Marcas", "Marca 1"])
   })
 })
 

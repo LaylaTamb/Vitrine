@@ -1,34 +1,29 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { z } from "zod"
 
+import type { EntryInput, MovePreview } from "@/lib/actions/contracts"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
+import {
+  bulkMoveSchema,
+  bulkSchema,
+  bulkTagSchema,
+  createEntryFolderSchema,
+  deleteEntryFolderSchema,
+  deleteEntrySchema,
+  entrySchema,
+  moveEntriesToFolderSchema,
+  moveFolderSchema,
+  normalizeRating,
+  renameFolderSchema,
+  updateEntrySchema,
+} from "@/lib/actions/schemas"
+import { descendantFolderIds } from "@/lib/domain/collections"
 import { coerceCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { migrateCustomFields } from "@/lib/domain/migrate"
-import type { CustomFields, Estrutura } from "@/lib/domain/types"
+import type { CustomFields, EntryFolder, Estrutura } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
-
-const uuid = z.uuid("Identificador inválido.")
-
-const entrySchema = z.object({
-  categoryId: uuid,
-  name: z.string().trim().min(1, "Dê um nome ao item.").max(160, "Nome muito longo."),
-  rating: z
-    .number()
-    .min(0, "A nota vai de 0 a 5.")
-    .max(5, "A nota vai de 0 a 5.")
-    .nullable(),
-  imageUrl: z.string().trim().max(2048).nullable(),
-  imageDisplay: z.object({
-    x: z.number().min(0).max(100),
-    y: z.number().min(0).max(100),
-    zoom: z.number().min(1).max(3),
-  }),
-  customFields: z.record(z.string(), z.union([z.string(), z.number()])),
-  tagIds: z.array(uuid),
-})
 
 async function estruturaOf(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -40,13 +35,6 @@ async function estruturaOf(
     .eq("id", categoryId)
     .maybeSingle()
   return parseEstrutura((data as { estrutura: unknown } | null)?.estrutura)
-}
-
-/** Meia estrela: a nota só existe em passos de 0,5. */
-function normalizeRating(rating: number | null): number | null {
-  if (rating === null) return null
-  const value = Math.min(5, Math.max(0, Math.round(rating * 2) / 2))
-  return value === 0 ? null : value
 }
 
 async function writeTags(
@@ -66,7 +54,7 @@ async function writeTags(
 }
 
 export async function createEntryAction(
-  input: z.input<typeof entrySchema>
+  input: EntryInput
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = entrySchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
@@ -79,6 +67,7 @@ export async function createEntryAction(
     .from("entries")
     .insert({
       category_id: parsed.data.categoryId,
+      folder_id: parsed.data.folderId ?? null,
       owner_id: user.id,
       name: parsed.data.name,
       rating: normalizeRating(parsed.data.rating),
@@ -101,9 +90,9 @@ export async function createEntryAction(
 }
 
 export async function updateEntryAction(
-  input: z.input<typeof entrySchema> & { id: string }
+  input: EntryInput & { id: string }
 ): Promise<ActionResult> {
-  const parsed = entrySchema.extend({ id: uuid }).safeParse(input)
+  const parsed = updateEntrySchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -117,6 +106,8 @@ export async function updateEntryAction(
       image_url: parsed.data.imageUrl || null,
       image_display: parsed.data.imageDisplay,
       custom_fields: coerceCustomFields(estrutura, parsed.data.customFields),
+      // `folderId` ausente = o formulário não mexeu na pasta.
+      ...(parsed.data.folderId !== undefined ? { folder_id: parsed.data.folderId } : {}),
     })
     .eq("id", parsed.data.id)
 
@@ -134,7 +125,7 @@ export async function deleteEntryAction(input: {
   id: string
   categoryId: string
 }): Promise<ActionResult> {
-  const parsed = z.object({ id: uuid, categoryId: uuid }).safeParse(input)
+  const parsed = deleteEntrySchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -149,11 +140,6 @@ export async function deleteEntryAction(input: {
 // ---------------------------------------------------------------------------
 // Ações em massa
 // ---------------------------------------------------------------------------
-
-const bulkSchema = z.object({
-  ids: z.array(uuid).min(1, "Selecione pelo menos um item."),
-  categoryId: uuid,
-})
 
 export async function bulkDeleteEntriesAction(input: {
   ids: string[]
@@ -177,9 +163,7 @@ export async function bulkTagAction(input: {
   tagId: string
   mode: "add" | "remove"
 }): Promise<ActionResult> {
-  const parsed = bulkSchema
-    .extend({ tagId: uuid, mode: z.enum(["add", "remove"]) })
-    .safeParse(input)
+  const parsed = bulkTagSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -201,12 +185,6 @@ export async function bulkTagAction(input: {
   if (error) return fail(error)
   revalidatePath(`/categoria/${parsed.data.categoryId}`)
   return ok()
-}
-
-export interface MovePreview {
-  /** Quantos valores de campo serão descartados na migração. */
-  dropped: number
-  kept: number
 }
 
 async function loadMoveContext(
@@ -235,7 +213,7 @@ export async function movePreviewAction(input: {
   categoryId: string
   toCategoryId: string
 }): Promise<ActionResult<MovePreview>> {
-  const parsed = bulkSchema.extend({ toCategoryId: uuid }).safeParse(input)
+  const parsed = bulkMoveSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -263,7 +241,7 @@ export async function bulkMoveEntriesAction(input: {
   categoryId: string
   toCategoryId: string
 }): Promise<ActionResult> {
-  const parsed = bulkSchema.extend({ toCategoryId: uuid }).safeParse(input)
+  const parsed = bulkMoveSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -276,13 +254,19 @@ export async function bulkMoveEntriesAction(input: {
   if (context.error) return fail(context.error)
 
   // Um valor sobrevive quando o destino tem um campo de mesmo nome e mesmo
-  // tipo — e é regravado sob o id do campo do destino.
+  // tipo — e é regravado sob o id do campo do destino. As subpastas são da
+  // categoria de origem, então o item chega na raiz do destino (a FK
+  // composta do banco recusaria manter o `folder_id`).
   const results = await Promise.all(
     context.entries.map((entry) => {
       const migrated = migrateCustomFields(context.from, context.to, entry.custom_fields ?? {})
       return supabase
         .from("entries")
-        .update({ category_id: parsed.data.toCategoryId, custom_fields: migrated.values })
+        .update({
+          category_id: parsed.data.toCategoryId,
+          folder_id: null,
+          custom_fields: migrated.values,
+        })
         .eq("id", entry.id)
     })
   )
@@ -293,5 +277,162 @@ export async function bulkMoveEntriesAction(input: {
   revalidatePath(`/categoria/${parsed.data.categoryId}`)
   revalidatePath(`/categoria/${parsed.data.toCategoryId}`)
   revalidatePath("/")
+  return ok()
+}
+
+// ---------------------------------------------------------------------------
+// Subpastas dentro da categoria
+// ---------------------------------------------------------------------------
+
+type Supabase = Awaited<ReturnType<typeof createClient>>
+
+async function loadEntryFolder(supabase: Supabase, id: string): Promise<EntryFolder | null> {
+  const { data } = await supabase.from("entry_folders").select("*").eq("id", id).maybeSingle()
+  return (data as EntryFolder | null) ?? null
+}
+
+async function loadCategoryFolders(supabase: Supabase, categoryId: string): Promise<EntryFolder[]> {
+  const { data } = await supabase.from("entry_folders").select("*").eq("category_id", categoryId)
+  return (data ?? []) as EntryFolder[]
+}
+
+export async function createEntryFolderAction(input: {
+  categoryId: string
+  name: string
+  parentFolderId: string | null
+}): Promise<ActionResult<{ id: string }>> {
+  const parsed = createEntryFolderSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  // A RLS confere que a categoria é de quem cria; a FK composta, que a
+  // pasta-mãe é da mesma categoria.
+  const { data, error } = await supabase
+    .from("entry_folders")
+    .insert({
+      owner_id: user.id,
+      category_id: parsed.data.categoryId,
+      parent_folder_id: parsed.data.parentFolderId,
+      name: parsed.data.name,
+    })
+    .select("id")
+    .single()
+
+  if (error) return fail(error)
+  revalidatePath(`/categoria/${parsed.data.categoryId}`)
+  return ok({ id: (data as { id: string }).id })
+}
+
+export async function renameEntryFolderAction(input: {
+  id: string
+  name: string
+}): Promise<ActionResult> {
+  const parsed = renameFolderSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("entry_folders")
+    .update({ name: parsed.data.name })
+    .eq("id", parsed.data.id)
+    .select("category_id")
+    .maybeSingle()
+
+  if (error) return fail(error)
+  const categoryId = (data as { category_id: string } | null)?.category_id
+  if (categoryId) revalidatePath(`/categoria/${categoryId}`)
+  return ok()
+}
+
+export async function moveEntryFolderAction(input: {
+  id: string
+  targetFolderId: string | null
+}): Promise<ActionResult> {
+  const parsed = moveFolderSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+  if (parsed.data.targetFolderId === parsed.data.id) {
+    return { ok: false, error: "Uma pasta não pode ir para dentro dela mesma." }
+  }
+
+  const supabase = await createClient()
+  const folder = await loadEntryFolder(supabase, parsed.data.id)
+  if (!folder) return { ok: false, error: "Essa pasta não existe mais." }
+
+  // Mesmo cuidado das Coleções: dentro de uma descendente vira ciclo órfão.
+  if (parsed.data.targetFolderId) {
+    const folders = await loadCategoryFolders(supabase, folder.category_id)
+    if (descendantFolderIds(folders, folder.id).has(parsed.data.targetFolderId)) {
+      return { ok: false, error: "Uma pasta não pode ir para dentro de uma subpasta dela." }
+    }
+  }
+
+  const { error } = await supabase
+    .from("entry_folders")
+    .update({ parent_folder_id: parsed.data.targetFolderId })
+    .eq("id", parsed.data.id)
+
+  if (error) return fail(error)
+  revalidatePath(`/categoria/${folder.category_id}`)
+  return ok()
+}
+
+/**
+ * Exclui uma subpasta. Com `keepContents`, as subpastas e os itens dela sobem
+ * um nível antes (para a pasta-mãe, ou para a raiz da categoria); sem, o
+ * `on delete cascade` do banco leva tudo junto.
+ */
+export async function deleteEntryFolderAction(input: {
+  id: string
+  keepContents: boolean
+}): Promise<ActionResult> {
+  const parsed = deleteEntryFolderSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const supabase = await createClient()
+  const folder = await loadEntryFolder(supabase, parsed.data.id)
+  if (!folder) return { ok: false, error: "Essa pasta não existe mais." }
+
+  if (parsed.data.keepContents) {
+    const [foldersMove, entriesMove] = await Promise.all([
+      supabase
+        .from("entry_folders")
+        .update({ parent_folder_id: folder.parent_folder_id })
+        .eq("parent_folder_id", folder.id),
+      supabase
+        .from("entries")
+        .update({ folder_id: folder.parent_folder_id })
+        .eq("folder_id", folder.id),
+    ])
+    if (foldersMove.error) return fail(foldersMove.error)
+    if (entriesMove.error) return fail(entriesMove.error)
+  }
+
+  const { error } = await supabase.from("entry_folders").delete().eq("id", folder.id)
+
+  if (error) return fail(error)
+  revalidatePath(`/categoria/${folder.category_id}`)
+  revalidatePath("/")
+  return ok()
+}
+
+export async function moveEntriesToFolderAction(input: {
+  ids: string[]
+  categoryId: string
+  folderId: string | null
+}): Promise<ActionResult> {
+  const parsed = moveEntriesToFolderSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("entries")
+    .update({ folder_id: parsed.data.folderId })
+    .in("id", parsed.data.ids)
+    .eq("category_id", parsed.data.categoryId)
+
+  if (error) return fail(error)
+  revalidatePath(`/categoria/${parsed.data.categoryId}`)
   return ok()
 }

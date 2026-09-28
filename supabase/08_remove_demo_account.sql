@@ -1,0 +1,25 @@
+-- =====================================================================
+-- Vitrine v2 — apaga a conta demo antiga (passo 1 de 2)
+-- Rode no SQL Editor do Supabase, depois de 01 a 07 — e SÓ DEPOIS que a
+-- versão nova do app (demo 100% no navegador) estiver no ar.
+--
+-- A demonstração agora roda inteira na memória do navegador (`/demo`): nada
+-- do que o visitante faz chega ao Supabase. A conta `demo-vitrine` e os
+-- dados dela não têm mais uso.
+--
+-- Por que esperar o deploy: a versão antiga do app tem a rota `/demo`, que
+-- recria a conta sozinha (com a service_role) se ela não existir — apagar
+-- antes do deploy só faria a conta voltar na próxima visita.
+--
+-- Apagar de auth.users cascateia: profile → pastas, categorias, subpastas,
+-- itens e vínculos de tag dela. Tags não têm dono e ficam. As sessões e os
+-- refresh tokens da conta morrem junto.
+--
+-- As regras de RLS que só existiam para conter a conta demo (05 e 06) ficam
+-- mais um pouco: um access token JWT já emitido continua válido até expirar
+-- (1 hora, no padrão do Supabase), e é `is_demo_reader()` — que compara o id
+-- fixo da conta — que impede esse token órfão de ler o acervo de todo mundo
+-- nesse intervalo. Quem remove as regras é o 09, uma hora depois.
+-- =====================================================================
+
+delete from auth.users where email = 'demo-vitrine@vitrine.local';

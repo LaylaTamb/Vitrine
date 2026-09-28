@@ -4,7 +4,7 @@ import { ListPlus, Pencil, Plus, Tags, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { createTagAction, deleteTagAction, updateTagAction } from "@/app/tags/actions"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { ApplyTagDialog } from "@/components/tag/apply-tag-dialog"
 import { ColorPalette } from "@/components/tag/color-palette"
 import { EmptyState } from "@/components/layout/empty-state"
@@ -26,14 +26,8 @@ import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { Tag } from "@/lib/domain/types"
 import type { TagWithUsage } from "@/lib/queries/tags"
 
-export function TagsView({
-  tags,
-  readOnly = false,
-}: {
-  tags: TagWithUsage[]
-  /** Conta demo: tags são vocabulário do grupo inteiro, não dela pra mexer. */
-  readOnly?: boolean
-}) {
+export function TagsView({ tags }: { tags: TagWithUsage[] }) {
+  const { actions, isDemo } = useVitrine()
   const [editing, setEditing] = useState<TagWithUsage | null>(null)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<TagWithUsage | null>(null)
@@ -57,8 +51,8 @@ export function TagsView({
 
     setPending(true)
     const result = editing
-      ? await updateTagAction({ id: editing.id, name, color })
-      : await createTagAction({ name, color })
+      ? await actions.updateTag({ id: editing.id, name, color })
+      : await actions.createTag({ name, color })
     setPending(false)
 
     if (!result.ok) {
@@ -79,16 +73,14 @@ export function TagsView({
         label="Vocabulário"
         title="Tags"
         subtitle={
-          readOnly
-            ? "As tags são do grupo inteiro — a conta demo pode aplicá-las, mas não criar, editar nem apagar."
+          isDemo
+            ? "Na demonstração as tags são só desta visita: crie, edite e apague à vontade — nada é salvo."
             : "As tags são do grupo inteiro: qualquer pessoa cria, edita e apaga, e a mudança vale para o acervo de todo mundo."
         }
         actions={
-          readOnly ? null : (
-            <Button size="lg" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> Nova tag
-            </Button>
-          )
+          <Button size="lg" onClick={() => setCreating(true)}>
+            <Plus className="size-4" /> Nova tag
+          </Button>
         }
       />
 
@@ -98,11 +90,9 @@ export function TagsView({
           title="Nenhuma tag ainda"
           description="Tags atravessam todas as categorias: crie a primeira e comece a cruzar o acervo."
           action={
-            readOnly ? null : (
-              <Button onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> Nova tag
-              </Button>
-            )
+            <Button onClick={() => setCreating(true)}>
+              <Plus className="size-4" /> Nova tag
+            </Button>
           }
         />
       ) : (
@@ -134,28 +124,24 @@ export function TagsView({
                 >
                   <ListPlus className="size-3.5" />
                 </button>
-                {readOnly ? null : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setEditing(tag)}
-                      title={`Editar ${tag.name}`}
-                      aria-label={`Editar ${tag.name}`}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
-                    >
-                      <Pencil className="size-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleting(tag)}
-                      title={`Excluir ${tag.name}`}
-                      aria-label={`Excluir ${tag.name}`}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-danger"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setEditing(tag)}
+                  title={`Editar ${tag.name}`}
+                  aria-label={`Editar ${tag.name}`}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleting(tag)}
+                  title={`Excluir ${tag.name}`}
+                  aria-label={`Excluir ${tag.name}`}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-danger"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
               </span>
             </li>
           ))}
@@ -179,7 +165,7 @@ export function TagsView({
                 {editing ? "Editar tag" : "Nova tag"}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
-                Vale para o acervo de todo mundo.
+                {isDemo ? "Só nesta demonstração." : "Vale para o acervo de todo mundo."}
               </DialogDescription>
             </DialogHeader>
 
@@ -237,7 +223,7 @@ export function TagsView({
         }
         onConfirm={async () => {
           if (!deleting) return
-          const result = await deleteTagAction({ id: deleting.id })
+          const result = await actions.deleteTag({ id: deleting.id })
           if (!result.ok) {
             toast.error(result.error)
             return

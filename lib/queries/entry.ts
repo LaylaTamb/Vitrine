@@ -1,7 +1,7 @@
 import { cache } from "react"
 
 import { parseEstrutura } from "@/lib/domain/fields"
-import type { Category, EntryWithTags, Profile, Tag } from "@/lib/domain/types"
+import type { Category, EntryFolder, EntryWithTags, Profile, Tag } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 
 export interface EntryPageData {
@@ -9,6 +9,8 @@ export interface EntryPageData {
   category: Category | null
   owner: Profile | null
   tags: Tag[]
+  /** As subpastas da categoria do item — o "Pasta" do formulário e o Voltar. */
+  entryFolders: EntryFolder[]
 }
 
 /**
@@ -23,7 +25,8 @@ export const getEntryPage = cache(async (entryId: string): Promise<EntryPageData
       .from("entries")
       .select(
         `*, entry_tags(tag_id),
-         category:categories(*, owner:profiles(id, username, display_name, avatar_url, created_at))`
+         category:categories(*, entry_folders(*),
+                             owner:profiles(id, username, display_name, avatar_url, created_at))`
       )
       .eq("id", entryId)
       .maybeSingle(),
@@ -37,22 +40,34 @@ export const getEntryPage = cache(async (entryId: string): Promise<EntryPageData
   const row = entryResult.data as
     | (EntryWithTags & {
         category:
-          | (Omit<Category, "estrutura"> & { estrutura: unknown; owner: Profile | null })
+          | (Omit<Category, "estrutura"> & {
+              estrutura: unknown
+              owner: Profile | null
+              entry_folders: EntryFolder[]
+            })
           | null
       })
     | null
 
-  if (!row) return { entry: null, category: null, owner: null, tags }
+  if (!row) return { entry: null, category: null, owner: null, tags, entryFolders: [] }
 
-  const { category, ...entry } = row
-  const owner = category?.owner ?? null
+  const { category: categoryRow, ...entry } = row
+  const owner = categoryRow?.owner ?? null
+  const entryFolders = categoryRow?.entry_folders ?? []
+
+  let category: Category | null = null
+  if (categoryRow) {
+    // Tira o que veio embutido: `Category` é só a linha da categoria.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { owner: _owner, entry_folders: _folders, ...rest } = categoryRow
+    category = { ...rest, estrutura: parseEstrutura(rest.estrutura) }
+  }
 
   return {
     entry: entry as EntryWithTags,
-    category: category
-      ? { ...category, estrutura: parseEstrutura(category.estrutura) }
-      : null,
+    category,
     owner,
     tags,
+    entryFolders,
   }
 })

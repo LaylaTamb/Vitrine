@@ -4,11 +4,7 @@ import { Search } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import {
-  applyTagToEntriesAction,
-  searchEntriesForTagAction,
-  type EntryPickerRow,
-} from "@/app/tags/actions"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -20,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import type { EntryPickerRow } from "@/lib/actions/contracts"
 import { plural } from "@/lib/domain/format"
 import type { Tag } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
@@ -38,6 +35,7 @@ export function ApplyTagDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { actions } = useVitrine()
   const [query, setQuery] = useState("")
   const [rows, setRows] = useState<EntryPickerRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -56,7 +54,7 @@ export function ApplyTagDialog({
     let cancelled = false
     setLoading(true)
     const timer = window.setTimeout(async () => {
-      const result = await searchEntriesForTagAction({ tagId: tag.id, query })
+      const result = await actions.searchEntriesForTag({ tagId: tag.id, query })
       if (cancelled) return
       setLoading(false)
       if (result.ok && result.data) setRows(result.data)
@@ -65,7 +63,7 @@ export function ApplyTagDialog({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [open, tag, query])
+  }, [open, tag, query, actions])
 
   function toggle(id: string) {
     setSelected((current) => {
@@ -79,7 +77,7 @@ export function ApplyTagDialog({
   async function apply() {
     if (!tag || selected.size === 0) return
     setPending(true)
-    const result = await applyTagToEntriesAction({ tagId: tag.id, ids: [...selected] })
+    const result = await actions.applyTagToEntries({ tagId: tag.id, ids: [...selected] })
     setPending(false)
 
     if (!result.ok) {

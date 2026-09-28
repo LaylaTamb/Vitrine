@@ -20,12 +20,8 @@ import { X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
-import {
-  createCategoryAction,
-  structureImpactAction,
-  updateCategoryAction,
-} from "@/app/actions"
 import { FieldRow } from "@/components/category/field-row"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { ColorPalette } from "@/components/tag/color-palette"
 import { Button } from "@/components/ui/button"
 import {
@@ -81,6 +77,7 @@ export function CategoryEditor({
   folderId?: string | null
   onSaved?: (id?: string) => void
 }) {
+  const { actions } = useVitrine()
   const editing = Boolean(initial.id)
 
   const [tab, setTab] = useState<"visual" | "json">("visual")
@@ -261,7 +258,7 @@ export function CategoryEditor({
     }
 
     setPending(true)
-    const result = await structureImpactAction({
+    const result = await actions.structureImpact({
       categoryId: initial.id!,
       fieldIds: diff.removed.map((field) => field.id),
       fieldOptions: optionsDiff.map((entry) => ({ fieldId: entry.fieldId, options: entry.removed })),
@@ -315,7 +312,7 @@ export function CategoryEditor({
   async function persist(estrutura: Estrutura, removedFieldIds: string[]) {
     setPending(true)
     const result = editing
-      ? await updateCategoryAction({
+      ? await actions.updateCategory({
           id: initial.id!,
           name: name.trim(),
           icon: icon.trim() || null,
@@ -323,7 +320,7 @@ export function CategoryEditor({
           estrutura,
           removedFieldIds,
         })
-      : await createCategoryAction({
+      : await actions.createCategory({
           name: name.trim(),
           icon: icon.trim() || null,
           color,

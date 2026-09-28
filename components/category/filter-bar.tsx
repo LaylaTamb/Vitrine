@@ -2,6 +2,7 @@
 
 import { Search, X } from "lucide-react"
 
+import { MatchModeToggle } from "@/components/filter/match-mode-toggle"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -94,7 +95,15 @@ export function FilterBar({
       </div>
 
       {tags.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {tags.length > 1 ? (
+            <MatchModeToggle
+              value={filter.mode}
+              onChange={(mode) => onChange({ ...filter, mode })}
+              label="Tags"
+              className="mr-1.5"
+            />
+          ) : null}
           {tags.map((tag) => (
             <TagPill
               key={tag.id}

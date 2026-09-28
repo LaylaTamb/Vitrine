@@ -30,8 +30,18 @@ export interface BackupCategory {
   estrutura: Estrutura
 }
 
+/** Subpasta de dentro de uma categoria. */
+export interface BackupEntryFolder {
+  id: string
+  categoryId: string
+  name: string
+  parentId: string | null
+}
+
 export interface BackupEntry {
   categoryId: string
+  /** Subpasta da categoria (id do arquivo). Ausente/nulo = raiz. */
+  folderId: string | null
   name: string
   rating: number | null
   imageUrl: string | null
@@ -45,6 +55,7 @@ export interface BackupPayload {
   exportedAt: string
   folders: BackupFolder[]
   categories: BackupCategory[]
+  entryFolders: BackupEntryFolder[]
   entries: BackupEntry[]
 }
 
@@ -70,8 +81,16 @@ const backupCategorySchema = z.object({
   estrutura: z.array(backupFieldSchema).default([]),
 })
 
+const backupEntryFolderSchema = z.object({
+  id: z.string().min(1),
+  categoryId: z.string().min(1),
+  name: z.string().trim().min(1),
+  parentId: z.string().nullable().default(null),
+})
+
 const backupEntrySchema = z.object({
   categoryId: z.string().min(1),
+  folderId: z.string().nullable().default(null),
   name: z.string().trim().min(1),
   rating: z.number().nullable().default(null),
   imageUrl: z.string().nullable().default(null),
@@ -82,9 +101,12 @@ const backupEntrySchema = z.object({
     .default([]),
 })
 
+// `entryFolders` e `folderId` chegaram depois: arquivo antigo, sem eles,
+// continua importando (tudo cai na raiz de cada categoria).
 export const backupPayloadSchema = z.object({
   folders: z.array(backupFolderSchema).default([]),
   categories: z.array(backupCategorySchema).min(1, "O arquivo não tem nenhuma categoria."),
+  entryFolders: z.array(backupEntryFolderSchema).default([]),
   entries: z.array(backupEntrySchema).default([]),
 })
 
@@ -108,7 +130,7 @@ export function parseBackupJSON(json: string): ParseBackupResult {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "JSON fora do formato esperado." }
   }
 
-  const { folders, categories, entries } = parsed.data
+  const { folders, categories, entryFolders, entries } = parsed.data
 
   const folderIds = new Set(folders.map((folder) => folder.id))
   for (const folder of folders) {
@@ -122,9 +144,25 @@ export function parseBackupJSON(json: string): ParseBackupResult {
       return { ok: false, error: `Categoria "${category.name}": a pasta não existe no arquivo.` }
     }
   }
+  // Subpasta: a categoria existe, e a mãe (se houver) é da MESMA categoria.
+  const entryFolderCategory = new Map(entryFolders.map((folder) => [folder.id, folder.categoryId]))
+  for (const folder of entryFolders) {
+    if (!categoryIds.has(folder.categoryId)) {
+      return { ok: false, error: `Pasta "${folder.name}": a categoria não existe no arquivo.` }
+    }
+    if (folder.parentId !== null && entryFolderCategory.get(folder.parentId) !== folder.categoryId) {
+      return {
+        ok: false,
+        error: `Pasta "${folder.name}": a pasta-mãe não existe nessa categoria.`,
+      }
+    }
+  }
   for (const entry of entries) {
     if (!categoryIds.has(entry.categoryId)) {
       return { ok: false, error: `Item "${entry.name}": a categoria não existe no arquivo.` }
+    }
+    if (entry.folderId !== null && entryFolderCategory.get(entry.folderId) !== entry.categoryId) {
+      return { ok: false, error: `Item "${entry.name}": a pasta não existe nessa categoria.` }
     }
   }
 
@@ -141,6 +179,8 @@ function normalizeImportRating(rating: number | null): number | null {
 export interface ImportSummary {
   folders: number
   categories: number
+  /** Subpastas de dentro das categorias. */
+  entryFolders: number
   entries: number
   /** Categoria cujo nome colidiu com uma já existente e ganhou um sufixo. */
   renamed: { from: string; to: string }[]
@@ -181,7 +221,7 @@ export async function performImport(
   ownerId: string,
   payload: ParsedBackupPayload
 ): Promise<ActionResult<ImportSummary>> {
-  const { folders, categories, entries } = payload
+  const { folders, categories, entryFolders, entries } = payload
 
   // 1) pastas, em ondas: só insere quem já tem a mãe resolvida (ou não tem mãe).
   const folderIdMap = new Map<string, string>()
@@ -272,6 +312,45 @@ export async function performImport(
     estruturaById.set(category.id, estrutura)
   }
 
+  // 2b) subpastas de categoria, em ondas como as pastas: só insere quem já
+  // tem a mãe resolvida.
+  const entryFolderIdMap = new Map<string, string>()
+  let pendingEntryFolders = [...entryFolders]
+  let entryFolderGuard = 0
+  while (pendingEntryFolders.length > 0) {
+    entryFolderGuard += 1
+    const ready = pendingEntryFolders.filter(
+      (folder) => folder.parentId === null || entryFolderIdMap.has(folder.parentId)
+    )
+    if (ready.length === 0 || entryFolderGuard > entryFolders.length + 1) {
+      return { ok: false, error: "As pastas de uma categoria formam um ciclo entre si." }
+    }
+
+    const results = await Promise.all(
+      ready.map((folder) =>
+        supabase
+          .from("entry_folders")
+          .insert({
+            owner_id: ownerId,
+            category_id: categoryIdMap.get(folder.categoryId)!,
+            name: folder.name,
+            parent_folder_id: folder.parentId
+              ? (entryFolderIdMap.get(folder.parentId) ?? null)
+              : null,
+          })
+          .select("id")
+          .single()
+      )
+    )
+    const failed = results.find((result) => result.error)
+    if (failed?.error) return fail(failed.error)
+    results.forEach((result, index) => {
+      entryFolderIdMap.set(ready[index].id, (result.data as { id: string }).id)
+    })
+
+    pendingEntryFolders = pendingEntryFolders.filter((folder) => !ready.includes(folder))
+  }
+
   // 3) tags — casa pelo nome com o vocabulário já compartilhado do grupo;
   // o resto é criado (com a cor que veio no arquivo, ou o roxo padrão).
   const { data: existingTags, error: tagsError } = await supabase.from("tags").select("id, name")
@@ -311,6 +390,7 @@ export async function performImport(
         .from("entries")
         .insert({
           category_id: categoryIdMap.get(entry.categoryId)!,
+          folder_id: entry.folderId ? (entryFolderIdMap.get(entry.folderId) ?? null) : null,
           owner_id: ownerId,
           name: entry.name.trim(),
           rating: normalizeImportRating(entry.rating),
@@ -350,6 +430,7 @@ export async function performImport(
   return ok({
     folders: folderIdMap.size,
     categories: categoryIdMap.size,
+    entryFolders: entryFolderIdMap.size,
     entries: entries.length,
     renamed,
   })

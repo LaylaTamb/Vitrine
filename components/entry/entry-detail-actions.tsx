@@ -5,11 +5,12 @@ import { Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { deleteEntryAction } from "@/app/categoria/[categoryId]/actions"
 import { EntryForm } from "@/components/entry/entry-form"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import type { EntryView, Estrutura, Tag } from "@/lib/domain/types"
+import type { EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
+import { withFolder } from "@/lib/navigation"
 
 /** Os botões Editar e Excluir da plaqueta — a ilha de interatividade da página. */
 export function EntryDetailActions({
@@ -17,12 +18,15 @@ export function EntryDetailActions({
   categoryId,
   estrutura,
   tags,
+  folders,
 }: {
   view: EntryView
   categoryId: string
   estrutura: Estrutura
   tags: Tag[]
+  folders: EntryFolder[]
 }) {
+  const { actions, basePath } = useVitrine()
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -45,6 +49,7 @@ export function EntryDetailActions({
         estrutura={estrutura}
         tags={tags}
         entry={view}
+        folders={folders}
       />
 
       <ConfirmDialog
@@ -53,13 +58,14 @@ export function EntryDetailActions({
         title="Excluir item"
         description={`"${view.name}" some da vitrine. Não dá para desfazer.`}
         onConfirm={async () => {
-          const result = await deleteEntryAction({ id: view.id, categoryId })
+          const result = await actions.deleteEntry({ id: view.id, categoryId })
           if (!result.ok) {
             toast.error(result.error)
             return
           }
           toast.success("Item excluído.")
-          router.push(`/categoria/${categoryId}`)
+          // Volta para o nível onde o item estava.
+          router.push(withFolder(`${basePath}/categoria/${categoryId}`, view.folderId))
         }}
       />
     </>

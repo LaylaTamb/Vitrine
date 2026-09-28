@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { createFolderAction, renameFolderAction } from "@/app/actions"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,19 +16,28 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+/**
+ * Onde a pasta mora: nas Coleções (organiza categorias) ou dentro de uma
+ * categoria (organiza os itens dela).
+ */
+export type FolderScope =
+  | { kind: "collection"; parentFolderId: string | null }
+  | { kind: "category"; categoryId: string; parentFolderId: string | null }
+
 /** Cria ou renomeia uma pasta. */
 export function FolderDialog({
   open,
   onOpenChange,
   folder,
-  parentFolderId,
+  scope,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   /** Sem folder = criar. */
   folder?: { id: string; name: string } | null
-  parentFolderId: string | null
+  scope: FolderScope
 }) {
+  const { actions } = useVitrine()
   const [name, setName] = useState(folder?.name ?? "")
   const [pending, setPending] = useState(false)
 
@@ -41,9 +50,18 @@ export function FolderDialog({
     if (!name.trim()) return
 
     setPending(true)
-    const result = folder
-      ? await renameFolderAction({ id: folder.id, name })
-      : await createFolderAction({ name, parentFolderId })
+    const result =
+      scope.kind === "collection"
+        ? folder
+          ? await actions.renameFolder({ id: folder.id, name })
+          : await actions.createFolder({ name, parentFolderId: scope.parentFolderId })
+        : folder
+          ? await actions.renameEntryFolder({ id: folder.id, name })
+          : await actions.createEntryFolder({
+              categoryId: scope.categoryId,
+              name,
+              parentFolderId: scope.parentFolderId,
+            })
     setPending(false)
 
     if (!result.ok) {
@@ -63,7 +81,9 @@ export function FolderDialog({
               {folder ? "Renomear pasta" : "Nova pasta"}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Pastas organizam suas categorias e podem ser aninhadas.
+              {scope.kind === "collection"
+                ? "Pastas organizam suas categorias e podem ser aninhadas."
+                : "Pastas separam os itens desta categoria (ex.: Feitos em casa, Marca 1) e podem ser aninhadas."}
             </DialogDescription>
           </DialogHeader>
 
@@ -77,7 +97,7 @@ export function FolderDialog({
               autoFocus
               maxLength={80}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Comida"
+              placeholder={scope.kind === "collection" ? "Comida" : "Feitos em casa"}
             />
           </div>
 

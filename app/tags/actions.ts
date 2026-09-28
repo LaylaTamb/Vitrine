@@ -1,20 +1,20 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { z } from "zod"
 
+import type { EntryPickerRow } from "@/lib/actions/contracts"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
+import {
+  applyTagSchema,
+  idSchema,
+  searchEntriesForTagSchema,
+  tagSchema,
+  updateTagSchema,
+} from "@/lib/actions/schemas"
 import { normalizeTagColor } from "@/lib/domain/tags"
 import type { Tag } from "@/lib/domain/types"
 import { requireUser } from "@/lib/queries/session"
 import { createClient } from "@/lib/supabase/server"
-
-const uuid = z.uuid("Identificador inválido.")
-
-const tagSchema = z.object({
-  name: z.string().trim().min(1, "Dê um nome à tag.").max(40, "Nome muito longo."),
-  color: z.string(),
-})
 
 /**
  * As tags são do grupo inteiro: qualquer autenticado cria, edita e apaga, e a
@@ -45,7 +45,7 @@ export async function updateTagAction(input: {
   name: string
   color: string
 }): Promise<ActionResult> {
-  const parsed = tagSchema.extend({ id: uuid }).safeParse(input)
+  const parsed = updateTagSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -62,7 +62,7 @@ export async function updateTagAction(input: {
 }
 
 export async function deleteTagAction(input: { id: string }): Promise<ActionResult> {
-  const parsed = z.object({ id: uuid }).safeParse(input)
+  const parsed = idSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
@@ -80,16 +80,6 @@ export async function deleteTagAction(input: { id: string }): Promise<ActionResu
 // Aplicar uma tag a itens, cruzando todas as categorias do dono
 // ---------------------------------------------------------------------------
 
-export interface EntryPickerRow {
-  id: string
-  name: string
-  categoryId: string
-  categoryName: string
-  categoryIcon: string | null
-  /** Já tem essa tag — aparece marcado e travado na lista. */
-  hasTag: boolean
-}
-
 interface EntryPickerJoinRow {
   id: string
   name: string
@@ -106,9 +96,7 @@ export async function searchEntriesForTagAction(input: {
   tagId: string
   query: string
 }): Promise<ActionResult<EntryPickerRow[]>> {
-  const parsed = z
-    .object({ tagId: uuid, query: z.string().max(160) })
-    .safeParse(input)
+  const parsed = searchEntriesForTagSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const user = await requireUser()
@@ -140,11 +128,6 @@ export async function searchEntriesForTagAction(input: {
 
   return ok(rows)
 }
-
-const applyTagSchema = z.object({
-  tagId: uuid,
-  ids: z.array(uuid).min(1, "Selecione pelo menos um item."),
-})
 
 export async function applyTagToEntriesAction(input: {
   tagId: string

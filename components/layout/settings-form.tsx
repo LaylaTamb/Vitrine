@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { Profile } from "@/lib/domain/types"
 
-export function SettingsForm({ profile, isDemo = false }: { profile: Profile; isDemo?: boolean }) {
+export function SettingsForm({ profile }: { profile: Profile }) {
   const [displayName, setDisplayName] = useState(profile.display_name ?? "")
   const [username, setUsername] = useState(profile.username)
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "")
@@ -84,16 +84,9 @@ export function SettingsForm({ profile, isDemo = false }: { profile: Profile; is
           onChange={(event) => setUsername(event.target.value)}
           maxLength={30}
           placeholder="seunome"
-          disabled={isDemo}
         />
         <p className="text-xs text-faint">
-          {isDemo
-            ? "Fixo na conta de demonstração."
-            : (
-              <>
-                Seu acervo fica em <span className="text-muted-foreground">/u/{cleanUsername || "…"}</span>
-              </>
-            )}
+          Seu acervo fica em <span className="text-muted-foreground">/u/{cleanUsername || "…"}</span>
         </p>
       </div>
 

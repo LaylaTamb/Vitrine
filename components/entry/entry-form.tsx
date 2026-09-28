@@ -4,10 +4,9 @@ import { Eraser, ImageOff, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import { createEntryAction, updateEntryAction } from "@/app/categoria/[categoryId]/actions"
-import { createTagAction } from "@/app/tags/actions"
 import { EntryImage } from "@/components/entry/entry-image"
 import { StarInput } from "@/components/entry/stars"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { ColorPalette } from "@/components/tag/color-palette"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Button } from "@/components/ui/button"
@@ -21,13 +20,15 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { moveTargets } from "@/lib/domain/collections"
 import { DEFAULT_CURRENCY } from "@/lib/domain/fields"
 import { formatRating } from "@/lib/domain/format"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
-import type { EntryView, Estrutura, Tag } from "@/lib/domain/types"
+import type { EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
 import { imageTransformOf } from "@/lib/domain/view"
 
 const DEFAULT_FRAMING = { x: 50, y: 50, zoom: 1 }
+const ROOT = "__raiz__"
 
 export function EntryForm({
   open,
@@ -36,6 +37,8 @@ export function EntryForm({
   estrutura,
   tags,
   entry,
+  folders,
+  defaultFolderId = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -44,7 +47,12 @@ export function EntryForm({
   tags: Tag[]
   /** Sem `entry` = novo item. */
   entry?: EntryView | null
+  /** Subpastas da categoria. Sem a lista, o formulário não mexe na pasta do item. */
+  folders?: EntryFolder[]
+  /** Onde um item NOVO nasce: a pasta que está aberta. */
+  defaultFolderId?: string | null
 }) {
+  const { actions } = useVitrine()
   const editing = Boolean(entry)
 
   const [name, setName] = useState("")
@@ -53,12 +61,18 @@ export function EntryForm({
   const [framing, setFraming] = useState(DEFAULT_FRAMING)
   const [values, setValues] = useState<Record<string, string>>({})
   const [tagIds, setTagIds] = useState<string[]>([])
+  const [folderId, setFolderId] = useState<string | null>(null)
   const [extraTags, setExtraTags] = useState<Tag[]>([])
   const [pending, setPending] = useState(false)
 
   const [creatingTag, setCreatingTag] = useState(false)
   const [newTagName, setNewTagName] = useState("")
   const [newTagColor, setNewTagColor] = useState<string>(DEFAULT_TAG_COLOR)
+
+  const folderOptions = useMemo(
+    () => (folders && folders.length > 0 ? moveTargets(folders, null, "Raiz da categoria") : []),
+    [folders]
+  )
 
   const allTags = useMemo(() => {
     const seen = new Map(tags.map((tag) => [tag.id, tag]))
@@ -84,10 +98,11 @@ export function EntryForm({
         : {}
     )
     setTagIds(entry?.tags.map((tag) => tag.id) ?? [])
+    setFolderId(entry ? entry.folderId : defaultFolderId)
     setCreatingTag(false)
     setNewTagName("")
     setNewTagColor(DEFAULT_TAG_COLOR)
-  }, [open, entry])
+  }, [open, entry, defaultFolderId])
 
   function setValue(fieldId: string, value: string) {
     setValues((current) => ({ ...current, [fieldId]: value }))
@@ -96,7 +111,7 @@ export function EntryForm({
   async function addTag() {
     if (!newTagName.trim()) return
     setPending(true)
-    const result = await createTagAction({ name: newTagName, color: newTagColor })
+    const result = await actions.createTag({ name: newTagName, color: newTagColor })
     setPending(false)
 
     if (!result.ok) {
@@ -127,12 +142,13 @@ export function EntryForm({
       imageDisplay: framing,
       customFields: values,
       tagIds,
+      ...(folders ? { folderId } : {}),
     }
 
     setPending(true)
     const result = entry
-      ? await updateEntryAction({ ...payload, id: entry.id })
-      : await createEntryAction(payload)
+      ? await actions.updateEntry({ ...payload, id: entry.id })
+      : await actions.createEntry(payload)
     setPending(false)
 
     if (!result.ok) {
@@ -255,6 +271,28 @@ export function EntryForm({
                   placeholder="Kinoshita"
                 />
               </div>
+
+              {folderOptions.length > 1 ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="entry-folder" className="plaque">
+                    Pasta
+                  </Label>
+                  <select
+                    id="entry-folder"
+                    value={folderId ?? ROOT}
+                    onChange={(event) =>
+                      setFolderId(event.target.value === ROOT ? null : event.target.value)
+                    }
+                    className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+                  >
+                    {folderOptions.map((option) => (
+                      <option key={option.id ?? ROOT} value={option.id ?? ROOT}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
 
               <div className="space-y-1.5">
                 <span className="plaque block">Avaliação</span>

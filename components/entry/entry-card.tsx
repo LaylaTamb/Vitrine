@@ -20,6 +20,7 @@ export function EntryCard({
   selected,
   onToggleSelect,
   categoryColor,
+  categoryLabel,
 }: {
   view: EntryView
   canEdit: boolean
@@ -30,6 +31,8 @@ export function EntryCard({
   selected?: boolean
   onToggleSelect?: (event: React.MouseEvent) => void
   categoryColor?: string | null
+  /** Mostra de qual categoria é o item — para listas que misturam categorias. */
+  categoryLabel?: string
 }) {
   return (
     <div
@@ -113,6 +116,9 @@ export function EntryCard({
         </div>
 
         <div className="space-y-1 px-1 pb-1 pt-2.5">
+          {categoryLabel ? (
+            <p className="plaque truncate text-[0.62rem]">{categoryLabel}</p>
+          ) : null}
           <h3 className="display truncate text-base leading-snug">{view.name}</h3>
           {view.summary ? (
             <p className="truncate text-xs text-muted-foreground">{view.summary}</p>

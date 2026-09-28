@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { moveCategoryAction, moveFolderAction } from "@/app/actions"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,27 +14,35 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { moveTargets } from "@/lib/domain/collections"
-import type { Folder } from "@/lib/domain/types"
+import { moveTargets, type TreeFolder } from "@/lib/domain/collections"
 
 const ROOT = "__raiz__"
 
 /**
- * Move uma pasta ou categoria. O `<select>` lista "Raiz das Coleções" e o
- * caminho completo de cada pasta — menos a própria pasta e as descendentes
- * dela, que criariam um ciclo.
+ * Move uma pasta ou categoria das Coleções, ou uma subpasta de categoria
+ * (`entryFolder`, entre as subpastas da mesma categoria). O `<select>` lista
+ * a raiz e o caminho completo de cada pasta — menos a própria pasta e as
+ * descendentes dela, que criariam um ciclo.
  */
 export function MoveDialog({
   open,
   onOpenChange,
   folders,
   target,
+  rootLabel,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  folders: Folder[]
-  target: { kind: "folder" | "category"; id: string; name: string; parentId: string | null } | null
+  folders: TreeFolder[]
+  target: {
+    kind: "folder" | "category" | "entryFolder"
+    id: string
+    name: string
+    parentId: string | null
+  } | null
+  rootLabel?: string
 }) {
+  const { actions } = useVitrine()
   const [value, setValue] = useState<string>(ROOT)
   const [pending, setPending] = useState(false)
 
@@ -44,7 +52,11 @@ export function MoveDialog({
 
   if (!target) return null
 
-  const targets = moveTargets(folders, target.kind === "folder" ? target.id : null)
+  const targets = moveTargets(
+    folders,
+    target.kind === "category" ? null : target.id,
+    rootLabel
+  )
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -54,8 +66,10 @@ export function MoveDialog({
     setPending(true)
     const result =
       target.kind === "folder"
-        ? await moveFolderAction({ id: target.id, targetFolderId })
-        : await moveCategoryAction({ id: target.id, targetFolderId })
+        ? await actions.moveFolder({ id: target.id, targetFolderId })
+        : target.kind === "entryFolder"
+          ? await actions.moveEntryFolder({ id: target.id, targetFolderId })
+          : await actions.moveCategory({ id: target.id, targetFolderId })
     setPending(false)
 
     if (!result.ok) {

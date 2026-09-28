@@ -9,15 +9,15 @@ import {
   performImport,
   type BackupCategory,
   type BackupEntry,
+  type BackupEntryFolder,
   type BackupFolder,
   type BackupPayload,
   type ImportSummary,
 } from "@/lib/backup/import"
-import { DEMO_USERNAME } from "@/lib/demo/config"
 import { parseCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { imageDisplayOf } from "@/lib/domain/view"
 import { createClient } from "@/lib/supabase/server"
-import { getMyProfile, requireUser } from "@/lib/queries/session"
+import { requireUser } from "@/lib/queries/session"
 
 const profileSchema = z.object({
   displayName: z.string().trim().max(80, "Nome muito longo."),
@@ -42,15 +42,6 @@ export async function updateProfileAction(input: {
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const user = await requireUser()
-  const profile = await getMyProfile()
-
-  // Trocar o username escaparia da restrição de leitura da conta demo (ela é
-  // identificada pelo id, mas isso evita a confusão de uma demo "com outro
-  // nome" — e fecha a possibilidade de se passar por um usuário de verdade).
-  if (profile?.username === DEMO_USERNAME && parsed.data.username !== DEMO_USERNAME) {
-    return { ok: false, error: "A conta de demonstração não pode mudar de nome de usuário." }
-  }
-
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -79,22 +70,28 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
   const user = await requireUser()
   const supabase = await createClient()
 
-  const [foldersResult, categoriesResult, entriesResult, tagsResult] = await Promise.all([
-    supabase.from("folders").select("id, name, parent_folder_id").eq("owner_id", user.id),
-    supabase
-      .from("categories")
-      .select("id, name, icon, color, folder_id, estrutura")
-      .eq("owner_id", user.id),
-    supabase
-      .from("entries")
-      .select(
-        "id, category_id, name, rating, image_url, image_display, custom_fields, entry_tags(tag_id)"
-      )
-      .eq("owner_id", user.id),
-    supabase.from("tags").select("id, name, color"),
-  ])
+  const [foldersResult, categoriesResult, entryFoldersResult, entriesResult, tagsResult] =
+    await Promise.all([
+      supabase.from("folders").select("id, name, parent_folder_id").eq("owner_id", user.id),
+      supabase
+        .from("categories")
+        .select("id, name, icon, color, folder_id, estrutura")
+        .eq("owner_id", user.id),
+      supabase
+        .from("entry_folders")
+        .select("id, category_id, name, parent_folder_id")
+        .eq("owner_id", user.id),
+      supabase
+        .from("entries")
+        .select(
+          "id, category_id, folder_id, name, rating, image_url, image_display, custom_fields, entry_tags(tag_id)"
+        )
+        .eq("owner_id", user.id),
+      supabase.from("tags").select("id, name, color"),
+    ])
 
   if (foldersResult.error) return fail(foldersResult.error)
+  if (entryFoldersResult.error) return fail(entryFoldersResult.error)
   if (categoriesResult.error) return fail(categoriesResult.error)
   if (entriesResult.error) return fail(entriesResult.error)
   if (tagsResult.error) return fail(tagsResult.error)
@@ -128,9 +125,24 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
     estrutura: parseEstrutura(row.estrutura),
   }))
 
+  const entryFolders: BackupEntryFolder[] = (
+    (entryFoldersResult.data ?? []) as {
+      id: string
+      category_id: string
+      name: string
+      parent_folder_id: string | null
+    }[]
+  ).map((row) => ({
+    id: row.id,
+    categoryId: row.category_id,
+    name: row.name,
+    parentId: row.parent_folder_id,
+  }))
+
   const entries: BackupEntry[] = (
     (entriesResult.data ?? []) as {
       category_id: string
+      folder_id: string | null
       name: string
       rating: number | null
       image_url: string | null
@@ -140,6 +152,7 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
     }[]
   ).map((row) => ({
     categoryId: row.category_id,
+    folderId: row.folder_id,
     name: row.name,
     rating: row.rating,
     imageUrl: row.image_url,
@@ -156,24 +169,20 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
     exportedAt: new Date().toISOString(),
     folders,
     categories,
+    entryFolders,
     entries,
   })
 }
 
 /**
  * Importa sempre criando estrutura nova — nunca mistura com o que já existe.
- * A validação e a gravação em si vivem em `lib/backup/import.ts`, reaproveitadas
- * pela semeadura da conta demo.
+ * A validação e a gravação em si vivem em `lib/backup/import.ts`; a validação
+ * também lê o acervo de exemplo da demonstração (`lib/demo/seed.ts`).
  */
 export async function importCollectionAction(input: {
   json: string
 }): Promise<ActionResult<ImportSummary>> {
   const user = await requireUser()
-  const profile = await getMyProfile()
-
-  if (profile?.username === DEMO_USERNAME) {
-    return { ok: false, error: "Importar não está disponível na conta de demonstração." }
-  }
 
   const parsed = parseBackupJSON(input.json)
   if (!parsed.ok) return parsed

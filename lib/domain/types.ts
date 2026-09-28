@@ -84,10 +84,26 @@ export interface Category {
   created_at: string
 }
 
+/**
+ * Subpasta DENTRO de uma categoria — organiza os itens dela
+ * (ex.: Suco › Feitos em casa | Marca 1). Aninhável sem limite.
+ */
+export interface EntryFolder {
+  id: string
+  owner_id: string
+  category_id: string
+  name: string
+  parent_folder_id: string | null
+  display_order: number
+  created_at: string
+}
+
 export interface Entry {
   id: string
   category_id: string
   owner_id: string
+  /** Subpasta da categoria onde o item está. `null` = raiz da categoria. */
+  folder_id: string | null
   name: string
   rating: number | null
   image_url: string | null
@@ -131,6 +147,8 @@ export interface EntryView {
   id: string
   categoryId: string
   categoryName: string
+  /** Subpasta da categoria. `null` = raiz. */
+  folderId: string | null
   ownerId: string
   name: string
   /** Primeira letra do nome, maiúscula. Usada quando não há imagem. */

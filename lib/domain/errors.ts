@@ -72,9 +72,6 @@ export function translateError(error: unknown): string {
   if (text.includes("jwt expired") || text.includes("pgrst301") || text.includes("session_expired")) {
     return "Sua sessão expirou. Faça login de novo."
   }
-  if (text.includes("demo_indisponivel")) {
-    return "O modo demonstração está indisponível no momento. Tente de novo em instantes."
-  }
 
   // ---- banco -------------------------------------------------------------
   if (code === "23505" || text.includes("duplicate key")) {
@@ -90,9 +87,6 @@ export function translateError(error: unknown): string {
     return "Isso já existe."
   }
   if (code === "42501" || text.includes("row-level security") || text.includes("row level security")) {
-    if (text.includes('"tags"') || text.includes("policy for table tags")) {
-      return "A conta de demonstração não pode criar, editar nem apagar tags — só usar as que já existem."
-    }
     return "Você só pode editar o que é seu."
   }
 

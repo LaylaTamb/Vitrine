@@ -12,8 +12,21 @@ const LINKS = [
   { href: "/usuarios", label: "Pessoas" },
 ]
 
-export function NavLinks({ hideUsers = false }: { hideUsers?: boolean }) {
-  const pathname = usePathname()
+/**
+ * `basePath` prefixa os links (`/demo` na demonstração); `hideUsers` tira
+ * "Pessoas", que não existe na demo.
+ */
+export function NavLinks({
+  hideUsers = false,
+  basePath = "",
+}: {
+  hideUsers?: boolean
+  basePath?: string
+}) {
+  const fullPath = usePathname()
+  // O caminho sem o prefixo, para a regra de "ativo" ser a mesma nos dois.
+  const pathname =
+    basePath && fullPath.startsWith(basePath) ? fullPath.slice(basePath.length) || "/" : fullPath
   const links = hideUsers ? LINKS.filter((link) => link.href !== "/usuarios") : LINKS
 
   return (
@@ -27,7 +40,7 @@ export function NavLinks({ hideUsers = false }: { hideUsers?: boolean }) {
         return (
           <Link
             key={link.href}
-            href={link.href}
+            href={link.href === "/" ? basePath || "/" : `${basePath}${link.href}`}
             className={cn(
               "rounded-md px-2.5 py-1.5 text-sm transition-colors",
               active

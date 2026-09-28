@@ -16,18 +16,20 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
-import { ChevronRight, FolderPlus, Library, Plus } from "lucide-react"
+import { FolderPlus, Library, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import { deleteCategoryAction, deleteFolderAction, reorderLevelAction } from "@/app/actions"
 import { CategoryEditor, type CategoryEditorValue } from "@/components/category/category-editor"
 import { CollectionCard } from "@/components/collection/collection-card"
 import { FolderDialog } from "@/components/collection/folder-dialog"
 import { MoveDialog } from "@/components/collection/move-dialog"
 import { EmptyState } from "@/components/layout/empty-state"
+import { LevelNav } from "@/components/layout/level-nav"
 import { PageHeader } from "@/components/layout/page-header"
+import { useFolderParam } from "@/components/layout/use-folder-param"
 import { ViewToggle, type ViewMode } from "@/components/layout/view-toggle"
+import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { breadcrumbOf, folderTotals, levelItems } from "@/lib/domain/collections"
@@ -68,7 +70,11 @@ export function CollectionsView({
   headerTitle: string
   headerSubtitle: string
 }) {
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
+  const { actions, basePath } = useVitrine()
+  const [folderParam, setCurrentFolderId] = useFolderParam()
+  // Link velho de uma pasta que não existe mais (ou de outra pessoa): raiz.
+  const currentFolderId =
+    folderParam && folders.some((folder) => folder.id === folderParam) ? folderParam : null
   const [view, setView] = useState<ViewMode>("grid")
   const [order, setOrder] = useState<string[] | null>(null)
 
@@ -152,7 +158,7 @@ export function CollectionsView({
       .filter((item) => item !== undefined)
       .map((item) => ({ kind: item.kind, id: item.id }))
 
-    const result = await reorderLevelAction({ items: payload })
+    const result = await actions.reorderLevel({ items: payload })
     if (!result.ok) {
       setOrder(previous)
       toast.error(result.error)
@@ -173,8 +179,8 @@ export function CollectionsView({
     if (!deleteTarget) return
     const result =
       deleteTarget.kind === "folder"
-        ? await deleteFolderAction({ id: deleteTarget.id })
-        : await deleteCategoryAction({ id: deleteTarget.id })
+        ? await actions.deleteFolder({ id: deleteTarget.id })
+        : await actions.deleteCategory({ id: deleteTarget.id })
 
     if (!result.ok) {
       toast.error(result.error)
@@ -221,34 +227,16 @@ export function CollectionsView({
         }
       />
 
-      {/* trilha */}
-      <div className="flex flex-wrap items-center gap-1 pb-5 text-sm">
-        <button
-          type="button"
-          onClick={() => setCurrentFolderId(null)}
-          className={cn(
-            "rounded px-1.5 py-0.5 transition-colors hover:text-foreground",
-            currentFolderId === null ? "text-foreground" : "text-muted-foreground"
-          )}
-        >
-          Coleções
-        </button>
-        {trail.map((folder, index) => (
-          <span key={folder.id} className="flex items-center gap-1">
-            <ChevronRight className="size-3.5 text-faint" />
-            <button
-              type="button"
-              onClick={() => setCurrentFolderId(folder.id)}
-              className={cn(
-                "rounded px-1.5 py-0.5 transition-colors hover:text-foreground",
-                index === trail.length - 1 ? "text-foreground" : "text-muted-foreground"
-              )}
-            >
-              {folder.name}
-            </button>
-          </span>
-        ))}
-      </div>
+      <LevelNav
+        trail={[
+          { key: "colecoes", label: "Coleções", onClick: () => setCurrentFolderId(null) },
+          ...trail.map((folder) => ({
+            key: folder.id,
+            label: folder.name,
+            onClick: () => setCurrentFolderId(folder.id),
+          })),
+        ]}
+      />
 
       {items.length === 0 && !canEdit ? (
         <EmptyState
@@ -272,7 +260,14 @@ export function CollectionsView({
           }
         />
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        // `id` fixo: sem ele o dnd-kit numera os ids de acessibilidade com um
+        // contador global, e o HTML do servidor não bate com o do navegador.
+        <DndContext
+          id="dnd-colecoes"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+        >
           <SortableContext items={items.map((item) => item.id)} strategy={strategy}>
             <div
               className={cn(
@@ -329,7 +324,7 @@ export function CollectionsView({
                     name={item.category.name}
                     icon={item.category.icon}
                     subtitle={itemCount(counts[item.id] ?? 0)}
-                    href={`/categoria/${item.id}`}
+                    href={`${basePath}/categoria/${item.id}`}
                     canEdit={canEdit}
                     sortable={canEdit}
                     view={view}
@@ -391,7 +386,7 @@ export function CollectionsView({
             open={folderDialog.open}
             onOpenChange={(open) => setFolderDialog((state) => ({ ...state, open }))}
             folder={folderDialog.folder}
-            parentFolderId={currentFolderId}
+            scope={{ kind: "collection", parentFolderId: currentFolderId }}
           />
 
           <CategoryEditor
