@@ -7,6 +7,7 @@ import { Stars } from "@/components/entry/stars"
 import { computeStats } from "@/lib/domain/stats"
 import { itemCount } from "@/lib/domain/format"
 import type { EntryView, Estrutura } from "@/lib/domain/types"
+import { cn } from "@/lib/utils"
 
 /**
  * A aba Números.
@@ -18,10 +19,13 @@ export function StatsPanel({
   views,
   estrutura,
   filterActive,
+  ratingEnabled = true,
 }: {
   views: EntryView[]
   estrutura: Estrutura
   filterActive: boolean
+  /** Categoria sem estrelas: nada de nota média nem distribuição. */
+  ratingEnabled?: boolean
 }) {
   const stats = computeStats(views, estrutura)
 
@@ -43,10 +47,14 @@ export function StatsPanel({
         </p>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className={cn("grid gap-3", ratingEnabled ? "sm:grid-cols-3" : "sm:grid-cols-1")}>
         <BigNumber value={String(stats.total)} label="itens no recorte" />
-        <BigNumber value={stats.averageLabel} label="nota média" />
-        <BigNumber value={String(stats.ratedCount)} label="itens avaliados" />
+        {ratingEnabled ? (
+          <>
+            <BigNumber value={stats.averageLabel} label="nota média" />
+            <BigNumber value={String(stats.ratedCount)} label="itens avaliados" />
+          </>
+        ) : null}
       </div>
 
       {stats.fields.length > 0 ? (
@@ -61,7 +69,8 @@ export function StatsPanel({
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className={cn("grid gap-4", ratingEnabled && "lg:grid-cols-2")}>
+        {ratingEnabled ? (
         <section className="rounded-lg border border-line bg-surface p-4">
           <h3 className="plaque mb-3">Distribuição das notas</h3>
           <ul className="space-y-1.5">
@@ -82,6 +91,7 @@ export function StatsPanel({
             ))}
           </ul>
         </section>
+        ) : null}
 
         <section className="rounded-lg border border-line bg-surface p-4">
           <h3 className="plaque mb-3">Tags mais usadas</h3>

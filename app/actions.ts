@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-import type { StructureImpact } from "@/lib/actions/contracts"
+import type { CategoryInput, StructureImpact } from "@/lib/actions/contracts"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import {
   createCategorySchema,
@@ -173,13 +173,9 @@ export async function deleteFolderAction(input: { id: string }): Promise<ActionR
 // Categorias
 // ---------------------------------------------------------------------------
 
-export async function createCategoryAction(input: {
-  name: string
-  icon: string | null
-  color: string | null
-  folderId: string | null
-  estrutura: unknown
-}): Promise<ActionResult<{ id: string }>> {
+export async function createCategoryAction(
+  input: CategoryInput & { folderId: string | null }
+): Promise<ActionResult<{ id: string }>> {
   const parsed = createCategorySchema.safeParse({
     ...input,
     estrutura: parseEstrutura(input.estrutura),
@@ -206,6 +202,8 @@ export async function createCategoryAction(input: {
       color: normalizeCategoryColor(parsed.data.color),
       folder_id: parsed.data.folderId,
       estrutura: parsed.data.estrutura,
+      rating_enabled: parsed.data.ratingEnabled,
+      default_sort: parsed.data.defaultSort,
       display_order,
     })
     .select("id")
@@ -216,15 +214,13 @@ export async function createCategoryAction(input: {
   return ok({ id: (data as { id: string }).id })
 }
 
-export async function updateCategoryAction(input: {
-  id: string
-  name: string
-  icon: string | null
-  color: string | null
-  estrutura: unknown
-  /** Ids de campo removidos cujos valores devem sair dos itens. */
-  removedFieldIds?: string[]
-}): Promise<ActionResult> {
+export async function updateCategoryAction(
+  input: CategoryInput & {
+    id: string
+    /** Ids de campo removidos cujos valores devem sair dos itens. */
+    removedFieldIds?: string[]
+  }
+): Promise<ActionResult> {
   const parsed = updateCategorySchema.safeParse({
     ...input,
     estrutura: parseEstrutura(input.estrutura),
@@ -240,10 +236,23 @@ export async function updateCategoryAction(input: {
       icon: parsed.data.icon || null,
       color: normalizeCategoryColor(parsed.data.color),
       estrutura: parsed.data.estrutura,
+      rating_enabled: parsed.data.ratingEnabled,
+      default_sort: parsed.data.defaultSort,
     })
     .eq("id", parsed.data.id)
 
   if (error) return fail(error)
+
+  // Estrelas desligadas: as notas saem de fato dos itens (a pessoa confirmou
+  // no diálogo de impacto quantas se perdem).
+  if (!parsed.data.ratingEnabled) {
+    const { error: ratingError } = await supabase
+      .from("entries")
+      .update({ rating: null })
+      .eq("category_id", parsed.data.id)
+      .not("rating", "is", null)
+    if (ratingError) return fail(ratingError)
+  }
 
   // Campo removido: o valor sai de fato de todos os itens da categoria.
   const removed = parsed.data.removedFieldIds ?? []
@@ -428,11 +437,16 @@ export async function structureImpactAction(input: {
     entry.options.map((option) => ({ fieldId: entry.fieldId, option }))
   )
 
-  const [totalResult, fieldResults, optionResults] = await Promise.all([
+  const [totalResult, ratedResult, fieldResults, optionResults] = await Promise.all([
     supabase
       .from("entries")
       .select("id", { count: "exact", head: true })
       .eq("category_id", parsed.data.categoryId),
+    supabase
+      .from("entries")
+      .select("id", { count: "exact", head: true })
+      .eq("category_id", parsed.data.categoryId)
+      .not("rating", "is", null),
     Promise.all(
       parsed.data.fieldIds.map((id) =>
         supabase
@@ -466,5 +480,10 @@ export async function structureImpactAction(input: {
     optionUsage[id][option] = optionResults[index]?.count ?? 0
   })
 
-  return ok({ total: totalResult.count ?? 0, filled, optionUsage })
+  return ok({
+    total: totalResult.count ?? 0,
+    rated: ratedResult.count ?? 0,
+    filled,
+    optionUsage,
+  })
 }

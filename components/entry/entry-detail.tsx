@@ -73,12 +73,14 @@ export function EntryDetail({
 
         <h1 className="display text-[2.3rem] leading-tight break-words">{view.name}</h1>
 
-        <div className="flex items-center gap-2">
-          <Stars percent={view.ratingPercent} size="md" />
-          <span className="text-sm text-muted-foreground">
-            {view.hasRating ? `${formatRating(view.rating)} de 5` : "sem avaliação"}
-          </span>
-        </div>
+        {category.rating_enabled ? (
+          <div className="flex items-center gap-2">
+            <Stars percent={view.ratingPercent} size="md" />
+            <span className="text-sm text-muted-foreground">
+              {view.hasRating ? `${formatRating(view.rating)} de 5` : "sem avaliação"}
+            </span>
+          </div>
+        ) : null}
 
         {view.extras.length > 0 ? (
           <dl className="pt-2">
@@ -118,6 +120,7 @@ export function EntryDetail({
             estrutura={category.estrutura}
             tags={tags}
             folders={entryFolders}
+            ratingEnabled={category.rating_enabled}
           />
         ) : null}
       </div>

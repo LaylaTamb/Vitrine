@@ -11,6 +11,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { ok, fail, type ActionResult } from "@/lib/actions/result"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
+import { normalizeSort, type SortKey } from "@/lib/domain/filter"
 import { normalizeCategoryColor, normalizeTagColor } from "@/lib/domain/tags"
 import { FIELD_TYPES, type CustomFields, type Estrutura } from "@/lib/domain/types"
 import { imageDisplayOf } from "@/lib/domain/view"
@@ -28,9 +29,12 @@ export interface BackupCategory {
   color: string | null
   folderId: string | null
   estrutura: Estrutura
+  /** `false` = lista simples, sem nota. Ausente (arquivo antigo) = com estrelas. */
+  ratingEnabled: boolean
+  defaultSort: SortKey
 }
 
-/** Subpasta de dentro de uma categoria. */
+/** Subpasta de dentro de uma categoria. A ordem no arquivo é a ordem na tela. */
 export interface BackupEntryFolder {
   id: string
   categoryId: string
@@ -38,6 +42,7 @@ export interface BackupEntryFolder {
   parentId: string | null
 }
 
+/** Um item. A ordem no arquivo, dentro de cada nível, é a "ordem manual". */
 export interface BackupEntry {
   categoryId: string
   /** Subpasta da categoria (id do arquivo). Ausente/nulo = raiz. */
@@ -79,6 +84,8 @@ const backupCategorySchema = z.object({
   color: z.string().nullable().default(null),
   folderId: z.string().nullable().default(null),
   estrutura: z.array(backupFieldSchema).default([]),
+  ratingEnabled: z.boolean().default(true),
+  defaultSort: z.string().default("recent"),
 })
 
 const backupEntryFolderSchema = z.object({
@@ -167,6 +174,21 @@ export function parseBackupJSON(json: string): ParseBackupResult {
   }
 
   return { ok: true, data: parsed.data }
+}
+
+/**
+ * A posição de cada elemento dentro do próprio nível, na ordem do arquivo:
+ * `[a(raiz), b(raiz), c(pasta X)] → [0, 1, 0]`. É assim que a ordem manual
+ * (itens e subpastas) atravessa um backup sem precisar de campo próprio.
+ */
+export function positionsInLevel<T>(items: T[], levelOf: (item: T) => string): number[] {
+  const next = new Map<string, number>()
+  return items.map((item) => {
+    const level = levelOf(item)
+    const position = next.get(level) ?? 0
+    next.set(level, position + 1)
+    return position
+  })
 }
 
 /** Meia estrela: a nota só existe em passos de 0,5 — mesma regra do formulário de item. */
@@ -290,6 +312,7 @@ export async function performImport(
 
   const categoryIdMap = new Map<string, string>()
   const estruturaById = new Map<string, Estrutura>()
+  const ratingEnabledById = new Map<string, boolean>()
 
   for (const category of categories) {
     const estrutura = parseEstrutura(category.estrutura)
@@ -302,6 +325,8 @@ export async function performImport(
         color: normalizeCategoryColor(category.color),
         folder_id: category.folderId ? (folderIdMap.get(category.folderId) ?? null) : null,
         estrutura,
+        rating_enabled: category.ratingEnabled,
+        default_sort: normalizeSort(category.defaultSort, category.ratingEnabled),
         display_order: 9999,
       })
       .select("id")
@@ -310,11 +335,17 @@ export async function performImport(
     if (error) return fail(error)
     categoryIdMap.set(category.id, (data as { id: string }).id)
     estruturaById.set(category.id, estrutura)
+    ratingEnabledById.set(category.id, category.ratingEnabled)
   }
 
   // 2b) subpastas de categoria, em ondas como as pastas: só insere quem já
   // tem a mãe resolvida.
   const entryFolderIdMap = new Map<string, string>()
+  const folderPosition = new Map(
+    positionsInLevel(entryFolders, (folder) => `${folder.categoryId}|${folder.parentId}`).map(
+      (position, index) => [entryFolders[index], position]
+    )
+  )
   let pendingEntryFolders = [...entryFolders]
   let entryFolderGuard = 0
   while (pendingEntryFolders.length > 0) {
@@ -337,6 +368,7 @@ export async function performImport(
             parent_folder_id: folder.parentId
               ? (entryFolderIdMap.get(folder.parentId) ?? null)
               : null,
+            display_order: folderPosition.get(folder) ?? 0,
           })
           .select("id")
           .single()
@@ -384,8 +416,9 @@ export async function performImport(
   // 4) itens, um insert por item — precisa do id de volta pareado 1:1 para
   // gravar os vínculos de tag, e um `.insert([...]).select()` em lote não
   // garante a ordem de retorno igual à de entrada.
+  const entryPositions = positionsInLevel(entries, (entry) => `${entry.categoryId}|${entry.folderId}`)
   const entryResults = await Promise.all(
-    entries.map((entry) =>
+    entries.map((entry, index) =>
       supabase
         .from("entries")
         .insert({
@@ -393,7 +426,11 @@ export async function performImport(
           folder_id: entry.folderId ? (entryFolderIdMap.get(entry.folderId) ?? null) : null,
           owner_id: ownerId,
           name: entry.name.trim(),
-          rating: normalizeImportRating(entry.rating),
+          rating:
+            ratingEnabledById.get(entry.categoryId) === false
+              ? null
+              : normalizeImportRating(entry.rating),
+          display_order: entryPositions[index],
           image_url: entry.imageUrl?.trim() || null,
           image_display: imageDisplayOf(entry.imageDisplay),
           custom_fields: coerceCustomFields(

@@ -6,8 +6,9 @@
  * TypeScript puro, sem React: é o que `store.ts` transforma e o que os
  * testes conferem.
  */
-import type { ParsedBackupPayload } from "@/lib/backup/import"
+import { positionsInLevel, type ParsedBackupPayload } from "@/lib/backup/import"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
+import { normalizeSort } from "@/lib/domain/filter"
 import { normalizeCategoryColor, normalizeTagColor } from "@/lib/domain/tags"
 import type {
   Category,
@@ -104,19 +105,34 @@ export function buildDemoState(seed: ParsedBackupPayload): DemoState {
     folder_id: category.folderId ? demoId(`pasta:${category.folderId}`) : null,
     display_order: index,
     estrutura: parseEstrutura(category.estrutura),
+    rating_enabled: category.ratingEnabled,
+    default_sort: normalizeSort(category.defaultSort, category.ratingEnabled),
     created_at: SEED_DATE,
   }))
   const estruturaBySeedId = new Map(
     seed.categories.map((category, index) => [category.id, categories[index].estrutura])
   )
+  const ratingEnabledBySeedId = new Map(
+    seed.categories.map((category) => [category.id, category.ratingEnabled])
+  )
 
-  const entryFolders: EntryFolder[] = seed.entryFolders.map((folder) => ({
+  // A ordem no seed, nível a nível, é a ordem manual — mesma regra do import.
+  const folderPositions = positionsInLevel(
+    seed.entryFolders,
+    (folder) => `${folder.categoryId}|${folder.parentId}`
+  )
+  const entryPositions = positionsInLevel(
+    seed.entries,
+    (entry) => `${entry.categoryId}|${entry.folderId}`
+  )
+
+  const entryFolders: EntryFolder[] = seed.entryFolders.map((folder, index) => ({
     id: demoId(`subpasta:${folder.id}`),
     owner_id: DEMO_OWNER_ID,
     category_id: demoId(`categoria:${folder.categoryId}`),
     name: folder.name,
     parent_folder_id: folder.parentId ? demoId(`subpasta:${folder.parentId}`) : null,
-    display_order: 0,
+    display_order: folderPositions[index],
     created_at: SEED_DATE,
   }))
 
@@ -149,13 +165,17 @@ export function buildDemoState(seed: ParsedBackupPayload): DemoState {
       folder_id: entry.folderId ? demoId(`subpasta:${entry.folderId}`) : null,
       owner_id: DEMO_OWNER_ID,
       name: entry.name.trim(),
-      rating: normalizeSeedRating(entry.rating),
+      rating:
+        ratingEnabledBySeedId.get(entry.categoryId) === false
+          ? null
+          : normalizeSeedRating(entry.rating),
       image_url: entry.imageUrl?.trim() || null,
       image_display: imageDisplayOf(entry.imageDisplay),
       custom_fields: coerceCustomFields(
         estruturaBySeedId.get(entry.categoryId) ?? [],
         entry.customFields
       ),
+      display_order: entryPositions[index],
       created_at: createdAt,
       updated_at: createdAt,
       entry_tags: tagIds.map((tagId) => ({ tag_id: tagId })),

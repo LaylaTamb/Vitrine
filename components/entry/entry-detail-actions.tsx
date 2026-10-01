@@ -19,12 +19,14 @@ export function EntryDetailActions({
   estrutura,
   tags,
   folders,
+  ratingEnabled,
 }: {
   view: EntryView
   categoryId: string
   estrutura: Estrutura
   tags: Tag[]
   folders: EntryFolder[]
+  ratingEnabled: boolean
 }) {
   const { actions, basePath } = useVitrine()
   const router = useRouter()
@@ -50,6 +52,7 @@ export function EntryDetailActions({
         tags={tags}
         entry={view}
         folders={folders}
+        ratingEnabled={ratingEnabled}
       />
 
       <ConfirmDialog

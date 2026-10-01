@@ -74,7 +74,8 @@ export default async function CategoryPage({
   const tagsById = new Map<string, Tag>(tags.map((tag) => [tag.id, tag]))
   const views = entries.map((entry) => toView(entry, category.estrutura, tagsById, category.name))
 
-  const initialFilter = categoryFilterFromParams(query)
+  // Sem `ordem` na URL, a categoria abre na ordenação padrão dela.
+  const initialFilter = categoryFilterFromParams(query, category)
 
   const canEdit = category.owner_id === user.id
   // O Voltar da raiz da categoria leva às Coleções de quem é dono dela.

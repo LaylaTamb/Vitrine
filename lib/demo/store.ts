@@ -27,6 +27,7 @@ import {
   moveFolderSchema,
   normalizeRating,
   renameFolderSchema,
+  reorderInCategorySchema,
   reorderSchema,
   searchEntriesForTagSchema,
   structureImpactSchema,
@@ -70,6 +71,34 @@ function withoutCategories(state: DemoState, ids: Set<string>): DemoState {
 
 function nextDisplayOrder<T extends { display_order: number }>(siblings: T[]): number {
   return siblings.reduce((top, item) => Math.max(top, item.display_order), -1) + 1
+}
+
+/** Próxima posição livre na ordem manual de um nível: item novo vai para o fim. */
+function nextEntryOrder(state: DemoState, categoryId: string, folderId: string | null): number {
+  return nextDisplayOrder(
+    state.entries.filter(
+      (entry) => entry.category_id === categoryId && (entry.folder_id ?? null) === folderId
+    )
+  )
+}
+
+function nextFolderOrder(state: DemoState, categoryId: string, parentId: string | null): number {
+  return nextDisplayOrder(
+    state.entryFolders.filter(
+      (folder) => folder.category_id === categoryId && folder.parent_folder_id === parentId
+    )
+  )
+}
+
+/** Os ids pedidos, na sequência em que estão hoje na ordem manual. */
+function inCurrentOrder(entries: EntryWithTags[], ids: Set<string>): string[] {
+  return entries
+    .filter((entry) => ids.has(entry.id))
+    .sort(
+      (a, b) =>
+        a.display_order - b.display_order || (a.created_at < b.created_at ? -1 : 1)
+    )
+    .map((entry) => entry.id)
 }
 
 /**
@@ -207,7 +236,7 @@ export function createDemoActions(
       })
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
-      const { name, icon, color, folderId, estrutura } = parsed.data
+      const { name, icon, color, folderId, estrutura, ratingEnabled, defaultSort } = parsed.data
       if (state.categories.some((category) => category.name === name)) {
         return no("Você já tem uma categoria com esse nome.")
       }
@@ -228,6 +257,8 @@ export function createDemoActions(
               state.categories.filter((category) => category.folder_id === folderId)
             ),
             estrutura,
+            rating_enabled: ratingEnabled,
+            default_sort: defaultSort,
             created_at: now(),
           },
         ],
@@ -242,7 +273,16 @@ export function createDemoActions(
       })
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
-      const { id, name, icon, color, estrutura, removedFieldIds = [] } = parsed.data
+      const {
+        id,
+        name,
+        icon,
+        color,
+        estrutura,
+        ratingEnabled,
+        defaultSort,
+        removedFieldIds = [],
+      } = parsed.data
       if (!state.categories.some((category) => category.id === id)) return no(GONE)
       if (state.categories.some((category) => category.id !== id && category.name === name)) {
         return no("Você já tem uma categoria com esse nome.")
@@ -251,9 +291,25 @@ export function createDemoActions(
         ...state,
         categories: state.categories.map((category) =>
           category.id === id
-            ? { ...category, name, icon: icon || null, color: normalizeCategoryColor(color), estrutura }
+            ? {
+                ...category,
+                name,
+                icon: icon || null,
+                color: normalizeCategoryColor(color),
+                estrutura,
+                rating_enabled: ratingEnabled,
+                default_sort: defaultSort,
+              }
             : category
         ),
+      }
+      // Estrelas desligadas: as notas saem de fato dos itens.
+      if (!ratingEnabled) {
+        next = updateEntries(
+          next,
+          (entry) => entry.category_id === id && entry.rating !== null,
+          (entry) => ({ ...entry, rating: null })
+        )
       }
       // Campo removido: o valor sai de fato de todos os itens da categoria.
       if (removedFieldIds.length > 0) {
@@ -313,7 +369,12 @@ export function createDemoActions(
           ).length
         }
       }
-      return ok({ total: entries.length, filled, optionUsage })
+      return ok({
+        total: entries.length,
+        rated: entries.filter((entry) => entry.rating !== null).length,
+        filled,
+        optionUsage,
+      })
     },
 
     // -----------------------------------------------------------------------
@@ -344,7 +405,7 @@ export function createDemoActions(
             category_id: categoryId,
             name,
             parent_folder_id: parentFolderId,
-            display_order: 0,
+            display_order: nextFolderOrder(state, categoryId, parentFolderId),
             created_at: now(),
           },
         ],
@@ -381,10 +442,28 @@ export function createDemoActions(
           return no("Uma pasta não pode ir para dentro de uma subpasta dela.")
         }
       }
+      // Chega no fim do nível de destino.
+      const display_order = nextFolderOrder(state, folder.category_id, targetFolderId)
       commit({
         ...state,
         entryFolders: state.entryFolders.map((item) =>
-          item.id === id ? { ...item, parent_folder_id: targetFolderId } : item
+          item.id === id ? { ...item, parent_folder_id: targetFolderId, display_order } : item
+        ),
+      })
+      return ok()
+    },
+
+    async reorderEntryFolders(input): Result {
+      const parsed = reorderInCategorySchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      const position = new Map(parsed.data.ids.map((id, index) => [id, index]))
+      const state = get()
+      commit({
+        ...state,
+        entryFolders: state.entryFolders.map((folder) =>
+          folder.category_id === parsed.data.categoryId && position.has(folder.id)
+            ? { ...folder, display_order: position.get(folder.id)! }
+            : folder
         ),
       })
       return ok()
@@ -439,12 +518,23 @@ export function createDemoActions(
       ) {
         return no(GONE)
       }
-      const wanted = new Set(ids)
+      // Chegam no fim da ordem manual do destino, na sequência em que estavam.
+      const base = nextEntryOrder(state, categoryId, folderId)
+      const ordered = inCurrentOrder(
+        state.entries.filter((entry) => entry.category_id === categoryId),
+        new Set(ids)
+      )
+      const position = new Map(ordered.map((id, index) => [id, base + index]))
       commit(
         updateEntries(
           state,
-          (entry) => wanted.has(entry.id) && entry.category_id === categoryId,
-          (entry) => ({ ...entry, folder_id: folderId, updated_at: now() })
+          (entry) => position.has(entry.id),
+          (entry) => ({
+            ...entry,
+            folder_id: folderId,
+            display_order: position.get(entry.id)!,
+            updated_at: now(),
+          })
         )
       )
       return ok()
@@ -482,10 +572,12 @@ export function createDemoActions(
             folder_id: folderId,
             owner_id: DEMO_OWNER_ID,
             name: data.name,
-            rating: normalizeRating(data.rating),
+            // Categoria sem estrelas nunca guarda nota.
+            rating: category.rating_enabled ? normalizeRating(data.rating) : null,
             image_url: data.imageUrl || null,
             image_display: data.imageDisplay,
             custom_fields: coerceCustomFields(category.estrutura, data.customFields),
+            display_order: nextEntryOrder(state, category.id, folderId),
             created_at: stamp,
             updated_at: stamp,
             entry_tags: [...new Set(data.tagIds)]
@@ -514,6 +606,13 @@ export function createDemoActions(
         return no(GONE)
       }
       const knownTags = new Set(state.tags.map((tag) => tag.id))
+      // Trocou de pasta pelo formulário: entra no fim da ordem manual do destino.
+      const movedTo =
+        data.folderId !== undefined && data.folderId !== current.folder_id ? data.folderId : undefined
+      const display_order =
+        movedTo !== undefined
+          ? nextEntryOrder(state, category.id, movedTo)
+          : current.display_order
       commit(
         updateEntries(
           state,
@@ -521,11 +620,12 @@ export function createDemoActions(
           (entry) => ({
             ...entry,
             name: data.name,
-            rating: normalizeRating(data.rating),
+            rating: category.rating_enabled ? normalizeRating(data.rating) : null,
             image_url: data.imageUrl || null,
             image_display: data.imageDisplay,
             custom_fields: coerceCustomFields(category.estrutura, data.customFields),
-            folder_id: data.folderId !== undefined ? data.folderId : entry.folder_id,
+            folder_id: movedTo !== undefined ? movedTo : entry.folder_id,
+            display_order,
             updated_at: now(),
             entry_tags: [...new Set(data.tagIds)]
               .filter((tagId) => knownTags.has(tagId))
@@ -541,6 +641,21 @@ export function createDemoActions(
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
       commit({ ...state, entries: state.entries.filter((entry) => entry.id !== parsed.data.id) })
+      return ok()
+    },
+
+    async reorderEntries(input): Result {
+      const parsed = reorderInCategorySchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      const position = new Map(parsed.data.ids.map((id, index) => [id, index]))
+      // Reordenar não é editar: `updated_at` fica como está (igual ao banco).
+      commit(
+        updateEntries(
+          get(),
+          (entry) => entry.category_id === parsed.data.categoryId && position.has(entry.id),
+          (entry) => ({ ...entry, display_order: position.get(entry.id)! })
+        )
+      )
       return ok()
     },
 
@@ -602,17 +717,22 @@ export function createDemoActions(
       const from = state.categories.find((item) => item.id === parsed.data.categoryId)
       const to = state.categories.find((item) => item.id === parsed.data.toCategoryId)
       if (!from || !to) return no(GONE)
-      const wanted = new Set(parsed.data.ids)
       // Mesma regra do app: valor migra por nome+tipo; o item chega na raiz
-      // do destino (as subpastas são da categoria de origem).
+      // do destino (as subpastas são da categoria de origem), no fim da ordem
+      // manual; destino sem estrelas tira a nota.
+      const base = nextEntryOrder(state, to.id, null)
+      const ordered = inCurrentOrder(state.entries, new Set(parsed.data.ids))
+      const position = new Map(ordered.map((id, index) => [id, base + index]))
       commit(
         updateEntries(
           state,
-          (entry) => wanted.has(entry.id),
+          (entry) => position.has(entry.id),
           (entry) => ({
             ...entry,
             category_id: to.id,
             folder_id: null,
+            display_order: position.get(entry.id)!,
+            rating: to.rating_enabled ? entry.rating : null,
             custom_fields: migrateCustomFields(from.estrutura, to.estrutura, entry.custom_fields)
               .values,
             updated_at: now(),

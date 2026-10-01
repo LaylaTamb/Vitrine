@@ -8,6 +8,7 @@
  */
 import { z } from "zod"
 
+import { SORT_KEYS, type SortKey } from "@/lib/domain/filter"
 import { FIELD_TYPES } from "@/lib/domain/types"
 
 export const uuid = z.uuid("Identificador inválido.")
@@ -58,6 +59,12 @@ export const deleteEntryFolderSchema = z.object({
   keepContents: z.boolean(),
 })
 
+/** A ordem nova de um nível inteiro (subpastas ou itens), depois de um arraste. */
+export const reorderInCategorySchema = z.object({
+  categoryId: uuid,
+  ids: z.array(uuid).min(1, "Nada para reordenar.").max(2000),
+})
+
 export const moveEntriesToFolderSchema = z.object({
   ids: z.array(uuid).min(1, "Selecione pelo menos um item."),
   categoryId: uuid,
@@ -68,11 +75,16 @@ export const moveEntriesToFolderSchema = z.object({
 // Categorias
 // ---------------------------------------------------------------------------
 
+export const sortKeySchema = z.enum(SORT_KEYS as [SortKey, ...SortKey[]])
+
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "Dê um nome à categoria.").max(80, "Nome muito longo."),
   icon: z.string().trim().max(4, "O ícone é um emoji só.").nullable(),
   color: z.string().nullable(),
   estrutura: estruturaSchema,
+  /** `false` = lista simples, sem nota de estrelas. */
+  ratingEnabled: z.boolean(),
+  defaultSort: sortKeySchema,
 })
 
 export const createCategorySchema = categorySchema.extend({ folderId: uuid.nullable() })

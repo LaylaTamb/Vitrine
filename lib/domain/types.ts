@@ -81,6 +81,13 @@ export interface Category {
   folder_id: string | null
   display_order: number
   estrutura: Estrutura
+  /**
+   * `false` = lista simples: a categoria não usa a nota de 0 a 5 estrelas em
+   * lugar nenhum (formulário, cards, filtro, Números).
+   */
+  rating_enabled: boolean
+  /** A ordenação com que a categoria abre. Lida com `defaultSortOf()`. */
+  default_sort: string
   created_at: string
 }
 
@@ -109,6 +116,8 @@ export interface Entry {
   image_url: string | null
   image_display: ImageDisplay
   custom_fields: CustomFields
+  /** Posição na "ordem manual", dentro do mesmo nível (categoria + subpasta). */
+  display_order: number
   created_at: string
   updated_at: string
 }
@@ -173,6 +182,8 @@ export interface EntryView {
   values: CustomFields
   /** Os dois primeiros valores de `str`/`select` preenchidos, com " · ". */
   summary: string
+  /** Posição na "ordem manual" do nível. */
+  displayOrder: number
   createdAt: string
   /** nome + tags + todos os valores, em minúsculas: o alvo da busca livre. */
   search: string

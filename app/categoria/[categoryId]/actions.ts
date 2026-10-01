@@ -16,6 +16,7 @@ import {
   moveFolderSchema,
   normalizeRating,
   renameFolderSchema,
+  reorderInCategorySchema,
   updateEntrySchema,
 } from "@/lib/actions/schemas"
 import { descendantFolderIds } from "@/lib/domain/collections"
@@ -25,16 +26,60 @@ import type { CustomFields, EntryFolder, Estrutura } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
 
-async function estruturaOf(
+/** O que decide como um item é gravado: os campos e se a categoria usa estrelas. */
+async function categoryRulesOf(
   supabase: Awaited<ReturnType<typeof createClient>>,
   categoryId: string
-): Promise<Estrutura> {
+): Promise<{ estrutura: Estrutura; ratingEnabled: boolean }> {
   const { data } = await supabase
     .from("categories")
-    .select("estrutura")
+    .select("estrutura, rating_enabled")
     .eq("id", categoryId)
     .maybeSingle()
-  return parseEstrutura((data as { estrutura: unknown } | null)?.estrutura)
+  const row = data as { estrutura: unknown; rating_enabled: boolean | null } | null
+  return {
+    estrutura: parseEstrutura(row?.estrutura),
+    ratingEnabled: row?.rating_enabled !== false,
+  }
+}
+
+/** A próxima posição livre na "ordem manual" de um nível: item novo vai para o fim. */
+async function nextEntryOrder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryId: string,
+  folderId: string | null
+): Promise<number> {
+  let query = supabase
+    .from("entries")
+    .select("display_order")
+    .eq("category_id", categoryId)
+    .order("display_order", { ascending: false })
+    .limit(1)
+  query = folderId === null ? query.is("folder_id", null) : query.eq("folder_id", folderId)
+  const { data } = await query
+  const top = (data ?? [])[0] as { display_order: number } | undefined
+  return (top?.display_order ?? -1) + 1
+}
+
+/** Idem, para as subpastas de um nível. */
+async function nextFolderOrder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryId: string,
+  parentFolderId: string | null
+): Promise<number> {
+  let query = supabase
+    .from("entry_folders")
+    .select("display_order")
+    .eq("category_id", categoryId)
+    .order("display_order", { ascending: false })
+    .limit(1)
+  query =
+    parentFolderId === null
+      ? query.is("parent_folder_id", null)
+      : query.eq("parent_folder_id", parentFolderId)
+  const { data } = await query
+  const top = (data ?? [])[0] as { display_order: number } | undefined
+  return (top?.display_order ?? -1) + 1
 }
 
 async function writeTags(
@@ -61,19 +106,25 @@ export async function createEntryAction(
 
   const user = await requireUser()
   const supabase = await createClient()
-  const estrutura = await estruturaOf(supabase, parsed.data.categoryId)
+  const folderId = parsed.data.folderId ?? null
+  const [rules, display_order] = await Promise.all([
+    categoryRulesOf(supabase, parsed.data.categoryId),
+    nextEntryOrder(supabase, parsed.data.categoryId, folderId),
+  ])
 
   const { data, error } = await supabase
     .from("entries")
     .insert({
       category_id: parsed.data.categoryId,
-      folder_id: parsed.data.folderId ?? null,
+      folder_id: folderId,
       owner_id: user.id,
       name: parsed.data.name,
-      rating: normalizeRating(parsed.data.rating),
+      // Categoria sem estrelas nunca guarda nota, venha o que vier.
+      rating: rules.ratingEnabled ? normalizeRating(parsed.data.rating) : null,
       image_url: parsed.data.imageUrl || null,
       image_display: parsed.data.imageDisplay,
-      custom_fields: coerceCustomFields(estrutura, parsed.data.customFields),
+      custom_fields: coerceCustomFields(rules.estrutura, parsed.data.customFields),
+      display_order,
     })
     .select("id")
     .single()
@@ -96,18 +147,32 @@ export async function updateEntryAction(
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
-  const estrutura = await estruturaOf(supabase, parsed.data.categoryId)
+  const [rules, currentResult] = await Promise.all([
+    categoryRulesOf(supabase, parsed.data.categoryId),
+    supabase.from("entries").select("folder_id").eq("id", parsed.data.id).maybeSingle(),
+  ])
+
+  // Trocou de pasta pelo formulário: entra no fim da ordem manual do destino.
+  // `folderId` ausente = o formulário não mexeu na pasta.
+  const currentFolder = (currentResult.data as { folder_id: string | null } | null)?.folder_id ?? null
+  const folderId = parsed.data.folderId
+  const folderPatch =
+    folderId !== undefined && folderId !== currentFolder
+      ? {
+          folder_id: folderId,
+          display_order: await nextEntryOrder(supabase, parsed.data.categoryId, folderId),
+        }
+      : {}
 
   const { error } = await supabase
     .from("entries")
     .update({
       name: parsed.data.name,
-      rating: normalizeRating(parsed.data.rating),
+      rating: rules.ratingEnabled ? normalizeRating(parsed.data.rating) : null,
       image_url: parsed.data.imageUrl || null,
       image_display: parsed.data.imageDisplay,
-      custom_fields: coerceCustomFields(estrutura, parsed.data.customFields),
-      // `folderId` ausente = o formulário não mexeu na pasta.
-      ...(parsed.data.folderId !== undefined ? { folder_id: parsed.data.folderId } : {}),
+      custom_fields: coerceCustomFields(rules.estrutura, parsed.data.customFields),
+      ...folderPatch,
     })
     .eq("id", parsed.data.id)
 
@@ -195,14 +260,28 @@ async function loadMoveContext(
 ) {
   const [fromResult, toResult, entriesResult] = await Promise.all([
     supabase.from("categories").select("estrutura").eq("id", fromCategoryId).maybeSingle(),
-    supabase.from("categories").select("estrutura").eq("id", toCategoryId).maybeSingle(),
-    supabase.from("entries").select("id, custom_fields").in("id", ids),
+    supabase
+      .from("categories")
+      .select("estrutura, rating_enabled")
+      .eq("id", toCategoryId)
+      .maybeSingle(),
+    supabase
+      .from("entries")
+      .select("id, custom_fields, display_order")
+      .in("id", ids)
+      .order("display_order", { ascending: true }),
   ])
 
+  const to = toResult.data as { estrutura: unknown; rating_enabled: boolean | null } | null
   return {
     from: parseEstrutura((fromResult.data as { estrutura: unknown } | null)?.estrutura),
-    to: parseEstrutura((toResult.data as { estrutura: unknown } | null)?.estrutura),
-    entries: (entriesResult.data ?? []) as { id: string; custom_fields: CustomFields }[],
+    to: parseEstrutura(to?.estrutura),
+    toRatingEnabled: to?.rating_enabled !== false,
+    entries: (entriesResult.data ?? []) as {
+      id: string
+      custom_fields: CustomFields
+      display_order: number
+    }[],
     error: fromResult.error ?? toResult.error ?? entriesResult.error,
   }
 }
@@ -256,9 +335,11 @@ export async function bulkMoveEntriesAction(input: {
   // Um valor sobrevive quando o destino tem um campo de mesmo nome e mesmo
   // tipo — e é regravado sob o id do campo do destino. As subpastas são da
   // categoria de origem, então o item chega na raiz do destino (a FK
-  // composta do banco recusaria manter o `folder_id`).
+  // composta do banco recusaria manter o `folder_id`) — no fim da ordem
+  // manual, na mesma sequência em que estava. Destino sem estrelas: a nota sai.
+  const base = await nextEntryOrder(supabase, parsed.data.toCategoryId, null)
   const results = await Promise.all(
-    context.entries.map((entry) => {
+    context.entries.map((entry, index) => {
       const migrated = migrateCustomFields(context.from, context.to, entry.custom_fields ?? {})
       return supabase
         .from("entries")
@@ -266,6 +347,8 @@ export async function bulkMoveEntriesAction(input: {
           category_id: parsed.data.toCategoryId,
           folder_id: null,
           custom_fields: migrated.values,
+          display_order: base + index,
+          ...(context.toRatingEnabled ? {} : { rating: null }),
         })
         .eq("id", entry.id)
     })
@@ -306,9 +389,14 @@ export async function createEntryFolderAction(input: {
 
   const user = await requireUser()
   const supabase = await createClient()
+  const display_order = await nextFolderOrder(
+    supabase,
+    parsed.data.categoryId,
+    parsed.data.parentFolderId
+  )
 
   // A RLS confere que a categoria é de quem cria; a FK composta, que a
-  // pasta-mãe é da mesma categoria.
+  // pasta-mãe é da mesma categoria. Pasta nova entra no fim do nível.
   const { data, error } = await supabase
     .from("entry_folders")
     .insert({
@@ -316,6 +404,7 @@ export async function createEntryFolderAction(input: {
       category_id: parsed.data.categoryId,
       parent_folder_id: parsed.data.parentFolderId,
       name: parsed.data.name,
+      display_order,
     })
     .select("id")
     .single()
@@ -368,9 +457,15 @@ export async function moveEntryFolderAction(input: {
     }
   }
 
+  // Chega no fim do nível de destino.
+  const display_order = await nextFolderOrder(
+    supabase,
+    folder.category_id,
+    parsed.data.targetFolderId
+  )
   const { error } = await supabase
     .from("entry_folders")
-    .update({ parent_folder_id: parsed.data.targetFolderId })
+    .update({ parent_folder_id: parsed.data.targetFolderId, display_order })
     .eq("id", parsed.data.id)
 
   if (error) return fail(error)
@@ -426,11 +521,82 @@ export async function moveEntriesToFolderAction(input: {
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
+  const { ids, categoryId, folderId } = parsed.data
+
+  // Chegam no fim da ordem manual da pasta de destino, na sequência em que
+  // estavam.
+  const [base, currentResult] = await Promise.all([
+    nextEntryOrder(supabase, categoryId, folderId),
+    supabase
+      .from("entries")
+      .select("id")
+      .in("id", ids)
+      .eq("category_id", categoryId)
+      .order("display_order", { ascending: true }),
+  ])
+  if (currentResult.error) return fail(currentResult.error)
+  const ordered = ((currentResult.data ?? []) as { id: string }[]).map((row) => row.id)
+
   const { error } = await supabase
     .from("entries")
-    .update({ folder_id: parsed.data.folderId })
-    .in("id", parsed.data.ids)
-    .eq("category_id", parsed.data.categoryId)
+    .update({ folder_id: folderId })
+    .in("id", ids)
+    .eq("category_id", categoryId)
+  if (error) return fail(error)
+
+  if (ordered.length > 0) {
+    const { error: orderError } = await supabase.rpc("reorder_entries", {
+      p_category_id: categoryId,
+      p_ids: ordered,
+      p_start: base,
+    })
+    if (orderError) return fail(orderError)
+  }
+
+  revalidatePath(`/categoria/${categoryId}`)
+  return ok()
+}
+
+// ---------------------------------------------------------------------------
+// Ordem manual (arrastar)
+// ---------------------------------------------------------------------------
+
+/**
+ * A ordem nova de um nível de subpastas: a posição na lista vira o
+ * `display_order`, num único UPDATE (função `reorder_entry_folders`, que roda
+ * com o papel de quem chama — a RLS continua valendo).
+ */
+export async function reorderEntryFoldersAction(input: {
+  categoryId: string
+  ids: string[]
+}): Promise<ActionResult> {
+  const parsed = reorderInCategorySchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("reorder_entry_folders", {
+    p_category_id: parsed.data.categoryId,
+    p_ids: parsed.data.ids,
+  })
+
+  if (error) return fail(error)
+  revalidatePath(`/categoria/${parsed.data.categoryId}`)
+  return ok()
+}
+
+/** A "ordem manual" nova de um nível de itens, depois de um arraste. */
+export async function reorderEntriesAction(input: {
+  categoryId: string
+  ids: string[]
+}): Promise<ActionResult> {
+  const parsed = reorderInCategorySchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("reorder_entries", {
+    p_category_id: parsed.data.categoryId,
+    p_ids: parsed.data.ids,
+  })
 
   if (error) return fail(error)
   revalidatePath(`/categoria/${parsed.data.categoryId}`)

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Pencil, Trash2 } from "lucide-react"
+import type { ReactNode } from "react"
 
 import { EntryImage } from "@/components/entry/entry-image"
 import { Stars } from "@/components/entry/stars"
@@ -21,6 +22,8 @@ export function EntryRow({
   selected,
   onToggleSelect,
   categoryColor,
+  showRating = true,
+  dragHandle,
 }: {
   view: EntryView
   canEdit: boolean
@@ -31,6 +34,10 @@ export function EntryRow({
   selected?: boolean
   onToggleSelect?: (event: React.MouseEvent) => void
   categoryColor?: string | null
+  /** Categoria sem estrelas: a coluna da nota some. */
+  showRating?: boolean
+  /** Alça para arrastar (ordem manual). */
+  dragHandle?: ReactNode
 }) {
   return (
     <div
@@ -87,21 +94,24 @@ export function EntryRow({
           </div>
         ) : null}
 
-        <div className="flex shrink-0 items-center gap-2">
-          <Stars percent={view.ratingPercent} size="sm" />
-          <span
-            className={cn(
-              "display w-8 text-right text-sm",
-              view.hasRating ? "text-foreground" : "text-faint"
-            )}
-          >
-            {view.ratingLabel}
-          </span>
-        </div>
+        {showRating ? (
+          <div className="flex shrink-0 items-center gap-2">
+            <Stars percent={view.ratingPercent} size="sm" />
+            <span
+              className={cn(
+                "display w-8 text-right text-sm",
+                view.hasRating ? "text-foreground" : "text-faint"
+              )}
+            >
+              {view.ratingLabel}
+            </span>
+          </div>
+        ) : null}
       </Link>
 
       {canEdit ? (
         <div className="card-actions flex shrink-0 items-center gap-0.5">
+          {dragHandle}
           <button
             type="button"
             title={`Editar ${view.name}`}

@@ -9,10 +9,13 @@
  * e o outro não, o build quebra.
  */
 import type { ActionResult } from "@/lib/actions/result"
+import type { SortKey } from "@/lib/domain/filter"
 import type { Tag } from "@/lib/domain/types"
 
 export interface StructureImpact {
   total: number
+  /** Quantos itens têm nota — o que se perde ao desligar as estrelas. */
+  rated: number
   /** id do campo → quantos itens têm valor gravado nele */
   filled: Record<string, number>
   /** id do campo → opção removida → quantos itens têm exatamente esse valor hoje */
@@ -52,6 +55,9 @@ export interface CategoryInput {
   icon: string | null
   color: string | null
   estrutura: unknown
+  /** `false` = lista simples: sem nota de estrelas (desligar apaga as notas). */
+  ratingEnabled: boolean
+  defaultSort: SortKey
 }
 
 type Result<T = undefined> = Promise<ActionResult<T>>
@@ -86,6 +92,8 @@ export interface VitrineActions {
   renameEntryFolder(input: { id: string; name: string }): Result
   moveEntryFolder(input: { id: string; targetFolderId: string | null }): Result
   deleteEntryFolder(input: { id: string; keepContents: boolean }): Result
+  /** Grava a ordem de um nível de subpastas depois de um arraste. */
+  reorderEntryFolders(input: { categoryId: string; ids: string[] }): Result
   moveEntriesToFolder(input: {
     ids: string[]
     categoryId: string
@@ -96,6 +104,8 @@ export interface VitrineActions {
   createEntry(input: EntryInput): Result<{ id: string }>
   updateEntry(input: EntryInput & { id: string }): Result
   deleteEntry(input: { id: string; categoryId: string }): Result
+  /** Grava a "ordem manual" de um nível de itens depois de um arraste. */
+  reorderEntries(input: { categoryId: string; ids: string[] }): Result
   bulkDeleteEntries(input: { ids: string[]; categoryId: string }): Result
   bulkTag(input: {
     ids: string[]

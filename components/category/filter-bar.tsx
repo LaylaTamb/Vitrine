@@ -7,7 +7,7 @@ import { TagPill } from "@/components/tag/tag-pill"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ViewToggle, type ViewMode } from "@/components/layout/view-toggle"
-import { SORT_OPTIONS, type CategoryFilter, type SortKey } from "@/lib/domain/filter"
+import { sortOptionsFor, type CategoryFilter, type SortKey } from "@/lib/domain/filter"
 import type { Tag } from "@/lib/domain/types"
 
 /**
@@ -22,6 +22,7 @@ export function FilterBar({
   view,
   onViewChange,
   active,
+  ratingEnabled = true,
 }: {
   filter: CategoryFilter
   onChange: (filter: CategoryFilter) => void
@@ -30,6 +31,8 @@ export function FilterBar({
   view: ViewMode
   onViewChange: (view: ViewMode) => void
   active: boolean
+  /** Categoria sem estrelas: some a faixa de nota e as ordenações por nota. */
+  ratingEnabled?: boolean
 }) {
   return (
     <div className="space-y-3">
@@ -45,6 +48,7 @@ export function FilterBar({
           />
         </div>
 
+        {ratingEnabled ? (
         <div className="flex items-center gap-1.5">
           <span className="plaque hidden sm:inline">Nota</span>
           <Input
@@ -71,6 +75,7 @@ export function FilterBar({
             className="w-20"
           />
         </div>
+        ) : null}
 
         <select
           value={filter.sort}
@@ -78,7 +83,7 @@ export function FilterBar({
           aria-label="Ordenar por"
           className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
         >
-          {SORT_OPTIONS.map((option) => (
+          {sortOptionsFor(ratingEnabled).map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>

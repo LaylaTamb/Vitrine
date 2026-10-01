@@ -47,6 +47,7 @@ import {
   serializeEstrutura,
   validateField,
 } from "@/lib/domain/fields"
+import { isRatingSort, sortOptionsFor, type SortKey } from "@/lib/domain/filter"
 import { plural } from "@/lib/domain/format"
 import { FIELD_TYPES, type Estrutura, type FieldDef, type FieldType } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
@@ -57,6 +58,19 @@ export interface CategoryEditorValue {
   icon: string | null
   color: string | null
   estrutura: Estrutura
+  /** `false` = lista simples, sem nota de estrelas. */
+  ratingEnabled: boolean
+  defaultSort: SortKey
+}
+
+/** O ponto de partida de uma categoria nova. */
+export const NEW_CATEGORY: CategoryEditorValue = {
+  name: "",
+  icon: null,
+  color: null,
+  estrutura: [],
+  ratingEnabled: true,
+  defaultSort: "recent",
 }
 
 interface ImpactLine {
@@ -85,6 +99,8 @@ export function CategoryEditor({
   const [icon, setIcon] = useState(initial.icon ?? "")
   const [color, setColor] = useState<string | null>(initial.color)
   const [fields, setFields] = useState<Estrutura>(initial.estrutura)
+  const [ratingEnabled, setRatingEnabled] = useState(initial.ratingEnabled)
+  const [defaultSort, setDefaultSort] = useState<SortKey>(initial.defaultSort)
   const [jsonText, setJsonText] = useState(() => serializeEstrutura(initial.estrutura))
   const [jsonError, setJsonError] = useState<string | null>(null)
 
@@ -124,6 +140,8 @@ export function CategoryEditor({
     setIcon(current.icon ?? "")
     setColor(current.color)
     setFields(current.estrutura)
+    setRatingEnabled(current.ratingEnabled)
+    setDefaultSort(current.defaultSort)
     setJsonText(serializeEstrutura(current.estrutura))
     setJsonError(null)
     setFieldError(null)
@@ -251,7 +269,13 @@ export function CategoryEditor({
 
     const diff = diffEstrutura(initial.estrutura, estrutura)
     const optionsDiff = diffFieldOptions(initial.estrutura, estrutura)
-    if (diff.added.length === 0 && diff.removed.length === 0 && optionsDiff.length === 0) {
+    const ratingTurnedOff = initial.ratingEnabled && !ratingEnabled
+    if (
+      diff.added.length === 0 &&
+      diff.removed.length === 0 &&
+      optionsDiff.length === 0 &&
+      !ratingTurnedOff
+    ) {
       // Só renomeou ou reordenou: com id estável, nada a avisar.
       await persist(estrutura, [])
       return
@@ -271,15 +295,30 @@ export function CategoryEditor({
     }
 
     const total = result.data?.total ?? 0
+    const rated = result.data?.rated ?? 0
     const filled = result.data?.filled ?? {}
     const optionUsage = result.data?.optionUsage ?? {}
 
-    if (total === 0) {
+    // Nenhum item, ou só desligou as estrelas de quem não tinha nota: nada se perde.
+    const onlyHarmlessRatingChange =
+      ratingTurnedOff &&
+      rated === 0 &&
+      diff.added.length === 0 &&
+      diff.removed.length === 0 &&
+      optionsDiff.length === 0
+    if (total === 0 || onlyHarmlessRatingChange) {
       await persist(estrutura, diff.removed.map((field) => field.id))
       return
     }
 
     const lines: ImpactLine[] = [
+      ...(ratingTurnedOff && rated > 0
+        ? [
+            {
+              text: `Avaliação desligada: ${plural(rated, "item vai perder", "itens vão perder")} a nota de estrelas permanentemente.`,
+            },
+          ]
+        : []),
       ...diff.added.map((field) => ({
         text: `"${field.nome}": ${plural(total, "item existente fica", "itens existentes ficam")} com esse campo vazio.`,
       })),
@@ -318,6 +357,8 @@ export function CategoryEditor({
           icon: icon.trim() || null,
           color,
           estrutura,
+          ratingEnabled,
+          defaultSort,
           removedFieldIds,
         })
       : await actions.createCategory({
@@ -326,6 +367,8 @@ export function CategoryEditor({
           color,
           folderId,
           estrutura,
+          ratingEnabled,
+          defaultSort,
         })
     setPending(false)
 
@@ -429,11 +472,84 @@ export function CategoryEditor({
               </p>
             </div>
 
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <span className="plaque block">Avaliação por estrelas</span>
+                <div
+                  role="radiogroup"
+                  aria-label="Avaliação por estrelas"
+                  className="inline-flex rounded-md border border-line bg-bg-soft p-0.5 text-sm"
+                >
+                  {(
+                    [
+                      { value: true, label: "★ Estrelas" },
+                      { value: false, label: "Nula" },
+                    ] as const
+                  ).map((option) => (
+                    <button
+                      key={option.label}
+                      type="button"
+                      role="radio"
+                      aria-checked={ratingEnabled === option.value}
+                      onClick={() => {
+                        setRatingEnabled(option.value)
+                        // Sem estrelas não dá para abrir ordenado por nota.
+                        if (!option.value && isRatingSort(defaultSort)) setDefaultSort("recent")
+                      }}
+                      className={cn(
+                        "rounded px-3 py-1 transition-colors",
+                        ratingEnabled === option.value
+                          ? "bg-brand-wash text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs leading-relaxed text-faint">
+                  {ratingEnabled
+                    ? "Cada item ganha uma nota de 0 a 5 — dá para filtrar, ordenar e comparar."
+                    : "Lista simples: nenhum item tem nota. Bom para organizar sem comparar."}
+                  {editing && initial.ratingEnabled && !ratingEnabled
+                    ? " As notas que já existem serão apagadas ao salvar."
+                    : ""}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="cat-sort" className="plaque">
+                  Ordem padrão dos itens
+                </Label>
+                <select
+                  id="cat-sort"
+                  value={defaultSort}
+                  onChange={(event) => setDefaultSort(event.target.value as SortKey)}
+                  className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+                >
+                  {sortOptionsFor(ratingEnabled).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs leading-relaxed text-faint">
+                  Como a categoria abre. “Ordem manual” é a que você define arrastando os itens.
+                </p>
+              </div>
+            </div>
+
             <p className="rounded-lg border border-brand-dim/40 bg-brand-wash px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-              Toda categoria já vem com <span className="text-foreground">Nome</span>,{" "}
-              <span className="text-foreground">Imagem</span> e{" "}
-              <span className="text-foreground">Avaliação</span>. Os campos abaixo são os que só
-              existem nesta categoria.
+              Toda categoria já vem com <span className="text-foreground">Nome</span> e{" "}
+              <span className="text-foreground">Imagem</span>
+              {ratingEnabled ? (
+                <>
+                  {" "}
+                  — e <span className="text-foreground">Avaliação</span>, enquanto as estrelas
+                  estiverem ligadas
+                </>
+              ) : null}
+              . Os campos abaixo são os que só existem nesta categoria.
             </p>
 
             {tab === "visual" ? (

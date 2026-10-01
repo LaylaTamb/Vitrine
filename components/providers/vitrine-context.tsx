@@ -26,6 +26,8 @@ import {
   moveEntryFolderAction,
   movePreviewAction,
   renameEntryFolderAction,
+  reorderEntriesAction,
+  reorderEntryFoldersAction,
   updateEntryAction,
 } from "@/app/categoria/[categoryId]/actions"
 import {
@@ -55,11 +57,13 @@ const serverActions: VitrineActions = {
   renameEntryFolder: renameEntryFolderAction,
   moveEntryFolder: moveEntryFolderAction,
   deleteEntryFolder: deleteEntryFolderAction,
+  reorderEntryFolders: reorderEntryFoldersAction,
   moveEntriesToFolder: moveEntriesToFolderAction,
 
   createEntry: createEntryAction,
   updateEntry: updateEntryAction,
   deleteEntry: deleteEntryAction,
+  reorderEntries: reorderEntriesAction,
   bulkDeleteEntries: bulkDeleteEntriesAction,
   bulkTag: bulkTagAction,
   movePreview: movePreviewAction,

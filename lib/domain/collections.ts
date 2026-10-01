@@ -207,3 +207,17 @@ export function levelItems(
     (a, b) => a.order - b.order || (a.kind === b.kind ? 0 : a.kind === "folder" ? -1 : 1)
   )
 }
+
+/**
+ * Aplica uma ordem otimista (a lista de ids depois de um arraste) sobre a
+ * lista que veio do servidor. Item que não está na ordem (chegou depois) vai
+ * para o fim, na ordem original.
+ */
+export function applyOrder<T extends { id: string }>(items: T[], ids: string[] | null): T[] {
+  if (!ids) return items
+  const position = new Map(ids.map((id, index) => [id, index]))
+  return [...items].sort(
+    (a, b) =>
+      (position.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (position.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+  )
+}

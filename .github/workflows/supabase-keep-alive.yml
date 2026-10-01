@@ -1,0 +1,53 @@
+# Mantém o projeto do Supabase acordado.
+#
+# O plano gratuito pausa o projeto depois de 7 dias sem atividade. Este
+# workflow roda o `scripts/supabase-keep-alive.mjs` uma vez por dia — sobra
+# folga de sobra se uma execução falhar — e pode ser disparado à mão em
+# Actions → "Supabase keep-alive" → Run workflow.
+#
+# Precisa de dois Secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL       https://xxxx.supabase.co
+#   SUPABASE_ANON_KEY  a chave anon / publishable (NUNCA a service_role)
+#
+# Atenção: em repositório público, o GitHub desliga workflows agendados
+# depois de 60 dias sem nenhum commit. Se isso acontecer, reative em
+# Actions → "Supabase keep-alive" → Enable workflow (ou faça um commit).
+
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Todo dia às 09:17 UTC (06:17 em Brasília). Minuto "quebrado" de
+    # propósito: no minuto 0 a fila do GitHub atrasa bastante.
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keep-alive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Ping no Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Baixar o script
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ping
+        run: node scripts/supabase-keep-alive.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}

@@ -20,7 +20,11 @@ import { FolderPlus, Library, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import { CategoryEditor, type CategoryEditorValue } from "@/components/category/category-editor"
+import {
+  CategoryEditor,
+  NEW_CATEGORY,
+  type CategoryEditorValue,
+} from "@/components/category/category-editor"
 import { CollectionCard } from "@/components/collection/collection-card"
 import { FolderDialog } from "@/components/collection/folder-dialog"
 import { MoveDialog } from "@/components/collection/move-dialog"
@@ -33,6 +37,7 @@ import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { breadcrumbOf, folderTotals, levelItems } from "@/lib/domain/collections"
+import { defaultSortOf } from "@/lib/domain/filter"
 import { itemCount, plural } from "@/lib/domain/format"
 import type { Category, Folder } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
@@ -85,7 +90,7 @@ export function CollectionsView({
   const [categoryEditor, setCategoryEditor] = useState<{
     open: boolean
     initial: CategoryEditorValue
-  }>({ open: false, initial: { name: "", icon: null, color: null, estrutura: [] } })
+  }>({ open: false, initial: NEW_CATEGORY })
   const [moveTarget, setMoveTarget] = useState<MoveTargetState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTargetState | null>(null)
 
@@ -214,7 +219,7 @@ export function CollectionsView({
                   onClick={() =>
                     setCategoryEditor({
                       open: true,
-                      initial: { name: "", icon: null, color: null, estrutura: [] },
+                      initial: NEW_CATEGORY,
                     })
                   }
                 >
@@ -252,7 +257,7 @@ export function CollectionsView({
           action={
             <Button
               onClick={() =>
-                setCategoryEditor({ open: true, initial: { name: "", icon: null, color: null, estrutura: [] } })
+                setCategoryEditor({ open: true, initial: NEW_CATEGORY })
               }
             >
               <Plus className="size-4" /> Nova categoria
@@ -345,6 +350,8 @@ export function CollectionsView({
                           icon: item.category.icon,
                           color: item.category.color,
                           estrutura: item.category.estrutura,
+                          ratingEnabled: item.category.rating_enabled,
+                          defaultSort: defaultSortOf(item.category),
                         },
                       })
                     }
@@ -366,7 +373,7 @@ export function CollectionsView({
                   onClick={() =>
                     setCategoryEditor({
                       open: true,
-                      initial: { name: "", icon: null, color: null, estrutura: [] },
+                      initial: NEW_CATEGORY,
                     })
                   }
                   className="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-line bg-transparent text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground"

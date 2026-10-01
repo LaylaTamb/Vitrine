@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  applyOrder,
   breadcrumbOf,
   categoriesOf,
   descendantFolderIds,
@@ -32,6 +33,8 @@ import {
   applyCategoryFilter,
   applyGlobalFilter,
   categoriesInScope,
+  categoryFilterFromParams,
+  defaultSortOf,
   EMPTY_CATEGORY_FILTER,
   EMPTY_GLOBAL_FILTER,
   globalSortOptions,
@@ -39,6 +42,7 @@ import {
   isCategoryFilterActive,
   sortDirLabel,
   sortGlobalViews,
+  sortOptionsFor,
   tagsPresentIn,
   unifyFields,
 } from "./filter"
@@ -77,6 +81,7 @@ function entry(partial: Partial<Entry> & { id: string; name: string }): Entry {
     image_url: null,
     image_display: {},
     custom_fields: {},
+    display_order: 0,
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",
     ...partial,
@@ -501,6 +506,18 @@ describe("filtro da categoria", () => {
     expect(isCategoryFilterActive({ ...EMPTY_CATEGORY_FILTER, query: "x" })).toBe(true)
   })
 
+  it("ordem manual segue a posição salva, e empate vai por criação", () => {
+    const withOrder = [
+      { ...views[0], displayOrder: 2 },
+      { ...views[1], displayOrder: 0 },
+      { ...views[2], displayOrder: 0 },
+    ]
+    // b e c empatam em 0: c foi criado antes (abril < maio).
+    expect(
+      applyCategoryFilter(withOrder, { ...EMPTY_CATEGORY_FILTER, sort: "manual" }).map((v) => v.id)
+    ).toEqual(["c", "b", "a"])
+  })
+
   it("lista só as tags presentes nos itens", () => {
     expect(tagsPresentIn(views).map((tag) => tag.id)).toEqual(["t2", "t1"])
   })
@@ -519,6 +536,8 @@ describe("filtro geral", () => {
     color: null,
     folder_id: null,
     display_order: 0,
+    rating_enabled: true,
+    default_sort: "recent",
     created_at: "2024-01-01T00:00:00Z",
     estrutura: [
       { id: "r_nota", nome: "Comida", tipo: "star" },
@@ -878,9 +897,9 @@ describe("coleções", () => {
     { id: "f4", owner_id: "u1", name: "Cinema", parent_folder_id: null, display_order: 1, created_at: "" },
   ]
   const categories: Category[] = [
-    { id: "c1", owner_id: "u1", name: "Restaurantes", icon: null, color: null, folder_id: "f2", display_order: 0, estrutura: [], created_at: "" },
-    { id: "c2", owner_id: "u1", name: "Receitas", icon: null, color: null, folder_id: "f3", display_order: 0, estrutura: [], created_at: "" },
-    { id: "c3", owner_id: "u1", name: "Filmes", icon: null, color: null, folder_id: null, display_order: 0, estrutura: [], created_at: "" },
+    { id: "c1", owner_id: "u1", name: "Restaurantes", icon: null, color: null, folder_id: "f2", display_order: 0, estrutura: [], rating_enabled: true, default_sort: "recent", created_at: "" },
+    { id: "c2", owner_id: "u1", name: "Receitas", icon: null, color: null, folder_id: "f3", display_order: 0, estrutura: [], rating_enabled: true, default_sort: "recent", created_at: "" },
+    { id: "c3", owner_id: "u1", name: "Filmes", icon: null, color: null, folder_id: null, display_order: 0, estrutura: [], rating_enabled: true, default_sort: "recent", created_at: "" },
   ]
   const counts = new Map([
     ["c1", 30],
@@ -915,6 +934,12 @@ describe("coleções", () => {
     expect(targets).not.toContain("f1")
     expect(targets).not.toContain("f2")
     expect(targets).not.toContain("f3")
+  })
+
+  it("aplica uma ordem otimista e manda quem não está nela para o fim", () => {
+    const items = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }]
+    expect(applyOrder(items, ["c", "a"]).map((item) => item.id)).toEqual(["c", "a", "b", "d"])
+    expect(applyOrder(items, null)).toBe(items)
   })
 
   it("aceita um rótulo de raiz próprio (subpastas de categoria)", () => {
@@ -1041,5 +1066,39 @@ describe("tradução de erro", () => {
     expect(translateError({ message: "TypeError: fetch failed" })).toContain("variáveis de ambiente")
     expect(translateError({ message: "coisa estranha" })).toBe("Algo deu errado.")
     expect(translateError(null)).toBe("Algo deu errado.")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// avaliação opcional e ordenação padrão
+// ---------------------------------------------------------------------------
+
+describe("categoria sem estrelas", () => {
+  const lista = { rating_enabled: false, default_sort: "manual" }
+  const comNotas = { rating_enabled: true, default_sort: "rating_desc" }
+
+  it("tira as ordenações por nota das opções", () => {
+    expect(sortOptionsFor(false).map((option) => option.value)).toEqual([
+      "recent",
+      "name_asc",
+      "manual",
+    ])
+    expect(sortOptionsFor(true)).toHaveLength(5)
+  })
+
+  it("abre na ordenação padrão da categoria, e ignora padrão por nota sem estrelas", () => {
+    expect(defaultSortOf(lista)).toBe("manual")
+    expect(defaultSortOf(comNotas)).toBe("rating_desc")
+    expect(defaultSortOf({ rating_enabled: false, default_sort: "rating_desc" })).toBe("recent")
+    expect(defaultSortOf({ rating_enabled: true, default_sort: "lixo" })).toBe("recent")
+  })
+
+  it("lê a URL respeitando o padrão e a falta de estrelas", () => {
+    expect(categoryFilterFromParams({}, lista).sort).toBe("manual")
+    expect(categoryFilterFromParams({ ordem: "name_asc" }, lista).sort).toBe("name_asc")
+    // Link velho com nota numa lista sem estrelas: nota ignorada.
+    const velho = categoryFilterFromParams({ ordem: "rating_asc", min: "3", max: "5" }, lista)
+    expect(velho).toMatchObject({ sort: "manual", minRating: "", maxRating: "" })
+    expect(categoryFilterFromParams({ min: "3" }, comNotas).minRating).toBe("3")
   })
 })

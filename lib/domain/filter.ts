@@ -12,7 +12,7 @@ import type { Category, EntryView, FieldType, Tag } from "./types"
 // Filtro de uma categoria
 // ---------------------------------------------------------------------------
 
-export type SortKey = "recent" | "rating_desc" | "rating_asc" | "name_asc"
+export type SortKey = "recent" | "rating_desc" | "rating_asc" | "name_asc" | "manual"
 
 /**
  * Como as regras marcadas se combinam. `and`: o item precisa bater com TODAS
@@ -30,7 +30,31 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "rating_desc", label: "Nota (maior primeiro)" },
   { value: "rating_asc", label: "Nota (menor primeiro)" },
   { value: "name_asc", label: "Nome (A-Z)" },
+  { value: "manual", label: "Ordem manual" },
 ]
+
+export const SORT_KEYS: SortKey[] = SORT_OPTIONS.map((option) => option.value)
+
+export function isRatingSort(sort: SortKey): boolean {
+  return sort === "rating_desc" || sort === "rating_asc"
+}
+
+/** As ordenações que fazem sentido: sem estrelas, as por nota somem. */
+export function sortOptionsFor(ratingEnabled: boolean): { value: SortKey; label: string }[] {
+  return ratingEnabled ? SORT_OPTIONS : SORT_OPTIONS.filter((option) => !isRatingSort(option.value))
+}
+
+/** Lê uma ordenação qualquer (URL, banco) e devolve uma válida para a categoria. */
+export function normalizeSort(value: unknown, ratingEnabled = true, fallback: SortKey = "recent"): SortKey {
+  const sort = SORT_KEYS.find((key) => key === value)
+  if (!sort || (!ratingEnabled && isRatingSort(sort))) return fallback
+  return sort
+}
+
+/** A ordenação com que uma categoria abre. */
+export function defaultSortOf(category: Pick<Category, "rating_enabled" | "default_sort">): SortKey {
+  return normalizeSort(category.default_sort, category.rating_enabled)
+}
 
 export interface CategoryFilter {
   query: string
@@ -51,23 +75,32 @@ export const EMPTY_CATEGORY_FILTER: CategoryFilter = {
   mode: "and",
 }
 
-const SORT_KEYS: SortKey[] = ["recent", "rating_desc", "rating_asc", "name_asc"]
-
-/** A URL de uma categoria (`?q=&min=&max=&tags=&modo=&ordem=`) virando filtro. */
-export function categoryFilterFromParams(params: {
-  q?: string | null
-  min?: string | null
-  max?: string | null
-  tags?: string | null
-  modo?: string | null
-  ordem?: string | null
-}): CategoryFilter {
+/**
+ * A URL de uma categoria (`?q=&min=&max=&tags=&modo=&ordem=`) virando filtro.
+ * Sem `ordem` na URL vale a ordenação padrão da categoria; sem estrelas, a
+ * faixa de nota e as ordenações por nota são ignoradas.
+ */
+export function categoryFilterFromParams(
+  params: {
+    q?: string | null
+    min?: string | null
+    max?: string | null
+    tags?: string | null
+    modo?: string | null
+    ordem?: string | null
+  },
+  category: Pick<Category, "rating_enabled" | "default_sort"> = {
+    rating_enabled: true,
+    default_sort: "recent",
+  }
+): CategoryFilter {
+  const ratingEnabled = category.rating_enabled
   return {
     query: params.q ?? "",
-    minRating: params.min ?? "",
-    maxRating: params.max ?? "",
+    minRating: ratingEnabled ? (params.min ?? "") : "",
+    maxRating: ratingEnabled ? (params.max ?? "") : "",
     tagIds: (params.tags ?? "").split(",").filter(Boolean),
-    sort: SORT_KEYS.find((key) => key === params.ordem) ?? "recent",
+    sort: normalizeSort(params.ordem, ratingEnabled, defaultSortOf(category)),
     mode: params.modo === "or" ? "or" : "and",
   }
 }
@@ -111,6 +144,14 @@ function sortViews(views: EntryView[], sort: SortKey): EntryView[] {
       break
     case "name_asc":
       out.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+      break
+    case "manual":
+      // A ordem que a pessoa arrastou; empate (item recém-chegado) por criação.
+      out.sort(
+        (a, b) =>
+          a.displayOrder - b.displayOrder ||
+          (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0)
+      )
       break
     case "recent":
     default:

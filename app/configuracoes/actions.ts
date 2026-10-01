@@ -15,6 +15,7 @@ import {
   type ImportSummary,
 } from "@/lib/backup/import"
 import { parseCustomFields, parseEstrutura } from "@/lib/domain/fields"
+import { normalizeSort } from "@/lib/domain/filter"
 import { imageDisplayOf } from "@/lib/domain/view"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
@@ -75,18 +76,22 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
       supabase.from("folders").select("id, name, parent_folder_id").eq("owner_id", user.id),
       supabase
         .from("categories")
-        .select("id, name, icon, color, folder_id, estrutura")
+        .select("id, name, icon, color, folder_id, estrutura, rating_enabled, default_sort")
         .eq("owner_id", user.id),
+      // A ordem de exportação É a ordem manual: o import a reconstrói.
       supabase
         .from("entry_folders")
         .select("id, category_id, name, parent_folder_id")
-        .eq("owner_id", user.id),
+        .eq("owner_id", user.id)
+        .order("display_order", { ascending: true }),
       supabase
         .from("entries")
         .select(
           "id, category_id, folder_id, name, rating, image_url, image_display, custom_fields, entry_tags(tag_id)"
         )
-        .eq("owner_id", user.id),
+        .eq("owner_id", user.id)
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: true }),
       supabase.from("tags").select("id, name, color"),
     ])
 
@@ -115,6 +120,8 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
       color: string | null
       folder_id: string | null
       estrutura: unknown
+      rating_enabled: boolean | null
+      default_sort: string | null
     }[]
   ).map((row) => ({
     id: row.id,
@@ -123,6 +130,8 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
     color: row.color,
     folderId: row.folder_id,
     estrutura: parseEstrutura(row.estrutura),
+    ratingEnabled: row.rating_enabled !== false,
+    defaultSort: normalizeSort(row.default_sort, row.rating_enabled !== false),
   }))
 
   const entryFolders: BackupEntryFolder[] = (

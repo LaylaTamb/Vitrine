@@ -43,6 +43,7 @@ npm run dev
 | `npm run test` | testes do domínio (Vitest) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
+| `npm run keep-alive` | pinga o Supabase uma vez (o mesmo que o GitHub Actions faz todo dia) |
 
 ### Variáveis de ambiente
 
@@ -66,6 +67,8 @@ No **SQL Editor**, rode nesta ordem:
 2. `supabase/02_rls.sql`
 3. `supabase/03_category_color.sql` a `supabase/07_entry_folders.sql`, em ordem
    (todos aditivos: cor de categoria, hardening, e as subpastas de categoria)
+4. `supabase/10_rating_toggle_manual_order.sql` (aditivo: estrelas opcionais
+   por categoria, ordenação padrão e ordem manual de itens e subpastas)
 
 Projeto que já tinha a conta demo antiga (`demo-vitrine`, anterior à demo em
 memória) roda ainda, **depois do deploy** da versão sem ela:
@@ -119,6 +122,21 @@ O template precisa trazer **link e código**, porque o app aceita os dois:
 **Authentication → Users → Invite user**. O trigger cria o perfil no primeiro
 acesso.
 
+### 4. Keep-alive (projeto gratuito)
+
+O plano gratuito do Supabase pausa o projeto depois de 7 dias sem atividade.
+O workflow `.github/workflows/supabase-keep-alive.yml` roda todo dia um ping
+de leitura (`scripts/supabase-keep-alive.mjs`) e falha — o GitHub manda
+e-mail — se o Supabase não responder. Ele precisa de dois **Secrets** em
+*Settings → Secrets and variables → Actions*:
+
+- `SUPABASE_URL` — a mesma de `NEXT_PUBLIC_SUPABASE_URL`;
+- `SUPABASE_ANON_KEY` — a chave **anon/publishable** (nunca a `service_role`).
+
+Para testar sem esperar o horário: *Actions → Supabase keep-alive → Run
+workflow*. Em repositório público, o GitHub desliga agendamentos depois de 60
+dias sem commit; aí é só reativar o workflow na mesma tela.
+
 ---
 
 ## Arquitetura
@@ -168,7 +186,8 @@ lib/
   domain/       TS puro e testado: tipos, campos, formatação, filtro, stats, erros
   queries/      leituras do Supabase
   supabase/     server.ts, client.ts, middleware.ts
-supabase/       01_schema.sql … 09_drop_demo_policies.sql
+supabase/       01_schema.sql … 10_rating_toggle_manual_order.sql
+scripts/        supabase-keep-alive.mjs (rodado pelo .github/workflows/)
 ```
 
 ### Organização: pastas, categorias e subpastas
@@ -192,6 +211,25 @@ Coleções › Bebidas › 🧃 Suco › Marca 1
   **excluir tudo**. Mover um item para outra categoria o leva para a raiz dela.
 - FKs compostas `(…, category_id)` garantem no banco que pasta-mãe e itens de
   uma subpasta são da mesma categoria.
+- **Arrastar para reordenar**: subpastas sempre (para o dono); itens quando a
+  ordenação é **Ordem manual** e não há filtro ativo — reordenar um recorte
+  filtrado deixaria ambíguo onde fica o resto. A posição vive em
+  `display_order` e é gravada em um único UPDATE pelas funções
+  `reorder_entries` / `reorder_entry_folders` (SECURITY INVOKER: a RLS vale).
+  Item ou pasta nova entra no fim do nível; reordenar não mexe no
+  `updated_at`.
+
+### Categorias sem estrelas
+
+- Cada categoria escolhe, na **Estrutura**, entre **★ Estrelas** e **Nula**.
+  Nula é uma lista simples: some a nota do formulário, dos cards, da página do
+  item, do filtro (faixa e ordenações por nota) e da aba Números. Campos do
+  tipo "Estrelas" que você mesma criou continuam valendo.
+- **Desligar as estrelas apaga as notas** dos itens — o diálogo de impacto
+  mostra quantas antes de salvar. O servidor também recusa nota nova numa
+  categoria sem estrelas, e mover um item para ela tira a nota dele.
+- A **ordem padrão dos itens** (Recentes, Nota, Nome ou Ordem manual) também
+  é da categoria: é como ela abre quando a URL não diz outra coisa.
 
 ### Filtros
 

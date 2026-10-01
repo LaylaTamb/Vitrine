@@ -77,6 +77,20 @@
         { "id": "harmonizacao", "nome": "Harmonização", "tipo": "str" },
         { "id": "onde", "nome": "Onde comprei", "tipo": "str" }
       ]
+    },
+    {
+      "id": "quero-visitar",
+      "name": "Quero visitar",
+      "icon": "📍",
+      "color": "#8FB3C9",
+      "folderId": null,
+      "ratingEnabled": false,
+      "defaultSort": "manual",
+      "estrutura": [
+        { "id": "cidade", "nome": "Cidade", "tipo": "str" },
+        { "id": "tipo", "nome": "Tipo", "tipo": "select", "opcoes": ["Museu", "Parque", "Restaurante", "Bar", "Viagem"] },
+        { "id": "quando", "nome": "Quando", "tipo": "select", "opcoes": ["Este mês", "Este ano", "Algum dia"] }
+      ]
     }
   ],
   "entryFolders": [
@@ -140,6 +154,12 @@
     { "categoryId": "vinhos", "folderId": "nacionais", "name": "Casa Valduga 130", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Branco", "uva": "Chardonnay", "safra": 2022, "harmonizacao": "Peixes", "onde": "Vinícola" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },
     { "categoryId": "vinhos", "folderId": "importados", "name": "Cono Sur Bicicleta", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Tinto", "uva": "Pinot Noir", "safra": 2021, "harmonizacao": "Aves", "onde": "Supermercado" }, "tags": [{ "name": "Baratinho", "color": "#8FB3C9" }] },
     { "categoryId": "vinhos", "folderId": "nacionais", "name": "Miolo Cuvée Tradição", "rating": 4, "imageUrl": "https://picsum.photos/id/1043/800/1000", "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Espumante", "uva": "Riesling", "safra": 2020, "harmonizacao": "Sobremesas", "onde": "Empório" }, "tags": [{ "name": "Clássico", "color": "#9A9AA4" }] },
-    { "categoryId": "vinhos", "folderId": "importados", "name": "Luigi Bosca Reserva", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Tinto", "uva": "Malbec", "safra": 2018, "harmonizacao": "Cordeiro", "onde": "Importadora" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Caro", "color": "#D6C08A" }] }
+    { "categoryId": "vinhos", "folderId": "importados", "name": "Luigi Bosca Reserva", "rating": 5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "tipo": "Tinto", "uva": "Malbec", "safra": 2018, "harmonizacao": "Cordeiro", "onde": "Importadora" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Caro", "color": "#D6C08A" }] },
+    { "categoryId": "quero-visitar", "name": "Pinacoteca", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "cidade": "São Paulo, SP", "tipo": "Museu", "quando": "Este mês" }, "tags": [] },
+    { "categoryId": "quero-visitar", "name": "Parque Ibirapuera", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "cidade": "São Paulo, SP", "tipo": "Parque", "quando": "Este mês" }, "tags": [] },
+    { "categoryId": "quero-visitar", "name": "Mercado Municipal", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "cidade": "São Paulo, SP", "tipo": "Restaurante", "quando": "Este ano" }, "tags": [] },
+    { "categoryId": "quero-visitar", "name": "Inhotim", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "cidade": "Brumadinho, MG", "tipo": "Museu", "quando": "Este ano" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
+    { "categoryId": "quero-visitar", "name": "Chapada Diamantina", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "cidade": "Lençóis, BA", "tipo": "Viagem", "quando": "Algum dia" }, "tags": [] },
+    { "categoryId": "quero-visitar", "name": "Bar Brahma", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "cidade": "São Paulo, SP", "tipo": "Bar", "quando": "Algum dia" }, "tags": [] }
   ]
 }

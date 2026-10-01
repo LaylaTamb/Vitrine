@@ -1,10 +1,34 @@
 "use client"
 
 import Link from "next/link"
-import { DndContext } from "@dnd-kit/core"
-import { SortableContext } from "@dnd-kit/sortable"
-import { CheckSquare, FolderOpen, FolderPlus, ImageOff, Plus, SlidersHorizontal } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import {
+  CheckSquare,
+  FolderOpen,
+  FolderPlus,
+  GripVertical,
+  ImageOff,
+  Plus,
+  SlidersHorizontal,
+} from "lucide-react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
 import { CategoryEditor } from "@/components/category/category-editor"
@@ -26,10 +50,11 @@ import type { ViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { breadcrumbOf, foldersOf, type TreeFolder } from "@/lib/domain/collections"
+import { applyOrder, breadcrumbOf, foldersOf, type TreeFolder } from "@/lib/domain/collections"
 import { entryFolderTotals, itemsAt, resolveFolderId } from "@/lib/domain/entry-folders"
 import {
   applyCategoryFilter,
+  defaultSortOf,
   isCategoryFilterActive,
   tagsPresentIn,
   type CategoryFilter,
@@ -101,6 +126,18 @@ export function CategoryView({
   const [selecting, setSelecting] = useState(false)
   const [lastIndex, setLastIndex] = useState<number | null>(null)
 
+  // Ordem otimista depois de um arraste — some quando o dado novo chega.
+  const [folderOrder, setFolderOrder] = useState<string[] | null>(null)
+  const [itemOrder, setItemOrder] = useState<string[] | null>(null)
+
+  const defaultSort = defaultSortOf(category)
+  const ratingEnabled = category.rating_enabled
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(VIEW_STORAGE_KEY)
@@ -137,24 +174,75 @@ export function CategoryView({
       set("max", filter.maxRating.trim())
       set("tags", filter.tagIds.join(","))
       set("modo", filter.mode === "and" ? "" : filter.mode)
-      set("ordem", filter.sort === "recent" ? "" : filter.sort)
+      set("ordem", filter.sort === defaultSort ? "" : filter.sort)
       set("aba", tab === "itens" ? "" : tab)
       window.history.replaceState(null, "", url.toString())
     }, 400)
     return () => window.clearTimeout(timer)
-  }, [filter, tab])
+  }, [filter, tab, defaultSort])
+
+  // Dado novo do servidor (ou outra pasta aberta) manda: a ordem otimista sai.
+  useEffect(() => {
+    setFolderOrder(null)
+  }, [entryFolders, currentFolderId])
+  useEffect(() => {
+    setItemOrder(null)
+  }, [views, currentFolderId])
 
   // O filtro olha só os itens soltos no nível aberto — subpastas são navegação.
   const levelViews = useMemo(() => itemsAt(views, currentFolderId), [views, currentFolderId])
-  // Subpastas nascem todas com display_order 0: na prática, ordem alfabética.
+  // Subpastas na ordem salva (arrastar); empate, por nome.
   const levelFolders = useMemo(
-    () => foldersOf(entryFolders, currentFolderId),
-    [entryFolders, currentFolderId]
+    () => applyOrder(foldersOf(entryFolders, currentFolderId), folderOrder),
+    [entryFolders, currentFolderId, folderOrder]
   )
   const totals = useMemo(() => entryFolderTotals(entryFolders, views), [entryFolders, views])
-  const filtered = useMemo(() => applyCategoryFilter(levelViews, filter), [levelViews, filter])
   const active = isCategoryFilterActive(filter)
+  const manual = filter.sort === "manual"
+  const filtered = useMemo(() => {
+    const list = applyCategoryFilter(levelViews, filter)
+    return manual && !active ? applyOrder(list, itemOrder) : list
+  }, [levelViews, filter, manual, active, itemOrder])
   const levelTags = useMemo(() => tagsPresentIn(levelViews), [levelViews])
+
+  // Arrastar itens só faz sentido na ordem manual e com o nível inteiro à
+  // vista: reordenar um recorte filtrado deixaria ambíguo onde fica o resto.
+  const canDragItems = canEdit && manual && !active && !selecting && filtered.length > 1
+  const dragStrategy = view === "grid" ? rectSortingStrategy : verticalListSortingStrategy
+
+  async function onFolderDragEnd({ active: dragged, over }: DragEndEvent) {
+    if (!over || dragged.id === over.id) return
+    const ids = levelFolders.map((folder) => folder.id)
+    const from = ids.indexOf(String(dragged.id))
+    const to = ids.indexOf(String(over.id))
+    if (from < 0 || to < 0) return
+
+    const previous = folderOrder
+    const next = arrayMove(ids, from, to)
+    setFolderOrder(next)
+    const result = await actions.reorderEntryFolders({ categoryId: category.id, ids: next })
+    if (!result.ok) {
+      setFolderOrder(previous)
+      toast.error(result.error)
+    }
+  }
+
+  async function onItemDragEnd({ active: dragged, over }: DragEndEvent) {
+    if (!over || dragged.id === over.id) return
+    const ids = filtered.map((item) => item.id)
+    const from = ids.indexOf(String(dragged.id))
+    const to = ids.indexOf(String(over.id))
+    if (from < 0 || to < 0) return
+
+    const previous = itemOrder
+    const next = arrayMove(ids, from, to)
+    setItemOrder(next)
+    const result = await actions.reorderEntries({ categoryId: category.id, ids: next })
+    if (!result.ok) {
+      setItemOrder(previous)
+      toast.error(result.error)
+    }
+  }
 
   const clearSelection = useCallback(() => {
     setSelected([])
@@ -347,11 +435,17 @@ export function CategoryView({
           view={view}
           onViewChange={changeView}
           active={active}
+          ratingEnabled={ratingEnabled}
         />
 
         {tab === "itens" && levelFolders.length > 0 ? (
-          <DndContext id="dnd-subpastas">
-            <SortableContext items={levelFolders.map((folder) => folder.id)}>
+          <DndContext
+            id="dnd-subpastas"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={onFolderDragEnd}
+          >
+            <SortableContext items={levelFolders.map((folder) => folder.id)} strategy={dragStrategy}>
               <div
                 className={cn(
                   view === "grid"
@@ -369,7 +463,7 @@ export function CategoryView({
                     subtitle={folderSubtitle(folder.id)}
                     onOpen={() => setFolderParam(folder.id)}
                     canEdit={canEdit}
-                    sortable={false}
+                    sortable={canEdit}
                     view={view}
                     onMove={() =>
                       setMovingFolder({
@@ -396,7 +490,12 @@ export function CategoryView({
         ) : null}
 
         {tab === "numeros" ? (
-          <StatsPanel views={filtered} estrutura={category.estrutura} filterActive={active} />
+          <StatsPanel
+            views={filtered}
+            estrutura={category.estrutura}
+            filterActive={active}
+            ratingEnabled={ratingEnabled}
+          />
         ) : views.length === 0 && entryFolders.length === 0 ? (
           <EmptyState
             icon={ImageOff}
@@ -455,6 +554,13 @@ export function CategoryView({
                   : itemCount(levelViews.length)}
                 {levelFolders.length > 0 || currentFolder ? " neste nível" : ""}
               </p>
+              {canEdit && manual && active ? (
+                <p className="text-xs text-faint">Limpe os filtros para arrastar e reordenar.</p>
+              ) : canEdit && canDragItems ? (
+                <p className="hidden text-xs text-faint sm:block">
+                  Arraste pela alça <GripVertical className="inline size-3" /> para mudar a ordem.
+                </p>
+              ) : null}
               {canEdit && selecting ? (
                 <Button
                   variant="ghost"
@@ -466,50 +572,64 @@ export function CategoryView({
               ) : null}
             </div>
 
-            <div
-              className={cn(
-                view === "grid"
-                  ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-                  : "flex flex-col gap-2",
-                selected.length > 0 && "pb-16"
-              )}
+            <DndContext
+              id="dnd-itens"
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onItemDragEnd}
             >
-              {filtered.map((item, index) =>
-                view === "grid" ? (
-                  <EntryCard
-                    key={item.id}
-                    view={item}
-                    canEdit={canEdit}
-                    categoryColor={category.color}
-                    selectable={canEdit}
-                    selecting={selecting}
-                    selected={selected.includes(item.id)}
-                    onToggleSelect={(event) => toggleSelect(index, event)}
-                    onEdit={() => {
-                      setEditing(item)
-                      setFormOpen(true)
-                    }}
-                    onDelete={() => setDeleting(item)}
-                  />
-                ) : (
-                  <EntryRow
-                    key={item.id}
-                    view={item}
-                    canEdit={canEdit}
-                    categoryColor={category.color}
-                    selectable={canEdit}
-                    selecting={selecting}
-                    selected={selected.includes(item.id)}
-                    onToggleSelect={(event) => toggleSelect(index, event)}
-                    onEdit={() => {
-                      setEditing(item)
-                      setFormOpen(true)
-                    }}
-                    onDelete={() => setDeleting(item)}
-                  />
-                )
-              )}
-            </div>
+              <SortableContext items={filtered.map((item) => item.id)} strategy={dragStrategy}>
+                <div
+                  className={cn(
+                    view === "grid"
+                      ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+                      : "flex flex-col gap-2",
+                    selected.length > 0 && "pb-16"
+                  )}
+                >
+                  {filtered.map((item, index) => (
+                    <SortableEntry key={item.id} id={item.id} disabled={!canDragItems}>
+                      {(dragHandle) =>
+                        view === "grid" ? (
+                          <EntryCard
+                            view={item}
+                            canEdit={canEdit}
+                            categoryColor={category.color}
+                            selectable={canEdit}
+                            selecting={selecting}
+                            selected={selected.includes(item.id)}
+                            onToggleSelect={(event) => toggleSelect(index, event)}
+                            onEdit={() => {
+                              setEditing(item)
+                              setFormOpen(true)
+                            }}
+                            onDelete={() => setDeleting(item)}
+                            dragHandle={dragHandle}
+                          />
+                        ) : (
+                          <EntryRow
+                            view={item}
+                            canEdit={canEdit}
+                            categoryColor={category.color}
+                            selectable={canEdit}
+                            selecting={selecting}
+                            selected={selected.includes(item.id)}
+                            onToggleSelect={(event) => toggleSelect(index, event)}
+                            onEdit={() => {
+                              setEditing(item)
+                              setFormOpen(true)
+                            }}
+                            onDelete={() => setDeleting(item)}
+                            showRating={ratingEnabled}
+                            dragHandle={dragHandle}
+                          />
+                        )
+                      }
+                    </SortableEntry>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </>
         )}
       </div>
@@ -525,6 +645,7 @@ export function CategoryView({
             entry={editing}
             folders={entryFolders}
             defaultFolderId={currentFolderId}
+            ratingEnabled={ratingEnabled}
           />
 
           <CategoryEditor
@@ -536,6 +657,8 @@ export function CategoryView({
               icon: category.icon,
               color: category.color,
               estrutura: category.estrutura,
+              ratingEnabled,
+              defaultSort,
             }}
           />
 
@@ -589,5 +712,47 @@ export function CategoryView({
         </>
       ) : null}
     </>
+  )
+}
+
+/**
+ * Um item arrastável. A alça vai junto das ações do card (só aparece quando
+ * dá para arrastar); o resto do card continua sendo o link para o item.
+ */
+function SortableEntry({
+  id,
+  disabled,
+  children,
+}: {
+  id: string
+  disabled: boolean
+  children: (dragHandle: ReactNode) => ReactNode
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled,
+  })
+
+  const handle = disabled ? null : (
+    <button
+      type="button"
+      {...attributes}
+      {...listeners}
+      title="Arrastar para reordenar"
+      aria-label="Arrastar para reordenar"
+      className="cursor-grab touch-none rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground active:cursor-grabbing"
+    >
+      <GripVertical className="size-3.5" />
+    </button>
+  )
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={cn(isDragging && "relative z-30 opacity-90")}
+    >
+      {children(handle)}
+    </div>
   )
 }

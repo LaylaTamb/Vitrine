@@ -39,6 +39,7 @@ export function EntryForm({
   entry,
   folders,
   defaultFolderId = null,
+  ratingEnabled = true,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -51,6 +52,8 @@ export function EntryForm({
   folders?: EntryFolder[]
   /** Onde um item NOVO nasce: a pasta que está aberta. */
   defaultFolderId?: string | null
+  /** Categoria sem estrelas (lista simples): o campo de avaliação some. */
+  ratingEnabled?: boolean
 }) {
   const { actions } = useVitrine()
   const editing = Boolean(entry)
@@ -137,7 +140,7 @@ export function EntryForm({
     const payload = {
       categoryId,
       name: name.trim(),
-      rating: rating > 0 ? rating : null,
+      rating: ratingEnabled && rating > 0 ? rating : null,
       imageUrl: imageUrl.trim() || null,
       imageDisplay: framing,
       customFields: values,
@@ -169,7 +172,9 @@ export function EntryForm({
               {editing ? "Editar item" : "Novo item"}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Nome, imagem e avaliação toda categoria tem. O resto vem da estrutura desta aqui.
+              {ratingEnabled
+                ? "Nome, imagem e avaliação toda categoria tem. O resto vem da estrutura desta aqui."
+                : "Nome e imagem toda categoria tem. O resto vem da estrutura desta aqui — esta lista não usa estrelas."}
             </DialogDescription>
           </DialogHeader>
 
@@ -294,6 +299,7 @@ export function EntryForm({
                 </div>
               ) : null}
 
+              {ratingEnabled ? (
               <div className="space-y-1.5">
                 <span className="plaque block">Avaliação</span>
                 <div className="flex items-center gap-3">
@@ -312,6 +318,7 @@ export function EntryForm({
                   </button>
                 </div>
               </div>
+              ) : null}
 
               <div className="space-y-2">
                 <span className="plaque block">Tags</span>

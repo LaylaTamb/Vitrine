@@ -16,23 +16,26 @@ export default function DemoCategoryPage() {
   const { categoryId } = useParams<{ categoryId: string }>()
   const searchParams = useSearchParams()
   const { state } = useDemoData()
+  const category = state.categories.find((item) => item.id === categoryId) ?? null
 
-  // A URL só vale na entrada, como no app (o filtro depois vive no cliente).
+  // A URL só vale na entrada, como no app (o filtro depois vive no cliente);
+  // sem `ordem`, a categoria abre na ordenação padrão dela.
   const [initialFilter] = useState(() =>
-    categoryFilterFromParams({
-      q: searchParams.get("q"),
-      min: searchParams.get("min"),
-      max: searchParams.get("max"),
-      tags: searchParams.get("tags"),
-      modo: searchParams.get("modo"),
-      ordem: searchParams.get("ordem"),
-    })
+    categoryFilterFromParams(
+      {
+        q: searchParams.get("q"),
+        min: searchParams.get("min"),
+        max: searchParams.get("max"),
+        tags: searchParams.get("tags"),
+        modo: searchParams.get("modo"),
+        ordem: searchParams.get("ordem"),
+      },
+      category ?? undefined
+    )
   )
   const [initialTab] = useState<"itens" | "numeros">(() =>
     searchParams.get("aba") === "numeros" ? "numeros" : "itens"
   )
-
-  const category = state.categories.find((item) => item.id === categoryId) ?? null
 
   const data = useMemo(() => {
     if (!category) return null

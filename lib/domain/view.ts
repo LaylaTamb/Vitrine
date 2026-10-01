@@ -177,6 +177,7 @@ export function toView(
     extras,
     values,
     summary: summaryParts.join(" · "),
+    displayOrder: Number(entry.display_order) || 0,
     createdAt: entry.created_at,
     search,
     href: `${basePath}/categoria/${entry.category_id}/${entry.id}`,

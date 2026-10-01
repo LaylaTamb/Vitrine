@@ -29,6 +29,15 @@ describe("acervo de exemplo", () => {
     expect(state.entries.some((entry) => entry.entry_tags.length > 0)).toBe(true)
   })
 
+  it("traz uma lista sem estrelas, em ordem manual", () => {
+    const state = buildDemoState(getSeedPayload())
+    const lista = state.categories.find((category) => category.name === "Quero visitar")!
+    expect(lista).toMatchObject({ rating_enabled: false, default_sort: "manual" })
+    const itens = state.entries.filter((entry) => entry.category_id === lista.id)
+    expect(itens.every((entry) => entry.rating === null)).toBe(true)
+    expect(itens.map((entry) => entry.display_order)).toEqual([0, 1, 2, 3, 4, 5])
+  })
+
   it("traz subpastas de exemplo, com itens dentro", () => {
     const state = buildDemoState(getSeedPayload())
     const orwell = state.entryFolders.find((folder) => folder.name === "George Orwell")
@@ -91,6 +100,8 @@ describe("escritas da demonstração", () => {
       color: null,
       folderId,
       estrutura: [{ id: "f_marca1", nome: "Marca", tipo: "str" }],
+      ratingEnabled: true,
+      defaultSort: "recent",
     })
     expect(category.ok).toBe(true)
     expect(state.categories.find((item) => item.name === "Suco")?.folder_id).toBe(folderId)
@@ -111,6 +122,8 @@ describe("escritas da demonstração", () => {
         color: null,
         folderId: null,
         estrutura: [],
+        ratingEnabled: true,
+        defaultSort: "recent",
       })
     ).toEqual({ ok: false, error: "Você já tem uma categoria com esse nome." })
     expect(await actions.createTag({ name: "favorito", color: "#B98CC2" })).toEqual({
@@ -217,5 +230,119 @@ describe("escritas da demonstração", () => {
     expect(
       state.entries.some((entry) => entry.entry_tags.some((link) => link.tag_id === favorito.id))
     ).toBe(false)
+  })
+})
+
+describe("estrelas opcionais e ordem manual na demonstração", () => {
+  let state: DemoState
+  let counter = 0
+  const store = {
+    get: () => state,
+    set: (next: DemoState) => {
+      state = next
+    },
+  }
+  const actions = createDemoActions(
+    store,
+    () => demoId(`novo2:${++counter}`),
+    () => "2026-10-01T10:00:00.000Z"
+  )
+
+  beforeEach(() => {
+    state = buildDemoState(getSeedPayload())
+    counter = 0
+  })
+
+  const byName = (name: string) => state.categories.find((category) => category.name === name)!
+  const levelOf = (categoryId: string, folderId: string | null) =>
+    state.entries
+      .filter((entry) => entry.category_id === categoryId && entry.folder_id === folderId)
+      .sort((a, b) => a.display_order - b.display_order)
+
+  it("desligar as estrelas apaga as notas, e o impacto conta quantas", async () => {
+    const filmes = byName("Filmes")
+    const impacto = await actions.structureImpact({ categoryId: filmes.id, fieldIds: [] })
+    expect(impacto.ok && impacto.data?.rated).toBe(10)
+
+    await actions.updateCategory({
+      id: filmes.id,
+      name: filmes.name,
+      icon: filmes.icon,
+      color: filmes.color,
+      estrutura: filmes.estrutura,
+      ratingEnabled: false,
+      defaultSort: "rating_desc",
+    })
+
+    expect(byName("Filmes").rating_enabled).toBe(false)
+    expect(state.entries.filter((e) => e.category_id === filmes.id && e.rating !== null)).toEqual([])
+  })
+
+  it("lista sem estrelas ignora a nota que chegar", async () => {
+    const lista = byName("Quero visitar")
+    await actions.createEntry({
+      categoryId: lista.id,
+      name: "Museu do Ipiranga",
+      rating: 4,
+      imageUrl: null,
+      imageDisplay: { x: 50, y: 50, zoom: 1 },
+      customFields: {},
+      tagIds: [],
+    })
+    const criado = state.entries.find((entry) => entry.name === "Museu do Ipiranga")!
+    expect(criado.rating).toBeNull()
+    // Item novo entra no fim da ordem manual.
+    expect(criado.display_order).toBe(6)
+  })
+
+  it("arrastar grava a ordem nova sem mexer no updated_at", async () => {
+    const lista = byName("Quero visitar")
+    const antes = levelOf(lista.id, null)
+    const invertido = [...antes].reverse().map((entry) => entry.id)
+
+    await actions.reorderEntries({ categoryId: lista.id, ids: invertido })
+
+    const depois = levelOf(lista.id, null)
+    expect(depois.map((entry) => entry.id)).toEqual(invertido)
+    expect(depois.map((entry) => entry.updated_at)).toEqual(
+      [...antes].reverse().map((entry) => entry.updated_at)
+    )
+  })
+
+  it("arrastar subpastas grava a ordem nova", async () => {
+    const vinhos = byName("Vinhos")
+    const pastas = state.entryFolders.filter((folder) => folder.category_id === vinhos.id)
+    const nova = [...pastas].sort((a, b) => b.display_order - a.display_order).map((f) => f.id)
+
+    await actions.reorderEntryFolders({ categoryId: vinhos.id, ids: nova })
+
+    const ordenadas = state.entryFolders
+      .filter((folder) => folder.category_id === vinhos.id)
+      .sort((a, b) => a.display_order - b.display_order)
+      .map((folder) => folder.id)
+    expect(ordenadas).toEqual(nova)
+  })
+
+  it("pasta nova e itens movidos entram no fim do nível", async () => {
+    const vinhos = byName("Vinhos")
+    const criada = await actions.createEntryFolder({
+      categoryId: vinhos.id,
+      name: "Feitos em casa",
+      parentFolderId: null,
+    })
+    const pasta = state.entryFolders.find((folder) => folder.id === (criada.ok ? criada.data!.id : ""))!
+    expect(pasta.display_order).toBe(2)
+
+    const nacionais = state.entryFolders.find((folder) => folder.name === "Nacionais")!
+    const importados = state.entryFolders.find((folder) => folder.name === "Importados")!
+    const doisNacionais = levelOf(vinhos.id, nacionais.id).slice(0, 2).map((entry) => entry.id)
+    await actions.moveEntriesToFolder({
+      ids: doisNacionais,
+      categoryId: vinhos.id,
+      folderId: importados.id,
+    })
+    expect(levelOf(vinhos.id, importados.id).slice(-2).map((entry) => entry.id)).toEqual(
+      doisNacionais
+    )
   })
 })

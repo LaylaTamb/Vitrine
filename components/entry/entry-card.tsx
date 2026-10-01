@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Pencil, Trash2 } from "lucide-react"
+import type { ReactNode } from "react"
 
 import { EntryImage } from "@/components/entry/entry-image"
 import { Stars } from "@/components/entry/stars"
@@ -21,6 +22,7 @@ export function EntryCard({
   onToggleSelect,
   categoryColor,
   categoryLabel,
+  dragHandle,
 }: {
   view: EntryView
   canEdit: boolean
@@ -33,6 +35,8 @@ export function EntryCard({
   categoryColor?: string | null
   /** Mostra de qual categoria é o item — para listas que misturam categorias. */
   categoryLabel?: string
+  /** Alça para arrastar (ordem manual). Vai junto das ações do card. */
+  dragHandle?: ReactNode
 }) {
   return (
     <div
@@ -60,6 +64,7 @@ export function EntryCard({
 
       {canEdit ? (
         <div className="card-actions absolute right-3 top-3 z-20 flex items-center gap-0.5 rounded-lg border border-line bg-bg/80 p-0.5 backdrop-blur-sm">
+          {dragHandle}
           <button
             type="button"
             title={`Editar ${view.name}`}
