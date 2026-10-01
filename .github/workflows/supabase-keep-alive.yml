@@ -17,9 +17,9 @@ name: Supabase keep-alive
 
 on:
   schedule:
-    # Todo dia às 09:17 UTC (06:17 em Brasília). Minuto "quebrado" de
+    # A cada 5 dias às 09:17 UTC (06:17 em Brasília). Minuto "quebrado" de
     # propósito: no minuto 0 a fila do GitHub atrasa bastante.
-    - cron: "17 9 * * *"
+    - cron: "17 9 */5 * *"
   workflow_dispatch:
 
 permissions:
