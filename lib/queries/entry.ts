@@ -1,7 +1,14 @@
 import { cache } from "react"
 
 import { parseEstrutura } from "@/lib/domain/fields"
-import type { Category, EntryFolder, EntryWithTags, Profile, Tag } from "@/lib/domain/types"
+import type {
+  Category,
+  EntryFolder,
+  EntryPlace,
+  EntryWithTags,
+  Profile,
+  Tag,
+} from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 
 export interface EntryPageData {
@@ -11,16 +18,18 @@ export interface EntryPageData {
   tags: Tag[]
   /** As subpastas da categoria do item — o "Pasta" do formulário e o Voltar. */
   entryFolders: EntryFolder[]
+  /** A localização dos campos de Localização (place_id e coordenadas para os links). */
+  places: EntryPlace[]
 }
 
 /**
  * A plaqueta de um item: o item traz a categoria por embedding, e a categoria
- * traz o dono. As tags do grupo vão em paralelo.
+ * traz o dono. As tags do grupo e a localização do item vão em paralelo.
  */
 export const getEntryPage = cache(async (entryId: string): Promise<EntryPageData> => {
   const supabase = await createClient()
 
-  const [entryResult, tagsResult] = await Promise.all([
+  const [entryResult, tagsResult, placesResult] = await Promise.all([
     supabase
       .from("entries")
       .select(
@@ -31,11 +40,15 @@ export const getEntryPage = cache(async (entryId: string): Promise<EntryPageData
       .eq("id", entryId)
       .maybeSingle(),
     supabase.from("tags").select("id, name, color"),
+    supabase.from("entry_places").select("*").eq("entry_id", entryId),
   ])
 
   const tags = ((tagsResult.data ?? []) as Tag[]).sort((a, b) =>
     a.name.localeCompare(b.name, "pt-BR")
   )
+  // Sem a tabela (migração 11 ainda não rodada) ou com erro: os links usam o
+  // texto do endereço, que sempre funciona.
+  const places = placesResult.error ? [] : ((placesResult.data ?? []) as EntryPlace[])
 
   const row = entryResult.data as
     | (EntryWithTags & {
@@ -49,7 +62,7 @@ export const getEntryPage = cache(async (entryId: string): Promise<EntryPageData
       })
     | null
 
-  if (!row) return { entry: null, category: null, owner: null, tags, entryFolders: [] }
+  if (!row) return { entry: null, category: null, owner: null, tags, entryFolders: [], places: [] }
 
   const { category: categoryRow, ...entry } = row
   const owner = categoryRow?.owner ?? null
@@ -69,5 +82,6 @@ export const getEntryPage = cache(async (entryId: string): Promise<EntryPageData
     owner,
     tags,
     entryFolders,
+    places,
   }
 })

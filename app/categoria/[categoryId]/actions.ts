@@ -20,9 +20,11 @@ import {
   updateEntrySchema,
 } from "@/lib/actions/schemas"
 import { descendantFolderIds } from "@/lib/domain/collections"
+import { isMissingSchema } from "@/lib/domain/errors"
 import { coerceCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { migrateCustomFields } from "@/lib/domain/migrate"
-import type { CustomFields, EntryFolder, Estrutura } from "@/lib/domain/types"
+import { remapPlaces } from "@/lib/domain/places"
+import type { CustomFields, EntryFolder, EntryPlace, Estrutura } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
 
@@ -338,24 +340,52 @@ export async function bulkMoveEntriesAction(input: {
   // composta do banco recusaria manter o `folder_id`) — no fim da ordem
   // manual, na mesma sequência em que estava. Destino sem estrelas: a nota sai.
   const base = await nextEntryOrder(supabase, parsed.data.toCategoryId, null)
+  const migrations = context.entries.map((entry) =>
+    migrateCustomFields(context.from, context.to, entry.custom_fields ?? {})
+  )
   const results = await Promise.all(
-    context.entries.map((entry, index) => {
-      const migrated = migrateCustomFields(context.from, context.to, entry.custom_fields ?? {})
-      return supabase
+    context.entries.map((entry, index) =>
+      supabase
         .from("entries")
         .update({
           category_id: parsed.data.toCategoryId,
           folder_id: null,
-          custom_fields: migrated.values,
+          custom_fields: migrations[index].values,
           display_order: base + index,
           ...(context.toRatingEnabled ? {} : { rating: null }),
         })
         .eq("id", entry.id)
-    })
+    )
   )
 
   const failed = results.find((result) => result.error)
   if (failed?.error) return fail(failed.error)
+
+  // A localização vai junto quando o valor foi mantido (campo de destino com
+  // mesmo nome e tipo): a linha passa para o id do campo do destino. Valor
+  // descartado leva a linha junto. Banco sem a migração 11: nada a mover.
+  const { data: placeRows, error: placesError } = await supabase
+    .from("entry_places")
+    .select("*")
+    .in("entry_id", parsed.data.ids)
+  if (placesError) {
+    if (!isMissingSchema(placesError)) return fail(placesError)
+  } else if ((placeRows ?? []).length > 0) {
+    const fieldMaps = new Map(
+      context.entries.map((entry, index) => [entry.id, migrations[index].fieldMap])
+    )
+    const moved = remapPlaces(placeRows as EntryPlace[], fieldMaps)
+    const { error: clearError } = await supabase
+      .from("entry_places")
+      .delete()
+      .in("entry_id", parsed.data.ids)
+    if (clearError) return fail(clearError)
+    if (moved.length > 0) {
+      const { error: insertError } = await supabase.from("entry_places").insert(moved)
+      if (insertError) return fail(insertError)
+    }
+    revalidatePath("/mapa")
+  }
 
   revalidatePath(`/categoria/${parsed.data.categoryId}`)
   revalidatePath(`/categoria/${parsed.data.toCategoryId}`)

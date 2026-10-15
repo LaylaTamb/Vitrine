@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Filter, LogOut, Settings, Tags, User, Users } from "lucide-react"
+import { Filter, LogOut, MapIcon, Settings, Tags, User, Users } from "lucide-react"
 
 import { signOutAction } from "@/app/actions"
 import {
@@ -55,6 +55,12 @@ export function UserMenu({
         <DropdownMenuItem asChild>
           <Link href="/filtro">
             <Filter className="size-4" /> Filtro geral
+          </Link>
+        </DropdownMenuItem>
+        {/* O menu da conta não existe na demonstração — o Mapa também não. */}
+        <DropdownMenuItem asChild>
+          <Link href="/mapa">
+            <MapIcon className="size-4" /> Mapa
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

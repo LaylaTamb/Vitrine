@@ -89,6 +89,9 @@ export function translateError(error: unknown): string {
   if (code === "42501" || text.includes("row-level security") || text.includes("row level security")) {
     return "Você só pode editar o que é seu."
   }
+  if (isMissingSchema(error)) {
+    return "O banco está desatualizado: rode no SQL Editor as migrações novas da pasta supabase/."
+  }
 
   // ---- rede --------------------------------------------------------------
   if (
@@ -102,6 +105,21 @@ export function translateError(error: unknown): string {
   }
 
   return FALLBACK_ERROR
+}
+
+/**
+ * Tabela ou função que ainda não existe no banco — o código novo chegou antes
+ * da migração correspondente ter sido rodada no SQL Editor. Quem chama decide
+ * se isso é fatal ou se dá para seguir sem (ex.: sem `entry_places`, o resto
+ * do app continua funcionando).
+ */
+export function isMissingSchema(error: unknown): boolean {
+  const { text, code } = read(error)
+  if (["42P01", "42883", "PGRST202", "PGRST205"].includes(code.toUpperCase())) return true
+  if (text.includes("could not find the function") || text.includes("could not find the table")) {
+    return true
+  }
+  return text.includes("does not exist") && (text.includes("relation") || text.includes("function"))
 }
 
 /**

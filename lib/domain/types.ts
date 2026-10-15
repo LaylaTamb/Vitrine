@@ -15,6 +15,7 @@ export const FIELD_TYPES = [
   "str",
   "date",
   "select",
+  "location",
 ] as const
 
 export type FieldType = (typeof FIELD_TYPES)[number]
@@ -126,6 +127,30 @@ export interface Tag {
   id: string
   name: string
   color: string
+}
+
+export const PLACE_STATUSES = ["pending", "ok", "not_found", "error"] as const
+
+export type PlaceStatus = (typeof PLACE_STATUSES)[number]
+
+/**
+ * Uma linha de `entry_places`: o resultado da busca (Geoapify) do endereço
+ * de UM campo de Localização de um item. O texto continua em
+ * `custom_fields`; isto é só o cache da busca — `address` é o texto exato
+ * que foi procurado.
+ */
+export interface EntryPlace {
+  entry_id: string
+  field_id: string
+  owner_id: string
+  address: string
+  formatted_address: string | null
+  lat: number | null
+  lng: number | null
+  place_id: string | null
+  status: PlaceStatus
+  /** Quando o endereço foi procurado pela última vez. */
+  geocoded_at: string | null
 }
 
 /** `entries` com os vínculos de tag já embutidos pelo PostgREST. */

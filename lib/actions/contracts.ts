@@ -10,6 +10,10 @@
  */
 import type { ActionResult } from "@/lib/actions/result"
 import type { SortKey } from "@/lib/domain/filter"
+import type { LatLng } from "@/lib/domain/map"
+import type { TravelMode } from "@/lib/domain/maps-links"
+import type { PlaceDetails, RouteInfo } from "@/lib/domain/place-details"
+import type { GeocodeMode } from "@/lib/domain/places"
 import type { Tag } from "@/lib/domain/types"
 
 export interface StructureImpact {
@@ -48,6 +52,27 @@ export interface EntryInput {
   imageDisplay: { x: number; y: number; zoom: number }
   customFields: Record<string, string | number>
   tagIds: string[]
+}
+
+/** O que aconteceu com um campo de Localização depois de salvar o item. */
+export interface GeocodeFieldResult {
+  fieldId: string
+  fieldLabel: string
+  address: string
+  status: "ok" | "not_found" | "error"
+  /** Só em `error`: a frase pronta para o toast. */
+  error?: string
+}
+
+/** Um lote de localizações pendentes. */
+export interface GeocodeBatchResult {
+  located: number
+  notFound: number
+  failed: number
+  /** Quantos ainda esperam — o cliente chama de novo enquanto houver. */
+  remaining: number
+  /** A primeira falha do lote, em português (cota, chave, rede…). */
+  error?: string
 }
 
 export interface CategoryInput {
@@ -115,6 +140,31 @@ export interface VitrineActions {
   }): Result
   movePreview(input: { ids: string[]; categoryId: string; toCategoryId: string }): Result<MovePreview>
   bulkMoveEntries(input: { ids: string[]; categoryId: string; toCategoryId: string }): Result
+
+  // ---- mapa: localização dos itens ----------------------------------------
+  /** Procura (Geoapify) os campos de Localização do item que mudaram ou estão pendentes. */
+  geocodeEntryLocations(input: { entryId: string }): Result<{ results: GeocodeFieldResult[] }>
+  /** Um lote (até 50) do que está pendente no acervo inteiro — ou só numa categoria. */
+  geocodePendingLocations(input: {
+    categoryId?: string
+    mode?: GeocodeMode
+    startedAt?: string
+  }): Result<GeocodeBatchResult>
+  /** "Onde estou" digitado nas Sugestões. Procurado, nunca gravado. */
+  geocodeAddress(input: { query: string }): Result<{ lat: number; lng: number; label: string }>
+  /**
+   * Horário, tipo, telefone e site de até 20 lugares do próprio acervo (por place_id).
+   * `null` = não há dados do lugar; ausente = falhou agora.
+   */
+  placeDetails(input: {
+    placeIds: string[]
+  }): Result<{ details: Record<string, PlaceDetails | null>; error?: string }>
+  /** Tempo e distância de trajeto até 10 lugares, chaveados por `key`. */
+  routeTimes(input: {
+    origin: LatLng
+    destinations: (LatLng & { key: string })[]
+    mode: TravelMode
+  }): Result<{ routes: Record<string, RouteInfo | null> }>
 
   // ---- tags ---------------------------------------------------------------
   createTag(input: { name: string; color: string }): Result<Tag>

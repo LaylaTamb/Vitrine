@@ -31,6 +31,13 @@ import {
   updateEntryAction,
 } from "@/app/categoria/[categoryId]/actions"
 import {
+  geocodeAddressAction,
+  geocodeEntryLocationsAction,
+  geocodePendingLocationsAction,
+  placeDetailsAction,
+  routeTimesAction,
+} from "@/app/mapa/actions"
+import {
   applyTagToEntriesAction,
   createTagAction,
   deleteTagAction,
@@ -68,6 +75,12 @@ const serverActions: VitrineActions = {
   bulkTag: bulkTagAction,
   movePreview: movePreviewAction,
   bulkMoveEntries: bulkMoveEntriesAction,
+
+  geocodeEntryLocations: geocodeEntryLocationsAction,
+  geocodePendingLocations: geocodePendingLocationsAction,
+  geocodeAddress: geocodeAddressAction,
+  placeDetails: placeDetailsAction,
+  routeTimes: routeTimesAction,
 
   createTag: createTagAction,
   updateTag: updateTagAction,

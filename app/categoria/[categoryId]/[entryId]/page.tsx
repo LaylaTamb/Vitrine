@@ -28,7 +28,7 @@ export default async function EntryPage({
   const { entryId } = await params
   const user = await requireUser()
 
-  const [{ entry, category, owner, tags, entryFolders }, profile] = await Promise.all([
+  const [{ entry, category, owner, tags, entryFolders, places }, profile] = await Promise.all([
     getEntryPage(entryId),
     getMyProfile(),
   ])
@@ -49,6 +49,7 @@ export default async function EntryPage({
 
   const tagsById = new Map<string, Tag>(tags.map((tag) => [tag.id, tag]))
   const view = toView(entry, category.estrutura, tagsById, category.name)
+  const isOwner = entry.owner_id === user.id
 
   return (
     <AppShell profile={profile}>
@@ -58,7 +59,10 @@ export default async function EntryPage({
         owner={owner}
         tags={tags}
         entryFolders={entryFolders}
-        canEdit={entry.owner_id === user.id}
+        canEdit={isOwner}
+        places={places}
+        // O Mapa só mostra os itens de quem está logado.
+        showMapLink={isOwner}
       />
     </AppShell>
   )

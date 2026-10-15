@@ -8,8 +8,8 @@ import { displayNameOf } from "@/lib/queries/session"
 import type { Profile } from "@/lib/domain/types"
 
 /**
- * `isDemo`: a demonstração em `/demo` — links com o prefixo, sem "Pessoas" e,
- * no lugar do menu da conta, um convite para entrar.
+ * `isDemo`: a demonstração em `/demo` — links com o prefixo, sem "Pessoas"
+ * nem "Mapa" e, no lugar do menu da conta, um convite para entrar.
  */
 export function Navbar({ profile, isDemo = false }: { profile: Profile | null; isDemo?: boolean }) {
   const basePath = isDemo ? DEMO_BASE_PATH : ""
@@ -31,7 +31,7 @@ export function Navbar({ profile, isDemo = false }: { profile: Profile | null; i
           >
             <Wordmark />
           </Link>
-          <NavLinks hideUsers={isDemo} basePath={basePath} />
+          <NavLinks hideUsers={isDemo} hideMap={isDemo} basePath={basePath} />
         </div>
 
         {isDemo ? (

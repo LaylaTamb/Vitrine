@@ -1,9 +1,10 @@
 import { fileURLToPath } from "node:url"
 import { defineConfig } from "vitest/config"
 
-// Os testes cobrem `lib/domain/` e o acervo em memória da demonstração
-// (`lib/demo/`) — TypeScript puro, sem React e sem Supabase. Nada aqui
-// precisa de DOM.
+// Os testes cobrem `lib/domain/`, o acervo em memória da demonstração
+// (`lib/demo/`) e o tratamento das respostas da Geoapify (`lib/geo/`, só as
+// funções puras de `parse.ts`) — TypeScript puro, sem React, sem Supabase e
+// sem rede. Nada aqui precisa de DOM.
 export default defineConfig({
   resolve: {
     alias: {
@@ -12,6 +13,6 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["lib/domain/**/*.test.ts", "lib/demo/**/*.test.ts"],
+    include: ["lib/domain/**/*.test.ts", "lib/demo/**/*.test.ts", "lib/geo/**/*.test.ts"],
   },
 })

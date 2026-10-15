@@ -46,6 +46,13 @@ export function formatDecimal(value: number, decimals = 1): string {
   return (trimmed === "" ? "0" : trimmed).replace(".", ",")
 }
 
+/** Distância em metros: `850 → "850 m"`, `1234 → "1,2 km"`, `25000 → "25 km"`. */
+export function formatDistance(meters: number): string {
+  if (!Number.isFinite(meters) || meters < 0) return ""
+  if (meters < 1000) return `${Math.round(meters / 10) * 10} m`
+  return `${formatDecimal(meters / 1000, meters < 10_000 ? 1 : 0)} km`
+}
+
 /** "12 itens" / "1 item" */
 export function itemCount(count: number): string {
   return plural(count, "item", "itens")

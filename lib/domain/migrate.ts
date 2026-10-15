@@ -15,6 +15,11 @@ export interface MigrationResult {
   values: CustomFields
   kept: number
   dropped: number
+  /**
+   * id do campo de origem → id do campo de destino, para cada valor mantido.
+   * É o que leva junto o que depende do campo (a localização no mapa).
+   */
+  fieldMap: Record<string, string>
 }
 
 export function migrateCustomFields(
@@ -27,6 +32,7 @@ export function migrateCustomFields(
   )
 
   const values: CustomFields = {}
+  const fieldMap: Record<string, string> = {}
   let kept = 0
   let dropped = 0
 
@@ -45,10 +51,11 @@ export function migrateCustomFields(
     }
 
     values[target.id] = raw
+    fieldMap[field.id] = target.id
     kept += 1
   }
 
-  return { values, kept, dropped }
+  return { values, kept, dropped, fieldMap }
 }
 
 /** Soma o impacto de mover vários itens de uma vez. */

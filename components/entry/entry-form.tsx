@@ -6,6 +6,7 @@ import { toast } from "sonner"
 
 import { EntryImage } from "@/components/entry/entry-image"
 import { StarInput } from "@/components/entry/stars"
+import { geocodeAfterSave } from "@/components/map/geocode-runner"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { ColorPalette } from "@/components/tag/color-palette"
 import { TagPill } from "@/components/tag/tag-pill"
@@ -21,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { moveTargets } from "@/lib/domain/collections"
-import { DEFAULT_CURRENCY } from "@/lib/domain/fields"
+import { DEFAULT_CURRENCY, LOCATION_MAX_LENGTH, locationFieldsOf } from "@/lib/domain/fields"
 import { formatRating } from "@/lib/domain/format"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
@@ -55,7 +56,7 @@ export function EntryForm({
   /** Categoria sem estrelas (lista simples): o campo de avaliação some. */
   ratingEnabled?: boolean
 }) {
-  const { actions } = useVitrine()
+  const { actions, isDemo } = useVitrine()
   const editing = Boolean(entry)
 
   const [name, setName] = useState("")
@@ -161,6 +162,15 @@ export function EntryForm({
 
     toast.success(editing ? "Item salvo." : "Item adicionado.")
     onOpenChange(false)
+
+    // O mapa nunca segura o salvamento: o item já está gravado, e o endereço
+    // que mudou é procurado agora, em segundo plano.
+    const savedId = entry ? entry.id : (result.data as { id?: string } | undefined)?.id
+    const addressChanged = locationFieldsOf(estrutura).some(
+      (field) =>
+        (values[field.id] ?? "").trim() !== String(entry?.values[field.id] ?? "").trim()
+    )
+    if (!isDemo && savedId && addressChanged) void geocodeAfterSave(actions, savedId)
   }
 
   return (
@@ -438,6 +448,14 @@ export function EntryForm({
                               onChange={(event) => setValue(field.id, event.target.value)}
                             />
                           </div>
+                        ) : field.tipo === "location" ? (
+                          <Input
+                            id={`field-${field.id}`}
+                            placeholder="Rua, número, bairro ou nome do lugar"
+                            maxLength={LOCATION_MAX_LENGTH}
+                            value={values[field.id] ?? ""}
+                            onChange={(event) => setValue(field.id, event.target.value)}
+                          />
                         ) : field.tipo === "decimal" ? (
                           <Input
                             id={`field-${field.id}`}

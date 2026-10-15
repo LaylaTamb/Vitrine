@@ -372,6 +372,22 @@ export function isGlobalFilterActive(filter: GlobalFilter): boolean {
 }
 
 /**
+ * Quantas regras do filtro geral estão ligadas — o número no botão "Filtros"
+ * do Mapa no celular. Nome e faixa de nota contam uma cada; categorias e
+ * tags, uma por marcada; campos, só os das categorias em escopo.
+ */
+export function activeFilterCount(filter: GlobalFilter, unifiedFields: UnifiedField[]): number {
+  const fields = unifiedFields.filter((field) => isFieldFilterActive(filter.fields[field.key]))
+  return (
+    (filter.query.trim() ? 1 : 0) +
+    (filter.minRating.trim() || filter.maxRating.trim() ? 1 : 0) +
+    filter.categoryIds.length +
+    filter.tagIds.length +
+    fields.length
+  )
+}
+
+/**
  * Um campo ativo no filtro é uma regra: item que não tem esse campo, ou está
  * com ele vazio, não bate com ela. Como as regras se combinam (E/OU) é
  * decidido em `applyGlobalFilter`.

@@ -22,6 +22,33 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   str: "Texto",
   date: "Data",
   select: "Lista de opções",
+  location: "Localização (mapa)",
+}
+
+/** Um endereço (ou nome de lugar) cabe em 300 caracteres. */
+export const LOCATION_MAX_LENGTH = 300
+
+/**
+ * As únicas trocas de tipo que o editor (modo Visual) aceita num campo que já
+ * existe. Texto → Localização existe porque endereços costumam ter nascido
+ * num campo de texto (o Restaurantes de exemplo nasce assim).
+ */
+const FIELD_CONVERSIONS: Partial<Record<FieldType, FieldType[]>> = {
+  str: ["location"],
+}
+
+/** Os tipos que um campo existente pode assumir: o dele e as conversões permitidas. */
+export function convertibleTypesOf(tipo: FieldType): FieldType[] {
+  return [tipo, ...(FIELD_CONVERSIONS[tipo] ?? [])]
+}
+
+export function isLocationField(field: Pick<FieldDef, "tipo">): boolean {
+  return field.tipo === "location"
+}
+
+/** Os campos de Localização de uma estrutura — cada um vira um pino próprio. */
+export function locationFieldsOf(estrutura: Estrutura): FieldDef[] {
+  return estrutura.filter(isLocationField)
 }
 
 /** Os tipos que aceitam filtro por faixa e média nas estatísticas. */
@@ -171,6 +198,10 @@ export function coerceFieldValue(field: FieldDef, raw: unknown): FieldValue | nu
     }
     case "select":
       return field.opcoes?.includes(text) ? text : null
+    case "location":
+      // O valor guardado é o texto do endereço; as coordenadas moram em
+      // `entry_places`. Assim busca, filtro, ordenação e backup não mudam.
+      return text.slice(0, LOCATION_MAX_LENGTH).trim() || null
     case "str":
     default:
       return text
@@ -360,6 +391,8 @@ export interface EstruturaDiff {
   added: FieldDef[]
   removed: FieldDef[]
   renamed: { from: string; to: string }[]
+  /** Mesmo id, tipo novo (Texto → Localização no Visual; qualquer troca no JSON). */
+  retyped: { field: FieldDef; from: FieldType; to: FieldType }[]
 }
 
 /**
@@ -373,15 +406,19 @@ export function diffEstrutura(before: Estrutura, after: Estrutura): EstruturaDif
   const added = after.filter((field) => !beforeById.has(field.id))
   const removed = before.filter((field) => !afterById.has(field.id))
   const renamed: { from: string; to: string }[] = []
+  const retyped: EstruturaDiff["retyped"] = []
 
   for (const field of after) {
     const original = beforeById.get(field.id)
     if (original && original.nome !== field.nome) {
       renamed.push({ from: original.nome, to: field.nome })
     }
+    if (original && original.tipo !== field.tipo) {
+      retyped.push({ field, from: original.tipo, to: field.tipo })
+    }
   }
 
-  return { added, removed, renamed }
+  return { added, removed, renamed, retyped }
 }
 
 export interface OptionsDiffEntry {

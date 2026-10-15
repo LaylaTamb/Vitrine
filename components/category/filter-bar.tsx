@@ -6,8 +6,10 @@ import { MatchModeToggle } from "@/components/filter/match-mode-toggle"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ViewToggle, type ViewMode } from "@/components/layout/view-toggle"
+import { GridSizeToggle } from "@/components/layout/grid-size-toggle"
+import { ViewToggle, type EntryViewMode } from "@/components/layout/view-toggle"
 import { sortOptionsFor, type CategoryFilter, type SortKey } from "@/lib/domain/filter"
+import type { GridSize } from "@/lib/domain/grid-size"
 import type { Tag } from "@/lib/domain/types"
 
 /**
@@ -21,6 +23,9 @@ export function FilterBar({
   tags,
   view,
   onViewChange,
+  viewModes,
+  gridSize,
+  onGridSizeChange,
   active,
   ratingEnabled = true,
 }: {
@@ -28,8 +33,13 @@ export function FilterBar({
   onChange: (filter: CategoryFilter) => void
   onClear: () => void
   tags: Tag[]
-  view: ViewMode
-  onViewChange: (view: ViewMode) => void
+  view: EntryViewMode
+  onViewChange: (view: EntryViewMode) => void
+  /** Os modos que esta categoria oferece — o tier list só com estrelas. */
+  viewModes: EntryViewMode[]
+  /** Tamanho dos cards (e das miniaturas do tier list) — some no modo Lista. */
+  gridSize: GridSize
+  onGridSizeChange: (size: GridSize) => void
   active: boolean
   /** Categoria sem estrelas: some a faixa de nota e as ordenações por nota. */
   ratingEnabled?: boolean
@@ -90,7 +100,10 @@ export function FilterBar({
           ))}
         </select>
 
-        <ViewToggle value={view} onChange={onViewChange} />
+        <div className="flex items-center gap-1.5">
+          <ViewToggle value={view} onChange={onViewChange} modes={viewModes} />
+          {view !== "list" ? <GridSizeToggle value={gridSize} onChange={onGridSizeChange} /> : null}
+        </div>
 
         {active ? (
           <Button variant="ghost" size="sm" onClick={onClear}>

@@ -255,7 +255,7 @@ describe("fields", () => {
       expect(parseEstruturaJSON('[{"nome":"Modo","tipo":"lista"}]')).toEqual({
         ok: false,
         error:
-          'Campo "Modo": tipo "lista" não existe. Use um destes: star, int, decimal, currency, time, str, date, select.',
+          'Campo "Modo": tipo "lista" não existe. Use um destes: star, int, decimal, currency, time, str, date, select, location.',
       })
       expect(
         parseEstruturaJSON('[{"nome":"Nota","tipo":"int"},{"nome":"Nota","tipo":"str"}]')

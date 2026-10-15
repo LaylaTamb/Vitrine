@@ -4,9 +4,18 @@ import { ArrowLeft } from "lucide-react"
 import { EntryDetailActions } from "@/components/entry/entry-detail-actions"
 import { EntryImage } from "@/components/entry/entry-image"
 import { Stars } from "@/components/entry/stars"
+import { OpenInMapsLink, VitrineMapLink } from "@/components/map/maps-links"
 import { TagPill } from "@/components/tag/tag-pill"
 import { formatRating } from "@/lib/domain/format"
-import type { Category, EntryFolder, EntryView, Profile, Tag } from "@/lib/domain/types"
+import { mapsTargetOf } from "@/lib/domain/maps-links"
+import type {
+  Category,
+  EntryFolder,
+  EntryPlace,
+  EntryView,
+  Profile,
+  Tag,
+} from "@/lib/domain/types"
 import { withFolder } from "@/lib/navigation"
 
 /**
@@ -15,6 +24,10 @@ import { withFolder } from "@/lib/navigation"
  *
  * O "voltar" sobe um nível: para a subpasta onde o item está, ou para a raiz
  * da categoria.
+ *
+ * Campo de Localização ganha "Abrir no Maps" — que funciona até sem
+ * `places` (na demonstração, ou quando o endereço não foi encontrado): vai o
+ * texto do endereço.
  */
 export function EntryDetail({
   view,
@@ -24,6 +37,8 @@ export function EntryDetail({
   entryFolders,
   canEdit,
   basePath = "",
+  places = [],
+  showMapLink = false,
 }: {
   view: EntryView
   category: Category
@@ -33,7 +48,12 @@ export function EntryDetail({
   entryFolders: EntryFolder[]
   canEdit: boolean
   basePath?: string
+  /** As linhas de `entry_places` deste item (place_id e coordenadas para os links). */
+  places?: EntryPlace[]
+  /** "Ver no mapa do Vitrine": só para o dono, e nunca na demonstração. */
+  showMapLink?: boolean
 }) {
+  const placeOf = (fieldId: string) => places.find((place) => place.field_id === fieldId)
   const folder = entryFolders.find((item) => item.id === view.folderId) ?? null
   const backHref = withFolder(`${basePath}/categoria/${category.id}`, folder?.id ?? null)
   const backLabel = folder
@@ -95,6 +115,16 @@ export function EntryDetail({
                     <span className="flex items-center gap-2">
                       <Stars percent={extra.percent} size="sm" />
                       <span>{extra.value}</span>
+                    </span>
+                  ) : extra.tipo === "location" ? (
+                    <span className="flex flex-col items-start gap-2">
+                      <span>{extra.value}</span>
+                      <span className="flex flex-wrap gap-1.5">
+                        <OpenInMapsLink
+                          target={mapsTargetOf(extra.value, placeOf(extra.id))}
+                        />
+                        {showMapLink ? <VitrineMapLink entryId={view.id} /> : null}
+                      </span>
                     </span>
                   ) : (
                     extra.value

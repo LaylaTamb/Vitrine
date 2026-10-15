@@ -23,6 +23,7 @@ export function EntryCard({
   categoryColor,
   categoryLabel,
   dragHandle,
+  compact = false,
 }: {
   view: EntryView
   canEdit: boolean
@@ -37,6 +38,8 @@ export function EntryCard({
   categoryLabel?: string
   /** Alça para arrastar (ordem manual). Vai junto das ações do card. */
   dragHandle?: ReactNode
+  /** Grade pequena: só imagem, nota e nome — resumo e tags não cabem. */
+  compact?: boolean
 }) {
   return (
     <div
@@ -125,10 +128,10 @@ export function EntryCard({
             <p className="plaque truncate text-[0.62rem]">{categoryLabel}</p>
           ) : null}
           <h3 className="display truncate text-base leading-snug">{view.name}</h3>
-          {view.summary ? (
+          {view.summary && !compact ? (
             <p className="truncate text-xs text-muted-foreground">{view.summary}</p>
           ) : null}
-          {view.tags.length > 0 ? (
+          {view.tags.length > 0 && !compact ? (
             <div className="flex flex-wrap gap-1 pt-1">
               {view.tags.slice(0, 3).map((tag) => (
                 <TagPill key={tag.id} tag={tag} size="xs" />

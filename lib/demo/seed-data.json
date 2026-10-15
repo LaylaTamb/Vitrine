@@ -19,7 +19,7 @@
         { "id": "comida", "nome": "Comida", "tipo": "star" },
         { "id": "espera", "nome": "Tempo de Espera", "tipo": "time" },
         { "id": "pedido", "nome": "Pedido", "tipo": "str" },
-        { "id": "local", "nome": "Localização", "tipo": "str" }
+        { "id": "local", "nome": "Localização", "tipo": "location" }
       ]
     },
     {

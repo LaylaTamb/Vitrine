@@ -152,6 +152,50 @@ export function normalizeRating(rating: number | null): number | null {
 }
 
 // ---------------------------------------------------------------------------
+// Mapa: localização dos itens (Geoapify)
+// ---------------------------------------------------------------------------
+
+export const geocodeEntrySchema = z.object({ entryId: uuid })
+
+export const geocodePendingSchema = z.object({
+  /** Ausente = o acervo inteiro de quem está logado. */
+  categoryId: uuid.optional(),
+  mode: z.enum(["pending", "retry"]).default("pending"),
+  /** Início do lote (ISO): falha registrada depois disso não é tentada de novo. */
+  startedAt: z.iso.datetime({ offset: true }).optional(),
+})
+
+export const latLngSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+})
+
+/** "Onde estou", digitado nas Sugestões — procurado, nunca gravado. */
+export const geocodeAddressSchema = z.object({
+  query: z
+    .string()
+    .trim()
+    .min(3, "Digite um endereço com pelo menos 3 letras.")
+    .max(300, "Endereço muito longo."),
+})
+
+export const placeDetailsSchema = z.object({
+  placeIds: z
+    .array(z.string().regex(/^[A-Za-z0-9_-]{1,300}$/, "Lugar inválido."))
+    .min(1, "Nenhum lugar para buscar.")
+    .max(20, "No máximo 20 lugares por vez."),
+})
+
+export const routeTimesSchema = z.object({
+  origin: latLngSchema,
+  destinations: z
+    .array(latLngSchema.extend({ key: z.string().min(1).max(200) }))
+    .min(1, "Nenhum lugar para calcular o trajeto.")
+    .max(10, "No máximo 10 trajetos por vez."),
+  mode: z.enum(["walking", "driving"]),
+})
+
+// ---------------------------------------------------------------------------
 // Tags
 // ---------------------------------------------------------------------------
 

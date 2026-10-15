@@ -31,7 +31,9 @@ import { MoveDialog } from "@/components/collection/move-dialog"
 import { EmptyState } from "@/components/layout/empty-state"
 import { LevelNav } from "@/components/layout/level-nav"
 import { PageHeader } from "@/components/layout/page-header"
+import { GridSizeToggle } from "@/components/layout/grid-size-toggle"
 import { useFolderParam } from "@/components/layout/use-folder-param"
+import { useStoredPreference } from "@/components/layout/use-stored-preference"
 import { ViewToggle, type ViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
@@ -39,10 +41,16 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { breadcrumbOf, folderTotals, levelItems } from "@/lib/domain/collections"
 import { defaultSortOf } from "@/lib/domain/filter"
 import { itemCount, plural } from "@/lib/domain/format"
+import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
 import type { Category, Folder } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
 
 const VIEW_STORAGE_KEY = "vitrine:colecoes:view"
+const GRID_STORAGE_KEY = "vitrine:colecoes:grade"
+
+function parseView(raw: string | null): ViewMode | null {
+  return raw === "grid" || raw === "list" ? raw : null
+}
 
 interface MoveTargetState {
   kind: "folder" | "category"
@@ -80,7 +88,13 @@ export function CollectionsView({
   // Link velho de uma pasta que não existe mais (ou de outra pessoa): raiz.
   const currentFolderId =
     folderParam && folders.some((folder) => folder.id === folderParam) ? folderParam : null
-  const [view, setView] = useState<ViewMode>("grid")
+  const [view, changeView] = useStoredPreference<ViewMode>(VIEW_STORAGE_KEY, "grid", parseView)
+  // Vale para os cards de pasta e de categoria.
+  const [gridSize, changeGridSize] = useStoredPreference(
+    GRID_STORAGE_KEY,
+    DEFAULT_GRID_SIZE,
+    normalizeGridSize
+  )
   const [order, setOrder] = useState<string[] | null>(null)
 
   const [folderDialog, setFolderDialog] = useState<{
@@ -98,24 +112,6 @@ export function CollectionsView({
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(VIEW_STORAGE_KEY)
-      if (stored === "grid" || stored === "list") setView(stored)
-    } catch {
-      // modo privado / storage bloqueado: segue no padrão
-    }
-  }, [])
-
-  function changeView(next: ViewMode) {
-    setView(next)
-    try {
-      window.localStorage.setItem(VIEW_STORAGE_KEY, next)
-    } catch {
-      // idem
-    }
-  }
 
   // Dado novo do servidor manda: a ordem otimista é descartada.
   useEffect(() => {
@@ -227,7 +223,12 @@ export function CollectionsView({
                 </Button>
               </>
             ) : null}
-            <ViewToggle value={view} onChange={changeView} />
+            <div className="flex items-center gap-1.5">
+              <ViewToggle value={view} onChange={changeView} />
+              {view === "grid" ? (
+                <GridSizeToggle value={gridSize} onChange={changeGridSize} />
+              ) : null}
+            </div>
           </>
         }
       />
@@ -276,9 +277,7 @@ export function CollectionsView({
           <SortableContext items={items.map((item) => item.id)} strategy={strategy}>
             <div
               className={cn(
-                view === "grid"
-                  ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-                  : "flex flex-col gap-2"
+                view === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2"
               )}
             >
               {items.map((item) =>

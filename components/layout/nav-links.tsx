@@ -8,26 +8,31 @@ import { cn } from "@/lib/utils"
 const LINKS = [
   { href: "/", label: "Coleções" },
   { href: "/filtro", label: "Filtro" },
+  { href: "/mapa", label: "Mapa" },
   { href: "/tags", label: "Tags" },
   { href: "/usuarios", label: "Pessoas" },
 ]
 
 /**
  * `basePath` prefixa os links (`/demo` na demonstração); `hideUsers` tira
- * "Pessoas", que não existe na demo.
+ * "Pessoas" e `hideMap` tira o "Mapa" — nenhum dos dois existe na demo.
  */
 export function NavLinks({
   hideUsers = false,
+  hideMap = false,
   basePath = "",
 }: {
   hideUsers?: boolean
+  hideMap?: boolean
   basePath?: string
 }) {
   const fullPath = usePathname()
   // O caminho sem o prefixo, para a regra de "ativo" ser a mesma nos dois.
   const pathname =
     basePath && fullPath.startsWith(basePath) ? fullPath.slice(basePath.length) || "/" : fullPath
-  const links = hideUsers ? LINKS.filter((link) => link.href !== "/usuarios") : LINKS
+  const links = LINKS.filter(
+    (link) => !(hideUsers && link.href === "/usuarios") && !(hideMap && link.href === "/mapa")
+  )
 
   return (
     <nav className="hidden items-center gap-1 md:flex">

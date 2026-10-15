@@ -9,7 +9,14 @@
  * mutado: toda operação produz um `DemoState` novo, o que faz o React
  * re-renderizar exatamente como um `revalidatePath` faria no app.
  */
-import type { EntryPickerRow, MovePreview, StructureImpact, VitrineActions } from "@/lib/actions/contracts"
+import type {
+  EntryPickerRow,
+  GeocodeBatchResult,
+  GeocodeFieldResult,
+  MovePreview,
+  StructureImpact,
+  VitrineActions,
+} from "@/lib/actions/contracts"
 import { failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import {
   applyTagSchema,
@@ -22,13 +29,18 @@ import {
   deleteEntryFolderSchema,
   deleteEntrySchema,
   entrySchema,
+  geocodeAddressSchema,
+  geocodeEntrySchema,
+  geocodePendingSchema,
   idSchema,
   moveEntriesToFolderSchema,
   moveFolderSchema,
   normalizeRating,
+  placeDetailsSchema,
   renameFolderSchema,
   reorderInCategorySchema,
   reorderSchema,
+  routeTimesSchema,
   searchEntriesForTagSchema,
   structureImpactSchema,
   tagSchema,
@@ -40,6 +52,7 @@ import { descendantFolderIds } from "@/lib/domain/collections"
 import { folderSubtree } from "@/lib/domain/entry-folders"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
 import { migrateCustomFields } from "@/lib/domain/migrate"
+import type { PlaceDetails, RouteInfo } from "@/lib/domain/place-details"
 import { normalizeCategoryColor, normalizeTagColor } from "@/lib/domain/tags"
 import type { CustomFields, EntryWithTags, Tag } from "@/lib/domain/types"
 
@@ -53,6 +66,7 @@ export interface DemoStore {
 type Result<T = undefined> = Promise<ActionResult<T>>
 
 const GONE = "Isso não existe mais — talvez tenha sido excluído."
+const DEMO_UNAVAILABLE = "Indisponível na demonstração."
 
 function no(error: string): ActionResult<never> {
   return { ok: false, error }
@@ -740,6 +754,42 @@ export function createDemoActions(
         )
       )
       return ok()
+    },
+
+    // -----------------------------------------------------------------------
+    // Mapa — a demo não tem chave da Geoapify nem gasta crédito: "Abrir no Maps"
+    // funciona pelo texto do endereço, e o resto fica de fora.
+    // -----------------------------------------------------------------------
+    async geocodeEntryLocations(input): Result<{ results: GeocodeFieldResult[] }> {
+      const parsed = geocodeEntrySchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      return no(DEMO_UNAVAILABLE)
+    },
+
+    async geocodePendingLocations(input): Result<GeocodeBatchResult> {
+      const parsed = geocodePendingSchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      return no(DEMO_UNAVAILABLE)
+    },
+
+    async geocodeAddress(input): Result<{ lat: number; lng: number; label: string }> {
+      const parsed = geocodeAddressSchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      return no(DEMO_UNAVAILABLE)
+    },
+
+    async placeDetails(
+      input
+    ): Result<{ details: Record<string, PlaceDetails | null>; error?: string }> {
+      const parsed = placeDetailsSchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      return no(DEMO_UNAVAILABLE)
+    },
+
+    async routeTimes(input): Result<{ routes: Record<string, RouteInfo | null> }> {
+      const parsed = routeTimesSchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      return no(DEMO_UNAVAILABLE)
     },
 
     // -----------------------------------------------------------------------

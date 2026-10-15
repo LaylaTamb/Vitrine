@@ -15,7 +15,8 @@ import {
   structureImpactSchema,
   updateCategorySchema,
 } from "@/lib/actions/schemas"
-import { parseEstrutura } from "@/lib/domain/fields"
+import { isMissingSchema } from "@/lib/domain/errors"
+import { locationFieldsOf, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeCategoryColor } from "@/lib/domain/tags"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
@@ -289,8 +290,19 @@ export async function updateCategoryAction(
     }
   }
 
+  // Localização: os pinos só valem para os campos de Localização que
+  // continuam existindo — campo removido, ou trocado para outro tipo
+  // (inclusive pelo modo JSON), perde as linhas de `entry_places`. Banco sem
+  // a migração 11 ainda não tem o que limpar.
+  const { error: pruneError } = await supabase.rpc("prune_entry_places", {
+    p_category_id: parsed.data.id,
+    p_field_ids: locationFieldsOf(parsed.data.estrutura).map((field) => field.id),
+  })
+  if (pruneError && !isMissingSchema(pruneError)) return fail(pruneError)
+
   revalidatePath("/")
   revalidatePath(`/categoria/${parsed.data.id}`)
+  revalidatePath("/mapa")
   return ok()
 }
 

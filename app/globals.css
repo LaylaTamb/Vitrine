@@ -38,6 +38,9 @@
   --color-brand-glow: var(--brand-glow);
   --color-danger: var(--danger);
 
+  /* o ponto "você está aqui" do Mapa */
+  --color-here: var(--here);
+
   /* tokens semânticos do shadcn */
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -82,6 +85,7 @@
   --brand-wash: rgb(185 140 194 / 0.14);
   --brand-glow: rgb(185 140 194 / 0.3);
   --danger: #c97b7b;
+  --here: #6ea8f5;
 
   --background: var(--bg);
   --foreground: var(--ink);
@@ -211,6 +215,38 @@
   .group\/card:focus-within .card-actions {
     opacity: 1;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Mapa (MapLibre): os controles vêm claros de fábrica. Fora de @layer de
+   propósito — o CSS do MapLibre não usa camadas e ganharia de qualquer regra
+   em camada, mesmo mais específica.
+--------------------------------------------------------------------------- */
+.vitrine-map .maplibregl-ctrl-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+.vitrine-map .maplibregl-ctrl-group button + button {
+  border-top-color: var(--border);
+}
+.vitrine-map .maplibregl-ctrl-group button:not(:disabled):hover {
+  background: var(--surface-hi);
+}
+.vitrine-map .maplibregl-ctrl-icon {
+  filter: invert(1) opacity(0.8);
+}
+.vitrine-map .maplibregl-ctrl-attrib,
+.vitrine-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  background: rgb(19 19 21 / 0.85);
+  color: var(--muted-foreground);
+}
+.vitrine-map .maplibregl-ctrl-attrib a {
+  color: var(--ink);
+}
+.vitrine-map .maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+  background-color: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -42,16 +42,19 @@ import { BulkBar } from "@/components/entry/bulk-bar"
 import { EntryCard } from "@/components/entry/entry-card"
 import { EntryForm } from "@/components/entry/entry-form"
 import { EntryRow } from "@/components/entry/entry-row"
+import { TierList } from "@/components/entry/tier-list"
 import { EmptyState } from "@/components/layout/empty-state"
 import { LevelNav, type Crumb } from "@/components/layout/level-nav"
 import { PageHeader } from "@/components/layout/page-header"
 import { useFolderParam } from "@/components/layout/use-folder-param"
-import type { ViewMode } from "@/components/layout/view-toggle"
+import { useStoredPreference } from "@/components/layout/use-stored-preference"
+import type { EntryViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { applyOrder, breadcrumbOf, foldersOf, type TreeFolder } from "@/lib/domain/collections"
 import { entryFolderTotals, itemsAt, resolveFolderId } from "@/lib/domain/entry-folders"
+import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
 import {
   applyCategoryFilter,
   defaultSortOf,
@@ -65,6 +68,14 @@ import { withFolder } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
 const VIEW_STORAGE_KEY = "vitrine:categoria:view"
+const GRID_STORAGE_KEY = "vitrine:categoria:grade"
+
+function parseView(raw: string | null): EntryViewMode | null {
+  return raw === "grid" || raw === "list" || raw === "tier" ? raw : null
+}
+
+const MODES_WITH_TIER: EntryViewMode[] = ["grid", "list", "tier"]
+const MODES_WITHOUT_TIER: EntryViewMode[] = ["grid", "list"]
 
 type Tab = "itens" | "numeros"
 
@@ -108,7 +119,17 @@ export function CategoryView({
 
   const [filter, setFilter] = useState<CategoryFilter>(initialFilter)
   const [tab, setTab] = useState<Tab>(initialTab)
-  const [view, setView] = useState<ViewMode>("grid")
+  const [storedView, changeView] = useStoredPreference<EntryViewMode>(
+    VIEW_STORAGE_KEY,
+    "grid",
+    parseView
+  )
+  // Vale para os cards de item e de subpasta desta tela.
+  const [gridSize, changeGridSize] = useStoredPreference(
+    GRID_STORAGE_KEY,
+    DEFAULT_GRID_SIZE,
+    normalizeGridSize
+  )
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<EntryView | null>(null)
@@ -132,29 +153,15 @@ export function CategoryView({
 
   const defaultSort = defaultSortOf(category)
   const ratingEnabled = category.rating_enabled
+  // O tier list nasce da nota: categoria sem estrelas mostra a Grade, mas a
+  // preferência salva fica como está (vale de novo numa categoria com notas).
+  const view: EntryViewMode = storedView === "tier" && !ratingEnabled ? "grid" : storedView
+  const cardView = view === "list" ? "list" : "grid"
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(VIEW_STORAGE_KEY)
-      if (stored === "grid" || stored === "list") setView(stored)
-    } catch {
-      // storage bloqueado: segue no padrão
-    }
-  }, [])
-
-  function changeView(next: ViewMode) {
-    setView(next)
-    try {
-      window.localStorage.setItem(VIEW_STORAGE_KEY, next)
-    } catch {
-      // idem
-    }
-  }
 
   /**
    * URL compartilhável sem custo: `replaceState` num debounce de 400 ms.
@@ -207,8 +214,11 @@ export function CategoryView({
 
   // Arrastar itens só faz sentido na ordem manual e com o nível inteiro à
   // vista: reordenar um recorte filtrado deixaria ambíguo onde fica o resto.
-  const canDragItems = canEdit && manual && !active && !selecting && filtered.length > 1
-  const dragStrategy = view === "grid" ? rectSortingStrategy : verticalListSortingStrategy
+  // O tier list é só leitura: nada de arrastar nem selecionar ali.
+  const isTier = view === "tier"
+  const canDragItems =
+    canEdit && manual && !active && !selecting && !isTier && filtered.length > 1
+  const dragStrategy = cardView === "grid" ? rectSortingStrategy : verticalListSortingStrategy
 
   async function onFolderDragEnd({ active: dragged, over }: DragEndEvent) {
     if (!over || dragged.id === over.id) return
@@ -259,6 +269,12 @@ export function CategoryView({
   useEffect(() => {
     setSelected((current) => current.filter((id) => filtered.some((item) => item.id === id)))
   }, [filtered])
+
+  // O tier list não tem seleção: entrar nele desfaz a que estava aberta.
+  function selectView(next: EntryViewMode) {
+    if (next === "tier") clearSelection()
+    changeView(next)
+  }
 
   // ---- trilha: Coleções › pastas › Categoria › subpastas -------------------
   const trail = useMemo((): Crumb[] => {
@@ -433,7 +449,10 @@ export function CategoryView({
           onClear={clearFilters}
           tags={levelTags}
           view={view}
-          onViewChange={changeView}
+          onViewChange={selectView}
+          viewModes={ratingEnabled ? MODES_WITH_TIER : MODES_WITHOUT_TIER}
+          gridSize={gridSize}
+          onGridSizeChange={changeGridSize}
           active={active}
           ratingEnabled={ratingEnabled}
         />
@@ -448,9 +467,7 @@ export function CategoryView({
             <SortableContext items={levelFolders.map((folder) => folder.id)} strategy={dragStrategy}>
               <div
                 className={cn(
-                  view === "grid"
-                    ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-                    : "flex flex-col gap-2"
+                  cardView === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2"
                 )}
               >
                 {levelFolders.map((folder) => (
@@ -464,7 +481,7 @@ export function CategoryView({
                     onOpen={() => setFolderParam(folder.id)}
                     canEdit={canEdit}
                     sortable={canEdit}
-                    view={view}
+                    view={cardView}
                     onMove={() =>
                       setMovingFolder({
                         id: folder.id,
@@ -554,14 +571,14 @@ export function CategoryView({
                   : itemCount(levelViews.length)}
                 {levelFolders.length > 0 || currentFolder ? " neste nível" : ""}
               </p>
-              {canEdit && manual && active ? (
+              {isTier ? null : canEdit && manual && active ? (
                 <p className="text-xs text-faint">Limpe os filtros para arrastar e reordenar.</p>
               ) : canEdit && canDragItems ? (
                 <p className="hidden text-xs text-faint sm:block">
                   Arraste pela alça <GripVertical className="inline size-3" /> para mudar a ordem.
                 </p>
               ) : null}
-              {canEdit && selecting ? (
+              {canEdit && selecting && !isTier ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -572,64 +589,68 @@ export function CategoryView({
               ) : null}
             </div>
 
-            <DndContext
-              id="dnd-itens"
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={onItemDragEnd}
-            >
-              <SortableContext items={filtered.map((item) => item.id)} strategy={dragStrategy}>
-                <div
-                  className={cn(
-                    view === "grid"
-                      ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-                      : "flex flex-col gap-2",
-                    selected.length > 0 && "pb-16"
-                  )}
-                >
-                  {filtered.map((item, index) => (
-                    <SortableEntry key={item.id} id={item.id} disabled={!canDragItems}>
-                      {(dragHandle) =>
-                        view === "grid" ? (
-                          <EntryCard
-                            view={item}
-                            canEdit={canEdit}
-                            categoryColor={category.color}
-                            selectable={canEdit}
-                            selecting={selecting}
-                            selected={selected.includes(item.id)}
-                            onToggleSelect={(event) => toggleSelect(index, event)}
-                            onEdit={() => {
-                              setEditing(item)
-                              setFormOpen(true)
-                            }}
-                            onDelete={() => setDeleting(item)}
-                            dragHandle={dragHandle}
-                          />
-                        ) : (
-                          <EntryRow
-                            view={item}
-                            canEdit={canEdit}
-                            categoryColor={category.color}
-                            selectable={canEdit}
-                            selecting={selecting}
-                            selected={selected.includes(item.id)}
-                            onToggleSelect={(event) => toggleSelect(index, event)}
-                            onEdit={() => {
-                              setEditing(item)
-                              setFormOpen(true)
-                            }}
-                            onDelete={() => setDeleting(item)}
-                            showRating={ratingEnabled}
-                            dragHandle={dragHandle}
-                          />
-                        )
-                      }
-                    </SortableEntry>
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
+            {isTier ? (
+              // Fora do DndContext de propósito: nada aqui é arrastável.
+              <TierList views={filtered} gridSize={gridSize} categoryColor={category.color} />
+            ) : (
+              <DndContext
+                id="dnd-itens"
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={onItemDragEnd}
+              >
+                <SortableContext items={filtered.map((item) => item.id)} strategy={dragStrategy}>
+                  <div
+                    className={cn(
+                      cardView === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2",
+                      selected.length > 0 && "pb-16"
+                    )}
+                  >
+                    {filtered.map((item, index) => (
+                      <SortableEntry key={item.id} id={item.id} disabled={!canDragItems}>
+                        {(dragHandle) =>
+                          cardView === "grid" ? (
+                            <EntryCard
+                              view={item}
+                              canEdit={canEdit}
+                              categoryColor={category.color}
+                              selectable={canEdit}
+                              selecting={selecting}
+                              selected={selected.includes(item.id)}
+                              onToggleSelect={(event) => toggleSelect(index, event)}
+                              onEdit={() => {
+                                setEditing(item)
+                                setFormOpen(true)
+                              }}
+                              onDelete={() => setDeleting(item)}
+                              dragHandle={dragHandle}
+                              compact={gridSize === "small"}
+                            />
+                          ) : (
+                            <EntryRow
+                              view={item}
+                              canEdit={canEdit}
+                              categoryColor={category.color}
+                              selectable={canEdit}
+                              selecting={selecting}
+                              selected={selected.includes(item.id)}
+                              onToggleSelect={(event) => toggleSelect(index, event)}
+                              onEdit={() => {
+                                setEditing(item)
+                                setFormOpen(true)
+                              }}
+                              onDelete={() => setDeleting(item)}
+                              showRating={ratingEnabled}
+                              dragHandle={dragHandle}
+                            />
+                          )
+                        }
+                      </SortableEntry>
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
           </>
         )}
       </div>

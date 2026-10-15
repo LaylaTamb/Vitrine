@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { FieldRow } from "@/components/category/field-row"
+import { runPendingGeocode } from "@/components/map/geocode-runner"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { ColorPalette } from "@/components/tag/color-palette"
 import { Button } from "@/components/ui/button"
@@ -39,6 +40,7 @@ import {
   CURRENCY_SYMBOLS,
   DEFAULT_CURRENCY,
   FIELD_TYPE_LABELS,
+  convertibleTypesOf,
   diffEstrutura,
   diffFieldOptions,
   newFieldId,
@@ -91,7 +93,7 @@ export function CategoryEditor({
   folderId?: string | null
   onSaved?: (id?: string) => void
 }) {
-  const { actions } = useVitrine()
+  const { actions, isDemo } = useVitrine()
   const editing = Boolean(initial.id)
 
   const [tab, setTab] = useState<"visual" | "json">("visual")
@@ -117,6 +119,8 @@ export function CategoryEditor({
   const [pendingEstrutura, setPendingEstrutura] = useState<{
     estrutura: Estrutura
     removedFieldIds: string[]
+    /** Algum Texto virou Localização com endereços já escritos: procurar depois de salvar. */
+    geocode: boolean
   } | null>(null)
 
 
@@ -189,13 +193,25 @@ export function CategoryEditor({
     resetFieldForm()
   }
 
+  /**
+   * Os tipos que o campo em edição pode assumir. O tipo de um campo que já
+   * existe fica travado — mudar o tipo estragaria os valores gravados —, com
+   * uma exceção: Texto pode virar Localização (e voltar, antes de salvar).
+   */
+  function editableTypesOf(fieldId: string): FieldType[] {
+    const saved = initial.estrutura.find((field) => field.id === fieldId)
+    const current = fields.find((field) => field.id === fieldId)
+    return convertibleTypesOf(saved?.tipo ?? current?.tipo ?? "str")
+  }
+
   function saveEditField() {
     if (!editingFieldId) return
     const current = fields.find((field) => field.id === editingFieldId)
     if (!current) return
 
-    const opcoes = current.tipo === "select" ? parseOptions(newOptions) : []
-    const error = validateField(fields, newName, current.tipo, opcoes, editingFieldId)
+    const tipo = editableTypesOf(editingFieldId).includes(newType) ? newType : current.tipo
+    const opcoes = tipo === "select" ? parseOptions(newOptions) : []
+    const error = validateField(fields, newName, tipo, opcoes, editingFieldId)
     if (error) {
       setFieldError(error)
       return
@@ -204,9 +220,9 @@ export function CategoryEditor({
     const updated: FieldDef = {
       id: current.id,
       nome: newName.trim(),
-      tipo: current.tipo,
-      ...(current.tipo === "select" ? { opcoes } : {}),
-      ...(current.tipo === "currency" ? { moeda: newCurrency } : {}),
+      tipo,
+      ...(tipo === "select" ? { opcoes } : {}),
+      ...(tipo === "currency" ? { moeda: newCurrency } : {}),
     }
     setFields(fields.map((field) => (field.id === editingFieldId ? updated : field)))
     resetFieldForm()
@@ -273,6 +289,7 @@ export function CategoryEditor({
     if (
       diff.added.length === 0 &&
       diff.removed.length === 0 &&
+      diff.retyped.length === 0 &&
       optionsDiff.length === 0 &&
       !ratingTurnedOff
     ) {
@@ -284,7 +301,11 @@ export function CategoryEditor({
     setPending(true)
     const result = await actions.structureImpact({
       categoryId: initial.id!,
-      fieldIds: diff.removed.map((field) => field.id),
+      // Removidos: quantos perdem o valor. Trocados de tipo: quantos têm valor
+      // ali (num Texto → Localização, quantos endereços vão ser procurados).
+      fieldIds: [...diff.removed, ...diff.retyped.map((change) => change.field)].map(
+        (field) => field.id
+      ),
       fieldOptions: optionsDiff.map((entry) => ({ fieldId: entry.fieldId, options: entry.removed })),
     })
     setPending(false)
@@ -305,11 +326,18 @@ export function CategoryEditor({
       rated === 0 &&
       diff.added.length === 0 &&
       diff.removed.length === 0 &&
+      diff.retyped.length === 0 &&
       optionsDiff.length === 0
     if (total === 0 || onlyHarmlessRatingChange) {
       await persist(estrutura, diff.removed.map((field) => field.id))
       return
     }
+
+    // Texto → Localização com endereços já escritos: eles são procurados
+    // depois de salvar (fora da demonstração, que não tem mapa).
+    const addressesToLocate = diff.retyped
+      .filter((change) => change.to === "location")
+      .reduce((sum, change) => sum + (filled[change.field.id] ?? 0), 0)
 
     const lines: ImpactLine[] = [
       ...(ratingTurnedOff && rated > 0
@@ -342,13 +370,37 @@ export function CategoryEditor({
           }
         })
       ),
+      ...diff.retyped.map(({ field, from, to }) => {
+        const count = filled[field.id] ?? 0
+        if (to !== "location") {
+          return {
+            text: `"${field.nome}": passa de “${FIELD_TYPE_LABELS[from]}” para “${FIELD_TYPE_LABELS[to]}”${from === "location" ? " e sai do mapa" : ""}.`,
+          }
+        }
+        return {
+          text:
+            count === 0
+              ? `"${field.nome}": vira Localização — nenhum item tem endereço aqui ainda.`
+              : isDemo
+                ? `"${field.nome}": vira Localização — ${plural(count, "item ganha", "itens ganham")} o botão “Abrir no Maps”.`
+                : `"${field.nome}": ${plural(count, "endereço vai ser procurado", "endereços vão ser procurados")} para aparecer no mapa.`,
+        }
+      }),
     ]
 
-    setPendingEstrutura({ estrutura, removedFieldIds: diff.removed.map((field) => field.id) })
+    setPendingEstrutura({
+      estrutura,
+      removedFieldIds: diff.removed.map((field) => field.id),
+      geocode: addressesToLocate > 0,
+    })
     setImpact(lines)
   }
 
-  async function persist(estrutura: Estrutura, removedFieldIds: string[]) {
+  async function persist(
+    estrutura: Estrutura,
+    removedFieldIds: string[],
+    { geocode = false }: { geocode?: boolean } = {}
+  ) {
     setPending(true)
     const result = editing
       ? await actions.updateCategory({
@@ -382,7 +434,15 @@ export function CategoryEditor({
     setPendingEstrutura(null)
     onOpenChange(false)
     onSaved?.(result.ok ? (result.data as { id?: string } | undefined)?.id : undefined)
+
+    // A categoria já está salva; os endereços são procurados em seguida, em lotes.
+    if (geocode && editing && !isDemo) {
+      void runPendingGeocode(actions, { categoryId: initial.id!, mode: "pending" })
+    }
   }
+
+  // `null` = adicionando (qualquer tipo); editando, o que o campo pode virar.
+  const editTypes = editingFieldId ? editableTypesOf(editingFieldId) : null
 
   return (
     <>
@@ -600,11 +660,11 @@ export function CategoryEditor({
                     <select
                       value={newType}
                       onChange={(event) => setNewType(event.target.value as FieldType)}
-                      disabled={editingFieldId !== null}
+                      disabled={editTypes !== null && editTypes.length < 2}
                       aria-label="Tipo do campo"
                       className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim disabled:opacity-60"
                     >
-                      {FIELD_TYPES.map((type) => (
+                      {(editTypes !== null && editTypes.length > 1 ? editTypes : FIELD_TYPES).map((type) => (
                         <option key={type} value={type}>
                           {FIELD_TYPE_LABELS[type]}
                         </option>
@@ -670,6 +730,13 @@ export function CategoryEditor({
                         </button>
                       ))}
                     </div>
+                  ) : null}
+
+                  {editTypes !== null && editTypes.length > 1 && editTypes.includes("location") ? (
+                    <p className="text-xs leading-relaxed text-faint">
+                      Um campo de Texto pode virar Localização (mapa): os endereços já escritos
+                      {isDemo ? " ganham o botão “Abrir no Maps”." : " são procurados e passam a aparecer no mapa."}
+                    </p>
                   ) : null}
 
                   {fieldError ? <p className="text-xs text-danger">{fieldError}</p> : null}
@@ -760,7 +827,9 @@ export function CategoryEditor({
               type="button"
               onClick={() => {
                 if (!pendingEstrutura) return
-                void persist(pendingEstrutura.estrutura, pendingEstrutura.removedFieldIds)
+                void persist(pendingEstrutura.estrutura, pendingEstrutura.removedFieldIds, {
+                  geocode: pendingEstrutura.geocode,
+                })
               }}
               disabled={pending}
             >
