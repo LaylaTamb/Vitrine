@@ -18,8 +18,10 @@ import {
   geolocationErrorMessage,
   hasLocationFields,
   haversine,
+  mapScope,
   nearby,
   pendingPlaces,
+  pinCountByCategory,
 } from "./map"
 import { mapsDirectionsUrl, mapsPlaceUrl, mapsTargetOf } from "./maps-links"
 import { migrateCustomFields } from "./migrate"
@@ -429,6 +431,28 @@ describe("pinos do mapa", () => {
   it("sabe se alguma categoria tem Localização", () => {
     expect(hasLocationFields([restaurantes, filmes])).toBe(true)
     expect(hasLocationFields([filmes])).toBe(false)
+  })
+
+  it("o filtro do Mapa só oferece categorias com Localização, os itens e as tags delas", () => {
+    const bares = category({ id: "c3", name: "Bares", estrutura: [LOCAL], rating_enabled: false })
+    const japones = { id: "t1", name: "japonês", color: "#B98CC2" }
+    const terror = { id: "t2", name: "terror", color: "#C97B7B" }
+    const sobra = { id: "t3", name: "sem uso", color: "#8FB3C9" }
+    const tagged = [
+      { ...view("sushi", { f_local: "Liberdade" }), tags: [japones] },
+      { ...view("filme", { f_dir: "Wes Craven" }, "c2"), tags: [terror] },
+    ]
+    const scope = mapScope([restaurantes, filmes, bares], tagged, [japones, terror, sobra])
+    // Bares entra mesmo sem item nenhum ainda
+    expect(scope.categories.map((item) => item.id)).toEqual(["c1", "c3"])
+    expect(scope.views.map((item) => item.id)).toEqual(["sushi"])
+    expect(scope.tags).toEqual([japones])
+  })
+
+  it("conta os pinos de cada categoria", () => {
+    const pins = buildPins(views, [restaurantes, filmes], places)
+    expect(pinCountByCategory(pins)).toEqual({ c1: 3 })
+    expect(pinCountByCategory([])).toEqual({})
   })
 
   it("mede a distância em linha reta", () => {

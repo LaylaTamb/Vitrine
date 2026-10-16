@@ -10,7 +10,7 @@ import { getMyProfile, requireUser } from "@/lib/queries/session"
 
 export const metadata: Metadata = { title: "Mapa · Vitrine" }
 
-type SearchParams = Promise<{ item?: string; aba?: string }>
+type SearchParams = Promise<{ item?: string; aba?: string; categoria?: string }>
 
 /**
  * `/mapa` — tudo que eu marquei com Localização, com o mesmo filtro do
@@ -46,6 +46,7 @@ export default async function MapPage({ searchParams }: { searchParams: SearchPa
         placesReady={ready}
         initialTab={initialTab}
         focusEntryId={query.item ?? null}
+        initialCategoryId={query.categoria ?? null}
       />
     </AppShell>
   )

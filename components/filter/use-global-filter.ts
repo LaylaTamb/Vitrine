@@ -27,9 +27,19 @@ import type { Category, EntryView } from "@/lib/domain/types"
  * batem. Com categorias marcadas, só os campos delas aparecem. Tags marcadas
  * e campos ativos são "regras" combinadas pelo switch E/OU; nome, nota e
  * categoria valem sempre.
+ *
+ * `initialCategoryIds`: categorias que já abrem marcadas (o "Ver no mapa" da
+ * tela de uma categoria).
  */
-export function useGlobalFilter(categories: Category[], views: EntryView[]) {
-  const [filter, setFilter] = useState<GlobalFilter>(EMPTY_GLOBAL_FILTER)
+export function useGlobalFilter(
+  categories: Category[],
+  views: EntryView[],
+  initialCategoryIds: string[] = []
+) {
+  const [filter, setFilter] = useState<GlobalFilter>(() => ({
+    ...EMPTY_GLOBAL_FILTER,
+    categoryIds: initialCategoryIds,
+  }))
   // Campos escolhidos manualmente para aparecer no filtro — todo campo de
   // toda categoria de uma vez sobrecarregava a barra lateral.
   const [activeFieldKeys, setActiveFieldKeys] = useState<string[]>([])

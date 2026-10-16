@@ -6,7 +6,7 @@
 
 import { locationFieldsOf } from "./fields"
 import { addressOf, isPlaceUsable, placeKey, placesByKey } from "./places"
-import type { Category, EntryPlace, EntryView } from "./types"
+import type { Category, EntryPlace, EntryView, Tag } from "./types"
 
 export interface LatLng {
   lat: number
@@ -158,6 +158,37 @@ export function pendingPlaces(
 /** Alguma categoria tem campo de Localização? Sem nenhum, o Mapa explica como criar. */
 export function hasLocationFields(categories: Category[]): boolean {
   return categories.some((category) => locationFieldsOf(category.estrutura).length > 0)
+}
+
+export interface MapScope {
+  categories: Category[]
+  views: EntryView[]
+  tags: Tag[]
+}
+
+/**
+ * O que o filtro do Mapa oferece: só as categorias com campo de Localização
+ * (mesmo sem endereço preenchido ainda), os itens delas e as tags que esses
+ * itens usam. O resto nunca vira pino — no filtro, só serviria para esvaziar
+ * o mapa.
+ */
+export function mapScope(categories: Category[], views: EntryView[], tags: Tag[]): MapScope {
+  const scoped = categories.filter((category) => locationFieldsOf(category.estrutura).length > 0)
+  const ids = new Set(scoped.map((category) => category.id))
+  const scopedViews = views.filter((view) => ids.has(view.categoryId))
+  const used = new Set(scopedViews.flatMap((view) => view.tags.map((tag) => tag.id)))
+  return {
+    categories: scoped,
+    views: scopedViews,
+    tags: tags.filter((tag) => used.has(tag.id)),
+  }
+}
+
+/** Quantos pinos cada categoria tem — o número ao lado dela no filtro do Mapa. */
+export function pinCountByCategory(pins: MapPin[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const pin of pins) counts[pin.category.id] = (counts[pin.category.id] ?? 0) + 1
+  return counts
 }
 
 /**

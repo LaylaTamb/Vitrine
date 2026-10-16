@@ -33,7 +33,9 @@ import { plural } from "@/lib/domain/format"
 import {
   buildPins,
   hasLocationFields,
+  mapScope,
   pendingPlaces,
+  pinCountByCategory,
   type UnplacedAddress,
 } from "@/lib/domain/map"
 import type { Category, EntryPlace, EntryView, Tag } from "@/lib/domain/types"
@@ -67,6 +69,7 @@ export function MapView({
   placesReady,
   initialTab,
   focusEntryId,
+  initialCategoryId,
 }: {
   categories: Category[]
   views: EntryView[]
@@ -77,9 +80,20 @@ export function MapView({
   initialTab: MapTab
   /** `?item=<id>`: abre com o pino desse item em foco. */
   focusEntryId: string | null
+  /** `?categoria=<id>`: abre com essa categoria marcada no filtro. */
+  initialCategoryId: string | null
 }) {
   const { actions } = useVitrine()
-  const filterState = useGlobalFilter(categories, views)
+  // O filtro só oferece o que pode virar pino: categorias com Localização,
+  // os itens delas e as tags que eles usam.
+  const scope = useMemo(() => mapScope(categories, views, tags), [categories, views, tags])
+  const filterState = useGlobalFilter(
+    scope.categories,
+    scope.views,
+    scope.categories.some((category) => category.id === initialCategoryId) && initialCategoryId
+      ? [initialCategoryId]
+      : []
+  )
   const { filter, unified, filtered, active, clearAll } = filterState
   const geo = useGeolocation()
   const mapRef = useRef<HTMLDivElement>(null)
@@ -96,6 +110,7 @@ export function MapView({
     () => pendingPlaces(views, categories, places),
     [views, categories, places]
   )
+  const pinCounts = useMemo(() => pinCountByCategory(allPins), [allPins])
   // O filtro decide o universo; os pinos seguem a ordem dele.
   const pins = useMemo(
     () => buildPins(filtered, categories, places),
@@ -115,9 +130,11 @@ export function MapView({
   )
   const selectedPin = pins.find((pin) => pin.key === selectedKey) ?? null
 
-  // A aba vai para a URL sem re-executar o Server Component.
+  // A aba vai para a URL sem re-executar o Server Component. O `?categoria=`
+  // só vale na abertura: depois o filtro é da tela, e a URL não o descreve.
   useEffect(() => {
     const url = new URL(window.location.href)
+    url.searchParams.delete("categoria")
     if (tab === "mapa") url.searchParams.delete("aba")
     else url.searchParams.set("aba", tab)
     window.history.replaceState(null, "", url.toString())
@@ -271,7 +288,13 @@ export function MapView({
             filtersOpen ? "block" : "hidden"
           )}
         >
-          <GlobalFilterSidebar state={filterState} categories={categories} tags={tags} />
+          <GlobalFilterSidebar
+            state={filterState}
+            categories={scope.categories}
+            tags={scope.tags}
+            categoryCounts={pinCounts}
+            showRating={scope.categories.some((category) => category.rating_enabled)}
+          />
         </aside>
 
         <section className="min-w-0 space-y-4">

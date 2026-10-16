@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { isNumericField } from "@/lib/domain/fields"
+import { plural } from "@/lib/domain/format"
 import {
   EMPTY_FIELD_FILTER,
   isFieldFilterActive,
@@ -27,10 +28,16 @@ export function GlobalFilterSidebar({
   state,
   categories,
   tags,
+  categoryCounts,
+  showRating = true,
 }: {
   state: GlobalFilterState
   categories: Category[]
   tags: Tag[]
+  /** Um número ao lado de cada categoria (os lugares no Mapa). */
+  categoryCounts?: Record<string, number>
+  /** `false` quando nenhuma das categorias usa estrelas: o filtro de nota some. */
+  showRating?: boolean
 }) {
   const { filter, unified, activeFields, availableFields, ruleCount } = state
 
@@ -50,30 +57,32 @@ export function GlobalFilterSidebar({
           />
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <span className="plaque shrink-0">Nota</span>
-          <Input
-            type="number"
-            min={0}
-            max={5}
-            step={0.5}
-            value={filter.minRating}
-            onChange={(event) => state.setMinRating(event.target.value)}
-            placeholder="mín"
-            aria-label="Nota mínima"
-          />
-          <span className="text-faint">–</span>
-          <Input
-            type="number"
-            min={0}
-            max={5}
-            step={0.5}
-            value={filter.maxRating}
-            onChange={(event) => state.setMaxRating(event.target.value)}
-            placeholder="máx"
-            aria-label="Nota máxima"
-          />
-        </div>
+        {showRating ? (
+          <div className="flex items-center gap-1.5">
+            <span className="plaque shrink-0">Nota</span>
+            <Input
+              type="number"
+              min={0}
+              max={5}
+              step={0.5}
+              value={filter.minRating}
+              onChange={(event) => state.setMinRating(event.target.value)}
+              placeholder="mín"
+              aria-label="Nota mínima"
+            />
+            <span className="text-faint">–</span>
+            <Input
+              type="number"
+              min={0}
+              max={5}
+              step={0.5}
+              value={filter.maxRating}
+              onChange={(event) => state.setMaxRating(event.target.value)}
+              placeholder="máx"
+              aria-label="Nota máxima"
+            />
+          </div>
+        ) : null}
 
         {categories.length > 1 ? (
           <div className="space-y-1.5 pt-1">
@@ -90,6 +99,14 @@ export function GlobalFilterSidebar({
                   />
                   {category.icon ? <span aria-hidden>{category.icon}</span> : null}
                   <span className="truncate">{category.name}</span>
+                  {categoryCounts ? (
+                    <span
+                      className="ml-auto shrink-0 text-xs tabular-nums text-faint"
+                      title={plural(categoryCounts[category.id] ?? 0, "lugar no mapa", "lugares no mapa")}
+                    >
+                      {categoryCounts[category.id] ?? 0}
+                    </span>
+                  ) : null}
                 </label>
               ))}
             </div>

@@ -347,6 +347,14 @@ Coleções › Bebidas › 🧃 Suco › Marca 1
   ficam perto. A página de outra pessoa (`/u/...`) e a demonstração não têm
   mapa. O filtro é o mesmo do Filtro geral; no celular, recolhido atrás do
   botão "Filtros".
+- **O filtro do Mapa só oferece o que pode virar pino** (`mapScope`, em
+  `lib/domain/map.ts`): as categorias com campo de Localização — mesmo as
+  ainda sem endereço —, com o número de lugares de cada uma ao lado; as tags
+  usadas pelos itens delas; e os campos delas no "Adicionar campo…". A nota
+  some quando nenhuma dessas categorias usa estrelas.
+- **"Ver no mapa"** na tela de uma categoria com Localização (só para o dono,
+  e fora da demonstração) abre `/mapa?categoria=<id>`, com ela já marcada no
+  filtro. O `?categoria=` só vale na abertura e sai da URL em seguida.
 - **`entry_places` é um cache.** O endereço continua em `custom_fields`; a
   tabela guarda, por (item, campo), o texto que foi procurado (`address`), as
   coordenadas, o `place_id` (o id da Geoapify) e a situação (`ok`,

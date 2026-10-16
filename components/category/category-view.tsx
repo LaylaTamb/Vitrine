@@ -25,6 +25,7 @@ import {
   FolderPlus,
   GripVertical,
   ImageOff,
+  MapIcon,
   Plus,
   SlidersHorizontal,
 } from "lucide-react"
@@ -50,10 +51,11 @@ import { useFolderParam } from "@/components/layout/use-folder-param"
 import { useStoredPreference } from "@/components/layout/use-stored-preference"
 import type { EntryViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { applyOrder, breadcrumbOf, foldersOf, type TreeFolder } from "@/lib/domain/collections"
 import { entryFolderTotals, itemsAt, resolveFolderId } from "@/lib/domain/entry-folders"
+import { locationFieldsOf } from "@/lib/domain/fields"
 import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
 import {
   applyCategoryFilter,
@@ -113,7 +115,7 @@ export function CategoryView({
   initialFilter: CategoryFilter
   initialTab: Tab
 }) {
-  const { actions, basePath } = useVitrine()
+  const { actions, basePath, isDemo } = useVitrine()
   const [folderParam, setFolderParam] = useFolderParam()
   const currentFolderId = resolveFolderId(entryFolders, folderParam)
 
@@ -378,6 +380,15 @@ export function CategoryView({
         actions={
           canEdit ? (
             <>
+              {/* O Mapa só mostra o que é meu, e a demonstração não tem mapa. */}
+              {!isDemo && locationFieldsOf(category.estrutura).length > 0 ? (
+                <Link
+                  href={`/mapa?categoria=${category.id}`}
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
+                >
+                  <MapIcon className="size-4" /> Ver no mapa
+                </Link>
+              ) : null}
               <Button variant="outline" size="lg" onClick={() => setStructureOpen(true)}>
                 <SlidersHorizontal className="size-4" /> Estrutura
               </Button>
