@@ -39,27 +39,41 @@ export function translateError(error: unknown): string {
   if (!text && !code) return FALLBACK_ERROR
 
   // ---- autenticação ------------------------------------------------------
-  if (text.includes("otp_expired") || (text.includes("expired") && text.includes("link"))) {
-    return "Esse link/código expirou. Peça um novo."
+  // Nunca diz se o e-mail tem conta: "e-mail ou senha" vale para os dois casos.
+  if (text.includes("invalid_credentials") || text.includes("invalid login credentials")) {
+    return "E-mail ou senha incorretos."
   }
-  if (text.includes("otp_disabled")) {
-    return "Login por e-mail está desativado no projeto do Supabase."
+  if (text.includes("email_not_confirmed") || text.includes("email not confirmed")) {
+    return "Confirme seu e-mail antes de entrar: abra o link que enviamos na hora do cadastro."
+  }
+  // Antes da "senha fraca": a mensagem desta também começa com "password should".
+  if (text.includes("same_password") || text.includes("should be different from the old")) {
+    return "A nova senha precisa ser diferente da atual."
+  }
+  if (text.includes("weak_password") || text.includes("password should")) {
+    return "Senha fraca: use pelo menos 8 caracteres, com letra e número."
+  }
+  if (text.includes("reauthentication")) {
+    return "Por segurança, saia e entre de novo antes de trocar a senha."
+  }
+  if (text.includes("otp_expired") || (text.includes("expired") && text.includes("link"))) {
+    return "Esse link expirou. Peça um novo."
   }
   if (
     text.includes("signups_not_allowed") ||
+    text.includes("signup_disabled") ||
     text.includes("signups not allowed") ||
-    text.includes("signup is disabled") ||
-    text.includes("user not found")
+    text.includes("signup is disabled")
   ) {
-    return "Este e-mail não tem convite. Peça ao administrador para adicioná-lo pelo painel do Supabase."
+    return "O cadastro está desligado no projeto do Supabase (Authentication → Sign In / Providers)."
   }
   if (
     text.includes("invalid_token") ||
     text.includes("token has expired or is invalid") ||
-    text.includes("invalid otp") ||
-    text.includes("otp_invalid")
+    text.includes("otp_invalid") ||
+    text.includes("flow_state")
   ) {
-    return "Código inválido ou expirado. Peça um novo."
+    return "Link inválido ou já usado. Peça um novo."
   }
   if (
     text.includes("rate limit") ||

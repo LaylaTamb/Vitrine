@@ -7,7 +7,8 @@ vocabulário compartilhado entre todas as categorias e todas as pessoas do grupo
 Itens com endereço aparecem no **Mapa**, que também diz o que dos seus lugares
 salvos fica perto de você agora.
 
-A interface é inteiramente em português do Brasil. O app é fechado por convite.
+A interface é inteiramente em português do Brasil. Qualquer pessoa cria conta
+com e-mail e senha; o que cada um vê das outras é só o que elas deixaram público.
 
 ---
 
@@ -93,6 +94,10 @@ No **SQL Editor**, rode nesta ordem:
    leitura que escondem o privado de terceiros; e a ordem padrão "Nota (maior
    primeiro)"). Tudo o que já existe continua público. Sem ele o app funciona
    como antes, e o botão Pública/Privada avisa que falta rodar
+7. `supabase/13_profile_after_email_confirmation.sql` (aditivo: com o
+   cadastro aberto, o perfil e a categoria de exemplo só nascem quando o
+   e-mail é confirmado — conta que nunca confirmou não aparece em Pessoas nem
+   prende um nome de usuário). Rode antes de abrir o cadastro
 
 Projeto que já tinha a conta demo antiga (`demo-vitrine`, anterior à demo em
 memória) roda ainda, **depois do deploy** da versão sem ela:
@@ -119,33 +124,91 @@ O que o schema cria:
 - o trigger de primeiro acesso, que cria o perfil e uma categoria de exemplo
   (**Restaurantes**).
 
-### 2. Autenticação
+### 2. Autenticação (e-mail e senha)
 
-**Authentication → Providers → Email**
+Quem guarda e confere as senhas é o **Supabase Auth** (com hash, no servidor
+dele — o app nunca vê nem grava senha). A sessão vive em cookies httpOnly
+(`@supabase/ssr`) e o middleware a renova a cada requisição: atualizar a
+página ou voltar dias depois continua logado, até sair ou a sessão expirar.
 
-- ligado;
-- **Allow new users to sign up: desligado**. O app é fechado por convite, e o
-  código também manda `shouldCreateUser: false`.
+**Authentication → Sign In / Providers → Email**
+
+- **Email**: ligado;
+- **Allow new users to sign up: ligado** — o cadastro é aberto (`/cadastro`);
+- **Confirm email: ligado** — a conta só entra depois do link de confirmação;
+- **Minimum password length: 8** e **Password requirements: Letters and
+  digits** — os mesmos requisitos que a tela mostra (`lib/domain/auth.ts`);
+- **Secure password change**: pode ficar desligado (ligado, trocar a senha nas
+  Configurações pede um login recente).
 
 **Authentication → URL Configuration**
 
-- *Site URL*: a URL do app;
-- *Redirect URLs*: `http://localhost:3000/auth/callback` e a de produção.
+- *Site URL*: a URL de produção;
+- *Redirect URLs*: `http://localhost:3000/auth/callback` e
+  `https://seu-dominio/auth/callback`. Destino fora desta lista o Supabase
+  recusa — é isso que impede um link de e-mail de levar para outro site.
 
-**Authentication → Emails → Magic Link**
+**Authentication → Emails → SMTP Settings**
 
-O template precisa trazer **link e código**, porque o app aceita os dois:
+O envio de e-mail padrão do Supabase é para testes: tem limite baixo de envios
+por hora e pode entregar só para os e-mails do time do projeto. Com o cadastro
+aberto, configure um SMTP próprio (Resend, Brevo, Amazon SES…) — senão a
+confirmação e a recuperação de senha não chegam para quem é de fora.
+
+**Authentication → Emails → Templates**
+
+Os links levam a `/auth/callback` com `token_hash`, que funciona em qualquer
+aparelho (o modelo padrão do Supabase, PKCE, só funciona no mesmo navegador
+que pediu o e-mail — o app aceita os dois, mas estes são os recomendados).
+Os links valem por 1 hora (*Email OTP Expiration*) e uma vez só.
+
+*Confirm signup*:
 
 ```html
-<h2>Entrar na Vitrine</h2>
-<p><a href="{{ .ConfirmationURL }}">Clique aqui para entrar</a></p>
-<p>Ou digite este código no app: <strong>{{ .Token }}</strong></p>
+<h2>Confirme seu e-mail</h2>
+<p>Falta só confirmar para entrar na Vitrine.</p>
+<p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=email">Confirmar meu e-mail</a></p>
 ```
 
-### 3. Convidar gente
+*Reset password* — serve também para quem ainda não tem senha:
 
-**Authentication → Users → Invite user**. O trigger cria o perfil no primeiro
-acesso.
+```html
+<h2>Criar uma senha nova</h2>
+<p>Recebemos um pedido para criar uma senha nova na Vitrine.</p>
+<p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery">Criar senha nova</a></p>
+<p>Se não foi você, ignore este e-mail: nada muda na sua conta.</p>
+```
+
+*Invite user* — o convite leva direto a criar a senha:
+
+```html
+<h2>Você foi convidado para a Vitrine</h2>
+<p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=invite">Aceitar e criar minha senha</a></p>
+```
+
+*Magic Link* não é mais usado pelo app.
+
+O que o app faz com cada link (`app/auth/callback/route.ts`): troca o token
+por uma sessão; quem chega por **recuperação** ou **convite** vai para
+`/redefinir-senha` criar a senha; quem confirma o cadastro entra direto. Link
+vencido ou já usado volta para o login com a explicação.
+
+### 3. Contas que já existiam (antes da senha)
+
+A troca não recria nem desvincula ninguém: cada conta continua com o mesmo
+`id` em `auth.users` e em `profiles`, e todos os dados seguem ligados a ele.
+O que muda é que essas contas **ainda não têm senha**. Dois caminhos:
+
+1. quem ainda está logado: **Configurações → Senha**, e cria a senha ali;
+2. quem não está: **Entrar → Esqueci minha senha**. O link do e-mail leva a
+   criar a senha — vale também para quem nunca teve uma.
+
+"Criar conta" com o e-mail de uma conta que já existe não cria outra e não
+avisa que ela existe (a tela é igual para todo mundo); ela orienta a entrar
+ou a usar "Esqueci minha senha".
+
+Convites pelo painel (**Authentication → Users → Invite user**) continuam
+funcionando, com o modelo *Invite user* acima.
 
 ### 4. Keep-alive (projeto gratuito)
 
@@ -271,8 +334,8 @@ lib/
   geo/          só servidor: chamadas à Geoapify (client.ts) e o tratamento das
                 respostas em funções puras e testadas (parse.ts)
   queries/      leituras do Supabase
-  supabase/     server.ts, client.ts, middleware.ts
-supabase/       01_schema.sql … 12_privacy_and_rating_sort.sql
+  supabase/     server.ts, middleware.ts, env.ts (só servidor: a sessão vive em cookies)
+supabase/       01_schema.sql … 13_profile_after_email_confirmation.sql
 scripts/        supabase-keep-alive.mjs (rodado pelo .github/workflows/)
 ```
 
@@ -528,7 +591,7 @@ todo mundo.
 - Console SQL / aba "Cmd" (a v1 tinha uma função `SECURITY DEFINER` que dava
   acesso irrestrito ao banco a qualquer autenticado — removida de propósito);
 - upload de imagem (só links externos);
-- cadastro aberto, recuperação de senha, login social;
+- login social (Google etc.) e verificação em duas etapas;
 - modo claro, paleta de comandos, notificações, comentários, favoritos;
 - no Mapa, por enquanto: descobrir lugares **novos** por perto ("Descobrir",
   com "Salvar no Vitrine") e resumo escrito por IA — próxima fase; mapa na

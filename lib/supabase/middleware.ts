@@ -3,13 +3,18 @@ import { NextResponse, type NextRequest } from "next/server"
 
 import { supabaseAnonKey, supabaseUrl } from "./env"
 
-/** Rotas que não exigem sessão. */
-const PUBLIC_PREFIXES = ["/login", "/auth", "/demo"]
+/** As telas de entrar, criar conta e pedir o link de senha — sem sessão. */
+const AUTH_PAGES = ["/login", "/cadastro", "/recuperar-senha"]
+
+/** Rotas que não exigem sessão. (`/redefinir-senha` exige: a sessão vem do link.) */
+const PUBLIC_PREFIXES = [...AUTH_PAGES, "/auth", "/demo"]
+
+function matches(prefixes: string[], pathname: string): boolean {
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+}
 
 function isPublic(pathname: string): boolean {
-  return PUBLIC_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  )
+  return matches(PUBLIC_PREFIXES, pathname)
 }
 
 /**
@@ -55,7 +60,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && pathname === "/login") {
+  // Já logado não tem o que fazer em entrar, criar conta ou pedir link.
+  if (user && matches(AUTH_PAGES, pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = "/"
     url.search = ""

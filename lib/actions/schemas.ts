@@ -8,6 +8,7 @@
  */
 import { z } from "zod"
 
+import { passwordProblem } from "@/lib/domain/auth"
 import { SORT_KEYS, type SortKey } from "@/lib/domain/filter"
 import { FIELD_TYPES } from "@/lib/domain/types"
 
@@ -225,3 +226,43 @@ export const applyTagSchema = z.object({
   tagId: uuid,
   ids: z.array(uuid).min(1, "Selecione pelo menos um item."),
 })
+
+// ---------------------------------------------------------------------------
+// Conta: e-mail e senha (quem guarda e confere a senha é o Supabase Auth)
+// ---------------------------------------------------------------------------
+
+const email = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(1, "Digite seu e-mail.")
+  .max(254, "E-mail longo demais.")
+  .pipe(z.email("Esse e-mail não parece válido."))
+
+/** Os requisitos da tela (`passwordProblem`) valem também no servidor. */
+const newPassword = z.string().superRefine((value, context) => {
+  const problem = passwordProblem(value)
+  if (problem) context.addIssue({ code: "custom", message: problem })
+})
+
+export const signInSchema = z.object({
+  email,
+  // No login, só "preenchida": a regra de senha nova não vale para senha antiga.
+  password: z.string().min(1, "Digite sua senha.").max(200, "Senha longa demais."),
+})
+
+export const signUpSchema = z
+  .object({ email, password: newPassword, confirm: z.string() })
+  .refine((data) => data.password === data.confirm, {
+    message: "As duas senhas não são iguais.",
+    path: ["confirm"],
+  })
+
+export const passwordResetSchema = z.object({ email })
+
+export const newPasswordSchema = z
+  .object({ password: newPassword, confirm: z.string() })
+  .refine((data) => data.password === data.confirm, {
+    message: "As duas senhas não são iguais.",
+    path: ["confirm"],
+  })

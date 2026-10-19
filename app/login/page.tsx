@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
+import { AUTH_LINK_CLASS, AuthShell } from "@/components/auth/auth-shell"
 import { LoginForm } from "@/components/auth/login-form"
-import { Wordmark } from "@/components/layout/wordmark"
+import { safeNextPath } from "@/lib/domain/auth"
 import { translateErrorCode } from "@/lib/domain/errors"
 
 export const metadata: Metadata = {
@@ -16,27 +18,29 @@ export default async function LoginPage({
   const params = await searchParams
   const error = translateErrorCode(params.erro ?? null)
   // Só destino interno: nada de redirecionar para fora do app.
-  const next = params.proximo?.startsWith("/") ? params.proximo : "/"
+  const next = safeNextPath(params.proximo)
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <Wordmark size="lg" />
-          <p className="plaque">Seu acervo particular</p>
-        </div>
-
-        <div className="rounded-xl border border-line bg-surface p-6">
-          <LoginForm initialError={error} next={next} />
-        </div>
-
-        <p className="mt-5 text-center text-sm text-muted-foreground">
-          Só quer dar uma olhada?{" "}
-          <a href="/demo" className="text-foreground underline underline-offset-2 hover:text-brand">
-            Testar sem conta
-          </a>
-        </p>
-      </div>
-    </main>
+    <AuthShell
+      title="Entrar"
+      footer={
+        <>
+          <p>
+            Ainda não tem conta?{" "}
+            <Link href="/cadastro" className={AUTH_LINK_CLASS}>
+              Criar conta
+            </Link>
+          </p>
+          <p>
+            Só quer dar uma olhada?{" "}
+            <Link href="/demo" className={AUTH_LINK_CLASS}>
+              Testar sem conta
+            </Link>
+          </p>
+        </>
+      }
+    >
+      <LoginForm initialError={error} next={next} />
+    </AuthShell>
   )
 }

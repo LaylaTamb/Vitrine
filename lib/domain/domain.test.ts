@@ -1076,11 +1076,26 @@ describe("migração de valores", () => {
 
 describe("tradução de erro", () => {
   it("traduz os casos que aparecem de verdade", () => {
-    expect(translateError("otp_expired")).toBe("Esse link/código expirou. Peça um novo.")
-    expect(translateError({ message: "Signups not allowed for otp" })).toContain("convite")
-    expect(translateError({ message: "Token has expired or is invalid" })).toBe(
-      "Código inválido ou expirado. Peça um novo."
+    expect(translateError("otp_expired")).toBe("Esse link expirou. Peça um novo.")
+    expect(translateError({ code: "signup_disabled", message: "Signups not allowed for this instance" })).toContain(
+      "cadastro está desligado"
     )
+    expect(translateError({ message: "Token has expired or is invalid" })).toBe(
+      "Link inválido ou já usado. Peça um novo."
+    )
+    // Login errado nunca diz se o e-mail existe.
+    expect(translateError({ code: "invalid_credentials", message: "Invalid login credentials" })).toBe(
+      "E-mail ou senha incorretos."
+    )
+    expect(translateError({ code: "email_not_confirmed", message: "Email not confirmed" })).toContain(
+      "Confirme seu e-mail"
+    )
+    expect(translateError({ code: "weak_password", message: "Password should contain..." })).toContain(
+      "Senha fraca"
+    )
+    expect(
+      translateError({ code: "same_password", message: "New password should be different from the old password." })
+    ).toBe("A nova senha precisa ser diferente da atual.")
     expect(translateError({ message: "email rate limit exceeded" })).toContain("Muitos e-mails")
     expect(
       translateError({

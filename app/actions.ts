@@ -26,9 +26,14 @@ import { requireUser } from "@/lib/queries/session"
 // Sessão
 // ---------------------------------------------------------------------------
 
+/**
+ * Sair: o Supabase revoga as sessões da conta em TODOS os aparelhos
+ * (`global`) e o cookie daqui é apagado. O token de acesso que já saiu ainda
+ * vale até expirar (1 h, no padrão do Supabase) — limite do próprio JWT.
+ */
 export async function signOutAction() {
   const supabase = await createClient()
-  await supabase.auth.signOut()
+  await supabase.auth.signOut({ scope: "global" })
   revalidatePath("/", "layout")
   redirect("/login")
 }

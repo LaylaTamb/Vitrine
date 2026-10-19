@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { UserCog } from "lucide-react"
 
+import { NewPasswordForm } from "@/components/auth/new-password-form"
 import { AppShell } from "@/components/layout/app-shell"
 import { BackupForm } from "@/components/layout/backup-form"
 import { EmptyState } from "@/components/layout/empty-state"
@@ -23,6 +24,17 @@ export default async function SettingsPage() {
       {profile ? (
         <div className="space-y-10">
           <SettingsForm profile={profile} />
+          <div className="max-w-[34rem] space-y-4 border-t border-line pt-8">
+            <div className="space-y-1">
+              <p className="plaque">Senha</p>
+              <h2 className="display text-xl">Definir ou trocar</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Quem entrava pelo link do e-mail ainda não tem senha: crie a sua aqui. Ao salvar,
+                as outras sessões da conta (outros aparelhos) são encerradas.
+              </p>
+            </div>
+            <NewPasswordForm mode="settings" />
+          </div>
           <div className="max-w-[34rem] space-y-4 border-t border-line pt-8">
             <div className="space-y-1">
               <p className="plaque">Privacidade</p>
