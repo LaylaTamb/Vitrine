@@ -85,7 +85,8 @@ const backupCategorySchema = z.object({
   folderId: z.string().nullable().default(null),
   estrutura: z.array(backupFieldSchema).default([]),
   ratingEnabled: z.boolean().default(true),
-  defaultSort: z.string().default("recent"),
+  // Sem ordem no arquivo: a de uma categoria nova (nota maior primeiro, ou recentes sem estrelas).
+  defaultSort: z.string().optional(),
 })
 
 const backupEntryFolderSchema = z.object({

@@ -76,3 +76,18 @@ export function folderSubtree(folders: EntryFolder[], folderId: string): Set<str
   ids.add(folderId)
   return ids
 }
+
+/**
+ * Os itens de uma pasta e de todas as subpastas dela (`null` = a categoria
+ * inteira) — o recorte da aba Números, que conta o que está "debaixo" do
+ * nível aberto, não só os itens soltos nele.
+ */
+export function itemsUnder<T extends InFolder>(
+  items: T[],
+  folders: EntryFolder[],
+  folderId: string | null
+): T[] {
+  if (folderId === null) return items
+  const subtree = folderSubtree(folders, folderId)
+  return items.filter((item) => item.folderId !== null && subtree.has(item.folderId))
+}

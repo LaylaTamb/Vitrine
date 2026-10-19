@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import Link from "next/link"
-import { FolderOpen, GripVertical, MoveRight, Pencil, Trash2 } from "lucide-react"
+import { FolderOpen, GripVertical, Lock, MoveRight, Pencil, Trash2 } from "lucide-react"
 
 import type { ViewMode } from "@/components/layout/view-toggle"
 import { cn } from "@/lib/utils"
@@ -22,6 +22,8 @@ export interface CollectionCardProps {
   onMove?: () => void
   onEdit?: () => void
   onDelete?: () => void
+  /** Privada: um cadeado ao lado do nome (só o dono chega a ver). */
+  isPrivate?: boolean
 }
 
 export function CollectionCard({
@@ -38,6 +40,7 @@ export function CollectionCard({
   onMove,
   onEdit,
   onDelete,
+  isPrivate = false,
 }: CollectionCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -94,11 +97,25 @@ export function CollectionCard({
         onClick={onOpen}
         className="flex min-w-0 flex-1 items-center gap-3 text-left outline-none"
       >
-        <CardFace glyph={glyph} name={name} subtitle={subtitle} view={view} kind={kind} />
+        <CardFace
+          glyph={glyph}
+          name={name}
+          subtitle={subtitle}
+          view={view}
+          kind={kind}
+          isPrivate={isPrivate}
+        />
       </button>
     ) : (
       <Link href={href ?? "#"} className="flex min-w-0 flex-1 items-center gap-3 outline-none">
-        <CardFace glyph={glyph} name={name} subtitle={subtitle} view={view} kind={kind} />
+        <CardFace
+          glyph={glyph}
+          name={name}
+          subtitle={subtitle}
+          view={view}
+          kind={kind}
+          isPrivate={isPrivate}
+        />
       </Link>
     )
 
@@ -135,21 +152,34 @@ function CardFace({
   subtitle,
   view,
   kind,
+  isPrivate,
 }: {
   glyph: string
   name: string
   subtitle: string
   view: ViewMode
   kind: "folder" | "category"
+  isPrivate: boolean
 }) {
+  const lock = isPrivate ? (
+    <Lock
+      role="img"
+      aria-label={kind === "folder" ? "Pasta privada" : "Categoria privada"}
+      className="size-3.5 shrink-0 text-faint"
+    >
+      <title>{kind === "folder" ? "Pasta privada: só você vê" : "Categoria privada: só você vê"}</title>
+    </Lock>
+  ) : null
+
   if (view === "list") {
     return (
       <>
         <span className="flex size-8 shrink-0 items-center justify-center text-lg">
           {glyph || <FolderOpen className="size-4 text-faint" />}
         </span>
-        <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="display block truncate text-base">{name}</span>
+          {lock}
         </span>
         <span className="shrink-0 text-xs text-muted-foreground">{subtitle}</span>
       </>
@@ -162,7 +192,10 @@ function CardFace({
         {glyph || <span className="text-faint">{kind === "folder" ? "📁" : "▫"}</span>}
       </span>
       <span className="min-w-0">
-        <span className="display block truncate text-lg leading-snug">{name}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="display block truncate text-lg leading-snug">{name}</span>
+          {lock}
+        </span>
         <span className="mt-0.5 block truncate text-xs text-muted-foreground">{subtitle}</span>
       </span>
     </span>

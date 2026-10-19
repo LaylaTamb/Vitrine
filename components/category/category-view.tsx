@@ -37,6 +37,7 @@ import { DeleteEntryFolderDialog } from "@/components/category/delete-entry-fold
 import { FilterBar } from "@/components/category/filter-bar"
 import { StatsPanel } from "@/components/category/stats-panel"
 import { CollectionCard } from "@/components/collection/collection-card"
+import { PrivacyNote, PrivacySwitch } from "@/components/collection/privacy-switch"
 import { FolderDialog } from "@/components/collection/folder-dialog"
 import { MoveDialog } from "@/components/collection/move-dialog"
 import { BulkBar } from "@/components/entry/bulk-bar"
@@ -53,10 +54,11 @@ import type { EntryViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { applyOrder, breadcrumbOf, foldersOf, type TreeFolder } from "@/lib/domain/collections"
-import { entryFolderTotals, itemsAt, resolveFolderId } from "@/lib/domain/entry-folders"
+import { applyOrder, breadcrumbOf, foldersOf } from "@/lib/domain/collections"
+import { entryFolderTotals, itemsAt, itemsUnder, resolveFolderId } from "@/lib/domain/entry-folders"
 import { locationFieldsOf } from "@/lib/domain/fields"
 import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
+import { isPublic, privateAncestor } from "@/lib/domain/privacy"
 import {
   applyCategoryFilter,
   defaultSortOf,
@@ -65,7 +67,7 @@ import {
   type CategoryFilter,
 } from "@/lib/domain/filter"
 import { itemCount, plural } from "@/lib/domain/format"
-import type { Category, EntryFolder, EntryView, Profile, Tag } from "@/lib/domain/types"
+import type { Category, EntryFolder, EntryView, Folder, Profile, Tag } from "@/lib/domain/types"
 import { withFolder } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
@@ -108,14 +110,14 @@ export function CategoryView({
   /** As subpastas desta categoria. */
   entryFolders: EntryFolder[]
   /** As pastas das Coleções do dono — só para a trilha e o Voltar. */
-  collectionFolders: TreeFolder[]
+  collectionFolders: Pick<Folder, "id" | "name" | "parent_folder_id" | "display_order" | "is_public">[]
   /** Onde ficam as Coleções do dono: `/`, `/u/<username>` ou `/demo`. */
   collectionsHref: string
   canEdit: boolean
   initialFilter: CategoryFilter
   initialTab: Tab
 }) {
-  const { actions, basePath, isDemo } = useVitrine()
+  const { actions, isDemo } = useVitrine()
   const [folderParam, setFolderParam] = useFolderParam()
   const currentFolderId = resolveFolderId(entryFolders, folderParam)
 
@@ -212,7 +214,16 @@ export function CategoryView({
     const list = applyCategoryFilter(levelViews, filter)
     return manual && !active ? applyOrder(list, itemOrder) : list
   }, [levelViews, filter, manual, active, itemOrder])
-  const levelTags = useMemo(() => tagsPresentIn(levelViews), [levelViews])
+  // A aba Números conta a pasta aberta com todas as subpastas dela.
+  const statsBase = useMemo(
+    () => itemsUnder(views, entryFolders, currentFolderId),
+    [views, entryFolders, currentFolderId]
+  )
+  const statsViews = useMemo(() => applyCategoryFilter(statsBase, filter), [statsBase, filter])
+  const levelTags = useMemo(
+    () => tagsPresentIn(tab === "numeros" ? statsBase : levelViews),
+    [tab, statsBase, levelViews]
+  )
 
   // Arrastar itens só faz sentido na ordem manual e com o nível inteiro à
   // vista: reordenar um recorte filtrado deixaria ambíguo onde fica o resto.
@@ -361,6 +372,8 @@ export function CategoryView({
   })()
 
   const levelIsEmpty = levelViews.length === 0 && levelFolders.length === 0
+  // Categoria pública dentro de uma pasta privada: ninguém mais vê — vale avisar o dono.
+  const hiddenBy = privateAncestor(collectionFolders, category.folder_id)
 
   return (
     <>
@@ -380,6 +393,12 @@ export function CategoryView({
         actions={
           canEdit ? (
             <>
+              <PrivacySwitch
+                kind="category"
+                id={category.id}
+                name={category.name}
+                isPublic={isPublic(category)}
+              />
               {/* O Mapa só mostra o que é meu, e a demonstração não tem mapa. */}
               {!isDemo && locationFieldsOf(category.estrutura).length > 0 ? (
                 <Link
@@ -409,24 +428,11 @@ export function CategoryView({
 
       <LevelNav trail={trail} />
 
-      {siblings.length > 1 ? (
-        <div className="-mx-1 mb-5 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {siblings.map((sibling) => (
-            <Link
-              key={sibling.id}
-              href={`${basePath}/categoria/${sibling.id}`}
-              className={cn(
-                "shrink-0 rounded-full border px-3 py-1 text-sm transition-colors",
-                sibling.id === category.id
-                  ? "border-brand-dim bg-brand-wash text-foreground"
-                  : "border-line text-muted-foreground hover:border-line-hi hover:text-foreground"
-              )}
-            >
-              {sibling.icon ? `${sibling.icon} ` : ""}
-              {sibling.name}
-            </Link>
-          ))}
-        </div>
+      {canEdit && isPublic(category) && hiddenBy ? (
+        <PrivacyNote>
+          Esta categoria está dentro de “{hiddenBy.name}”, que é privada: ninguém mais vê os
+          itens dela.
+        </PrivacyNote>
       ) : null}
 
       <div className="mb-5 flex items-center gap-1 border-b border-line">
@@ -466,6 +472,7 @@ export function CategoryView({
           onGridSizeChange={changeGridSize}
           active={active}
           ratingEnabled={ratingEnabled}
+          showListControls={tab === "itens"}
         />
 
         {tab === "itens" && levelFolders.length > 0 ? (
@@ -519,10 +526,12 @@ export function CategoryView({
 
         {tab === "numeros" ? (
           <StatsPanel
-            views={filtered}
+            views={statsViews}
             estrutura={category.estrutura}
             filterActive={active}
             ratingEnabled={ratingEnabled}
+            includesSubfolders={statsBase.length > levelViews.length}
+            categoryColor={category.color}
           />
         ) : views.length === 0 && entryFolders.length === 0 ? (
           <EmptyState

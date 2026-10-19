@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
+import { defaultPrivacySchema } from "@/lib/actions/schemas"
 import {
   parseBackupJSON,
   performImport,
@@ -14,6 +15,7 @@ import {
   type BackupPayload,
   type ImportSummary,
 } from "@/lib/backup/import"
+import { isMissingColumn } from "@/lib/domain/errors"
 import { parseCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeSort } from "@/lib/domain/filter"
 import { imageDisplayOf } from "@/lib/domain/view"
@@ -55,6 +57,38 @@ export async function updateProfileAction(input: {
     .eq("id", user.id)
 
   if (error) return fail(error)
+
+  revalidatePath("/", "layout")
+  return ok()
+}
+
+/**
+ * O padrão de privacidade de quem cria: novas pastas e categorias nascem
+ * públicas ou privadas. Não mexe nas que já existem — cada uma tem o seu.
+ */
+export async function setDefaultPrivacyAction(input: {
+  isPublic: boolean
+}): Promise<ActionResult> {
+  const parsed = defaultPrivacySchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ default_public: parsed.data.isPublic })
+    .eq("id", user.id)
+
+  if (error) {
+    return isMissingColumn(error)
+      ? {
+          ok: false,
+          error:
+            "A privacidade ainda não está no banco: rode supabase/12_privacy_and_rating_sort.sql no SQL Editor do Supabase.",
+        }
+      : fail(error)
+  }
 
   revalidatePath("/", "layout")
   return ok()

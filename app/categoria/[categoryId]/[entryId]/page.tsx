@@ -40,7 +40,7 @@ export default async function EntryPage({
           <EmptyState
             icon={ImageOff}
             title="Item não encontrado"
-            description="Ele pode ter sido excluído, ou o endereço está errado."
+            description="Ele pode ter sido excluído, a categoria dele pode ter ficado privada — ou o endereço está errado."
           />
         </div>
       </AppShell>

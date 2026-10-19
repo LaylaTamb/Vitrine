@@ -1,6 +1,7 @@
 import { CollectionsView } from "@/components/collection/collections-view"
 import { AppShell } from "@/components/layout/app-shell"
 import { itemCount, plural } from "@/lib/domain/format"
+import { defaultPublicOf } from "@/lib/domain/privacy"
 import { getCollections } from "@/lib/queries/collections"
 import { displayNameOf, requireUser } from "@/lib/queries/session"
 
@@ -32,6 +33,7 @@ export default async function CollectionsPage() {
         headerLabel="Perfil"
         headerTitle={displayNameOf(profile)}
         headerSubtitle={subtitle}
+        defaultPublic={defaultPublicOf(profile)}
       />
     </AppShell>
   )

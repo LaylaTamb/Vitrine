@@ -5,15 +5,15 @@
  * importa React nem Supabase. É o que os testes cobrem.
  */
 
-/** Os tipos de campo que uma categoria pode ter. E só eles. */
+/** Os tipos de campo que uma categoria pode ter. E só eles — nesta ordem no editor. */
 export const FIELD_TYPES = [
   "star",
+  "date",
+  "str",
   "int",
   "decimal",
-  "currency",
   "time",
-  "str",
-  "date",
+  "currency",
   "select",
   "location",
 ] as const
@@ -61,6 +61,11 @@ export interface Profile {
   display_name: string | null
   avatar_url: string | null
   created_at: string
+  /**
+   * Padrão de quem cria: novas pastas e categorias nascem públicas (`true`)
+   * ou privadas. Ausente (antes da migração 12) = públicas.
+   */
+  default_public?: boolean
 }
 
 export interface Folder {
@@ -70,6 +75,11 @@ export interface Folder {
   parent_folder_id: string | null
   display_order: number
   created_at: string
+  /**
+   * `false` = só o dono vê a pasta e tudo dentro dela. Ausente (antes da
+   * migração 12) = pública. Ler com `isPublic()`.
+   */
+  is_public?: boolean
 }
 
 export interface Category {
@@ -77,7 +87,7 @@ export interface Category {
   owner_id: string
   name: string
   icon: string | null
-  /** Cor de acento (uma das `TAG_COLORS`) — tinge o card dos itens. `null` = sem cor. */
+  /** Cor de acento (`#RRGGBB`: uma das `TAG_COLORS` ou qualquer outra) — tinge o card dos itens. `null` = sem cor. */
   color: string | null
   folder_id: string | null
   display_order: number
@@ -90,6 +100,11 @@ export interface Category {
   /** A ordenação com que a categoria abre. Lida com `defaultSortOf()`. */
   default_sort: string
   created_at: string
+  /**
+   * `false` = só o dono vê a categoria e os itens. Ausente (antes da
+   * migração 12) = pública. Ler com `isPublic()`.
+   */
+  is_public?: boolean
 }
 
 /**

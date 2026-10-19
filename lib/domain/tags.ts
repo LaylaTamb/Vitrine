@@ -1,3 +1,5 @@
+import { parseHexColor } from "./color"
+
 /** A paleta de 8 cores das tags. */
 export const TAG_COLORS = [
   { value: "#B98CC2", label: "Roxo" },
@@ -20,13 +22,18 @@ export function normalizeTagColor(value: unknown): string {
     : DEFAULT_TAG_COLOR
 }
 
+/** A cor é uma das 8 da paleta? */
+export function isPaletteColor(value: string | null | undefined): boolean {
+  const text = String(value ?? "").toUpperCase()
+  return TAG_COLORS.some((color) => color.value.toUpperCase() === text)
+}
+
 /**
- * Cor de categoria: mesma paleta das tags, mas nula é uma opção válida (sem
- * cor — visual padrão). Qualquer valor fora da paleta também vira nulo, em
- * vez de cair num roxo padrão como as tags fazem.
+ * Cor de categoria: uma das 8 da paleta ou qualquer outra em HEX (a "+" do
+ * editor), e nula é uma opção válida (sem cor — visual padrão). Um valor que
+ * não é cor vira nulo, em vez de cair num roxo padrão como as tags fazem.
  */
 export function normalizeCategoryColor(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null
-  const text = String(value).toUpperCase()
-  return TAG_COLORS.some((color) => color.value.toUpperCase() === text) ? text : null
+  return parseHexColor(value)
 }

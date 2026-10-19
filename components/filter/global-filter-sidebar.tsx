@@ -2,6 +2,7 @@
 
 import { Search, X } from "lucide-react"
 
+import { DurationInput } from "@/components/entry/duration-input"
 import { MatchModeToggle } from "@/components/filter/match-mode-toggle"
 import type { GlobalFilterState } from "@/components/filter/use-global-filter"
 import { TagPill } from "@/components/tag/tag-pill"
@@ -213,7 +214,21 @@ function FieldControl({
       <Label className="block text-xs text-foreground">{field.label}</Label>
       <p className="text-[0.68rem] text-faint">em {where}</p>
 
-      {isNumericField(field.tipo) ? (
+      {field.tipo === "time" ? (
+        <div className="flex items-center gap-1.5">
+          <DurationInput
+            label={`${field.label} mínimo`}
+            value={value.min}
+            onChange={(min) => onChange({ min })}
+          />
+          <span className="text-faint">–</span>
+          <DurationInput
+            label={`${field.label} máximo`}
+            value={value.max}
+            onChange={(max) => onChange({ max })}
+          />
+        </div>
+      ) : isNumericField(field.tipo) ? (
         <div className="flex items-center gap-1.5">
           <Input
             type="number"

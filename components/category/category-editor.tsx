@@ -20,10 +20,11 @@ import { X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
+import { CategoryColorPicker } from "@/components/category/category-color-picker"
 import { FieldRow } from "@/components/category/field-row"
+import { PrivacyToggle } from "@/components/collection/privacy-switch"
 import { runPendingGeocode } from "@/components/map/geocode-runner"
 import { useVitrine } from "@/components/providers/vitrine-context"
-import { ColorPalette } from "@/components/tag/color-palette"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -72,7 +73,7 @@ export const NEW_CATEGORY: CategoryEditorValue = {
   color: null,
   estrutura: [],
   ratingEnabled: true,
-  defaultSort: "recent",
+  defaultSort: "rating_desc",
 }
 
 interface ImpactLine {
@@ -85,6 +86,7 @@ export function CategoryEditor({
   initial,
   folderId = null,
   onSaved,
+  defaultPublic = true,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -92,6 +94,8 @@ export function CategoryEditor({
   initial: CategoryEditorValue
   folderId?: string | null
   onSaved?: (id?: string) => void
+  /** O padrão do perfil para categoria nova (`true` = pública). */
+  defaultPublic?: boolean
 }) {
   const { actions, isDemo } = useVitrine()
   const editing = Boolean(initial.id)
@@ -103,6 +107,8 @@ export function CategoryEditor({
   const [fields, setFields] = useState<Estrutura>(initial.estrutura)
   const [ratingEnabled, setRatingEnabled] = useState(initial.ratingEnabled)
   const [defaultSort, setDefaultSort] = useState<SortKey>(initial.defaultSort)
+  // Só categoria NOVA escolhe aqui; a que já existe troca pelo botão no topo dela.
+  const [isPublic, setIsPublic] = useState(defaultPublic)
   const [jsonText, setJsonText] = useState(() => serializeEstrutura(initial.estrutura))
   const [jsonError, setJsonError] = useState<string | null>(null)
 
@@ -135,6 +141,8 @@ export function CategoryEditor({
   // digitado aqui dentro.
   const initialRef = useRef(initial)
   initialRef.current = initial
+  const defaultPublicRef = useRef(defaultPublic)
+  defaultPublicRef.current = defaultPublic
 
   useEffect(() => {
     if (!open) return
@@ -146,6 +154,7 @@ export function CategoryEditor({
     setFields(current.estrutura)
     setRatingEnabled(current.ratingEnabled)
     setDefaultSort(current.defaultSort)
+    setIsPublic(defaultPublicRef.current)
     setJsonText(serializeEstrutura(current.estrutura))
     setJsonError(null)
     setFieldError(null)
@@ -421,6 +430,8 @@ export function CategoryEditor({
           estrutura,
           ratingEnabled,
           defaultSort,
+          // Igual ao padrão: quem decide é o banco (vale também antes da migração 12).
+          isPublic: isPublic === defaultPublic ? undefined : isPublic,
         })
     setPending(false)
 
@@ -509,28 +520,23 @@ export function CategoryEditor({
 
             <div className="space-y-1.5">
               <span className="plaque block">Cor (opcional)</span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  title="Sem cor"
-                  aria-label="Sem cor"
-                  aria-pressed={color === null}
-                  onClick={() => setColor(null)}
-                  className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-line text-faint transition-transform",
-                    color === null
-                      ? "ring-2 ring-white ring-offset-2 ring-offset-[var(--bg-soft)]"
-                      : "hover:scale-110"
-                  )}
-                >
-                  <X className="size-3.5" />
-                </button>
-                <ColorPalette value={color ?? ""} onChange={setColor} />
-              </div>
+              <CategoryColorPicker value={color} onChange={setColor} />
               <p className="text-xs leading-relaxed text-faint">
                 Tinge o card dos itens desta categoria — o brilho e a borda ficam nessa cor.
               </p>
             </div>
+
+            {!editing ? (
+              <div className="space-y-1.5">
+                <span className="plaque block">Visibilidade</span>
+                <PrivacyToggle kind="category" checked={isPublic} onChange={setIsPublic} />
+                <p className="text-xs leading-relaxed text-faint">
+                  {isPublic
+                    ? "Quem tem acesso ao app vê a categoria e os itens dela. Dá para mudar depois, no topo da categoria."
+                    : "Só você vê a categoria e os itens dela. Dá para mudar depois, no topo da categoria."}
+                </p>
+              </div>
+            ) : null}
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">

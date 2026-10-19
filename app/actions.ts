@@ -14,8 +14,9 @@ import {
   reorderSchema,
   structureImpactSchema,
   updateCategorySchema,
+  visibilitySchema,
 } from "@/lib/actions/schemas"
-import { isMissingSchema } from "@/lib/domain/errors"
+import { isMissingColumn, isMissingSchema } from "@/lib/domain/errors"
 import { locationFieldsOf, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeCategoryColor } from "@/lib/domain/tags"
 import { createClient } from "@/lib/supabase/server"
@@ -30,6 +31,60 @@ export async function signOutAction() {
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
   redirect("/login")
+}
+
+// ---------------------------------------------------------------------------
+// Privacidade — pública (o grupo vê) ou privada (só o dono). Quem esconde de
+// fato é a RLS do banco (migração 12); estas ações só gravam a escolha.
+// ---------------------------------------------------------------------------
+
+const PRIVACY_NOT_READY =
+  "A privacidade ainda não está no banco: rode supabase/12_privacy_and_rating_sort.sql no SQL Editor do Supabase."
+
+/** Como `fail`, mas explica o que fazer quando a coluna da migração 12 ainda não existe. */
+function failPrivacy(error: unknown): ActionResult<never> {
+  return isMissingColumn(error) ? { ok: false, error: PRIVACY_NOT_READY } : fail(error)
+}
+
+async function setVisibility(
+  table: "folders" | "categories",
+  input: { id: string; isPublic: boolean }
+): Promise<ActionResult> {
+  const parsed = visibilitySchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from(table)
+    .update({ is_public: parsed.data.isPublic })
+    .eq("id", parsed.data.id)
+    .eq("owner_id", user.id)
+    .select("id")
+
+  if (error) return failPrivacy(error)
+  if (!data || data.length === 0) {
+    return { ok: false, error: "Só quem criou pode mudar a privacidade." }
+  }
+
+  // As telas de todo mundo leem de novo — a de outra pessoa (/u/...) inclusive.
+  revalidatePath("/", "layout")
+  return ok()
+}
+
+export async function setFolderVisibilityAction(input: {
+  id: string
+  isPublic: boolean
+}): Promise<ActionResult> {
+  return setVisibility("folders", input)
+}
+
+export async function setCategoryVisibilityAction(input: {
+  id: string
+  isPublic: boolean
+}): Promise<ActionResult> {
+  return setVisibility("categories", input)
 }
 
 // ---------------------------------------------------------------------------
@@ -60,6 +115,7 @@ async function nextOrder(
 export async function createFolderAction(input: {
   name: string
   parentFolderId: string | null
+  isPublic?: boolean
 }): Promise<ActionResult<{ id: string }>> {
   const parsed = createFolderSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
@@ -82,11 +138,13 @@ export async function createFolderAction(input: {
       name: parsed.data.name,
       parent_folder_id: parsed.data.parentFolderId,
       display_order,
+      // Sem escolha explícita, o banco põe o padrão do perfil (migração 12).
+      ...(parsed.data.isPublic === undefined ? {} : { is_public: parsed.data.isPublic }),
     })
     .select("id")
     .single()
 
-  if (error) return fail(error)
+  if (error) return failPrivacy(error)
   revalidatePath("/")
   return ok({ id: (data as { id: string }).id })
 }
@@ -175,7 +233,7 @@ export async function deleteFolderAction(input: { id: string }): Promise<ActionR
 // ---------------------------------------------------------------------------
 
 export async function createCategoryAction(
-  input: CategoryInput & { folderId: string | null }
+  input: CategoryInput & { folderId: string | null; isPublic?: boolean }
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = createCategorySchema.safeParse({
     ...input,
@@ -206,11 +264,12 @@ export async function createCategoryAction(
       rating_enabled: parsed.data.ratingEnabled,
       default_sort: parsed.data.defaultSort,
       display_order,
+      ...(parsed.data.isPublic === undefined ? {} : { is_public: parsed.data.isPublic }),
     })
     .select("id")
     .single()
 
-  if (error) return fail(error)
+  if (error) return failPrivacy(error)
   revalidatePath("/")
   return ok({ id: (data as { id: string }).id })
 }

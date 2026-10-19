@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
+import { PrivacyToggle } from "@/components/collection/privacy-switch"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,7 +22,12 @@ import { Label } from "@/components/ui/label"
  * categoria (organiza os itens dela).
  */
 export type FolderScope =
-  | { kind: "collection"; parentFolderId: string | null }
+  | {
+      kind: "collection"
+      parentFolderId: string | null
+      /** O padrão do perfil para pasta nova (`true` = pública). */
+      defaultPublic?: boolean
+    }
   | { kind: "category"; categoryId: string; parentFolderId: string | null }
 
 /** Cria ou renomeia uma pasta. */
@@ -38,12 +44,19 @@ export function FolderDialog({
   scope: FolderScope
 }) {
   const { actions } = useVitrine()
+  const defaultPublic = scope.kind === "collection" ? (scope.defaultPublic ?? true) : true
   const [name, setName] = useState(folder?.name ?? "")
+  const [isPublic, setIsPublic] = useState(defaultPublic)
   const [pending, setPending] = useState(false)
+  // Só pasta NOVA das Coleções escolhe a privacidade aqui; a que já existe
+  // troca pelo botão no topo dela.
+  const choosesPrivacy = scope.kind === "collection" && !folder
 
   useEffect(() => {
-    if (open) setName(folder?.name ?? "")
-  }, [open, folder])
+    if (!open) return
+    setName(folder?.name ?? "")
+    setIsPublic(defaultPublic)
+  }, [open, folder, defaultPublic])
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -54,7 +67,12 @@ export function FolderDialog({
       scope.kind === "collection"
         ? folder
           ? await actions.renameFolder({ id: folder.id, name })
-          : await actions.createFolder({ name, parentFolderId: scope.parentFolderId })
+          : await actions.createFolder({
+              name,
+              parentFolderId: scope.parentFolderId,
+              // Igual ao padrão: quem decide é o banco (vale também antes da migração 12).
+              isPublic: isPublic === defaultPublic ? undefined : isPublic,
+            })
         : folder
           ? await actions.renameEntryFolder({ id: folder.id, name })
           : await actions.createEntryFolder({
@@ -100,6 +118,18 @@ export function FolderDialog({
               placeholder={scope.kind === "collection" ? "Comida" : "Feitos em casa"}
             />
           </div>
+
+          {choosesPrivacy ? (
+            <div className="space-y-1.5 pb-4">
+              <span className="plaque block">Visibilidade</span>
+              <PrivacyToggle kind="folder" checked={isPublic} onChange={setIsPublic} />
+              <p className="text-xs leading-relaxed text-faint">
+                {isPublic
+                  ? "Quem tem acesso ao app vê a pasta e o que for público dentro dela."
+                  : "Só você vê a pasta e tudo o que estiver dentro dela."}
+              </p>
+            </div>
+          ) : null}
 
           <DialogFooter>
             <Button

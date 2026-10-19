@@ -11,6 +11,8 @@ import {
   moveFolderAction,
   renameFolderAction,
   reorderLevelAction,
+  setCategoryVisibilityAction,
+  setFolderVisibilityAction,
   structureImpactAction,
   updateCategoryAction,
 } from "@/app/actions"
@@ -53,6 +55,9 @@ const serverActions: VitrineActions = {
   moveFolder: moveFolderAction,
   deleteFolder: deleteFolderAction,
   reorderLevel: reorderLevelAction,
+
+  setFolderVisibility: setFolderVisibilityAction,
+  setCategoryVisibility: setCategoryVisibilityAction,
 
   createCategory: createCategoryAction,
   updateCategory: updateCategoryAction,

@@ -28,6 +28,7 @@ import {
 import { CollectionCard } from "@/components/collection/collection-card"
 import { FolderDialog } from "@/components/collection/folder-dialog"
 import { MoveDialog } from "@/components/collection/move-dialog"
+import { PrivacyNote, PrivacySwitch } from "@/components/collection/privacy-switch"
 import { EmptyState } from "@/components/layout/empty-state"
 import { LevelNav } from "@/components/layout/level-nav"
 import { PageHeader } from "@/components/layout/page-header"
@@ -42,6 +43,7 @@ import { breadcrumbOf, folderTotals, levelItems } from "@/lib/domain/collections
 import { defaultSortOf } from "@/lib/domain/filter"
 import { itemCount, plural } from "@/lib/domain/format"
 import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
+import { isPublic, privateAncestor } from "@/lib/domain/privacy"
 import type { Category, Folder } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
 
@@ -74,6 +76,7 @@ export function CollectionsView({
   headerLabel,
   headerTitle,
   headerSubtitle,
+  defaultPublic = true,
 }: {
   folders: Folder[]
   categories: Category[]
@@ -82,6 +85,8 @@ export function CollectionsView({
   headerLabel: string
   headerTitle: string
   headerSubtitle: string
+  /** O padrão do perfil para pasta e categoria novas (`true` = públicas). */
+  defaultPublic?: boolean
 }) {
   const { actions, basePath } = useVitrine()
   const [folderParam, setCurrentFolderId] = useFolderParam()
@@ -128,7 +133,12 @@ export function CollectionsView({
   )
 
   const items = useMemo(() => {
-    const base = levelItems(folders, categories, currentFolderId)
+    const level = levelItems(folders, categories, currentFolderId)
+    // Para quem visita, pasta sem nenhuma categoria visível não diz nada — e
+    // denunciaria que há coisa privada lá dentro.
+    const base = canEdit
+      ? level
+      : level.filter((item) => item.kind !== "folder" || (totals.get(item.id)?.categories ?? 0) > 0)
     if (!order) return base
     const byId = new Map(base.map((item) => [item.id, item]))
     const sorted = order.map((id) => byId.get(id)).filter((item) => item !== undefined)
@@ -136,7 +146,13 @@ export function CollectionsView({
       if (!order.includes(item.id)) sorted.push(item)
     }
     return sorted
-  }, [folders, categories, currentFolderId, order])
+  }, [folders, categories, currentFolderId, order, canEdit, totals])
+
+  const currentFolder = folders.find((folder) => folder.id === currentFolderId) ?? null
+  // Pasta pública dentro de uma privada: ninguém mais vê — vale avisar o dono.
+  const hiddenBy = currentFolder
+    ? privateAncestor(folders, currentFolder.parent_folder_id)
+    : null
 
   const trail = useMemo(() => breadcrumbOf(folders, currentFolderId), [folders, currentFolderId])
 
@@ -203,6 +219,14 @@ export function CollectionsView({
           <>
             {canEdit ? (
               <>
+                {currentFolder ? (
+                  <PrivacySwitch
+                    kind="folder"
+                    id={currentFolder.id}
+                    name={currentFolder.name}
+                    isPublic={isPublic(currentFolder)}
+                  />
+                ) : null}
                 <Button
                   variant="outline"
                   size="lg"
@@ -243,6 +267,13 @@ export function CollectionsView({
           })),
         ]}
       />
+
+      {canEdit && currentFolder && isPublic(currentFolder) && hiddenBy ? (
+        <PrivacyNote>
+          Esta pasta está dentro de “{hiddenBy.name}”, que é privada: ninguém mais vê o que
+          tem aqui.
+        </PrivacyNote>
+      ) : null}
 
       {items.length === 0 && !canEdit ? (
         <EmptyState
@@ -287,6 +318,7 @@ export function CollectionsView({
                     id={item.id}
                     kind="folder"
                     name={item.folder.name}
+                    isPrivate={canEdit && !isPublic(item.folder)}
                     icon={null}
                     subtitle={folderSubtitle(item.id)}
                     onOpen={() => setCurrentFolderId(item.id)}
@@ -326,6 +358,7 @@ export function CollectionsView({
                     id={item.id}
                     kind="category"
                     name={item.category.name}
+                    isPrivate={canEdit && !isPublic(item.category)}
                     icon={item.category.icon}
                     subtitle={itemCount(counts[item.id] ?? 0)}
                     href={`${basePath}/categoria/${item.id}`}
@@ -392,7 +425,7 @@ export function CollectionsView({
             open={folderDialog.open}
             onOpenChange={(open) => setFolderDialog((state) => ({ ...state, open }))}
             folder={folderDialog.folder}
-            scope={{ kind: "collection", parentFolderId: currentFolderId }}
+            scope={{ kind: "collection", parentFolderId: currentFolderId, defaultPublic }}
           />
 
           <CategoryEditor
@@ -400,6 +433,7 @@ export function CollectionsView({
             onOpenChange={(open) => setCategoryEditor((state) => ({ ...state, open }))}
             initial={categoryEditor.initial}
             folderId={currentFolderId}
+            defaultPublic={defaultPublic}
           />
 
           <MoveDialog

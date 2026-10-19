@@ -1,8 +1,7 @@
 import { cache } from "react"
 
 import { parseEstrutura } from "@/lib/domain/fields"
-import type { TreeFolder } from "@/lib/domain/collections"
-import type { Category, EntryFolder, EntryWithTags, Profile, Tag } from "@/lib/domain/types"
+import type { Category, EntryFolder, EntryWithTags, Folder, Profile, Tag } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 
 export interface CategoryPageData {
@@ -15,7 +14,7 @@ export interface CategoryPageData {
   /** As subpastas desta categoria. */
   entryFolders: EntryFolder[]
   /** As pastas das Coleções do dono — a trilha "Coleções › Bebidas › Suco". */
-  collectionFolders: TreeFolder[]
+  collectionFolders: Folder[]
 }
 
 /**
@@ -35,7 +34,7 @@ export const getCategoryPage = cache(async (categoryId: string): Promise<Categor
         `*,
          owner:profiles(id, username, display_name, avatar_url, created_at,
                         categories(id, name, icon, display_order),
-                        folders(id, name, parent_folder_id, display_order)),
+                        folders(*)),
          entry_folders(*),
          entries(*, entry_tags(tag_id))`
       )
@@ -52,7 +51,7 @@ export const getCategoryPage = cache(async (categoryId: string): Promise<Categor
   const row = categoryResult.data as
     | (Omit<Category, "estrutura"> & {
         estrutura: unknown
-        owner: (Profile & { categories: Category[]; folders: TreeFolder[] }) | null
+        owner: (Profile & { categories: Category[]; folders: Folder[] }) | null
         entry_folders: EntryFolder[]
         entries: EntryWithTags[]
       })

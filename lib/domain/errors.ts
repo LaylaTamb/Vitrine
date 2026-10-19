@@ -123,6 +123,16 @@ export function isMissingSchema(error: unknown): boolean {
 }
 
 /**
+ * Coluna que o banco ainda não tem — a migração que a cria não rodou
+ * (`42703` do Postgres, `PGRST204` do PostgREST).
+ */
+export function isMissingColumn(error: unknown): boolean {
+  const { text, code } = read(error)
+  if (["42703", "PGRST204"].includes(code.toUpperCase())) return true
+  return text.includes("column") && (text.includes("does not exist") || text.includes("could not find"))
+}
+
+/**
  * Códigos que chegam por querystring (`/login?erro=otp_expired`), vindos do
  * redirect do Supabase ou do nosso próprio `/auth/callback`.
  */

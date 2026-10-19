@@ -47,6 +47,7 @@ import {
   updateCategorySchema,
   updateEntrySchema,
   updateTagSchema,
+  visibilitySchema,
 } from "@/lib/actions/schemas"
 import { descendantFolderIds } from "@/lib/domain/collections"
 import { folderSubtree } from "@/lib/domain/entry-folders"
@@ -144,7 +145,7 @@ export function createDemoActions(
       const parsed = createFolderSchema.safeParse(input)
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
-      const { name, parentFolderId } = parsed.data
+      const { name, parentFolderId, isPublic = true } = parsed.data
       if (parentFolderId && !state.folders.some((folder) => folder.id === parentFolderId)) {
         return no(GONE)
       }
@@ -162,6 +163,7 @@ export function createDemoActions(
               state.folders.filter((folder) => folder.parent_folder_id === parentFolderId)
             ),
             created_at: now(),
+            is_public: isPublic,
           },
         ],
       })
@@ -241,6 +243,40 @@ export function createDemoActions(
     },
 
     // -----------------------------------------------------------------------
+    // Privacidade — na demo não há mais ninguém para esconder, mas o botão
+    // funciona igual, para mostrar como é.
+    // -----------------------------------------------------------------------
+    async setFolderVisibility(input): Result {
+      const parsed = visibilitySchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      const state = get()
+      if (!state.folders.some((folder) => folder.id === parsed.data.id)) return no(GONE)
+      commit({
+        ...state,
+        folders: state.folders.map((folder) =>
+          folder.id === parsed.data.id ? { ...folder, is_public: parsed.data.isPublic } : folder
+        ),
+      })
+      return ok()
+    },
+
+    async setCategoryVisibility(input): Result {
+      const parsed = visibilitySchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      const state = get()
+      if (!state.categories.some((category) => category.id === parsed.data.id)) return no(GONE)
+      commit({
+        ...state,
+        categories: state.categories.map((category) =>
+          category.id === parsed.data.id
+            ? { ...category, is_public: parsed.data.isPublic }
+            : category
+        ),
+      })
+      return ok()
+    },
+
+    // -----------------------------------------------------------------------
     // Categorias
     // -----------------------------------------------------------------------
     async createCategory(input): Result<{ id: string }> {
@@ -250,7 +286,8 @@ export function createDemoActions(
       })
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
-      const { name, icon, color, folderId, estrutura, ratingEnabled, defaultSort } = parsed.data
+      const { name, icon, color, folderId, estrutura, ratingEnabled, defaultSort, isPublic = true } =
+        parsed.data
       if (state.categories.some((category) => category.name === name)) {
         return no("Você já tem uma categoria com esse nome.")
       }
@@ -274,6 +311,7 @@ export function createDemoActions(
             rating_enabled: ratingEnabled,
             default_sort: defaultSort,
             created_at: now(),
+            is_public: isPublic,
           },
         ],
       })

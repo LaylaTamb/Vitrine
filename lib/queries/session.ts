@@ -41,9 +41,11 @@ export const getMyProfile = cache(async (): Promise<Profile | null> => {
   if (!user) return null
 
   const supabase = await createClient()
+  // `*`: traz também `default_public` quando a migração 12 já rodou — e não
+  // quebra quando ainda não rodou (pedir a coluna pelo nome quebraria).
   const { data } = await supabase
     .from("profiles")
-    .select("id, username, display_name, avatar_url, created_at")
+    .select("*")
     .eq("id", user.id)
     .maybeSingle()
 

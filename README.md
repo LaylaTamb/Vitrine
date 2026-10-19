@@ -88,6 +88,11 @@ No **SQL Editor**, rode nesta ordem:
 5. `supabase/11_entry_places.sql` (aditivo: a localização dos itens para o
    Mapa — tabela `entry_places` e a função `prune_entry_places`). Sem ele o
    app funciona, mas o Mapa pede para rodar
+6. `supabase/12_privacy_and_rating_sort.sql` (aditivo: pastas e categorias
+   **públicas ou privadas**, o padrão de privacidade do perfil e as regras de
+   leitura que escondem o privado de terceiros; e a ordem padrão "Nota (maior
+   primeiro)"). Tudo o que já existe continua público. Sem ele o app funciona
+   como antes, e o botão Pública/Privada avisa que falta rodar
 
 Projeto que já tinha a conta demo antiga (`demo-vitrine`, anterior à demo em
 memória) roda ainda, **depois do deploy** da versão sem ela:
@@ -267,7 +272,7 @@ lib/
                 respostas em funções puras e testadas (parse.ts)
   queries/      leituras do Supabase
   supabase/     server.ts, client.ts, middleware.ts
-supabase/       01_schema.sql … 11_entry_places.sql
+supabase/       01_schema.sql … 12_privacy_and_rating_sort.sql
 scripts/        supabase-keep-alive.mjs (rodado pelo .github/workflows/)
 ```
 
@@ -287,7 +292,9 @@ Coleções › Bebidas › 🧃 Suco › Marca 1
   níveis continua sem ida ao servidor.
 - O botão **Voltar** (`components/layout/level-nav.tsx`) sobe um nível:
   subpasta → categoria → pasta das Coleções → Coleções.
-- Na categoria, o filtro e a aba Números olham **só os itens do nível aberto**.
+- Na categoria, a lista e o filtro olham **só os itens do nível aberto**; a
+  aba Números conta o nível aberto **com todas as subpastas dele** (na raiz,
+  a categoria inteira) — e diz "inclui as subpastas" quando é o caso.
 - Excluir uma subpasta pergunta: **manter o conteúdo** (sobe um nível) ou
   **excluir tudo**. Mover um item para outra categoria o leva para a raiz dela.
 - FKs compostas `(…, category_id)` garantem no banco que pasta-mãe e itens de
@@ -310,7 +317,43 @@ Coleções › Bebidas › 🧃 Suco › Marca 1
   mostra quantas antes de salvar. O servidor também recusa nota nova numa
   categoria sem estrelas, e mover um item para ela tira a nota dele.
 - A **ordem padrão dos itens** (Recentes, Nota, Nome ou Ordem manual) também
-  é da categoria: é como ela abre quando a URL não diz outra coisa.
+  é da categoria: é como ela abre quando a URL não diz outra coisa. Categoria
+  nova abre por **Nota (maior primeiro)**; sem estrelas, por Recentes
+  (`initialSortFor`, em `lib/domain/filter.ts`).
+
+### Estrutura: cor e campos
+
+- **Cor**: as 8 da paleta ou a nona, **+**, que abre uma roda de cores (a
+  volta escolhe a cor, o centro clareia), o brilho e o campo **HEX** para
+  digitar ou colar (`#2A9D8F`, `2a9d8f` ou `#abc`). A cor é só um `#RRGGBB`
+  em `categories.color` — cards, tier list, pinos do Mapa e Números usam a
+  mesma, seja da paleta ou livre (`normalizeCategoryColor`, em
+  `lib/domain/tags.ts`). As tags continuam só com as 8.
+- Os tipos de campo aparecem nesta ordem: Estrela (0–5), Data, Texto, Número
+  inteiro, Número com vírgula, Duração (h:min), Moeda, Lista de opções e
+  Localização (mapa).
+- **Duração** se escolhe como **00:00**: horas e minutos se digitam
+  separados, as setas (e a roda do mouse, com o campo em foco) sobem e
+  descem, e o relógio abre duas colunas que rolam (horas 0–999, minutos
+  0–59). Por dentro continua o total em **minutos** — `custom_fields`, filtro,
+  ordenação, backup e Números não mudaram. O filtro por duração do Filtro
+  geral usa o mesmo campo.
+
+### Números
+
+Uma leitura rápida do recorte (a pasta aberta com as subpastas, depois do
+filtro), de cima para baixo:
+
+- **Resumo** numa linha: quantos itens, a nota média e quantos têm nota.
+- **Notas** por faixa de estrela (5, 4–4,5 … 0–0,5 — as mesmas do tier list)
+  e **Destaques**: os 3 de nota mais alta e, fora deles, o de menor nota, com
+  link para cada um. Somem numa categoria sem estrelas.
+- **Campos**, uma linha cada: média, faixa (de… a…) e total (para contagem,
+  dinheiro e tempo); as opções mais comuns de uma Lista; a faixa de datas; e
+  "em N de M" quando nem todo item preencheu.
+- **Tags mais usadas**, como pastilhas com a contagem.
+
+O cálculo é puro e testado (`lib/domain/stats.ts`).
 
 ### Filtros
 
@@ -437,10 +480,10 @@ valor em todos os itens. Com id estável, renomear é seguro e barato — e o ed
 de estrutura só pede confirmação quando a mudança realmente mexe nos itens
 (campo acrescentado ou removido).
 
-Os nove tipos de campo são `star`, `int`, `decimal`, `currency`, `time`,
-`str`, `date`, `select` e `location`. `star`, `int`, `decimal`, `currency` e
+Os nove tipos de campo são `star`, `date`, `str`, `int`, `decimal`, `time`,
+`currency`, `select` e `location`. `star`, `int`, `decimal`, `currency` e
 `time` são os numéricos: aceitam filtro por faixa e entram na média da aba
-Números.
+Números. `time` guarda o total em minutos (`95` = 1h 35min).
 
 `location` ("Localização (mapa)") guarda o **texto** do endereço, como um
 `str` — busca, filtro "contém", ordenação e backup não mudam. As coordenadas
@@ -451,9 +494,32 @@ Localização** (os endereços já escritos são procurados na Geoapify ao salva
 
 ### Permissões
 
-Todo usuário autenticado **lê** tudo; só o dono **escreve** o que é seu. As
-`tags` são a exceção: vocabulário compartilhado, sem dono — qualquer autenticado
-cria, edita e apaga, e a mudança vale para o acervo de todo mundo.
+Todo usuário autenticado **lê** o que é **público**; só o dono **escreve** o
+que é seu. As `tags` são a exceção: vocabulário compartilhado, sem dono —
+qualquer autenticado cria, edita e apaga, e a mudança vale para o acervo de
+todo mundo.
+
+**Privacidade** (migração 12):
+
+- Cada **pasta** e cada **categoria** é **Pública** (quem tem acesso ao app
+  vê) ou **Privada** (só o dono). O dono troca no interruptor do topo da
+  categoria, ou do topo da pasta aberta nas Coleções; as privadas ganham um
+  cadeado no card.
+- **Pasta privada esconde tudo o que está dentro dela**, em qualquer
+  profundidade — mesmo uma categoria marcada como pública. A tela avisa o
+  dono quando é o caso ("está dentro de “X”, que é privada").
+- Quem decide é o **banco**, não a tela: as políticas de leitura (RLS) de
+  `folders`, `categories`, `entries`, `entry_folders`, `entry_tags` e
+  `entry_places` só devolvem a terceiros o que é visível
+  (`folder_chain_is_public`, `category_is_visible`, `entry_is_visible`). Um
+  link direto, a contagem de itens ou o uso de uma tag não denunciam nada
+  privado, e trocar para privada vale na próxima leitura de qualquer pessoa.
+- **Padrão do perfil** (Configurações → Privacidade): novas pastas e
+  categorias nascem **públicas** (o inicial) ou **privadas**. Um gatilho no
+  banco aplica o padrão quando a criação não diz nada — vale também para a
+  importação de backup. Mudar o padrão não mexe no que já existe.
+- Na página de outra pessoa (`/u/...`), pasta sem nada visível dentro não
+  aparece.
 
 ---
 
@@ -467,5 +533,8 @@ cria, edita e apaga, e a mudança vale para o acervo de todo mundo.
 - no Mapa, por enquanto: descobrir lugares **novos** por perto ("Descobrir",
   com "Salvar no Vitrine") e resumo escrito por IA — próxima fase; mapa na
   página de outras pessoas e na demonstração;
+- na privacidade: compartilhar só com algumas pessoas (é tudo ou nada: o
+  grupo inteiro ou só o dono), e levar a privacidade no backup — o arquivo
+  não guarda quem é público, e a importação segue o padrão do perfil;
 - no tier list: arrastar entre fileiras (mudaria a nota) e exportar como
   imagem.

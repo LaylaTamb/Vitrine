@@ -14,13 +14,13 @@ import {
 } from "./types"
 
 export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
-  star: "Estrelas (0-5)",
+  star: "Estrela (0–5)",
+  date: "Data",
+  str: "Texto",
   int: "Número inteiro",
   decimal: "Número com vírgula",
+  time: "Duração (h:min)",
   currency: "Moeda",
-  time: "Duração (minutos)",
-  str: "Texto",
-  date: "Data",
   select: "Lista de opções",
   location: "Localização (mapa)",
 }

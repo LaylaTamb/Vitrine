@@ -28,7 +28,8 @@ export async function getCollections(ownerId: string): Promise<CollectionsData> 
   const [profileResult, foldersResult, categoriesResult, countsResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, created_at")
+      // `*`: inclui `default_public` (migração 12) sem quebrar antes dela.
+      .select("*")
       .eq("id", ownerId)
       .maybeSingle(),
     supabase

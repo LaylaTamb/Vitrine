@@ -5,7 +5,9 @@ import { AppShell } from "@/components/layout/app-shell"
 import { BackupForm } from "@/components/layout/backup-form"
 import { EmptyState } from "@/components/layout/empty-state"
 import { PageHeader } from "@/components/layout/page-header"
+import { PrivacyDefaultForm } from "@/components/layout/privacy-default-form"
 import { SettingsForm } from "@/components/layout/settings-form"
+import { defaultPublicOf } from "@/lib/domain/privacy"
 import { getMyProfile, requireUser } from "@/lib/queries/session"
 
 export const metadata: Metadata = { title: "Configurações · Vitrine" }
@@ -21,6 +23,13 @@ export default async function SettingsPage() {
       {profile ? (
         <div className="space-y-10">
           <SettingsForm profile={profile} />
+          <div className="max-w-[34rem] space-y-4 border-t border-line pt-8">
+            <div className="space-y-1">
+              <p className="plaque">Privacidade</p>
+              <h2 className="display text-xl">Novas pastas e categorias</h2>
+            </div>
+            <PrivacyDefaultForm defaultPublic={defaultPublicOf(profile)} />
+          </div>
           <div className="max-w-[34rem] space-y-4 border-t border-line pt-8">
             <div className="space-y-1">
               <p className="plaque">Backup</p>

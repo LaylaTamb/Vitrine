@@ -44,8 +44,17 @@ export function sortOptionsFor(ratingEnabled: boolean): { value: SortKey; label:
   return ratingEnabled ? SORT_OPTIONS : SORT_OPTIONS.filter((option) => !isRatingSort(option.value))
 }
 
+/** A ordem com que uma categoria nova abre: a nota maior primeiro — ou, sem estrelas, as recentes. */
+export function initialSortFor(ratingEnabled: boolean): SortKey {
+  return ratingEnabled ? "rating_desc" : "recent"
+}
+
 /** Lê uma ordenação qualquer (URL, banco) e devolve uma válida para a categoria. */
-export function normalizeSort(value: unknown, ratingEnabled = true, fallback: SortKey = "recent"): SortKey {
+export function normalizeSort(
+  value: unknown,
+  ratingEnabled = true,
+  fallback: SortKey = initialSortFor(ratingEnabled)
+): SortKey {
   const sort = SORT_KEYS.find((key) => key === value)
   if (!sort || (!ratingEnabled && isRatingSort(sort))) return fallback
   return sort
@@ -91,7 +100,7 @@ export function categoryFilterFromParams(
   },
   category: Pick<Category, "rating_enabled" | "default_sort"> = {
     rating_enabled: true,
-    default_sort: "recent",
+    default_sort: "rating_desc",
   }
 ): CategoryFilter {
   const ratingEnabled = category.rating_enabled

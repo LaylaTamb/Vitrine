@@ -4,6 +4,7 @@ import { Eraser, ImageOff, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
+import { DurationInput } from "@/components/entry/duration-input"
 import { EntryImage } from "@/components/entry/entry-image"
 import { StarInput } from "@/components/entry/stars"
 import { geocodeAfterSave } from "@/components/map/geocode-runner"
@@ -456,6 +457,13 @@ export function EntryForm({
                             value={values[field.id] ?? ""}
                             onChange={(event) => setValue(field.id, event.target.value)}
                           />
+                        ) : field.tipo === "time" ? (
+                          <DurationInput
+                            id={`field-${field.id}`}
+                            label={field.nome}
+                            value={values[field.id] ?? ""}
+                            onChange={(next) => setValue(field.id, next)}
+                          />
                         ) : field.tipo === "decimal" ? (
                           <Input
                             id={`field-${field.id}`}
@@ -467,18 +475,9 @@ export function EntryForm({
                         ) : (
                           <Input
                             id={`field-${field.id}`}
-                            type={
-                              field.tipo === "int" || field.tipo === "time"
-                                ? "number"
-                                : field.tipo === "date"
-                                  ? "date"
-                                  : "text"
-                            }
-                            step={field.tipo === "int" || field.tipo === "time" ? 1 : undefined}
-                            inputMode={
-                              field.tipo === "int" || field.tipo === "time" ? "numeric" : undefined
-                            }
-                            placeholder={field.tipo === "time" ? "minutos" : undefined}
+                            type={field.tipo === "int" ? "number" : field.tipo === "date" ? "date" : "text"}
+                            step={field.tipo === "int" ? 1 : undefined}
+                            inputMode={field.tipo === "int" ? "numeric" : undefined}
                             value={values[field.id] ?? ""}
                             onChange={(event) => setValue(field.id, event.target.value)}
                           />

@@ -28,6 +28,7 @@ export function FilterBar({
   onGridSizeChange,
   active,
   ratingEnabled = true,
+  showListControls = true,
 }: {
   filter: CategoryFilter
   onChange: (filter: CategoryFilter) => void
@@ -43,6 +44,8 @@ export function FilterBar({
   active: boolean
   /** Categoria sem estrelas: some a faixa de nota e as ordenações por nota. */
   ratingEnabled?: boolean
+  /** `false` na aba Números: ordem, modo de exibição e tamanho não mudam nada lá. */
+  showListControls?: boolean
 }) {
   return (
     <div className="space-y-3">
@@ -87,23 +90,29 @@ export function FilterBar({
         </div>
         ) : null}
 
-        <select
-          value={filter.sort}
-          onChange={(event) => onChange({ ...filter, sort: event.target.value as SortKey })}
-          aria-label="Ordenar por"
-          className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
-        >
-          {sortOptionsFor(ratingEnabled).map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        {showListControls ? (
+          <>
+            <select
+              value={filter.sort}
+              onChange={(event) => onChange({ ...filter, sort: event.target.value as SortKey })}
+              aria-label="Ordenar por"
+              className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+            >
+              {sortOptionsFor(ratingEnabled).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
 
-        <div className="flex items-center gap-1.5">
-          <ViewToggle value={view} onChange={onViewChange} modes={viewModes} />
-          {view !== "list" ? <GridSizeToggle value={gridSize} onChange={onGridSizeChange} /> : null}
-        </div>
+            <div className="flex items-center gap-1.5">
+              <ViewToggle value={view} onChange={onViewChange} modes={viewModes} />
+              {view !== "list" ? (
+                <GridSizeToggle value={gridSize} onChange={onGridSizeChange} />
+              ) : null}
+            </div>
+          </>
+        ) : null}
 
         {active ? (
           <Button variant="ghost" size="sm" onClick={onClear}>

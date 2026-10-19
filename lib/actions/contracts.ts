@@ -89,14 +89,26 @@ type Result<T = undefined> = Promise<ActionResult<T>>
 
 export interface VitrineActions {
   // ---- pastas das Coleções ------------------------------------------------
-  createFolder(input: { name: string; parentFolderId: string | null }): Result<{ id: string }>
+  /** `isPublic` ausente = o padrão do perfil (o banco decide). */
+  createFolder(input: {
+    name: string
+    parentFolderId: string | null
+    isPublic?: boolean
+  }): Result<{ id: string }>
   renameFolder(input: { id: string; name: string }): Result
   moveFolder(input: { id: string; targetFolderId: string | null }): Result
   deleteFolder(input: { id: string }): Result
   reorderLevel(input: { items: { kind: "folder" | "category"; id: string }[] }): Result
 
+  // ---- privacidade: pública (o grupo vê) ou privada (só o dono) -----------
+  setFolderVisibility(input: { id: string; isPublic: boolean }): Result
+  setCategoryVisibility(input: { id: string; isPublic: boolean }): Result
+
   // ---- categorias ---------------------------------------------------------
-  createCategory(input: CategoryInput & { folderId: string | null }): Result<{ id: string }>
+  /** `isPublic` ausente = o padrão do perfil (o banco decide). */
+  createCategory(
+    input: CategoryInput & { folderId: string | null; isPublic?: boolean }
+  ): Result<{ id: string }>
   updateCategory(
     input: CategoryInput & { id: string; removedFieldIds?: string[] }
   ): Result

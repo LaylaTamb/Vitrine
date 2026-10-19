@@ -255,7 +255,7 @@ describe("fields", () => {
       expect(parseEstruturaJSON('[{"nome":"Modo","tipo":"lista"}]')).toEqual({
         ok: false,
         error:
-          'Campo "Modo": tipo "lista" não existe. Use um destes: star, int, decimal, currency, time, str, date, select, location.',
+          'Campo "Modo": tipo "lista" não existe. Use um destes: star, date, str, int, decimal, time, currency, select, location.',
       })
       expect(
         parseEstruturaJSON('[{"nome":"Nota","tipo":"int"},{"nome":"Nota","tipo":"str"}]')
@@ -844,28 +844,62 @@ describe("estatísticas", () => {
     expect(stats.averageLabel).toBe("4,5")
   })
 
-  it("faz média dos numéricos e moda dos select, ignorando str e date", () => {
-    const labels = stats.fields.map((field) => field.label)
-    expect(labels).toEqual(["Visitas", "Tempo de Espera", "Modo"])
+  it("resume cada campo numa linha: média, faixa, total e quantos preencheram", () => {
+    expect(stats.fields.map((field) => field.label)).toEqual(["Visitas", "Tempo de Espera", "Modo"])
 
     const visitas = stats.fields.find((field) => field.label === "Visitas")!
-    expect(visitas.value).toBe("3")
-    expect(visitas.caption).toBe("média · 2 itens")
+    expect(visitas.headline).toBe("3 em média")
+    expect(visitas.details).toEqual(["de 2 a 4", "6 no total", "em 2 de 3"])
 
     const espera = stats.fields.find((field) => field.label === "Tempo de Espera")!
-    expect(espera.value).toBe("1h 30min")
+    expect(espera.headline).toBe("1h 30min em média")
+    expect(espera.details).toEqual(["de 1h a 2h", "3h no total", "em 2 de 3"])
 
     const modo = stats.fields.find((field) => field.label === "Modo")!
-    expect(modo.value).toBe("Salão")
-    expect(modo.caption).toBe("mais comum · 2 itens")
+    expect(modo.headline).toBe("Salão 2")
+    expect(modo.details).toEqual(["em 2 de 3"])
   })
 
-  it("distribui as notas em 10 baldes de meia estrela", () => {
-    expect(stats.distribution).toHaveLength(10)
-    expect(stats.distribution[0]!.label).toBe("5")
-    expect(stats.distribution[0]!.count).toBe(1)
-    expect(stats.distribution.at(-1)!.label).toBe("0,5")
-    expect(stats.distribution.reduce((acc, bucket) => acc + bucket.count, 0)).toBe(2)
+  it("mostra estrela com ★, data como faixa, e não soma nota", () => {
+    const more = computeStats(
+      [
+        toView(entry({ id: "x", name: "X", custom_fields: { f_atend: 3, f_quand: "2024-05-03" } }), ESTRUTURA, tagsById, "R"),
+        toView(entry({ id: "y", name: "Y", custom_fields: { f_atend: 5, f_quand: "2026-10-10" } }), ESTRUTURA, tagsById, "R"),
+      ],
+      ESTRUTURA
+    )
+    const atendimento = more.fields.find((field) => field.label === "Atendimento")!
+    expect(atendimento.headline).toBe("★ 4")
+    expect(atendimento.details).toEqual(["de 3 a 5"])
+    const quando = more.fields.find((field) => field.label === "Quando")!
+    expect(quando.headline).toBe("de 03/05/2024 a 10/10/2026")
+  })
+
+  it("agrupa as notas nas 6 faixas de estrela", () => {
+    expect(stats.ratingRows.map((row) => row.label)).toEqual([
+      "5",
+      "4–4,5",
+      "3–3,5",
+      "2–2,5",
+      "1–1,5",
+      "0–0,5",
+    ])
+    expect(stats.ratingRows.map((row) => row.count)).toEqual([1, 1, 0, 0, 0, 0])
+    expect(stats.ratingRows[0]!.percent).toBe(100)
+  })
+
+  it("destaca os 3 melhores e, fora deles, o de menor nota", () => {
+    expect(stats.best.map((view) => view.name)).toEqual(["A", "B"])
+    expect(stats.worst).toBeNull()
+
+    const ranked = computeStats(
+      [5, 4.5, 4.5, 2, 3].map((rating, index) =>
+        toView(entry({ id: `r${index}`, name: `R${index}`, rating }), ESTRUTURA, tagsById, "R")
+      ),
+      ESTRUTURA
+    )
+    expect(ranked.best.map((view) => view.name)).toEqual(["R0", "R1", "R2"])
+    expect(ranked.worst?.name).toBe("R3")
   })
 
   it("ranqueia as tags mais usadas", () => {
@@ -873,7 +907,6 @@ describe("estatísticas", () => {
       ["Japonês", 2],
       ["Barato", 1],
     ])
-    expect(stats.topTags[0]!.percent).toBe(100)
   })
 
   it("aguenta recorte vazio", () => {
@@ -882,6 +915,8 @@ describe("estatísticas", () => {
     expect(empty.average).toBeNull()
     expect(empty.averageLabel).toBe("—")
     expect(empty.fields).toEqual([])
+    expect(empty.best).toEqual([])
+    expect(empty.ratingRows.every((row) => row.count === 0)).toBe(true)
   })
 })
 
@@ -1090,7 +1125,9 @@ describe("categoria sem estrelas", () => {
     expect(defaultSortOf(lista)).toBe("manual")
     expect(defaultSortOf(comNotas)).toBe("rating_desc")
     expect(defaultSortOf({ rating_enabled: false, default_sort: "rating_desc" })).toBe("recent")
-    expect(defaultSortOf({ rating_enabled: true, default_sort: "lixo" })).toBe("recent")
+    // valor estragado: a categoria cai na ordem com que uma nova abriria
+    expect(defaultSortOf({ rating_enabled: true, default_sort: "lixo" })).toBe("rating_desc")
+    expect(defaultSortOf({ rating_enabled: false, default_sort: "lixo" })).toBe("recent")
   })
 
   it("lê a URL respeitando o padrão e a falta de estrelas", () => {

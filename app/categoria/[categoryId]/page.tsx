@@ -64,7 +64,7 @@ export default async function CategoryPage({
           <EmptyState
             icon={Library}
             title="Categoria não encontrada"
-            description="Ela pode ter sido excluída, ou o endereço está errado."
+            description="Ela pode ter sido excluída ou ficado privada — ou o endereço está errado."
           />
         </div>
       </AppShell>

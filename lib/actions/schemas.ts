@@ -43,7 +43,14 @@ export const folderName = z
 export const createFolderSchema = z.object({
   name: folderName,
   parentFolderId: uuid.nullable(),
+  /** Ausente = o padrão do perfil (quem decide é o banco — migração 12). */
+  isPublic: z.boolean().optional(),
 })
+
+/** Pública ou privada: uma pasta das Coleções ou uma categoria. */
+export const visibilitySchema = z.object({ id: uuid, isPublic: z.boolean() })
+
+export const defaultPrivacySchema = z.object({ isPublic: z.boolean() })
 
 export const renameFolderSchema = z.object({ id: uuid, name: folderName })
 
@@ -51,7 +58,9 @@ export const moveFolderSchema = z.object({ id: uuid, targetFolderId: uuid.nullab
 
 export const idSchema = z.object({ id: uuid })
 
-export const createEntryFolderSchema = createFolderSchema.extend({ categoryId: uuid })
+export const createEntryFolderSchema = createFolderSchema
+  .omit({ isPublic: true })
+  .extend({ categoryId: uuid })
 
 export const deleteEntryFolderSchema = z.object({
   id: uuid,
@@ -87,7 +96,11 @@ export const categorySchema = z.object({
   defaultSort: sortKeySchema,
 })
 
-export const createCategorySchema = categorySchema.extend({ folderId: uuid.nullable() })
+export const createCategorySchema = categorySchema.extend({
+  folderId: uuid.nullable(),
+  /** Ausente = o padrão do perfil (quem decide é o banco — migração 12). */
+  isPublic: z.boolean().optional(),
+})
 
 export const updateCategorySchema = categorySchema.extend({
   id: uuid,
