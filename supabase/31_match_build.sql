@@ -120,7 +120,7 @@ create or replace function public.keep_match_entries_inside()
 returns trigger
 language plpgsql
 set search_path = public
-as $
+as $$
 begin
   if current_user <> 'authenticated' then
     return new;
@@ -137,7 +137,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 revoke execute on function public.keep_match_entries_inside() from public, anon, authenticated;
 
