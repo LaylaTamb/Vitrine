@@ -9,7 +9,7 @@ import { EntryForm } from "@/components/entry/entry-form"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import type { EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
+import type { CategorySummary, EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
 import { withFolder } from "@/lib/navigation"
 
 /** Os botões Editar e Excluir da plaqueta — a ilha de interatividade da página. */
@@ -20,6 +20,7 @@ export function EntryDetailActions({
   tags,
   folders,
   ratingEnabled,
+  categories,
 }: {
   view: EntryView
   categoryId: string
@@ -27,6 +28,8 @@ export function EntryDetailActions({
   tags: Tag[]
   folders: EntryFolder[]
   ratingEnabled: boolean
+  /** As categorias do dono: com elas, a edição pode trocar o item de categoria. */
+  categories?: CategorySummary[]
 }) {
   const { actions, basePath } = useVitrine()
   const router = useRouter()
@@ -53,6 +56,7 @@ export function EntryDetailActions({
         entry={view}
         folders={folders}
         ratingEnabled={ratingEnabled}
+        categories={categories}
       />
 
       <ConfirmDialog

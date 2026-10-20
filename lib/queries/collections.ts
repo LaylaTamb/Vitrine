@@ -28,7 +28,7 @@ export async function getCollections(ownerId: string): Promise<CollectionsData> 
   const [profileResult, foldersResult, categoriesResult, countsResult] = await Promise.all([
     supabase
       .from("profiles")
-      // `*`: inclui `default_public` (migração 12) sem quebrar antes dela.
+      // `*`: inclui as colunas de privacidade (migrações 12 e 14) sem quebrar antes delas.
       .select("*")
       .eq("id", ownerId)
       .maybeSingle(),

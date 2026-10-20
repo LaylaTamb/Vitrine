@@ -8,7 +8,10 @@
  */
 import { positionsInLevel, type ParsedBackupPayload } from "@/lib/backup/import"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
+import type { FavoriteRow } from "@/lib/domain/favorites"
 import { normalizeSort } from "@/lib/domain/filter"
+import { inboxOf, newInboxCategory } from "@/lib/domain/inbox"
+import { normalizeQuickField } from "@/lib/domain/quick-field"
 import { normalizeCategoryColor, normalizeTagColor } from "@/lib/domain/tags"
 import type {
   Category,
@@ -26,7 +29,20 @@ export interface DemoState {
   entryFolders: EntryFolder[]
   entries: EntryWithTags[]
   tags: Tag[]
+  /** O favorito de cada categoria e a aba Favoritos (`category_favorites`). */
+  favorites: FavoriteRow[]
 }
+
+/**
+ * Os favoritos do exemplo, por nome: a aba já nasce com três categorias com
+ * favorito e uma sem (que só aparece no "Editar aba").
+ */
+const DEMO_FAVORITES: { category: string; entry: string | null }[] = [
+  { category: "Restaurantes", entry: "Kinoshita" },
+  { category: "Filmes", entry: "Cidade de Deus" },
+  { category: "Livros", entry: "Dom Casmurro" },
+  { category: "Vinhos", entry: null },
+]
 
 /** Data fixa do seed: o HTML do servidor e o do navegador saem idênticos. */
 const SEED_DATE = "2026-09-24T12:00:00.000Z"
@@ -108,7 +124,18 @@ export function buildDemoState(seed: ParsedBackupPayload): DemoState {
     rating_enabled: category.ratingEnabled,
     default_sort: normalizeSort(category.defaultSort, category.ratingEnabled),
     created_at: SEED_DATE,
+    quick_field: normalizeQuickField(
+      category.quickField,
+      parseEstrutura(category.estrutura),
+      category.ratingEnabled
+    ),
+    // A "A organizar" é privada, como a que o banco cria (migração 17).
+    ...(category.inbox ? { kind: "inbox" as const, visibility: "private" as const } : {}),
   }))
+  // Toda conta tem uma "A organizar"; seed sem ela ganha uma vazia.
+  if (!inboxOf(categories)) {
+    categories.push(newInboxCategory(demoId("categoria:a-organizar"), DEMO_OWNER_ID, SEED_DATE))
+  }
   const estruturaBySeedId = new Map(
     seed.categories.map((category, index) => [category.id, categories[index].estrutura])
   )
@@ -182,12 +209,29 @@ export function buildDemoState(seed: ParsedBackupPayload): DemoState {
     }
   })
 
+  const favorites: FavoriteRow[] = DEMO_FAVORITES.flatMap((item, index) => {
+    const category = categories.find((row) => row.name === item.category)
+    if (!category) return []
+    const entry = item.entry
+      ? entries.find((row) => row.category_id === category.id && row.name === item.entry)
+      : undefined
+    return [
+      {
+        category_id: category.id,
+        owner_id: DEMO_OWNER_ID,
+        entry_id: entry?.id ?? null,
+        tab_position: index,
+      },
+    ]
+  })
+
   return {
     folders,
     categories,
     entryFolders,
     entries,
     tags: [...tagsByName.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    favorites,
   }
 }
 

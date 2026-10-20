@@ -5,6 +5,8 @@
  * encontram. O resto cai no fallback, e nunca mostramos a exceção crua.
  */
 
+import { INBOX_LOCKED_MESSAGE } from "./inbox"
+
 export const FALLBACK_ERROR = "Algo deu errado."
 
 /** O formato que interessa de um erro do supabase-js, sem importar o SDK. */
@@ -87,6 +89,28 @@ export function translateError(error: unknown): string {
     return "Sua sessão expirou. Faça login de novo."
   }
 
+  // ---- favoritos (migração 20) --------------------------------------------
+  if (text.includes("favorite_entry_mismatch")) {
+    return "Esse item não é desta categoria."
+  }
+
+  // ---- "A organizar" (travas da migração 17) ------------------------------
+  if (text.includes("inbox_locked")) return INBOX_LOCKED_MESSAGE
+
+  // ---- o @ (change_username, migração 15) --------------------------------
+  if (text.includes("username_rate_limited")) {
+    return "Você já trocou o @ 2 vezes nos últimos 14 dias. Espere um pouco para trocar de novo."
+  }
+  if (text.includes("username_reserved")) {
+    return "Esse nome de usuário é reservado. Escolha outro."
+  }
+  if (text.includes("username_taken")) {
+    return "Esse nome de usuário já está em uso."
+  }
+  if (text.includes("username_invalid")) {
+    return "Use de 3 a 30 caracteres: letras sem acento, números e _."
+  }
+
   // ---- banco -------------------------------------------------------------
   if (code === "23505" || text.includes("duplicate key")) {
     if (text.includes("categories_owner_id_name_key")) {
@@ -138,12 +162,15 @@ export function isMissingSchema(error: unknown): boolean {
 
 /**
  * Coluna que o banco ainda não tem — a migração que a cria não rodou
- * (`42703` do Postgres, `PGRST204` do PostgREST).
+ * (`42703` do Postgres, `PGRST204` do PostgREST). Com `column`, só quando é
+ * ESSA a coluna que falta (a mensagem traz o nome).
  */
-export function isMissingColumn(error: unknown): boolean {
+export function isMissingColumn(error: unknown, column?: string): boolean {
   const { text, code } = read(error)
-  if (["42703", "PGRST204"].includes(code.toUpperCase())) return true
-  return text.includes("column") && (text.includes("does not exist") || text.includes("could not find"))
+  const missing =
+    ["42703", "PGRST204"].includes(code.toUpperCase()) ||
+    (text.includes("column") && (text.includes("does not exist") || text.includes("could not find")))
+  return missing && (!column || text.includes(column.toLowerCase()))
 }
 
 /**

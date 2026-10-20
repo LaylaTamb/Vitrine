@@ -13,10 +13,15 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; proximo?: string }>
+  searchParams: Promise<{ erro?: string; proximo?: string; conta?: string }>
 }) {
   const params = await searchParams
   const error = translateErrorCode(params.erro ?? null)
+  // Depois de "Excluir minha conta" (Configurações).
+  const notice =
+    params.conta === "excluida"
+      ? "Sua conta foi excluída, com tudo o que estava nela. Obrigado por ter usado o Vitrine."
+      : null
   // Só destino interno: nada de redirecionar para fora do app.
   const next = safeNextPath(params.proximo)
 
@@ -40,7 +45,7 @@ export default async function LoginPage({
         </>
       }
     >
-      <LoginForm initialError={error} next={next} />
+      <LoginForm initialError={error} initialNotice={notice} next={next} />
     </AuthShell>
   )
 }

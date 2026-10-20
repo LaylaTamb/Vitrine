@@ -5,7 +5,10 @@ import { Pencil, Trash2 } from "lucide-react"
 import type { ReactNode } from "react"
 
 import { EntryImage } from "@/components/entry/entry-image"
+import { FavoriteMark, FavoriteToggle } from "@/components/entry/favorite-star"
 import { Stars } from "@/components/entry/stars"
+import { RemovedMark } from "@/components/explore/removed-mark"
+import { MatchOwnerLine } from "@/components/match/match-marks"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EntryView } from "@/lib/domain/types"
@@ -24,6 +27,9 @@ export function EntryCard({
   categoryLabel,
   dragHandle,
   compact = false,
+  favorite = false,
+  onToggleFavorite,
+  extraAction,
 }: {
   view: EntryView
   canEdit: boolean
@@ -40,6 +46,12 @@ export function EntryCard({
   dragHandle?: ReactNode
   /** Grade pequena: só imagem, nota e nome — resumo e tags não cabem. */
   compact?: boolean
+  /** É o favorito da categoria (só o dono recebe): a estrela ao lado do nome. */
+  favorite?: boolean
+  /** Com ela, a estrela entra nas ações do card (só o dono). */
+  onToggleFavorite?: () => void
+  /** No canto do card quando não há as ações de edição (o "Trazer" do match). */
+  extraAction?: ReactNode
 }) {
   return (
     <div
@@ -47,7 +59,8 @@ export function EntryCard({
         "group/card vitrine-card relative p-2",
         selected && "border-brand-dim bg-surface-hi"
       )}
-      style={categoryTintVars(categoryColor)}
+      // Na cópia de um match, o card tem a cor de quem é o item.
+      style={categoryTintVars(view.match?.color ?? categoryColor)}
     >
       {selectable ? (
         <label
@@ -68,6 +81,9 @@ export function EntryCard({
       {canEdit ? (
         <div className="card-actions absolute right-3 top-3 z-20 flex items-center gap-0.5 rounded-lg border border-line bg-bg/80 p-0.5 backdrop-blur-sm">
           {dragHandle}
+          {onToggleFavorite ? (
+            <FavoriteToggle active={favorite} name={view.name} onToggle={onToggleFavorite} />
+          ) : null}
           <button
             type="button"
             title={`Editar ${view.name}`}
@@ -93,6 +109,8 @@ export function EntryCard({
             <Trash2 className="size-3.5" />
           </button>
         </div>
+      ) : extraAction ? (
+        <div className="absolute right-3 top-3 z-20">{extraAction}</div>
       ) : null}
 
       <Link
@@ -127,7 +145,12 @@ export function EntryCard({
           {categoryLabel ? (
             <p className="plaque truncate text-[0.62rem]">{categoryLabel}</p>
           ) : null}
-          <h3 className="display truncate text-base leading-snug">{view.name}</h3>
+          <div className="flex min-w-0 items-center gap-1">
+            <h3 className="display min-w-0 truncate text-base leading-snug">{view.name}</h3>
+            {favorite ? <FavoriteMark /> : null}
+            {view.sourceRemoved ? <RemovedMark /> : null}
+          </div>
+          {view.match ? <MatchOwnerLine match={view.match} compact={compact} /> : null}
           {view.summary && !compact ? (
             <p className="truncate text-xs text-muted-foreground">{view.summary}</p>
           ) : null}

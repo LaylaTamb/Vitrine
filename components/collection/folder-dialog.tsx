@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
-import { PrivacyToggle } from "@/components/collection/privacy-switch"
+import { VisibilityPicker } from "@/components/collection/privacy-switch"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { visibilityHint, type Visibility } from "@/lib/domain/privacy"
 
 /**
  * Onde a pasta mora: nas Coleções (organiza categorias) ou dentro de uma
@@ -25,8 +26,8 @@ export type FolderScope =
   | {
       kind: "collection"
       parentFolderId: string | null
-      /** O padrão do perfil para pasta nova (`true` = pública). */
-      defaultPublic?: boolean
+      /** O padrão do perfil para pasta nova. */
+      defaultVisibility?: Visibility
     }
   | { kind: "category"; categoryId: string; parentFolderId: string | null }
 
@@ -44,9 +45,10 @@ export function FolderDialog({
   scope: FolderScope
 }) {
   const { actions } = useVitrine()
-  const defaultPublic = scope.kind === "collection" ? (scope.defaultPublic ?? true) : true
+  const defaultVisibility: Visibility =
+    scope.kind === "collection" ? (scope.defaultVisibility ?? "public") : "public"
   const [name, setName] = useState(folder?.name ?? "")
-  const [isPublic, setIsPublic] = useState(defaultPublic)
+  const [visibility, setVisibility] = useState(defaultVisibility)
   const [pending, setPending] = useState(false)
   // Só pasta NOVA das Coleções escolhe a privacidade aqui; a que já existe
   // troca pelo botão no topo dela.
@@ -55,8 +57,8 @@ export function FolderDialog({
   useEffect(() => {
     if (!open) return
     setName(folder?.name ?? "")
-    setIsPublic(defaultPublic)
-  }, [open, folder, defaultPublic])
+    setVisibility(defaultVisibility)
+  }, [open, folder, defaultVisibility])
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -70,8 +72,8 @@ export function FolderDialog({
           : await actions.createFolder({
               name,
               parentFolderId: scope.parentFolderId,
-              // Igual ao padrão: quem decide é o banco (vale também antes da migração 12).
-              isPublic: isPublic === defaultPublic ? undefined : isPublic,
+              // Igual ao padrão: quem decide é o banco (vale também antes da migração 14).
+              visibility: visibility === defaultVisibility ? undefined : visibility,
             })
         : folder
           ? await actions.renameEntryFolder({ id: folder.id, name })
@@ -122,11 +124,9 @@ export function FolderDialog({
           {choosesPrivacy ? (
             <div className="space-y-1.5 pb-4">
               <span className="plaque block">Visibilidade</span>
-              <PrivacyToggle kind="folder" checked={isPublic} onChange={setIsPublic} />
+              <VisibilityPicker kind="folder" value={visibility} onChange={setVisibility} />
               <p className="text-xs leading-relaxed text-faint">
-                {isPublic
-                  ? "Quem tem acesso ao app vê a pasta e o que for público dentro dela."
-                  : "Só você vê a pasta e tudo o que estiver dentro dela."}
+                {visibilityHint("folder", visibility)}
               </p>
             </div>
           ) : null}

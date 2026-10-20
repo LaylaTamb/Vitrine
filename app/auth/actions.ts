@@ -1,18 +1,22 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 
+import { appOrigin } from "@/lib/actions/origin"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import {
+  acceptTermsSchema,
+  deleteAccountSchema,
   newPasswordSchema,
   passwordResetSchema,
   signInSchema,
   signUpSchema,
 } from "@/lib/actions/schemas"
 import { safeNextPath } from "@/lib/domain/auth"
-import { translateError } from "@/lib/domain/errors"
+import { isMissingSchema, translateError } from "@/lib/domain/errors"
+import { deleteConfirmationMatches, termsAcceptance } from "@/lib/domain/terms"
+import { requireUser } from "@/lib/queries/session"
 import { createClient } from "@/lib/supabase/server"
 
 /**
@@ -25,22 +29,6 @@ import { createClient } from "@/lib/supabase/server"
 
 /** Login que falhou porque o e-mail ainda não foi confirmado: a tela oferece reenviar. */
 export type SignInResult = { ok: false; error: string; unconfirmed?: boolean }
-
-/**
- * De onde o app está sendo servido — o começo dos links dos e-mails. O
- * Supabase só aceita destinos da lista "Redirect URLs" do projeto, então um
- * cabeçalho forjado não leva o link para fora.
- */
-async function appOrigin(): Promise<string> {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "")
-  if (configured) return configured
-  const list = await headers()
-  const origin = list.get("origin")
-  if (origin) return origin
-  const host = list.get("x-forwarded-host") ?? list.get("host") ?? "localhost:3000"
-  const protocol = list.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")
-  return `${protocol}://${host}`
-}
 
 /** Erros que vale mostrar mesmo nas telas que não revelam nada: limite de envio e rede. */
 function isServiceTrouble(error: unknown): boolean {
@@ -105,6 +93,8 @@ export async function signUpAction(input: {
   email: string
   password: string
   confirm: string
+  /** A caixa dos 18 anos + Termos + Política — conferida aqui também. */
+  acceptTerms: boolean
 }): Promise<ActionResult<{ confirmEmail: boolean }>> {
   const parsed = signUpSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
@@ -113,7 +103,12 @@ export async function signUpAction(input: {
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { emailRedirectTo: `${await appOrigin()}/auth/callback` },
+    options: {
+      emailRedirectTo: `${await appOrigin()}/auth/callback`,
+      // O aceite vai junto da conta; o banco copia para o perfil quando ele
+      // nascer, na confirmação do e-mail (migração 16).
+      data: termsAcceptance(new Date()),
+    },
   })
 
   if (error) {
@@ -134,6 +129,76 @@ export async function signUpAction(input: {
   // Ligada (o recomendado): a conta só entra depois do link. Com e-mail que
   // já tinha conta o Supabase não manda nada — e não conta. A tela também não.
   return ok({ confirmEmail: true })
+}
+
+// ---------------------------------------------------------------------------
+// Termos: o aceite de quem já tinha conta (ou de quando a versão muda)
+// ---------------------------------------------------------------------------
+
+/**
+ * Grava o aceite no `user_metadata` da conta — é ali que o middleware olha a
+ * cada requisição — e segue para onde a pessoa ia. O banco copia para o
+ * perfil (migração 16).
+ */
+export async function acceptTermsAction(input: {
+  acceptTerms: boolean
+  next?: string
+}): Promise<ActionResult> {
+  const parsed = acceptTermsSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({ data: termsAcceptance(new Date()) })
+  if (error) return fail(error)
+
+  revalidatePath("/", "layout")
+  const next = safeNextPath(parsed.data.next)
+  redirect(next.startsWith("/aceitar-termos") ? "/" : next)
+}
+
+// ---------------------------------------------------------------------------
+// Excluir a conta
+// ---------------------------------------------------------------------------
+
+/**
+ * Apaga a conta de quem está logado e tudo o que é dela (migração 16: as
+ * cascatas do banco levam perfil, acervo e relações). Confere antes que a
+ * pessoa digitou o próprio @. Deu certo: limpa a sessão daqui e volta para o
+ * login com o aviso.
+ */
+export async function deleteAccountAction(input: { confirm: string }): Promise<ActionResult> {
+  const parsed = deleteAccountSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const user = await requireUser()
+  const supabase = await createClient()
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle()
+  const username = (profile as { username: string } | null)?.username ?? ""
+  if (!deleteConfirmationMatches(parsed.data.confirm, username)) {
+    return { ok: false, error: `Para confirmar, digite o seu @ (@${username || "…"}).` }
+  }
+
+  const { error } = await supabase.rpc("delete_my_account")
+  if (error) {
+    return isMissingSchema(error)
+      ? {
+          ok: false,
+          error:
+            "Excluir a conta ainda não está no banco: rode supabase/16_terms_and_account_deletion.sql no SQL Editor do Supabase.",
+        }
+      : fail(error)
+  }
+
+  // A conta já não existe: o Supabase recusa o "sair" no servidor, mas os
+  // cookies daqui são apagados do mesmo jeito.
+  await supabase.auth.signOut({ scope: "local" })
+  revalidatePath("/", "layout")
+  redirect("/login?conta=excluida")
 }
 
 // ---------------------------------------------------------------------------

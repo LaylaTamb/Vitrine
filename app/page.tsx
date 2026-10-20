@@ -1,7 +1,10 @@
 import { CollectionsView } from "@/components/collection/collections-view"
+import { PublicNotice } from "@/components/collection/public-notice"
 import { AppShell } from "@/components/layout/app-shell"
+import { HereBanner } from "@/components/nearby/here-banner"
 import { itemCount, plural } from "@/lib/domain/format"
-import { defaultPublicOf } from "@/lib/domain/privacy"
+import { placeTargets } from "@/lib/domain/nearby"
+import { defaultVisibilityOf, needsPublicNotice } from "@/lib/domain/privacy"
 import { getCollections } from "@/lib/queries/collections"
 import { displayNameOf, requireUser } from "@/lib/queries/session"
 
@@ -18,13 +21,18 @@ export default async function CollectionsPage() {
   const { profile, folders, categories, counts } = await getCollections(user.id)
 
   const totalEntries = Object.values(counts).reduce((acc, value) => acc + value, 0)
+  // O @ sempre à vista, também no próprio perfil.
+  const handle = profile ? `@${profile.username}` : "Suas coleções"
   const subtitle =
     categories.length === 0
-      ? "Suas coleções"
-      : `${plural(categories.length, "categoria", "categorias")} · ${itemCount(totalEntries)}`
+      ? handle
+      : `${handle} · ${plural(categories.length, "categoria", "categorias")} · ${itemCount(totalEntries)}`
 
   return (
     <AppShell profile={profile}>
+      {needsPublicNotice(profile, categories, folders) ? <PublicNotice /> : null}
+      {/* "Você está em X?": só aparece com a localização já autorizada. */}
+      <HereBanner targets={placeTargets(categories)} />
       <CollectionsView
         folders={folders}
         categories={categories}
@@ -33,7 +41,7 @@ export default async function CollectionsPage() {
         headerLabel="Perfil"
         headerTitle={displayNameOf(profile)}
         headerSubtitle={subtitle}
-        defaultPublic={defaultPublicOf(profile)}
+        defaultVisibility={defaultVisibilityOf(profile)}
       />
     </AppShell>
   )

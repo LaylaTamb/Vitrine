@@ -7,6 +7,7 @@ import { CategoryView } from "@/components/category/category-view"
 import { useDemoData } from "@/components/demo/demo-provider"
 import { DemoNotFound } from "@/components/demo/demo-not-found"
 import { DEMO_BASE_PATH } from "@/lib/demo/config"
+import { favoriteOf } from "@/lib/domain/favorites"
 import { categoryFilterFromParams } from "@/lib/domain/filter"
 import type { Tag } from "@/lib/domain/types"
 import { toView } from "@/lib/domain/view"
@@ -36,6 +37,7 @@ export default function DemoCategoryPage() {
   const [initialTab] = useState<"itens" | "numeros">(() =>
     searchParams.get("aba") === "numeros" ? "numeros" : "itens"
   )
+  const [initialEditId] = useState(() => searchParams.get("editar"))
 
   const data = useMemo(() => {
     if (!category) return null
@@ -69,6 +71,8 @@ export default function DemoCategoryPage() {
       canEdit
       initialFilter={initialFilter}
       initialTab={initialTab}
+      initialEditId={initialEditId}
+      favoriteEntryId={favoriteOf(state.favorites, category.id)}
     />
   )
 }

@@ -12,6 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { ok, fail, type ActionResult } from "@/lib/actions/result"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeSort, type SortKey } from "@/lib/domain/filter"
+import { normalizeQuickField, QUICK_FIELD_NAME } from "@/lib/domain/quick-field"
 import { normalizeCategoryColor, normalizeTagColor } from "@/lib/domain/tags"
 import { FIELD_TYPES, type CustomFields, type Estrutura } from "@/lib/domain/types"
 import { imageDisplayOf } from "@/lib/domain/view"
@@ -32,6 +33,10 @@ export interface BackupCategory {
   /** `false` = lista simples, sem nota. Ausente (arquivo antigo) = com estrelas. */
   ratingEnabled: boolean
   defaultSort: SortKey
+  /** `true` = a "A organizar" da conta: na importação, os itens vão para a "A organizar" de quem importa. */
+  inbox?: boolean
+  /** O campo principal do acesso rápido ("rating" ou id de campo). Ausente = o Nome. */
+  quickField?: string
 }
 
 /** Subpasta de dentro de uma categoria. A ordem no arquivo é a ordem na tela. */
@@ -87,6 +92,8 @@ const backupCategorySchema = z.object({
   ratingEnabled: z.boolean().default(true),
   // Sem ordem no arquivo: a de uma categoria nova (nota maior primeiro, ou recentes sem estrelas).
   defaultSort: z.string().optional(),
+  inbox: z.boolean().default(false),
+  quickField: z.string().optional(),
 })
 
 const backupEntryFolderSchema = z.object({
@@ -230,7 +237,9 @@ export async function wipeOwnerData(
 
 /**
  * Grava um payload validado em nome de `ownerId`. Sempre cria estrutura
- * nova — nunca mistura com o que já existe. Categoria com nome repetido
+ * nova — nunca mistura com o que já existe. A exceção é a "A organizar"
+ * (`inbox: true`): toda conta já tem a sua, então os itens dela entram na de
+ * quem importa. Categoria com nome repetido
  * ganha um sufixo (a tabela tem `unique(owner_id, name)`); pasta não tem essa
  * trava. Tag casa por nome com o vocabulário já compartilhado do grupo; a que
  * não existir ainda é criada.
@@ -288,15 +297,22 @@ export async function performImport(
 
   // 2) categorias — nome que já existe ganha um sufixo, uma de cada vez (o
   // conjunto de nomes usados precisa estar atualizado a cada iteração).
+  // `*`: traz o `kind` (migração 17) quando existe, sem quebrar antes dela.
   const { data: existingCategories, error: existingError } = await supabase
     .from("categories")
-    .select("name")
+    .select("*")
     .eq("owner_id", ownerId)
   if (existingError) return fail(existingError)
 
-  const usedNames = new Set(
-    ((existingCategories ?? []) as { name: string }[]).map((row) => row.name.toLowerCase())
-  )
+  const existingRows = (existingCategories ?? []) as {
+    id: string
+    name: string
+    kind?: string
+    estrutura: unknown
+    rating_enabled: boolean | null
+  }[]
+  const existingInbox = existingRows.find((row) => row.kind === "inbox") ?? null
+  const usedNames = new Set(existingRows.map((row) => row.name.toLowerCase()))
   const renamed: { from: string; to: string }[] = []
 
   function uniqueCategoryName(base: string): string {
@@ -316,10 +332,25 @@ export async function performImport(
   const ratingEnabledById = new Map<string, boolean>()
 
   for (const category of categories) {
+    // A "A organizar" do arquivo é a da conta (sem ela — antes da migração
+    // 17 —, vira uma categoria comum, como sempre foi).
+    if (category.inbox && existingInbox && !categoryIdMap.has(category.id)) {
+      const alreadyMapped = [...categoryIdMap.values()].includes(existingInbox.id)
+      if (!alreadyMapped) {
+        categoryIdMap.set(category.id, existingInbox.id)
+        estruturaById.set(category.id, parseEstrutura(existingInbox.estrutura))
+        ratingEnabledById.set(category.id, existingInbox.rating_enabled !== false)
+        continue
+      }
+    }
+
     const estrutura = parseEstrutura(category.estrutura)
+    // Os ids dos campos vêm do arquivo, então o campo principal continua valendo.
+    const quick = normalizeQuickField(category.quickField, estrutura, category.ratingEnabled)
     const { data, error } = await supabase
       .from("categories")
       .insert({
+        ...(quick === QUICK_FIELD_NAME ? {} : { quick_field: quick }),
         owner_id: ownerId,
         name: uniqueCategoryName(category.name.trim()),
         icon: category.icon?.trim() || null,

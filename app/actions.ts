@@ -18,6 +18,8 @@ import {
 } from "@/lib/actions/schemas"
 import { isMissingColumn, isMissingSchema } from "@/lib/domain/errors"
 import { locationFieldsOf, parseEstrutura } from "@/lib/domain/fields"
+import { VISIBILITY_NOT_READY, type Visibility } from "@/lib/domain/privacy"
+import { normalizeQuickField, QUICK_FIELD_NAME } from "@/lib/domain/quick-field"
 import { normalizeCategoryColor } from "@/lib/domain/tags"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
@@ -39,21 +41,19 @@ export async function signOutAction() {
 }
 
 // ---------------------------------------------------------------------------
-// Privacidade — pública (o grupo vê) ou privada (só o dono). Quem esconde de
-// fato é a RLS do banco (migração 12); estas ações só gravam a escolha.
+// Privacidade — Pública (qualquer pessoa, mesmo sem conta), Amigos ou Privada
+// (só o dono). Quem esconde de fato é a RLS do banco (migração 14); estas
+// ações só gravam a escolha.
 // ---------------------------------------------------------------------------
 
-const PRIVACY_NOT_READY =
-  "A privacidade ainda não está no banco: rode supabase/12_privacy_and_rating_sort.sql no SQL Editor do Supabase."
-
-/** Como `fail`, mas explica o que fazer quando a coluna da migração 12 ainda não existe. */
+/** Como `fail`, mas explica o que fazer quando a coluna da migração 14 ainda não existe. */
 function failPrivacy(error: unknown): ActionResult<never> {
-  return isMissingColumn(error) ? { ok: false, error: PRIVACY_NOT_READY } : fail(error)
+  return isMissingColumn(error) ? { ok: false, error: VISIBILITY_NOT_READY } : fail(error)
 }
 
 async function setVisibility(
   table: "folders" | "categories",
-  input: { id: string; isPublic: boolean }
+  input: { id: string; visibility: Visibility }
 ): Promise<ActionResult> {
   const parsed = visibilitySchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
@@ -63,7 +63,7 @@ async function setVisibility(
 
   const { data, error } = await supabase
     .from(table)
-    .update({ is_public: parsed.data.isPublic })
+    .update({ visibility: parsed.data.visibility })
     .eq("id", parsed.data.id)
     .eq("owner_id", user.id)
     .select("id")
@@ -73,21 +73,21 @@ async function setVisibility(
     return { ok: false, error: "Só quem criou pode mudar a privacidade." }
   }
 
-  // As telas de todo mundo leem de novo — a de outra pessoa (/u/...) inclusive.
+  // As telas de todo mundo leem de novo — a de outra pessoa (/v/...) inclusive.
   revalidatePath("/", "layout")
   return ok()
 }
 
 export async function setFolderVisibilityAction(input: {
   id: string
-  isPublic: boolean
+  visibility: Visibility
 }): Promise<ActionResult> {
   return setVisibility("folders", input)
 }
 
 export async function setCategoryVisibilityAction(input: {
   id: string
-  isPublic: boolean
+  visibility: Visibility
 }): Promise<ActionResult> {
   return setVisibility("categories", input)
 }
@@ -120,7 +120,7 @@ async function nextOrder(
 export async function createFolderAction(input: {
   name: string
   parentFolderId: string | null
-  isPublic?: boolean
+  visibility?: Visibility
 }): Promise<ActionResult<{ id: string }>> {
   const parsed = createFolderSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
@@ -143,8 +143,8 @@ export async function createFolderAction(input: {
       name: parsed.data.name,
       parent_folder_id: parsed.data.parentFolderId,
       display_order,
-      // Sem escolha explícita, o banco põe o padrão do perfil (migração 12).
-      ...(parsed.data.isPublic === undefined ? {} : { is_public: parsed.data.isPublic }),
+      // Sem escolha explícita, o banco põe o padrão do perfil (migração 14).
+      ...(parsed.data.visibility === undefined ? {} : { visibility: parsed.data.visibility }),
     })
     .select("id")
     .single()
@@ -237,8 +237,15 @@ export async function deleteFolderAction(input: { id: string }): Promise<ActionR
 // Categorias
 // ---------------------------------------------------------------------------
 
+const QUICK_FIELD_NOT_READY =
+  "O campo do acesso rápido ainda não está no banco: rode supabase/19_quick_field.sql no SQL Editor do Supabase."
+
 export async function createCategoryAction(
-  input: CategoryInput & { folderId: string | null; isPublic?: boolean }
+  input: CategoryInput & {
+    folderId: string | null
+    visibility?: Visibility
+    sourceCategoryId?: string
+  }
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = createCategorySchema.safeParse({
     ...input,
@@ -257,22 +264,50 @@ export async function createCategoryAction(
     parsed.data.folderId
   )
 
-  const { data, error } = await supabase
-    .from("categories")
-    .insert({
-      owner_id: user.id,
-      name: parsed.data.name,
-      icon: parsed.data.icon || null,
-      color: normalizeCategoryColor(parsed.data.color),
-      folder_id: parsed.data.folderId,
-      estrutura: parsed.data.estrutura,
-      rating_enabled: parsed.data.ratingEnabled,
-      default_sort: parsed.data.defaultSort,
-      display_order,
-      ...(parsed.data.isPublic === undefined ? {} : { is_public: parsed.data.isPublic }),
-    })
-    .select("id")
-    .single()
+  const row = {
+    owner_id: user.id,
+    name: parsed.data.name,
+    icon: parsed.data.icon || null,
+    color: normalizeCategoryColor(parsed.data.color),
+    folder_id: parsed.data.folderId,
+    estrutura: parsed.data.estrutura,
+    rating_enabled: parsed.data.ratingEnabled,
+    default_sort: parsed.data.defaultSort,
+    display_order,
+    ...(parsed.data.visibility === undefined ? {} : { visibility: parsed.data.visibility }),
+  }
+  const quick = normalizeQuickField(
+    parsed.data.quickField,
+    parsed.data.estrutura,
+    parsed.data.ratingEnabled
+  )
+
+  const insert = (values: Record<string, unknown>) =>
+    supabase.from("categories").insert(values).select("id").single()
+
+  // Veio de um modelo (migração 25): a categoria lembra de onde, e o banco
+  // conta mais um "usado por" na original.
+  const source = parsed.data.sourceCategoryId
+  let { data, error } = await insert({
+    ...row,
+    quick_field: quick,
+    ...(source ? { source_category_id: source } : {}),
+  })
+  // Antes da migração 25, ou o modelo foi apagado nesse meio-tempo: nasce
+  // igual, só sem lembrar de onde veio.
+  if (
+    error &&
+    source &&
+    (isMissingColumn(error, "source_category_id") ||
+      String((error as { code?: unknown }).code) === "23503")
+  ) {
+    ;({ data, error } = await insert({ ...row, quick_field: quick }))
+  }
+  // Antes da migração 19: com o Nome (o padrão) não há o que perder.
+  if (error && isMissingColumn(error, "quick_field")) {
+    if (quick !== QUICK_FIELD_NAME) return { ok: false, error: QUICK_FIELD_NOT_READY }
+    ;({ data, error } = await supabase.from("categories").insert(row).select("id").single())
+  }
 
   if (error) return failPrivacy(error)
   revalidatePath("/")
@@ -294,17 +329,30 @@ export async function updateCategoryAction(
 
   const supabase = await createClient()
 
-  const { error } = await supabase
+  const changes = {
+    name: parsed.data.name,
+    icon: parsed.data.icon || null,
+    color: normalizeCategoryColor(parsed.data.color),
+    estrutura: parsed.data.estrutura,
+    rating_enabled: parsed.data.ratingEnabled,
+    default_sort: parsed.data.defaultSort,
+  }
+  // Campo removido ou estrelas desligadas: o campo principal volta para o Nome.
+  const quick = normalizeQuickField(
+    parsed.data.quickField,
+    parsed.data.estrutura,
+    parsed.data.ratingEnabled
+  )
+
+  let { error } = await supabase
     .from("categories")
-    .update({
-      name: parsed.data.name,
-      icon: parsed.data.icon || null,
-      color: normalizeCategoryColor(parsed.data.color),
-      estrutura: parsed.data.estrutura,
-      rating_enabled: parsed.data.ratingEnabled,
-      default_sort: parsed.data.defaultSort,
-    })
+    .update({ ...changes, quick_field: quick })
     .eq("id", parsed.data.id)
+  // Antes da migração 19: com o Nome (o padrão) não há o que perder.
+  if (error && isMissingColumn(error, "quick_field")) {
+    if (quick !== QUICK_FIELD_NAME) return { ok: false, error: QUICK_FIELD_NOT_READY }
+    ;({ error } = await supabase.from("categories").update(changes).eq("id", parsed.data.id))
+  }
 
   if (error) return fail(error)
 

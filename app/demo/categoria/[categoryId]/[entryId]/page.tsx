@@ -7,6 +7,7 @@ import { useDemoData } from "@/components/demo/demo-provider"
 import { DemoNotFound } from "@/components/demo/demo-not-found"
 import { EntryDetail } from "@/components/entry/entry-detail"
 import { DEMO_BASE_PATH } from "@/lib/demo/config"
+import { favoriteOf } from "@/lib/domain/favorites"
 import type { Tag } from "@/lib/domain/types"
 import { toView } from "@/lib/domain/view"
 
@@ -37,6 +38,8 @@ export default function DemoEntryPage() {
       entryFolders={state.entryFolders.filter((folder) => folder.category_id === category.id)}
       canEdit
       basePath={DEMO_BASE_PATH}
+      categories={state.categories}
+      isFavorite={favoriteOf(state.favorites, category.id) === entry.id}
     />
   )
 }

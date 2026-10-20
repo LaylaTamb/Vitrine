@@ -8,6 +8,17 @@
   ],
   "categories": [
     {
+      "id": "a-organizar",
+      "name": "A organizar",
+      "icon": "📥",
+      "color": null,
+      "folderId": null,
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "inbox": true,
+      "estrutura": [{ "id": "f_inbox_loc", "nome": "Localização", "tipo": "location" }]
+    },
+    {
       "id": "restaurantes",
       "name": "Restaurantes",
       "icon": "🍽️",
@@ -101,6 +112,9 @@
     { "id": "importados", "categoryId": "vinhos", "name": "Importados", "parentId": null }
   ],
   "entries": [
+    { "categoryId": "a-organizar", "name": "Padaria que a Ana indicou", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "f_inbox_loc": "Rua Augusta, 1500, São Paulo" }, "tags": [] },
+    { "categoryId": "a-organizar", "name": "Série que apareceu num story", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": {}, "tags": [] },
+    { "categoryId": "a-organizar", "name": "Livro citado no podcast", "rating": null, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": {}, "tags": [] },
     { "categoryId": "restaurantes", "folderId": "japoneses", "name": "Kinoshita", "rating": 4.5, "imageUrl": "https://picsum.photos/id/1015/800/1000", "imageDisplay": { "x": 30, "y": 40, "zoom": 1.6 }, "customFields": { "visitas": 3, "atendimento": 4, "comida": 5, "espera": 90, "pedido": "Omakase", "local": "Liberdade, SP" }, "tags": [{ "name": "Favorito", "color": "#B98CC2" }, { "name": "Recomendo", "color": "#8FC9A6" }] },
     { "categoryId": "restaurantes", "name": "Mocotó", "rating": 4, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 2, "atendimento": 4, "comida": 4.5, "espera": 45, "pedido": "Feijoada", "local": "Vila Medeiros, SP" }, "tags": [{ "name": "Recomendo", "color": "#8FC9A6" }] },
     { "categoryId": "restaurantes", "name": "Bar da Dona Onça", "rating": 3.5, "imageUrl": null, "imageDisplay": { "x": 50, "y": 50, "zoom": 1 }, "customFields": { "visitas": 1, "atendimento": 3, "comida": 4, "espera": 30, "pedido": "Sarapatel", "local": "Centro, SP" }, "tags": [{ "name": "Repetir", "color": "#C79BD0" }] },

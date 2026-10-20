@@ -7,16 +7,19 @@ import { useState, type FormEvent } from "react"
 import { resendConfirmationAction, signUpAction } from "@/app/auth/actions"
 import { AUTH_LINK_CLASS } from "@/components/auth/auth-shell"
 import { PasswordChecklist, PasswordInput } from "@/components/auth/password-input"
+import { TermsCheckbox } from "@/components/auth/terms-checkbox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { passwordChecks, passwordProblem } from "@/lib/domain/auth"
 
-/** Criar conta: e-mail, senha e a confirmação da senha. */
+/** Criar conta: e-mail, senha, a confirmação da senha e a caixa dos 18 anos + Termos. */
 export function SignUpForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
+  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [termsMissing, setTermsMissing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -31,10 +34,17 @@ export function SignUpForm() {
       setError(problem)
       return
     }
+    if (!acceptTerms) {
+      setTermsMissing(true)
+      setError(
+        "Para criar a conta, confirme que tem 18 anos ou mais e aceite os Termos e a Política de privacidade."
+      )
+      return
+    }
 
     setPending(true)
     setError(null)
-    const result = await signUpAction({ email, password, confirm })
+    const result = await signUpAction({ email, password, confirm, acceptTerms })
     // Com a confirmação de e-mail desligada no Supabase, o servidor já leva para dentro.
     if (!result) return
     setPending(false)
@@ -148,6 +158,15 @@ export function SignUpForm() {
       <div id="password-rules">
         <PasswordChecklist checks={checks} />
       </div>
+
+      <TermsCheckbox
+        checked={acceptTerms}
+        invalid={termsMissing && !acceptTerms}
+        onChange={(checked) => {
+          setAcceptTerms(checked)
+          if (checked) setTermsMissing(false)
+        }}
+      />
 
       {error ? (
         <p role="alert" className="text-sm text-danger">

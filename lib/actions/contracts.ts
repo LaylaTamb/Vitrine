@@ -14,6 +14,7 @@ import type { LatLng } from "@/lib/domain/map"
 import type { TravelMode } from "@/lib/domain/maps-links"
 import type { PlaceDetails, RouteInfo } from "@/lib/domain/place-details"
 import type { GeocodeMode } from "@/lib/domain/places"
+import type { Visibility } from "@/lib/domain/privacy"
 import type { Tag } from "@/lib/domain/types"
 
 export interface StructureImpact {
@@ -83,31 +84,41 @@ export interface CategoryInput {
   /** `false` = lista simples: sem nota de estrelas (desligar apaga as notas). */
   ratingEnabled: boolean
   defaultSort: SortKey
+  /**
+   * O campo principal do acesso rápido: "name", "rating" ou o id de um campo.
+   * Ausente = o Nome. Quem salva confere se ele ainda existe.
+   */
+  quickField?: string
 }
 
 type Result<T = undefined> = Promise<ActionResult<T>>
 
 export interface VitrineActions {
   // ---- pastas das Coleções ------------------------------------------------
-  /** `isPublic` ausente = o padrão do perfil (o banco decide). */
+  /** `visibility` ausente = o padrão do perfil (o banco decide). */
   createFolder(input: {
     name: string
     parentFolderId: string | null
-    isPublic?: boolean
+    visibility?: Visibility
   }): Result<{ id: string }>
   renameFolder(input: { id: string; name: string }): Result
   moveFolder(input: { id: string; targetFolderId: string | null }): Result
   deleteFolder(input: { id: string }): Result
   reorderLevel(input: { items: { kind: "folder" | "category"; id: string }[] }): Result
 
-  // ---- privacidade: pública (o grupo vê) ou privada (só o dono) -----------
-  setFolderVisibility(input: { id: string; isPublic: boolean }): Result
-  setCategoryVisibility(input: { id: string; isPublic: boolean }): Result
+  // ---- privacidade: Pública (qualquer pessoa), Amigos ou Privada (só o dono)
+  setFolderVisibility(input: { id: string; visibility: Visibility }): Result
+  setCategoryVisibility(input: { id: string; visibility: Visibility }): Result
 
   // ---- categorias ---------------------------------------------------------
-  /** `isPublic` ausente = o padrão do perfil (o banco decide). */
+  /** `visibility` ausente = o padrão do perfil (o banco decide). */
   createCategory(
-    input: CategoryInput & { folderId: string | null; isPublic?: boolean }
+    input: CategoryInput & {
+      folderId: string | null
+      visibility?: Visibility
+      /** O modelo de onde a estrutura veio (migração 25). A demonstração ignora. */
+      sourceCategoryId?: string
+    }
   ): Result<{ id: string }>
   updateCategory(
     input: CategoryInput & { id: string; removedFieldIds?: string[] }
@@ -152,6 +163,12 @@ export interface VitrineActions {
   }): Result
   movePreview(input: { ids: string[]; categoryId: string; toCategoryId: string }): Result<MovePreview>
   bulkMoveEntries(input: { ids: string[]; categoryId: string; toCategoryId: string }): Result
+
+  // ---- favoritos (só o dono vê) -------------------------------------------
+  /** O favorito de uma categoria: no máximo um. `entryId: null` desmarca. */
+  setFavoriteEntry(input: { categoryId: string; entryId: string | null }): Result
+  /** As categorias da aba Favoritos, na ordem (a estrela não põe na aba sozinha). */
+  setFavoritesTab(input: { categoryIds: string[] }): Result
 
   // ---- mapa: localização dos itens ----------------------------------------
   /** Procura (Geoapify) os campos de Localização do item que mudaram ou estão pendentes. */

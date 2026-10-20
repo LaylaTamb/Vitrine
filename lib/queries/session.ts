@@ -3,6 +3,11 @@ import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
 import type { Profile } from "@/lib/domain/types"
+import {
+  USERNAME_WINDOW_DAYS,
+  usernameAllowance,
+  type UsernameAllowance,
+} from "@/lib/domain/username"
 
 export interface SessionUser {
   id: string
@@ -41,8 +46,9 @@ export const getMyProfile = cache(async (): Promise<Profile | null> => {
   if (!user) return null
 
   const supabase = await createClient()
-  // `*`: traz também `default_public` quando a migração 12 já rodou — e não
-  // quebra quando ainda não rodou (pedir a coluna pelo nome quebraria).
+  // `*`: traz também as colunas das migrações 12 e 14 (`default_visibility`,
+  // `public_notice_seen_at`…) quando já rodaram — e não quebra quando ainda
+  // não rodaram (pedir a coluna pelo nome quebraria).
   const { data } = await supabase
     .from("profiles")
     .select("*")
@@ -51,6 +57,26 @@ export const getMyProfile = cache(async (): Promise<Profile | null> => {
 
   return (data as Profile | null) ?? null
 })
+
+/**
+ * Quantas trocas de @ ainda cabem agora, a partir das trocas dos últimos 14
+ * dias (migração 15). Sem a tabela (antes da migração): nenhuma troca feita.
+ */
+export async function getMyUsernameAllowance(userId: string): Promise<UsernameAllowance> {
+  const supabase = await createClient()
+  const now = new Date()
+  const since = new Date(now.getTime() - USERNAME_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+  const { data, error } = await supabase
+    .from("username_changes")
+    .select("changed_at")
+    .eq("profile_id", userId)
+    .gt("changed_at", since.toISOString())
+  const rows = error ? [] : ((data ?? []) as { changed_at: string }[])
+  return usernameAllowance(
+    rows.map((row) => row.changed_at),
+    now
+  )
+}
 
 /** Nome para exibir, com queda para o username. */
 export function displayNameOf(profile: Pick<Profile, "display_name" | "username"> | null): string {

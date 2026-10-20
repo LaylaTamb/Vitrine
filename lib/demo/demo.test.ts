@@ -346,3 +346,222 @@ describe("estrelas opcionais e ordem manual na demonstração", () => {
     )
   })
 })
+
+// ---------------------------------------------------------------------------
+// "A organizar"
+// ---------------------------------------------------------------------------
+
+describe("A organizar na demonstração", () => {
+  let state: DemoState
+  const store = {
+    get: () => state,
+    set: (next: DemoState) => {
+      state = next
+    },
+  }
+  const actions = createDemoActions(
+    store,
+    () => demoId(`novo:${Math.random()}`),
+    () => "2026-09-28T10:00:00.000Z"
+  )
+  const inbox = () => state.categories.find((category) => category.kind === "inbox")!
+
+  beforeEach(() => {
+    state = buildDemoState(getSeedPayload())
+  })
+
+  it("existe exatamente uma, privada, na raiz, com itens de exemplo", () => {
+    expect(state.categories.filter((category) => category.kind === "inbox")).toHaveLength(1)
+    expect(inbox()).toMatchObject({ name: "A organizar", folder_id: null, visibility: "private" })
+    expect(state.entries.some((entry) => entry.category_id === inbox().id)).toBe(true)
+  })
+
+  it("não pode ser apagada, editada nem movida", async () => {
+    const id = inbox().id
+    expect((await actions.deleteCategory({ id })).ok).toBe(false)
+    expect(
+      (
+        await actions.updateCategory({
+          id,
+          name: "Outra",
+          icon: null,
+          color: null,
+          estrutura: [],
+          ratingEnabled: false,
+          defaultSort: "recent",
+        })
+      ).ok
+    ).toBe(false)
+    const folder = state.folders[0]
+    expect((await actions.moveCategory({ id, targetFolderId: folder.id })).ok).toBe(false)
+    expect(inbox()).toMatchObject({ id, name: "A organizar", folder_id: null })
+  })
+
+  it("os itens dela vão para qualquer outra categoria", async () => {
+    const padaria = state.entries.find((entry) => entry.name === "Padaria que a Ana indicou")!
+    const restaurantes = state.categories.find((category) => category.name === "Restaurantes")!
+    const result = await actions.bulkMoveEntries({
+      ids: [padaria.id],
+      categoryId: inbox().id,
+      toCategoryId: restaurantes.id,
+    })
+    expect(result.ok).toBe(true)
+    expect(state.entries.find((entry) => entry.id === padaria.id)?.category_id).toBe(
+      restaurantes.id
+    )
+  })
+})
+
+// ---------------------------------------------------------------------------
+// campo principal (acesso rápido)
+// ---------------------------------------------------------------------------
+
+describe("campo principal na demonstração", () => {
+  let state: DemoState
+  const store = {
+    get: () => state,
+    set: (next: DemoState) => {
+      state = next
+    },
+  }
+  const actions = createDemoActions(
+    store,
+    () => demoId(`novo:${Math.random()}`),
+    () => "2026-09-28T10:00:00.000Z"
+  )
+
+  beforeEach(() => {
+    state = buildDemoState(getSeedPayload())
+  })
+
+  it("toda categoria do exemplo começa com o Nome", () => {
+    expect(state.categories.every((category) => category.quick_field === "name")).toBe(true)
+  })
+
+  it("guarda o escolhido e volta para o Nome quando o campo some", async () => {
+    const livros = state.categories.find((category) => category.name === "Livros")!
+    const campo = livros.estrutura[0]
+    const base = {
+      id: livros.id,
+      name: livros.name,
+      icon: livros.icon,
+      color: livros.color,
+      ratingEnabled: livros.rating_enabled,
+      defaultSort: "recent" as const,
+    }
+
+    await actions.updateCategory({ ...base, estrutura: livros.estrutura, quickField: campo.id })
+    expect(state.categories.find((category) => category.id === livros.id)?.quick_field).toBe(
+      campo.id
+    )
+
+    const semCampo = livros.estrutura.filter((field) => field.id !== campo.id)
+    await actions.updateCategory({
+      ...base,
+      estrutura: semCampo,
+      quickField: campo.id,
+      removedFieldIds: [campo.id],
+    })
+    expect(state.categories.find((category) => category.id === livros.id)?.quick_field).toBe(
+      "name"
+    )
+  })
+
+  it("Estrelas só valem com as estrelas ligadas", async () => {
+    const created = await actions.createCategory({
+      name: "Podcasts",
+      icon: null,
+      color: null,
+      folderId: null,
+      estrutura: [],
+      ratingEnabled: false,
+      defaultSort: "recent",
+      quickField: "rating",
+    })
+    const id = created.ok ? created.data!.id : ""
+    expect(state.categories.find((category) => category.id === id)?.quick_field).toBe("name")
+  })
+})
+
+// ---------------------------------------------------------------------------
+// favoritos
+// ---------------------------------------------------------------------------
+
+describe("favoritos na demonstração", () => {
+  let state: DemoState
+  const store = {
+    get: () => state,
+    set: (next: DemoState) => {
+      state = next
+    },
+  }
+  const actions = createDemoActions(
+    store,
+    () => demoId(`novo:${Math.random()}`),
+    () => "2026-09-28T10:00:00.000Z"
+  )
+  const byName = (name: string) => state.categories.find((category) => category.name === name)!
+  const entry = (name: string) => state.entries.find((item) => item.name === name)!
+  const favoriteOf = (categoryId: string) =>
+    state.favorites.find((row) => row.category_id === categoryId)?.entry_id ?? null
+
+  beforeEach(() => {
+    state = buildDemoState(getSeedPayload())
+  })
+
+  it("o exemplo já tem favoritos e uma aba com uma categoria sem favorito", () => {
+    expect(favoriteOf(byName("Restaurantes").id)).toBe(entry("Kinoshita").id)
+    const tab = state.favorites
+      .filter((row) => row.tab_position !== null)
+      .sort((a, b) => a.tab_position! - b.tab_position!)
+    expect(tab.map((row) => state.categories.find((c) => c.id === row.category_id)?.name)).toEqual([
+      "Restaurantes",
+      "Filmes",
+      "Livros",
+      "Vinhos",
+    ])
+    expect(favoriteOf(byName("Vinhos").id)).toBeNull()
+  })
+
+  it("marca, troca e desmarca o favorito", async () => {
+    const restaurantes = byName("Restaurantes").id
+    await actions.setFavoriteEntry({ categoryId: restaurantes, entryId: entry("Mocotó").id })
+    expect(favoriteOf(restaurantes)).toBe(entry("Mocotó").id)
+    await actions.setFavoriteEntry({ categoryId: restaurantes, entryId: null })
+    expect(favoriteOf(restaurantes)).toBeNull()
+  })
+
+  it("recusa item de outra categoria", async () => {
+    const result = await actions.setFavoriteEntry({
+      categoryId: byName("Restaurantes").id,
+      entryId: entry("Dom Casmurro").id,
+    })
+    expect(result.ok).toBe(false)
+  })
+
+  it("item apagado ou movido deixa de ser o favorito", async () => {
+    const restaurantes = byName("Restaurantes").id
+    await actions.bulkMoveEntries({
+      ids: [entry("Kinoshita").id],
+      categoryId: restaurantes,
+      toCategoryId: byName("Quero visitar").id,
+    })
+    expect(favoriteOf(restaurantes)).toBeNull()
+
+    const filmes = byName("Filmes").id
+    await actions.deleteEntry({ id: entry("Cidade de Deus").id, categoryId: filmes })
+    expect(favoriteOf(filmes)).toBeNull()
+  })
+
+  it("a aba guarda a ordem, e tirar da aba mantém o favorito", async () => {
+    const livros = byName("Livros").id
+    const filmes = byName("Filmes").id
+    await actions.setFavoritesTab({ categoryIds: [livros, filmes] })
+    const tab = state.favorites
+      .filter((row) => row.tab_position !== null)
+      .sort((a, b) => a.tab_position! - b.tab_position!)
+      .map((row) => row.category_id)
+    expect(tab).toEqual([livros, filmes])
+    expect(favoriteOf(byName("Restaurantes").id)).toBe(entry("Kinoshita").id)
+  })
+})

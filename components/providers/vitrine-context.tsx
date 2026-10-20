@@ -32,6 +32,7 @@ import {
   reorderEntryFoldersAction,
   updateEntryAction,
 } from "@/app/categoria/[categoryId]/actions"
+import { setFavoriteEntryAction, setFavoritesTabAction } from "@/app/favoritos/actions"
 import {
   geocodeAddressAction,
   geocodeEntryLocationsAction,
@@ -80,6 +81,9 @@ const serverActions: VitrineActions = {
   bulkTag: bulkTagAction,
   movePreview: movePreviewAction,
   bulkMoveEntries: bulkMoveEntriesAction,
+
+  setFavoriteEntry: setFavoriteEntryAction,
+  setFavoritesTab: setFavoritesTabAction,
 
   geocodeEntryLocations: geocodeEntryLocationsAction,
   geocodePendingLocations: geocodePendingLocationsAction,

@@ -12,16 +12,19 @@ import { Label } from "@/components/ui/label"
 /** Entrar com e-mail e senha. */
 export function LoginForm({
   initialError,
+  initialNotice = null,
   next,
 }: {
   initialError: string | null
+  /** Recado neutro de chegada (ex.: a conta acabou de ser excluída). */
+  initialNotice?: string | null
   next: string
 }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(initialError)
   const [unconfirmed, setUnconfirmed] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(initialNotice)
   const [pending, setPending] = useState(false)
 
   async function submit(event: FormEvent) {

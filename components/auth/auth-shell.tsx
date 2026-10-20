@@ -1,10 +1,12 @@
+import Link from "next/link"
 import type { ReactNode } from "react"
 
 import { Wordmark } from "@/components/layout/wordmark"
 
 /**
  * A moldura das telas de conta (entrar, criar conta, recuperar e criar
- * senha): a marca, o título, o cartão e uma linha embaixo.
+ * senha, aceitar os termos): a marca, o título, o cartão, uma linha embaixo e
+ * os links dos Termos e da Política de privacidade.
  */
 export function AuthShell({
   title,
@@ -38,6 +40,16 @@ export function AuthShell({
         {footer ? (
           <div className="mt-5 space-y-2 text-center text-sm text-muted-foreground">{footer}</div>
         ) : null}
+
+        <p className="mt-6 text-center text-xs text-faint">
+          <Link href="/termos" className="transition-colors hover:text-foreground">
+            Termos de uso
+          </Link>
+          {" · "}
+          <Link href="/privacidade" className="transition-colors hover:text-foreground">
+            Política de privacidade
+          </Link>
+        </p>
       </div>
     </main>
   )

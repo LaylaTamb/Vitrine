@@ -3,19 +3,26 @@ import { ArrowLeft } from "lucide-react"
 
 import { EntryDetailActions } from "@/components/entry/entry-detail-actions"
 import { EntryImage } from "@/components/entry/entry-image"
+import { FavoriteDetailToggle } from "@/components/entry/favorite-star"
 import { Stars } from "@/components/entry/stars"
 import { OpenInMapsLink, VitrineMapLink } from "@/components/map/maps-links"
+import { MatchEntryActions } from "@/components/match/match-entry-actions"
+import { MatchOwnerLine } from "@/components/match/match-marks"
 import { TagPill } from "@/components/tag/tag-pill"
 import { formatRating } from "@/lib/domain/format"
 import { mapsTargetOf } from "@/lib/domain/maps-links"
+import { matchOwnerText, suggestionText, type MatchOrigin } from "@/lib/domain/match"
 import type {
   Category,
+  CategorySummary,
   EntryFolder,
+  EntryMatch,
   EntryPlace,
   EntryView,
   Profile,
   Tag,
 } from "@/lib/domain/types"
+import { profilePath } from "@/lib/domain/username"
 import { withFolder } from "@/lib/navigation"
 
 /**
@@ -39,6 +46,9 @@ export function EntryDetail({
   basePath = "",
   places = [],
   showMapLink = false,
+  categories = [],
+  isFavorite = false,
+  match = null,
 }: {
   view: EntryView
   category: Category
@@ -52,6 +62,15 @@ export function EntryDetail({
   places?: EntryPlace[]
   /** "Ver no mapa do Vitrine": só para o dono, e nunca na demonstração. */
   showMapLink?: boolean
+  /** As categorias do dono — o seletor "Categoria" da edição (trocar o item de categoria). */
+  categories?: CategorySummary[]
+  /** É o favorito da categoria — só vem para o dono. */
+  isFavorite?: boolean
+  /**
+   * Item da cópia de um match (migração 31): de quem é, as marcações e os
+   * campos do original, só leitura.
+   */
+  match?: { entry: EntryMatch; origin: MatchOrigin } | null
 }) {
   const placeOf = (fieldId: string) => places.find((place) => place.field_id === fieldId)
   const folder = entryFolders.find((item) => item.id === view.folderId) ?? null
@@ -70,7 +89,7 @@ export function EntryDetail({
           initial={view.initial}
           initialSize="6rem"
           eager
-          tint={category.color}
+          tint={match?.entry.color ?? category.color}
         />
       </div>
 
@@ -84,8 +103,10 @@ export function EntryDetail({
             voltar para {backLabel}
           </Link>
 
-          {owner ? (
-            <Link href={`/u/${owner.username}`} className="plaque block hover:text-foreground">
+          {match ? (
+            <MatchOwnerLine match={match.entry} className="text-xs" />
+          ) : owner ? (
+            <Link href={profilePath(owner.username)} className="plaque block hover:text-foreground">
               acervo de {ownerName}
             </Link>
           ) : null}
@@ -93,11 +114,34 @@ export function EntryDetail({
 
         <h1 className="display text-[2.3rem] leading-tight break-words">{view.name}</h1>
 
+        {view.sourceRemoved ? (
+          <p className="text-sm text-muted-foreground">
+            Removido do original: quem fez a categoria apagou este item. O seu continua aqui.
+          </p>
+        ) : null}
+
+        {match && match.entry.suggestionFor.length > 0 ? (
+          <p className="text-sm text-muted-foreground">{suggestionText(match.entry)}</p>
+        ) : null}
+
+        {canEdit && !match ? (
+          <FavoriteDetailToggle
+            categoryId={category.id}
+            categoryName={category.name}
+            entryId={view.id}
+            entryName={view.name}
+            isFavorite={isFavorite}
+          />
+        ) : null}
+
         {category.rating_enabled ? (
           <div className="flex items-center gap-2">
             <Stars percent={view.ratingPercent} size="md" />
             <span className="text-sm text-muted-foreground">
               {view.hasRating ? `${formatRating(view.rating)} de 5` : "sem avaliação"}
+              {match && view.hasRating
+                ? ` · nota ${match.entry.isMine ? "sua" : matchOwnerText(match.entry)}`
+                : ""}
             </span>
           </div>
         ) : null}
@@ -135,6 +179,37 @@ export function EntryDetail({
           </dl>
         ) : null}
 
+        {match && (match.origin.category || match.origin.fields.length > 0) ? (
+          <div className="pt-2">
+            <p className="plaque">
+              {match.origin.category ? `em “${match.origin.category}”` : "do original"} · só
+              leitura
+            </p>
+            {match.origin.fields.length > 0 ? (
+              <dl>
+                {match.origin.fields.map((field) => (
+                  <div
+                    key={field.id}
+                    className="flex flex-col gap-0.5 border-b border-line py-2.5 sm:flex-row sm:gap-4"
+                  >
+                    <dt className="plaque w-40 shrink-0 pt-0.5">{field.label}</dt>
+                    <dd className="min-w-0 flex-1 text-sm break-words">
+                      {field.tipo === "location" ? (
+                        <span className="flex flex-col items-start gap-2">
+                          <span>{field.value}</span>
+                          <OpenInMapsLink target={mapsTargetOf(field.value, placeOf(field.id))} />
+                        </span>
+                      ) : (
+                        field.value
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+          </div>
+        ) : null}
+
         {view.tags.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 pt-2">
             {view.tags.map((tag) => (
@@ -143,7 +218,14 @@ export function EntryDetail({
           </div>
         ) : null}
 
-        {canEdit ? (
+        {canEdit && match ? (
+          <MatchEntryActions
+            view={view}
+            categoryId={category.id}
+            tags={tags}
+            isMine={match.entry.isMine}
+          />
+        ) : canEdit ? (
           <EntryDetailActions
             view={view}
             categoryId={category.id}
@@ -151,6 +233,7 @@ export function EntryDetail({
             tags={tags}
             folders={entryFolders}
             ratingEnabled={category.rating_enabled}
+            categories={categories}
           />
         ) : null}
       </div>

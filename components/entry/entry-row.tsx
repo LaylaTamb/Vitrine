@@ -5,7 +5,10 @@ import { Pencil, Trash2 } from "lucide-react"
 import type { ReactNode } from "react"
 
 import { EntryImage } from "@/components/entry/entry-image"
+import { FavoriteMark, FavoriteToggle } from "@/components/entry/favorite-star"
 import { Stars } from "@/components/entry/stars"
+import { RemovedMark } from "@/components/explore/removed-mark"
+import { MatchOwnerLine } from "@/components/match/match-marks"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EntryView } from "@/lib/domain/types"
@@ -24,6 +27,9 @@ export function EntryRow({
   categoryColor,
   showRating = true,
   dragHandle,
+  favorite = false,
+  onToggleFavorite,
+  extraAction,
 }: {
   view: EntryView
   canEdit: boolean
@@ -38,6 +44,12 @@ export function EntryRow({
   showRating?: boolean
   /** Alça para arrastar (ordem manual). */
   dragHandle?: ReactNode
+  /** É o favorito da categoria (só o dono recebe): a estrela ao lado do nome. */
+  favorite?: boolean
+  /** Com ela, a estrela entra nas ações da linha (só o dono). */
+  onToggleFavorite?: () => void
+  /** Na ponta da linha quando não há as ações de edição (o "Trazer" do match). */
+  extraAction?: ReactNode
 }) {
   return (
     <div
@@ -45,7 +57,7 @@ export function EntryRow({
         "group/card vitrine-card flex items-center gap-3 p-2",
         selected && "border-brand-dim bg-surface-hi"
       )}
-      style={categoryTintVars(categoryColor)}
+      style={categoryTintVars(view.match?.color ?? categoryColor)}
     >
       {selectable ? (
         <label
@@ -80,7 +92,12 @@ export function EntryRow({
         />
 
         <div className="min-w-0 flex-1">
-          <h3 className="display truncate text-base leading-snug">{view.name}</h3>
+          <div className="flex min-w-0 items-center gap-1">
+            <h3 className="display min-w-0 truncate text-base leading-snug">{view.name}</h3>
+            {favorite ? <FavoriteMark /> : null}
+            {view.sourceRemoved ? <RemovedMark /> : null}
+          </div>
+          {view.match ? <MatchOwnerLine match={view.match} className="mt-0.5" /> : null}
           {view.summary ? (
             <p className="truncate text-xs text-muted-foreground">{view.summary}</p>
           ) : null}
@@ -112,6 +129,9 @@ export function EntryRow({
       {canEdit ? (
         <div className="card-actions flex shrink-0 items-center gap-0.5">
           {dragHandle}
+          {onToggleFavorite ? (
+            <FavoriteToggle active={favorite} name={view.name} onToggle={onToggleFavorite} />
+          ) : null}
           <button
             type="button"
             title={`Editar ${view.name}`}
@@ -131,6 +151,8 @@ export function EntryRow({
             <Trash2 className="size-3.5" />
           </button>
         </div>
+      ) : extraAction ? (
+        <div className="shrink-0">{extraAction}</div>
       ) : null}
     </div>
   )

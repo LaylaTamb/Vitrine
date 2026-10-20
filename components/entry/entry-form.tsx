@@ -1,17 +1,19 @@
 "use client"
 
 import { Eraser, ImageOff, Plus } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import { DurationInput } from "@/components/entry/duration-input"
 import { EntryImage } from "@/components/entry/entry-image"
+import { FieldInput } from "@/components/entry/field-input"
 import { StarInput } from "@/components/entry/stars"
 import { geocodeAfterSave } from "@/components/map/geocode-runner"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { ColorPalette } from "@/components/tag/color-palette"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   Dialog,
   DialogContent,
@@ -23,10 +25,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { moveTargets } from "@/lib/domain/collections"
-import { DEFAULT_CURRENCY, LOCATION_MAX_LENGTH, locationFieldsOf } from "@/lib/domain/fields"
+import { locationFieldsOf } from "@/lib/domain/fields"
 import { formatRating } from "@/lib/domain/format"
+import { moveSummary } from "@/lib/domain/migrate"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
-import type { EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
+import type { CategorySummary, EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
 import { imageTransformOf } from "@/lib/domain/view"
 
 const DEFAULT_FRAMING = { x: 50, y: 50, zoom: 1 }
@@ -42,6 +45,7 @@ export function EntryForm({
   folders,
   defaultFolderId = null,
   ratingEnabled = true,
+  categories = [],
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -56,9 +60,17 @@ export function EntryForm({
   defaultFolderId?: string | null
   /** Categoria sem estrelas (lista simples): o campo de avaliação some. */
   ratingEnabled?: boolean
+  /**
+   * As categorias da pessoa. Com a lista, a edição ganha o seletor
+   * "Categoria": trocar move o item (e reabre a edição na categoria nova).
+   */
+  categories?: CategorySummary[]
 }) {
-  const { actions, isDemo } = useVitrine()
+  const { actions, basePath, isDemo } = useVitrine()
+  const router = useRouter()
   const editing = Boolean(entry)
+  /** O destino escolhido no seletor "Categoria", esperando a confirmação. */
+  const [moveTo, setMoveTo] = useState<CategorySummary | null>(null)
 
   const [name, setName] = useState("")
   const [rating, setRating] = useState(0)
@@ -132,14 +144,13 @@ export function EntryForm({
     setCreatingTag(false)
   }
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
+  /** O que está no formulário agora, pronto para gravar — `null` (com aviso) se faltar o nome. */
+  function currentPayload() {
     if (!name.trim()) {
       toast.error("Dê um nome ao item.")
-      return
+      return null
     }
-
-    const payload = {
+    return {
       categoryId,
       name: name.trim(),
       rating: ratingEnabled && rating > 0 ? rating : null,
@@ -149,6 +160,48 @@ export function EntryForm({
       tagIds,
       ...(folders ? { folderId } : {}),
     }
+  }
+
+  /**
+   * Trocar de categoria: salva o que foi mexido aqui, move (os valores vão
+   * pelo mesmo campo ou pelo mesmo nome e tipo; tags, imagem e — se o
+   * destino usa estrelas — a nota vão junto) e reabre a edição lá.
+   */
+  async function moveToCategory(target: CategorySummary) {
+    if (!entry) return
+    const payload = currentPayload()
+    if (!payload) return
+
+    setPending(true)
+    const saved = await actions.updateEntry({ ...payload, id: entry.id })
+    if (!saved.ok) {
+      setPending(false)
+      toast.error(saved.error)
+      return
+    }
+    const moved = await actions.bulkMoveEntries({
+      ids: [entry.id],
+      categoryId,
+      toCategoryId: target.id,
+    })
+    setPending(false)
+    if (!moved.ok) {
+      toast.error(moved.error)
+      return
+    }
+
+    toast.success(`“${payload.name}” agora está em “${target.name}”. Complete o que faltar.`)
+    onOpenChange(false)
+    if (!isDemo && locationFieldsOf(target.estrutura).length > 0) {
+      void geocodeAfterSave(actions, entry.id)
+    }
+    router.push(`${basePath}/categoria/${target.id}?editar=${entry.id}`)
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    const payload = currentPayload()
+    if (!payload) return
 
     setPending(true)
     const result = entry
@@ -288,6 +341,31 @@ export function EntryForm({
                 />
               </div>
 
+              {editing && categories.length > 1 ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="entry-category" className="plaque">
+                    Categoria
+                  </Label>
+                  <select
+                    id="entry-category"
+                    value={categoryId}
+                    onChange={(event) => {
+                      const target = categories.find((item) => item.id === event.target.value)
+                      if (target && target.id !== categoryId) setMoveTo(target)
+                    }}
+                    disabled={pending}
+                    className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+                  >
+                    {categories.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.icon ? `${item.icon} ` : ""}
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
               {folderOptions.length > 1 ? (
                 <div className="space-y-1.5">
                   <Label htmlFor="entry-folder" className="plaque">
@@ -411,77 +489,11 @@ export function EntryForm({
                           {field.nome}
                         </Label>
 
-                        {field.tipo === "star" ? (
-                          <div className="flex items-center gap-2">
-                            <StarInput
-                              size="md"
-                              value={Number(values[field.id] ?? 0)}
-                              onChange={(value) => setValue(field.id, value ? String(value) : "")}
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              {values[field.id] ? formatRating(Number(values[field.id])) : "—"}
-                            </span>
-                          </div>
-                        ) : field.tipo === "select" ? (
-                          <select
-                            id={`field-${field.id}`}
-                            value={values[field.id] ?? ""}
-                            onChange={(event) => setValue(field.id, event.target.value)}
-                            className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
-                          >
-                            <option value="">—</option>
-                            {(field.opcoes ?? []).map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        ) : field.tipo === "currency" ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="flex h-9 shrink-0 items-center rounded-md border border-line bg-bg-soft px-2 text-sm text-muted-foreground">
-                              {field.moeda ?? DEFAULT_CURRENCY}
-                            </span>
-                            <Input
-                              id={`field-${field.id}`}
-                              inputMode="decimal"
-                              placeholder="0,00"
-                              value={values[field.id] ?? ""}
-                              onChange={(event) => setValue(field.id, event.target.value)}
-                            />
-                          </div>
-                        ) : field.tipo === "location" ? (
-                          <Input
-                            id={`field-${field.id}`}
-                            placeholder="Rua, número, bairro ou nome do lugar"
-                            maxLength={LOCATION_MAX_LENGTH}
-                            value={values[field.id] ?? ""}
-                            onChange={(event) => setValue(field.id, event.target.value)}
-                          />
-                        ) : field.tipo === "time" ? (
-                          <DurationInput
-                            id={`field-${field.id}`}
-                            label={field.nome}
-                            value={values[field.id] ?? ""}
-                            onChange={(next) => setValue(field.id, next)}
-                          />
-                        ) : field.tipo === "decimal" ? (
-                          <Input
-                            id={`field-${field.id}`}
-                            inputMode="decimal"
-                            placeholder="0,00"
-                            value={values[field.id] ?? ""}
-                            onChange={(event) => setValue(field.id, event.target.value)}
-                          />
-                        ) : (
-                          <Input
-                            id={`field-${field.id}`}
-                            type={field.tipo === "int" ? "number" : field.tipo === "date" ? "date" : "text"}
-                            step={field.tipo === "int" ? 1 : undefined}
-                            inputMode={field.tipo === "int" ? "numeric" : undefined}
-                            value={values[field.id] ?? ""}
-                            onChange={(event) => setValue(field.id, event.target.value)}
-                          />
-                        )}
+                        <FieldInput
+                          field={field}
+                          value={values[field.id] ?? ""}
+                          onChange={(next) => setValue(field.id, next)}
+                        />
                       </div>
                     ))}
                   </div>
@@ -504,9 +516,58 @@ export function EntryForm({
             </Button>
           </DialogFooter>
         </form>
+
+        {/* Trocar de categoria: o que vai junto e o que fica, antes de mover. */}
+        <ConfirmDialog
+          open={moveTo !== null}
+          onOpenChange={(next) => {
+            if (!next) setMoveTo(null)
+          }}
+          title={moveTo ? `Mover para “${moveTo.name}”` : "Mover"}
+          description={moveTo ? moveDescription(moveTo) : null}
+          confirmLabel="Mover"
+          pendingLabel="Movendo…"
+          destructive={false}
+          onConfirm={() => (moveTo ? moveToCategory(moveTo) : undefined)}
+        />
       </DialogContent>
     </Dialog>
   )
+
+  /** O texto do diálogo de mover: o que fica para trás, o que vai junto e a nota. */
+  function moveDescription(target: CategorySummary) {
+    const summary = moveSummary(
+      estrutura,
+      target.estrutura,
+      values,
+      ratingEnabled && rating > 0 ? rating : null,
+      target.rating_enabled
+    )
+    const names = (fields: { nome: string }[]) => fields.map((field) => field.nome).join(", ")
+    return (
+      <>
+        {summary.dropped.length > 0 ? (
+          <p className="text-foreground">
+            {summary.dropped.length === 1
+              ? `Fica para trás: ${names(summary.dropped)} — “${target.name}” não tem esse campo.`
+              : `Ficam para trás ${summary.dropped.length} campos: ${names(summary.dropped)} — “${target.name}” não tem esses campos.`}
+          </p>
+        ) : (
+          <p>Nenhum campo preenchido se perde.</p>
+        )}
+        {summary.kept.length > 0 ? <p>Vão junto: {names(summary.kept)}.</p> : null}
+        {summary.ratingLost ? (
+          <p className="text-foreground">
+            A nota ({formatRating(rating)}) some: “{target.name}” não usa estrelas.
+          </p>
+        ) : null}
+        <p>
+          Nome, imagem e tags vão junto, e o que você mudou aqui é salvo antes. O item chega na
+          raiz de “{target.name}” e abre para você completar.
+        </p>
+      </>
+    )
+  }
 }
 
 function Slider({

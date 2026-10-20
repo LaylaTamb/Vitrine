@@ -12,6 +12,17 @@ export async function listProfiles(): Promise<Profile[]> {
   )
 }
 
+/** Só a linha do perfil (sem acervo), pelo @ — para as listas de seguidores. */
+export async function getProfileByUsername(username: string): Promise<Profile | null> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url, created_at")
+    .eq("username", username)
+    .maybeSingle()
+  return (data as Profile | null) ?? null
+}
+
 export interface PublicCollections {
   profile: Profile | null
   folders: Folder[]

@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 
 import { AppShell } from "@/components/layout/app-shell"
 import { MapView, type MapTab } from "@/components/map/map-view"
+import { HereBanner } from "@/components/nearby/here-banner"
+import { placeTargets } from "@/lib/domain/nearby"
 import type { EntryView, Tag } from "@/lib/domain/types"
 import { toView } from "@/lib/domain/view"
 import { getAcervo } from "@/lib/queries/acervo"
@@ -14,7 +16,7 @@ type SearchParams = Promise<{ item?: string; aba?: string; categoria?: string }>
 
 /**
  * `/mapa` — tudo que eu marquei com Localização, com o mesmo filtro do
- * Filtro geral. Só do dono: a tela de outra pessoa (`/u/...`) e a
+ * Filtro geral. Só do dono: a tela de outra pessoa (`/v/...`) e a
  * demonstração não têm mapa.
  *
  * O acervo, o perfil e a localização dos itens vêm juntos; o mapa
@@ -38,6 +40,8 @@ export default async function MapPage({ searchParams }: { searchParams: SearchPa
 
   return (
     <AppShell profile={profile}>
+      {/* "Você está em X?": só aparece com a localização já autorizada. */}
+      <HereBanner targets={placeTargets(categories)} />
       <MapView
         categories={categories}
         views={views}

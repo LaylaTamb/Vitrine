@@ -4,6 +4,7 @@ import {
   geoErrorMessage,
   geoHttpErrorReason,
   parseGeocodeResponse,
+  parseNearbyPlaces,
   parsePlaceDetails,
   parseRouteMatrix,
 } from "./parse"
@@ -35,7 +36,36 @@ describe("Geocoding", () => {
       lng: -46.6617,
       placeId: "51abc_augusta",
       formattedAddress: "Rua Augusta, 1500, Consolação, São Paulo - SP, 01304-001, Brasil",
+      name: null,
+      resultType: "building",
+      osmId: null,
     })
+  })
+
+  it("traz o nome, o tipo e o id do OSM de um estabelecimento (para o catálogo)", () => {
+    const padaria = {
+      results: [
+        {
+          ...GEOCODE_OK.results[0],
+          name: "Padaria Santa Tereza",
+          result_type: "amenity",
+          place_id: "51def_padaria",
+          datasource: { sourcename: "openstreetmap", raw: { osm_type: "n", osm_id: 123456 } },
+        },
+      ],
+    }
+    expect(parseGeocodeResponse(padaria)).toMatchObject({
+      status: "ok",
+      placeId: "51def_padaria",
+      name: "Padaria Santa Tereza",
+      resultType: "amenity",
+      osmId: "node/123456",
+    })
+    // id do OSM torto ou sem tipo: fica de fora, o resto vale
+    const torto = {
+      results: [{ ...padaria.results[0], datasource: { raw: { osm_type: "x", osm_id: "abc" } } }],
+    }
+    expect(parseGeocodeResponse(torto)).toMatchObject({ status: "ok", osmId: null })
   })
 
   it("sem resultado é 'não encontrado'", () => {
@@ -69,6 +99,9 @@ describe("Geocoding", () => {
       lng: 2,
       placeId: null,
       formattedAddress: null,
+      name: null,
+      resultType: null,
+      osmId: null,
     })
   })
 
@@ -183,5 +216,57 @@ describe("Route Matrix", () => {
       null,
       null,
     ])
+  })
+})
+
+describe("Places (lugares por perto)", () => {
+  const body = {
+    type: "FeatureCollection",
+    features: [
+      {
+        properties: {
+          name: "Padaria Longe",
+          place_id: "p_longe",
+          lat: -23.55,
+          lon: -46.66,
+          categories: ["commercial.food_and_drink.bakery"],
+          distance: 120,
+        },
+      },
+      {
+        properties: {
+          name: "Café do Ponto",
+          place_id: "p_cafe",
+          lat: -23.5501,
+          lon: -46.6601,
+          categories: ["catering.cafe"],
+          address_line2: "Rua Augusta, 1500, São Paulo",
+          opening_hours: "Mo-Su 08:00-20:00",
+          distance: 25,
+          datasource: { raw: { osm_type: "n", osm_id: "123" } },
+          timezone: { offset_STD_seconds: -10800 },
+        },
+      },
+      { properties: { place_id: "sem_nome", lat: -23.5, lon: -46.6, distance: 5 } },
+      { properties: { name: "Café do Ponto", place_id: "p_cafe", lat: 1, lon: 1, distance: 1 } },
+    ],
+  }
+
+  it("lugares com nome, do mais perto ao mais longe", () => {
+    const places = parseNearbyPlaces(body)
+    expect(places.map((place) => place.name)).toEqual(["Café do Ponto", "Padaria Longe"])
+    expect(places[0]).toMatchObject({
+      placeId: "p_cafe",
+      address: "Rua Augusta, 1500, São Paulo",
+      osmId: "node/123",
+      openingHoursText: "Mo-Su 08:00-20:00",
+      utcOffsetMinutes: -180,
+    })
+    expect(places[0].periods?.length).toBeGreaterThan(0)
+  })
+
+  it("resposta estranha: nada", () => {
+    expect(parseNearbyPlaces(null)).toEqual([])
+    expect(parseNearbyPlaces({ features: "x" })).toEqual([])
   })
 })

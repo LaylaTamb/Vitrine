@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Fraunces, Inter } from "next/font/google"
+import { PwaSetup } from "@/components/pwa/install"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
@@ -21,6 +22,8 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Vitrine",
   description: "Seu acervo pessoal: tudo que você consome, catalogado do seu jeito.",
+  // No iPhone, "Adicionar à Tela de Início" abre como app (sem a barra do Safari).
+  appleWebApp: { capable: true, title: "Vitrine", statusBarStyle: "black-translucent" },
 }
 
 export const viewport: Viewport = {
@@ -37,6 +40,7 @@ export default function RootLayout({
       <body>
         {children}
         <Toaster />
+        <PwaSetup />
       </body>
     </html>
   )

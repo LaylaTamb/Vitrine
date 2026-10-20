@@ -334,8 +334,9 @@ export async function bulkMoveEntriesAction(input: {
   )
   if (context.error) return fail(context.error)
 
-  // Um valor sobrevive quando o destino tem um campo de mesmo nome e mesmo
-  // tipo — e é regravado sob o id do campo do destino. As subpastas são da
+  // Um valor sobrevive quando o destino tem o mesmo campo (mesmo id e tipo)
+  // ou um de mesmo nome e mesmo tipo — e é regravado sob o id do campo do
+  // destino (`migrateCustomFields`). As subpastas são da
   // categoria de origem, então o item chega na raiz do destino (a FK
   // composta do banco recusaria manter o `folder_id`) — no fim da ordem
   // manual, na mesma sequência em que estava. Destino sem estrelas: a nota sai.
@@ -361,8 +362,8 @@ export async function bulkMoveEntriesAction(input: {
   const failed = results.find((result) => result.error)
   if (failed?.error) return fail(failed.error)
 
-  // A localização vai junto quando o valor foi mantido (campo de destino com
-  // mesmo nome e tipo): a linha passa para o id do campo do destino. Valor
+  // A localização vai junto quando o valor foi mantido: a linha passa para o
+  // id do campo do destino. Valor
   // descartado leva a linha junto. Banco sem a migração 11: nada a mover.
   const { data: placeRows, error: placesError } = await supabase
     .from("entry_places")

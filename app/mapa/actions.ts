@@ -5,16 +5,28 @@ import { revalidatePath } from "next/cache"
 import type { GeocodeBatchResult, GeocodeFieldResult } from "@/lib/actions/contracts"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import {
+  addNearbyPlaceSchema,
   geocodeAddressSchema,
   geocodeEntrySchema,
   geocodePendingSchema,
+  latLngSchema,
+  normalizeRating,
   placeDetailsSchema,
+  placeRatingsSchema,
   routeTimesSchema,
 } from "@/lib/actions/schemas"
-import { isMissingSchema } from "@/lib/domain/errors"
+import { isMissingColumn, isMissingSchema } from "@/lib/domain/errors"
 import { parseCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import type { LatLng } from "@/lib/domain/map"
 import type { TravelMode } from "@/lib/domain/maps-links"
+import {
+  EMPTY_RATINGS,
+  NEARBY_SHOWN,
+  parsePlaceRatings,
+  placeAddressText,
+  type NearbyPlace,
+  type PlaceRatings,
+} from "@/lib/domain/nearby"
 import type { PlaceDetails, RouteInfo } from "@/lib/domain/place-details"
 import {
   locationTargets,
@@ -26,7 +38,14 @@ import {
   type GeocodeMode,
 } from "@/lib/domain/places"
 import type { EntryPlace } from "@/lib/domain/types"
-import { geocode, mapWithLimit, placeDetails, routeMatrix, serverKey } from "@/lib/geo/client"
+import {
+  geocode,
+  mapWithLimit,
+  nearbyPlaces,
+  placeDetails,
+  routeMatrix,
+  serverKey,
+} from "@/lib/geo/client"
 import {
   geoErrorMessage,
   type GeocodeOutcome,
@@ -74,7 +93,38 @@ function rowFor(
     place_id: outcome.status === "ok" ? outcome.placeId : null,
     status: outcome.status,
     geocoded_at: at,
+    // Para o catálogo comum: o banco liga o lugar quando ele é preciso (migração 18).
+    place_name: outcome.status === "ok" ? outcome.name : null,
+    result_type: outcome.status === "ok" ? outcome.resultType : null,
+    osm_id: outcome.status === "ok" ? outcome.osmId : null,
   }
+}
+
+/** As colunas do catálogo (migração 18): gravadas só depois que ela roda. */
+const CATALOG_COLUMNS = ["place_name", "result_type", "osm_id"] as const
+
+/**
+ * Grava as linhas de `entry_places`. Antes da migração 18 o banco não tem as
+ * colunas do catálogo: grava de novo sem elas — o Mapa não pode parar por isso.
+ */
+async function upsertPlaces(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  rows: EntryPlace[]
+): Promise<{ error: unknown }> {
+  const first = await supabase
+    .from("entry_places")
+    .upsert(rows, { onConflict: "entry_id,field_id" })
+  if (!first.error || !isMissingColumn(first.error)) return { error: first.error }
+
+  const withoutCatalog = rows.map((row) => {
+    const copy: Record<string, unknown> = { ...row }
+    for (const column of CATALOG_COLUMNS) delete copy[column]
+    return copy
+  })
+  const retry = await supabase
+    .from("entry_places")
+    .upsert(withoutCatalog, { onConflict: "entry_id,field_id" })
+  return { error: retry.error }
 }
 
 /**
@@ -148,9 +198,7 @@ export async function geocodeEntryLocationsAction(input: {
     .filter((row): row is EntryPlace => row !== null)
 
   if (rows.length > 0) {
-    const { error } = await supabase
-      .from("entry_places")
-      .upsert(rows, { onConflict: "entry_id,field_id" })
+    const { error } = await upsertPlaces(supabase, rows)
     if (error) return fail(error)
   }
 
@@ -239,9 +287,7 @@ export async function geocodePendingLocationsAction(input: {
     .filter((row): row is EntryPlace => row !== null)
 
   if (rows.length > 0) {
-    const { error } = await supabase
-      .from("entry_places")
-      .upsert(rows, { onConflict: "entry_id,field_id" })
+    const { error } = await upsertPlaces(supabase, rows)
     if (error) return fail(error)
     revalidatePath("/mapa")
     revalidatePath("/categoria/[categoryId]/[entryId]", "page")
@@ -354,4 +400,143 @@ export async function routeTimesAction(input: {
       destinations.map((destination, index) => [destination.key, outcome.routes[index] ?? null])
     ),
   })
+}
+
+// ---------------------------------------------------------------------------
+// "Você está em X?" (Etapa 4.4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Os lugares a até ~150 m da posição (que chega, é usada e some — nunca é
+ * gravada). Sem a chave da Geoapify: nenhum, sem aviso (a faixa só não
+ * aparece). Resposta guardada por até 24 h por pedaço do mapa.
+ */
+export async function nearbyPlacesAction(input: {
+  lat: number
+  lng: number
+}): Promise<ActionResult<NearbyPlace[]>> {
+  const parsed = latLngSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  await requireUser()
+  if (!serverKey()) return ok([])
+  const outcome = await nearbyPlaces(parsed.data)
+  if (outcome.status === "error") return { ok: false, error: geoErrorMessage(outcome.reason) }
+  return ok(outcome.places.slice(0, NEARBY_SHOWN))
+}
+
+/**
+ * "No Vitrine": quem avaliou o lugar, do que eu posso ver (migração 28), e
+ * onde ele já está no meu acervo. Antes da migração: ninguém.
+ */
+export async function placeRatingsAction(input: {
+  placeId: string
+  osmId: string | null
+}): Promise<ActionResult<PlaceRatings>> {
+  const parsed = placeRatingsSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  await requireUser()
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("place_ratings", {
+    p_geoapify_id: parsed.data.placeId,
+    p_osm_id: parsed.data.osmId,
+  })
+  if (error) return isMissingSchema(error) ? ok(EMPTY_RATINGS) : fail(error)
+  return ok(parsePlaceRatings(data))
+}
+
+/**
+ * "Adicionar": um item novo com o Nome e a Localização já prontos — com as
+ * coordenadas e o catálogo, sem gastar busca de endereço. O lugar é lido de
+ * novo aqui (do cache da busca por perto), nunca do que o navegador mandou.
+ * Categoria sem campo Localização: entra só com o nome.
+ */
+export async function addNearbyPlaceAction(input: {
+  lat: number
+  lng: number
+  placeId: string
+  categoryId: string
+  rating: number | null
+}): Promise<ActionResult<{ entryId: string; categoryId: string; categoryName: string }>> {
+  const parsed = addNearbyPlaceSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const user = await requireUser()
+  const outcome = await nearbyPlaces({ lat: parsed.data.lat, lng: parsed.data.lng })
+  if (outcome.status === "error") return { ok: false, error: geoErrorMessage(outcome.reason) }
+  const place = outcome.places.find((item) => item.placeId === parsed.data.placeId)
+  if (!place) return { ok: false, error: "Esse lugar não está mais por perto. Abra de novo." }
+
+  const supabase = await createClient()
+  const { data: categoryRow, error: categoryError } = await supabase
+    .from("categories")
+    .select("id, name, estrutura, rating_enabled")
+    .eq("id", parsed.data.categoryId)
+    .eq("owner_id", user.id)
+    .maybeSingle()
+  if (categoryError) return fail(categoryError)
+  if (!categoryRow) return { ok: false, error: "Categoria não encontrada." }
+  const category = categoryRow as {
+    id: string
+    name: string
+    estrutura: unknown
+    rating_enabled: boolean
+  }
+  const locationField = parseEstrutura(category.estrutura).find(
+    (field) => field.tipo === "location"
+  )
+  const address = placeAddressText(place)
+
+  const { data: top } = await supabase
+    .from("entries")
+    .select("display_order")
+    .eq("category_id", category.id)
+    .is("folder_id", null)
+    .order("display_order", { ascending: false })
+    .limit(1)
+  const last = (top ?? [])[0] as { display_order: number } | undefined
+  const displayOrder = (last?.display_order ?? -1) + 1
+
+  const { data: created, error } = await supabase
+    .from("entries")
+    .insert({
+      category_id: category.id,
+      owner_id: user.id,
+      name: place.name.slice(0, 200),
+      rating: category.rating_enabled ? normalizeRating(parsed.data.rating) : null,
+      custom_fields: locationField ? { [locationField.id]: address } : {},
+      display_order: displayOrder,
+    })
+    .select("id")
+    .single()
+  if (error) return fail(error)
+  const entryId = (created as { id: string }).id
+
+  if (locationField) {
+    // A localização já resolvida: aparece no Mapa na hora e liga ao catálogo
+    // comum (o gatilho da migração 18 trata o lugar como estabelecimento).
+    await upsertPlaces(supabase, [
+      {
+        entry_id: entryId,
+        field_id: locationField.id,
+        owner_id: user.id,
+        address,
+        formatted_address: place.address,
+        lat: place.lat,
+        lng: place.lng,
+        place_id: place.placeId,
+        status: "ok",
+        geocoded_at: new Date().toISOString(),
+        place_name: place.name,
+        result_type: "amenity",
+        osm_id: place.osmId,
+      },
+    ])
+  }
+
+  revalidatePath("/")
+  revalidatePath("/mapa")
+  revalidatePath(`/categoria/${category.id}`)
+  return ok({ entryId, categoryId: category.id, categoryName: category.name })
 }

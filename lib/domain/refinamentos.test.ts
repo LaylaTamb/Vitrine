@@ -6,7 +6,6 @@ import { itemsUnder } from "./entry-folders"
 import { isMissingColumn } from "./errors"
 import { FIELD_TYPE_LABELS } from "./fields"
 import { initialSortFor, normalizeSort } from "./filter"
-import { defaultPublicOf, isPublic, privateAncestor, visibilityLabel } from "./privacy"
 import { isPaletteColor, normalizeCategoryColor } from "./tags"
 import { FIELD_TYPES, type EntryFolder } from "./types"
 
@@ -136,45 +135,10 @@ describe("recorte dos Números", () => {
 })
 
 // ---------------------------------------------------------------------------
-// privacidade
+// migração ainda não rodada
 // ---------------------------------------------------------------------------
 
-describe("privacidade", () => {
-  it("o que não tem a coluna (antes da migração 12) é público", () => {
-    expect(isPublic({})).toBe(true)
-    expect(isPublic({ is_public: null })).toBe(true)
-    expect(isPublic({ is_public: true })).toBe(true)
-    expect(isPublic({ is_public: false })).toBe(false)
-    expect(defaultPublicOf(null)).toBe(true)
-    expect(defaultPublicOf({})).toBe(true)
-    expect(defaultPublicOf({ default_public: false })).toBe(false)
-  })
-
-  it("acha a pasta privada que esconde o que está dentro", () => {
-    const folders = [
-      { id: "pessoal", name: "Pessoal", parent_folder_id: null, is_public: false },
-      { id: "saude", name: "Saúde", parent_folder_id: "pessoal", is_public: true },
-      { id: "cultura", name: "Cultura", parent_folder_id: null, is_public: true },
-    ]
-    expect(privateAncestor(folders, "saude")?.name).toBe("Pessoal")
-    expect(privateAncestor(folders, "pessoal")?.name).toBe("Pessoal")
-    expect(privateAncestor(folders, "cultura")).toBeNull()
-    expect(privateAncestor(folders, null)).toBeNull()
-  })
-
-  it("aguenta ciclo na árvore sem travar", () => {
-    const loop = [
-      { id: "a", name: "A", parent_folder_id: "b" },
-      { id: "b", name: "B", parent_folder_id: "a" },
-    ]
-    expect(privateAncestor(loop, "a")).toBeNull()
-  })
-
-  it("diz o estado em palavras", () => {
-    expect(visibilityLabel("category", false)).toBe("Categoria privada: só você vê")
-    expect(visibilityLabel("folder", true)).toBe("Pasta pública: quem tem acesso ao app vê")
-  })
-
+describe("coluna ausente", () => {
   it("reconhece a coluna que o banco ainda não tem", () => {
     expect(isMissingColumn({ code: "42703", message: 'column "is_public" does not exist' })).toBe(true)
     expect(

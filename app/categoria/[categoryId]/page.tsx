@@ -1,14 +1,23 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { Library } from "lucide-react"
 
 import { CategoryView } from "@/components/category/category-view"
+import type { LinkView } from "@/components/explore/linked-bar"
 import { AppShell } from "@/components/layout/app-shell"
 import { EmptyState } from "@/components/layout/empty-state"
+import { buttonVariants } from "@/components/ui/button"
+import { linkChanged, linkNews } from "@/lib/domain/explore"
 import { categoryFilterFromParams } from "@/lib/domain/filter"
+import { isMatchCategory } from "@/lib/domain/match"
 import type { Tag } from "@/lib/domain/types"
+import { profilePath } from "@/lib/domain/username"
 import { toView } from "@/lib/domain/view"
-import { getCategoryPage } from "@/lib/queries/category"
-import { getMyProfile, requireUser } from "@/lib/queries/session"
+import { getCategoryPage, loadCategoryPage } from "@/lib/queries/category"
+import { syncLinkedCategory } from "@/lib/queries/explore"
+import { getMatchCopy } from "@/lib/queries/matches"
+import { getPublicCategory } from "@/lib/queries/public"
+import { getMyProfile, getSessionUser } from "@/lib/queries/session"
 
 type SearchParams = Promise<{
   q?: string
@@ -18,15 +27,18 @@ type SearchParams = Promise<{
   ordem?: string
   aba?: string
   modo?: string
+  /** O item que acabou de trocar de categoria: abre já em edição. */
+  editar?: string
 }>
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ categoryId: string }>
-}): Promise<Metadata> {
+type Params = Promise<{ categoryId: string }>
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { categoryId } = await params
-  const { category } = await getCategoryPage(categoryId)
+  const user = await getSessionUser()
+  const category = user
+    ? (await getCategoryPage(categoryId)).category
+    : ((await getPublicCategory(categoryId))?.category ?? null)
   return { title: category ? `${category.name} · Vitrine` : "Vitrine" }
 }
 
@@ -36,26 +48,50 @@ export async function generateMetadata({
  * Uma consulta com embedding traz categoria + dono + irmãs + itens + vínculos
  * de tag; as tags do grupo vão em paralelo. A categoria inteira desce de uma
  * vez, e o filtro roda na memória do cliente daí em diante.
+ *
+ * Sem login, a mesma tela abre em modo visitante (somente leitura), mas só se
+ * a categoria for pública — pela função `public_category`.
  */
 export default async function CategoryPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ categoryId: string }>
+  params: Params
   searchParams: SearchParams
 }) {
   const { categoryId } = await params
-  const user = await requireUser()
+  const user = await getSessionUser()
+  if (!user) return <VisitorCategoryPage categoryId={categoryId} searchParams={searchParams} />
 
-  const [
-    { category, owner, siblings, entries, tags, entryFolders, collectionFolders },
-    profile,
-    query,
-  ] = await Promise.all([
+  const [firstRead, profile, query] = await Promise.all([
     getCategoryPage(categoryId),
     getMyProfile(),
     searchParams,
   ])
+
+  // Cópia do Explorar ainda ligada: traz as novidades da original antes de
+  // mostrar (o banco só trabalha se a última vez foi há mais de 10 minutos).
+  // Mudou algo? Lê de novo — a leitura de cima é a de antes.
+  let data = firstRead
+  let link: LinkView | null = null
+  if (firstRead.category?.linked && firstRead.category.owner_id === user.id) {
+    const sync = await syncLinkedCategory(categoryId)
+    if (linkChanged(sync)) data = await loadCategoryPage(categoryId)
+    if (sync.status === "unlinked") link = { status: "unlinked", author: null, news: null }
+    else if (sync.status !== "not_linked") {
+      link = { status: "linked", author: sync.author, news: linkNews(sync) }
+    }
+  }
+  const {
+    category,
+    owner,
+    siblings,
+    entries,
+    tags,
+    entryFolders,
+    collectionFolders,
+    favoriteEntryId,
+  } = data
 
   if (!category) {
     return (
@@ -78,12 +114,21 @@ export default async function CategoryPage({
   const initialFilter = categoryFilterFromParams(query, category)
 
   const canEdit = category.owner_id === user.id
+
+  // A cópia de um match: as pessoas vêm do match; "Em comum", as sugestões e
+  // a % saem dos próprios itens da cópia, na hora.
+  const matchCopy =
+    canEdit && isMatchCategory(category) ? await getMatchCopy(category, user.id, entries) : null
+  if (matchCopy) {
+    for (const view of views) view.match = matchCopy.byEntry.get(view.id) ?? null
+  }
   // O Voltar da raiz da categoria leva às Coleções de quem é dono dela.
-  const collectionsHref = canEdit || !owner ? "/" : `/u/${owner.username}`
+  const collectionsHref = canEdit || !owner ? "/" : profilePath(owner.username)
 
   return (
     <AppShell profile={profile}>
       <CategoryView
+        key={category.id}
         category={category}
         owner={owner}
         siblings={siblings}
@@ -94,6 +139,67 @@ export default async function CategoryPage({
         collectionsHref={collectionsHref}
         canEdit={canEdit}
         initialFilter={initialFilter}
+        initialTab={query.aba === "numeros" ? "numeros" : "itens"}
+        initialEditId={query.editar ?? null}
+        favoriteEntryId={canEdit ? favoriteEntryId : null}
+        link={canEdit ? link : null}
+        match={matchCopy?.info ?? null}
+      />
+    </AppShell>
+  )
+}
+
+/** Quem não tem conta: só categoria pública, sem nenhum botão de editar. */
+async function VisitorCategoryPage({
+  categoryId,
+  searchParams,
+}: {
+  categoryId: string
+  searchParams: SearchParams
+}) {
+  const [data, query] = await Promise.all([getPublicCategory(categoryId), searchParams])
+  const next = `/categoria/${categoryId}`
+
+  if (!data) {
+    return (
+      <AppShell profile={null} visitor={{ next }}>
+        <div className="py-16">
+          <EmptyState
+            icon={Library}
+            title="Categoria não encontrada"
+            description="Ela pode não ser pública. Se alguém compartilhou com você, entre na sua conta para ver."
+            action={
+              <Link
+                href={`/login?proximo=${encodeURIComponent(next)}`}
+                className={buttonVariants()}
+              >
+                Entrar
+              </Link>
+            }
+          />
+        </div>
+      </AppShell>
+    )
+  }
+
+  const { owner, category, entryFolders, entries, tags } = data
+  const tagsById = new Map<string, Tag>(tags.map((tag) => [tag.id, tag]))
+  const views = entries.map((entry) => toView(entry, category.estrutura, tagsById, category.name))
+
+  return (
+    <AppShell profile={null} visitor={{ next }}>
+      <CategoryView
+        category={category}
+        owner={owner}
+        siblings={[]}
+        views={views}
+        tags={tags}
+        entryFolders={entryFolders}
+        // As pastas das Coleções não vêm: a trilha começa nas Coleções do dono.
+        collectionFolders={[]}
+        collectionsHref={profilePath(owner.username)}
+        canEdit={false}
+        initialFilter={categoryFilterFromParams(query, category)}
         initialTab={query.aba === "numeros" ? "numeros" : "itens"}
       />
     </AppShell>

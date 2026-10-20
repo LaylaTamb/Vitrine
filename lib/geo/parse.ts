@@ -8,6 +8,7 @@
  */
 
 import { parseOpeningHours } from "@/lib/domain/opening-hours"
+import type { NearbyPlace } from "@/lib/domain/nearby"
 import { typeLabelOf, type PlaceDetails, type RouteInfo } from "@/lib/domain/place-details"
 
 /** Por que uma chamada falhou — vira frase em `geoErrorMessage`. */
@@ -20,6 +21,12 @@ export type GeocodeOutcome =
       lng: number
       placeId: string | null
       formattedAddress: string | null
+      /** O nome do lugar, quando é um estabelecimento ou prédio com nome. */
+      name: string | null
+      /** "amenity", "building", "street", "suburb"… — o banco só cataloga os precisos. */
+      resultType: string | null
+      /** "node/123", "way/456"… quando a resposta traz. */
+      osmId: string | null
     }
   | { status: "not_found" }
   | { status: "error"; reason: GeoErrorReason }
@@ -59,6 +66,24 @@ export const MIN_CONFIDENCE = 0.4
 /** Tão vago que o pino não ajuda: o país ou o estado inteiro. */
 const TOO_VAGUE = new Set(["country", "state"])
 
+const OSM_TYPES: Record<string, string> = {
+  n: "node",
+  w: "way",
+  r: "relation",
+  node: "node",
+  way: "way",
+  relation: "relation",
+}
+
+/** O id do OpenStreetMap ("node/123"), se a resposta trouxer (`datasource.raw`). */
+function osmIdOf(result: Record<string, unknown>): string | null {
+  const raw = asRecord(asRecord(result.datasource)?.raw)
+  const type = typeof raw?.osm_type === "string" ? OSM_TYPES[raw.osm_type.toLowerCase()] : null
+  const id = raw?.osm_id
+  const number = typeof id === "number" || (typeof id === "string" && /^\d+$/.test(id)) ? id : null
+  return type && number !== null ? `${type}/${number}` : null
+}
+
 /** Resposta do Geocoding (`format=json`) → resultado. Usa o primeiro (o mais provável). */
 export function parseGeocodeResponse(body: unknown): GeocodeOutcome {
   const data = asRecord(body)
@@ -83,6 +108,9 @@ export function parseGeocodeResponse(body: unknown): GeocodeOutcome {
     lng,
     placeId: text(first.place_id),
     formattedAddress: text(first.formatted),
+    name: text(first.name),
+    resultType: text(first.result_type),
+    osmId: osmIdOf(first),
   }
 }
 
@@ -119,6 +147,53 @@ export function parsePlaceDetails(body: unknown, placeId: string): PlaceDetails 
     phone: text(asRecord(properties.contact)?.phone),
     website: text(properties.website),
   }
+}
+
+// ---------------------------------------------------------------------------
+// Places (lugares por perto)
+// ---------------------------------------------------------------------------
+
+/**
+ * A resposta do Places (um GeoJSON) → os lugares com nome, do mais perto
+ * para o mais longe (`distance`, quando vem; senão, na ordem da resposta).
+ */
+export function parseNearbyPlaces(body: unknown): NearbyPlace[] {
+  const features = asRecord(body)?.features
+  if (!Array.isArray(features)) return []
+  const seen = new Set<string>()
+  const ranked: { place: NearbyPlace; distance: number }[] = []
+  features.forEach((item, index) => {
+    const properties = asRecord(asRecord(item)?.properties)
+    if (!properties) return
+    const name = text(properties.name)
+    const placeId = text(properties.place_id)
+    const lat = finite(properties.lat)
+    const lng = finite(properties.lon)
+    if (!name || !placeId || lat === null || lng === null || seen.has(placeId)) return
+    seen.add(placeId)
+    const categories = Array.isArray(properties.categories)
+      ? properties.categories.filter((value): value is string => typeof value === "string")
+      : []
+    const raw = asRecord(asRecord(properties.datasource)?.raw)
+    const openingHoursText = text(properties.opening_hours) ?? text(raw?.opening_hours)
+    const offsetSeconds = finite(asRecord(properties.timezone)?.offset_STD_seconds)
+    ranked.push({
+      distance: finite(properties.distance) ?? 1_000_000 + index,
+      place: {
+        placeId,
+        name,
+        lat,
+        lng,
+        typeLabel: typeLabelOf(categories, text(asRecord(properties.catering)?.cuisine)),
+        address: text(properties.address_line2) ?? text(properties.formatted),
+        osmId: osmIdOf(properties),
+        periods: parseOpeningHours(openingHoursText),
+        openingHoursText,
+        utcOffsetMinutes: offsetSeconds === null ? null : Math.round(offsetSeconds / 60),
+      },
+    })
+  })
+  return ranked.sort((a, b) => a.distance - b.distance).map((item) => item.place)
 }
 
 // ---------------------------------------------------------------------------

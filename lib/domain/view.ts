@@ -181,5 +181,6 @@ export function toView(
     createdAt: entry.created_at,
     search,
     href: `${basePath}/categoria/${entry.category_id}/${entry.id}`,
+    sourceRemoved: Boolean(entry.source_removed_at),
   }
 }

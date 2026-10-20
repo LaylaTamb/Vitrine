@@ -58,10 +58,12 @@ describe("validação no servidor", () => {
   })
 
   it("no cadastro e na troca, exige a senha forte e as duas iguais", () => {
+    // (a caixa dos 18 anos + Termos tem os testes dela em terms.test.ts)
+    const conta = { email: "a@b.co", acceptTerms: true }
     expect(
-      signUpSchema.safeParse({ email: "a@b.co", password: "abc12345", confirm: "abc12345" }).success
+      signUpSchema.safeParse({ ...conta, password: "abc12345", confirm: "abc12345" }).success
     ).toBe(true)
-    const fraca = signUpSchema.safeParse({ email: "a@b.co", password: "abc", confirm: "abc" })
+    const fraca = signUpSchema.safeParse({ ...conta, password: "abc", confirm: "abc" })
     expect(fraca.success).toBe(false)
     expect(fraca.error?.issues[0]?.message).toBe("A senha precisa de pelo menos 8 caracteres.")
     const diferente = newPasswordSchema.safeParse({ password: "abc12345", confirm: "abc12399" })

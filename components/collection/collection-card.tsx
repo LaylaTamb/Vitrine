@@ -3,9 +3,11 @@
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import Link from "next/link"
-import { FolderOpen, GripVertical, Lock, MoveRight, Pencil, Trash2 } from "lucide-react"
+import { FolderOpen, GripVertical, MoveRight, Pencil, Trash2 } from "lucide-react"
 
+import { VISIBILITY_ICONS } from "@/components/collection/privacy-switch"
 import type { ViewMode } from "@/components/layout/view-toggle"
+import { visibilityLabel, type Visibility } from "@/lib/domain/privacy"
 import { cn } from "@/lib/utils"
 
 export interface CollectionCardProps {
@@ -22,8 +24,11 @@ export interface CollectionCardProps {
   onMove?: () => void
   onEdit?: () => void
   onDelete?: () => void
-  /** Privada: um cadeado ao lado do nome (só o dono chega a ver). */
-  isPrivate?: boolean
+  /**
+   * O nível, para o ícone ao lado do nome: cadeado na Privada, pessoas na de
+   * Amigos, nada na Pública. Só o dono passa (e chega a ver).
+   */
+  visibility?: Visibility
 }
 
 export function CollectionCard({
@@ -40,7 +45,7 @@ export function CollectionCard({
   onMove,
   onEdit,
   onDelete,
-  isPrivate = false,
+  visibility = "public",
 }: CollectionCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -103,7 +108,7 @@ export function CollectionCard({
           subtitle={subtitle}
           view={view}
           kind={kind}
-          isPrivate={isPrivate}
+          visibility={visibility}
         />
       </button>
     ) : (
@@ -114,7 +119,7 @@ export function CollectionCard({
           subtitle={subtitle}
           view={view}
           kind={kind}
-          isPrivate={isPrivate}
+          visibility={visibility}
         />
       </Link>
     )
@@ -152,24 +157,23 @@ function CardFace({
   subtitle,
   view,
   kind,
-  isPrivate,
+  visibility,
 }: {
   glyph: string
   name: string
   subtitle: string
   view: ViewMode
   kind: "folder" | "category"
-  isPrivate: boolean
+  visibility: Visibility
 }) {
-  const lock = isPrivate ? (
-    <Lock
-      role="img"
-      aria-label={kind === "folder" ? "Pasta privada" : "Categoria privada"}
-      className="size-3.5 shrink-0 text-faint"
-    >
-      <title>{kind === "folder" ? "Pasta privada: só você vê" : "Categoria privada: só você vê"}</title>
-    </Lock>
-  ) : null
+  const LevelIcon = VISIBILITY_ICONS[visibility]
+  const label = visibilityLabel(kind, visibility)
+  const lock =
+    visibility === "public" ? null : (
+      <LevelIcon role="img" aria-label={label} className="size-3.5 shrink-0 text-faint">
+        <title>{label}</title>
+      </LevelIcon>
+    )
 
   if (view === "list") {
     return (

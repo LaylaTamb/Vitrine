@@ -9,7 +9,11 @@
 import { z } from "zod"
 
 import { passwordProblem } from "@/lib/domain/auth"
+import { BIO_MAX, CARD_MAX_CATEGORIES } from "@/lib/domain/card"
 import { SORT_KEYS, type SortKey } from "@/lib/domain/filter"
+import { VISIBILITIES } from "@/lib/domain/privacy"
+import { QR_TOKEN_PATTERN } from "@/lib/domain/qr"
+import { TEMPLATE_SORTS } from "@/lib/domain/templates"
 import { FIELD_TYPES } from "@/lib/domain/types"
 
 export const uuid = z.uuid("Identificador inválido.")
@@ -41,17 +45,20 @@ export const folderName = z
   .min(1, "Dê um nome à pasta.")
   .max(80, "Nome muito longo.")
 
+/** Pública, Amigos ou Privada. */
+export const visibilityLevel = z.enum(VISIBILITIES, "Visibilidade inválida.")
+
 export const createFolderSchema = z.object({
   name: folderName,
   parentFolderId: uuid.nullable(),
-  /** Ausente = o padrão do perfil (quem decide é o banco — migração 12). */
-  isPublic: z.boolean().optional(),
+  /** Ausente = o padrão do perfil (quem decide é o banco — migração 14). */
+  visibility: visibilityLevel.optional(),
 })
 
-/** Pública ou privada: uma pasta das Coleções ou uma categoria. */
-export const visibilitySchema = z.object({ id: uuid, isPublic: z.boolean() })
+/** Quem vê uma pasta das Coleções ou uma categoria. */
+export const visibilitySchema = z.object({ id: uuid, visibility: visibilityLevel })
 
-export const defaultPrivacySchema = z.object({ isPublic: z.boolean() })
+export const defaultVisibilitySchema = z.object({ visibility: visibilityLevel })
 
 export const renameFolderSchema = z.object({ id: uuid, name: folderName })
 
@@ -60,7 +67,7 @@ export const moveFolderSchema = z.object({ id: uuid, targetFolderId: uuid.nullab
 export const idSchema = z.object({ id: uuid })
 
 export const createEntryFolderSchema = createFolderSchema
-  .omit({ isPublic: true })
+  .omit({ visibility: true })
   .extend({ categoryId: uuid })
 
 export const deleteEntryFolderSchema = z.object({
@@ -95,12 +102,16 @@ export const categorySchema = z.object({
   /** `false` = lista simples, sem nota de estrelas. */
   ratingEnabled: z.boolean(),
   defaultSort: sortKeySchema,
+  /** O campo principal do acesso rápido (migração 19). Ausente = o Nome. */
+  quickField: z.string().trim().max(80).optional(),
 })
 
 export const createCategorySchema = categorySchema.extend({
   folderId: uuid.nullable(),
-  /** Ausente = o padrão do perfil (quem decide é o banco — migração 12). */
-  isPublic: z.boolean().optional(),
+  /** Ausente = o padrão do perfil (quem decide é o banco — migração 14). */
+  visibility: visibilityLevel.optional(),
+  /** O modelo de onde a estrutura veio (migração 25). */
+  sourceCategoryId: uuid.optional(),
 })
 
 export const updateCategorySchema = categorySchema.extend({
@@ -166,6 +177,138 @@ export function normalizeRating(rating: number | null): number | null {
 }
 
 // ---------------------------------------------------------------------------
+// Seguir e bloquear (migração 14)
+// ---------------------------------------------------------------------------
+
+/** O outro perfil de uma ação social (seguir, bloquear, remover seguidor). */
+export const profileTargetSchema = z.object({ profileId: uuid })
+
+/** O cartão de apresentação (migração 23): a bio e as categorias, na ordem. */
+export const profileCardSchema = z.object({
+  bio: z.string().trim().max(BIO_MAX, `A bio tem no máximo ${BIO_MAX} caracteres.`),
+  categoryIds: z
+    .array(uuid)
+    .max(CARD_MAX_CATEGORIES, `No máximo ${CARD_MAX_CATEGORIES} categorias no cartão.`),
+})
+
+/**
+ * Os links das redes (migração 23). Chegam como a pessoa digitou; a ação
+ * normaliza cada um (`normalizeSocialLink`).
+ */
+const socialInput = z.string().max(300, "Link muito longo.").optional()
+export const socialLinksSchema = z.object({
+  links: z.object({
+    instagram: socialInput,
+    x: socialInput,
+    discord: socialInput,
+    spotify: socialInput,
+    youtube: socialInput,
+  }),
+})
+
+/** A busca de modelos (migração 25). */
+export const templateSearchSchema = z.object({
+  query: z.string().trim().max(80, "Busca muito longa."),
+  sort: z.enum(TEMPLATE_SORTS),
+})
+
+/** O nome da categoria nova, para sugerir campos (migração 27). */
+export const fieldSuggestionsSchema = z.object({
+  name: z.string().trim().min(1, "Dê um nome à categoria.").max(80, "Nome muito longo."),
+})
+
+// ---------------------------------------------------------------------------
+// Importações: Google Maps (Takeout) e Letterboxd (Etapa 4.5)
+// ---------------------------------------------------------------------------
+
+export const importSourceSchema = z.enum(["google", "letterboxd"])
+
+export const prepareImportSchema = z.object({
+  source: importSourceSchema,
+  names: z.array(z.string().trim().min(1).max(80)).min(1).max(100),
+})
+
+const googleRowSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  note: z.string().max(2000).nullable(),
+  url: z.string().trim().min(1).max(2000),
+  address: z.string().max(300).nullable(),
+  lat: z.number().min(-90).max(90).nullable(),
+  lng: z.number().min(-180).max(180).nullable(),
+})
+
+export const importGoogleSchema = z.object({
+  categoryId: uuid,
+  listName: z.string().trim().min(1).max(80),
+  rows: z.array(googleRowSchema).min(1).max(200),
+})
+
+const letterboxdRowSchema = z.object({
+  key: z.string().min(1).max(200),
+  name: z.string().trim().min(1).max(200),
+  year: z.number().int().min(1850).max(2200).nullable(),
+  rating: z.number().min(0.5).max(5).nullable(),
+  watchedDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+  review: z.string().max(5000).nullable(),
+})
+
+export const importLetterboxdSchema = z.object({
+  categoryId: uuid,
+  rows: z.array(letterboxdRowSchema).min(1).max(100),
+})
+
+export const finishImportSchema = z.object({
+  source: importSourceSchema,
+  added: z.number().int().min(0),
+  pending: z.number().int().min(0),
+})
+
+/** Match (migração 30): chamar até 7 amigos; responder a um convite. */
+export const createMatchSchema = z.object({
+  userIds: z
+    .array(uuid)
+    .min(1, "Escolha pelo menos um amigo.")
+    .max(7, "No máximo 8 pessoas por match (você e mais 7)."),
+})
+
+export const respondMatchSchema = z.object({ matchId: uuid, accept: z.boolean() })
+
+/** Abrir (montar, na 1ª vez) a sua cópia de um match pronto (migração 31). */
+export const openMatchSchema = z.object({ matchId: uuid })
+
+/** "Trazer" um item da cópia de um match para a A organizar. */
+export const bringFromMatchSchema = z.object({ entryId: uuid })
+
+/** Pegar uma categoria com itens (migração 26). */
+export const copyCategorySchema = z.object({ sourceId: uuid })
+
+/** Desligar uma cópia da original (migração 26). */
+export const unlinkCategorySchema = z.object({ categoryId: uuid })
+
+/** O código de um QR pessoal lido (migração 22). */
+export const qrTokenSchema = z.object({
+  token: z.string().regex(QR_TOKEN_PATTERN, "Este QR não é do Vitrine."),
+})
+
+// ---------------------------------------------------------------------------
+// Favoritos (migração 20)
+// ---------------------------------------------------------------------------
+
+/** O favorito de uma categoria. `null` = desmarcar. */
+export const favoriteEntrySchema = z.object({ categoryId: uuid, entryId: uuid.nullable() })
+
+/** As categorias da aba Favoritos, na ordem. Lista vazia = aba vazia. */
+export const favoritesTabSchema = z.object({
+  categoryIds: z
+    .array(uuid)
+    .max(500, "Categorias demais na aba.")
+    .refine((ids) => new Set(ids).size === ids.length, "Categoria repetida na aba."),
+})
+
+// ---------------------------------------------------------------------------
 // Mapa: localização dos itens (Geoapify)
 // ---------------------------------------------------------------------------
 
@@ -198,6 +341,27 @@ export const placeDetailsSchema = z.object({
     .array(z.string().regex(/^[A-Za-z0-9_-]{1,300}$/, "Lugar inválido."))
     .min(1, "Nenhum lugar para buscar.")
     .max(20, "No máximo 20 lugares por vez."),
+})
+
+/** "Você está em X?": um lugar por perto, pelo id da Geoapify (Etapa 4.4). */
+const placeIdText = z.string().regex(/^[A-Za-z0-9_-]{1,300}$/, "Lugar inválido.")
+
+export const placeRatingsSchema = z.object({
+  placeId: placeIdText,
+  osmId: z
+    .string()
+    .regex(/^(node|way|relation)\/\d{1,20}$/)
+    .nullable(),
+})
+
+/**
+ * Salvar um lugar por perto: o lugar é procurado de novo no servidor pelo id
+ * (no cache), a partir da posição — nome e coordenadas nunca vêm do navegador.
+ */
+export const addNearbyPlaceSchema = latLngSchema.extend({
+  placeId: placeIdText,
+  categoryId: uuid,
+  rating: z.number().min(0).max(5).nullable(),
 })
 
 export const routeTimesSchema = z.object({
@@ -251,12 +415,27 @@ export const signInSchema = z.object({
   password: z.string().min(1, "Digite sua senha.").max(200, "Senha longa demais."),
 })
 
+/** A caixa "Tenho 18 anos ou mais e aceito…": sem ela marcada, nada feito. */
+export const acceptTermsField = z.literal(
+  true,
+  "Para continuar, confirme que tem 18 anos ou mais e aceite os Termos e a Política de privacidade."
+)
+
 export const signUpSchema = z
-  .object({ email, password: newPassword, confirm: z.string() })
+  .object({ email, password: newPassword, confirm: z.string(), acceptTerms: acceptTermsField })
   .refine((data) => data.password === data.confirm, {
     message: "As duas senhas não são iguais.",
     path: ["confirm"],
   })
+
+export const acceptTermsSchema = z.object({
+  acceptTerms: acceptTermsField,
+  next: z.string().max(2000).optional(),
+})
+
+export const deleteAccountSchema = z.object({
+  confirm: z.string().trim().min(1, "Digite o seu @ para confirmar.").max(40),
+})
 
 export const passwordResetSchema = z.object({ email })
 

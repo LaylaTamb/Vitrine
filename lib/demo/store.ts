@@ -29,6 +29,8 @@ import {
   deleteEntryFolderSchema,
   deleteEntrySchema,
   entrySchema,
+  favoriteEntrySchema,
+  favoritesTabSchema,
   geocodeAddressSchema,
   geocodeEntrySchema,
   geocodePendingSchema,
@@ -51,8 +53,11 @@ import {
 } from "@/lib/actions/schemas"
 import { descendantFolderIds } from "@/lib/domain/collections"
 import { folderSubtree } from "@/lib/domain/entry-folders"
+import { pruneFavorites, withFavorite, withTab } from "@/lib/domain/favorites"
+import { INBOX_LOCKED_MESSAGE, isInbox } from "@/lib/domain/inbox"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
 import { migrateCustomFields } from "@/lib/domain/migrate"
+import { normalizeQuickField } from "@/lib/domain/quick-field"
 import type { PlaceDetails, RouteInfo } from "@/lib/domain/place-details"
 import { normalizeCategoryColor, normalizeTagColor } from "@/lib/domain/tags"
 import type { CustomFields, EntryWithTags, Tag } from "@/lib/domain/types"
@@ -126,7 +131,13 @@ export function createDemoActions(
   now: () => string = () => new Date().toISOString()
 ): VitrineActions {
   const get = store.get
-  const commit = (next: DemoState) => store.set(next)
+  // As regras do banco para os favoritos (migração 20) valem a cada escrita:
+  // categoria apagada sai da aba, item apagado ou movido deixa de ser favorito.
+  const commit = (next: DemoState) =>
+    store.set({
+      ...next,
+      favorites: pruneFavorites(next.favorites ?? [], next.categories, next.entries),
+    })
 
   const updateEntries = (
     state: DemoState,
@@ -145,7 +156,7 @@ export function createDemoActions(
       const parsed = createFolderSchema.safeParse(input)
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
-      const { name, parentFolderId, isPublic = true } = parsed.data
+      const { name, parentFolderId, visibility = "public" } = parsed.data
       if (parentFolderId && !state.folders.some((folder) => folder.id === parentFolderId)) {
         return no(GONE)
       }
@@ -163,7 +174,7 @@ export function createDemoActions(
               state.folders.filter((folder) => folder.parent_folder_id === parentFolderId)
             ),
             created_at: now(),
-            is_public: isPublic,
+            visibility,
           },
         ],
       })
@@ -254,7 +265,7 @@ export function createDemoActions(
       commit({
         ...state,
         folders: state.folders.map((folder) =>
-          folder.id === parsed.data.id ? { ...folder, is_public: parsed.data.isPublic } : folder
+          folder.id === parsed.data.id ? { ...folder, visibility: parsed.data.visibility } : folder
         ),
       })
       return ok()
@@ -269,7 +280,7 @@ export function createDemoActions(
         ...state,
         categories: state.categories.map((category) =>
           category.id === parsed.data.id
-            ? { ...category, is_public: parsed.data.isPublic }
+            ? { ...category, visibility: parsed.data.visibility }
             : category
         ),
       })
@@ -286,8 +297,16 @@ export function createDemoActions(
       })
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
-      const { name, icon, color, folderId, estrutura, ratingEnabled, defaultSort, isPublic = true } =
-        parsed.data
+      const {
+        name,
+        icon,
+        color,
+        folderId,
+        estrutura,
+        ratingEnabled,
+        defaultSort,
+        visibility = "public",
+      } = parsed.data
       if (state.categories.some((category) => category.name === name)) {
         return no("Você já tem uma categoria com esse nome.")
       }
@@ -311,7 +330,8 @@ export function createDemoActions(
             rating_enabled: ratingEnabled,
             default_sort: defaultSort,
             created_at: now(),
-            is_public: isPublic,
+            visibility,
+            quick_field: normalizeQuickField(parsed.data.quickField, estrutura, ratingEnabled),
           },
         ],
       })
@@ -336,6 +356,9 @@ export function createDemoActions(
         removedFieldIds = [],
       } = parsed.data
       if (!state.categories.some((category) => category.id === id)) return no(GONE)
+      if (isInbox(state.categories.find((category) => category.id === id))) {
+        return no(INBOX_LOCKED_MESSAGE)
+      }
       if (state.categories.some((category) => category.id !== id && category.name === name)) {
         return no("Você já tem uma categoria com esse nome.")
       }
@@ -351,6 +374,8 @@ export function createDemoActions(
                 estrutura,
                 rating_enabled: ratingEnabled,
                 default_sort: defaultSort,
+                // Campo removido ou estrelas desligadas: volta para o Nome.
+                quick_field: normalizeQuickField(parsed.data.quickField, estrutura, ratingEnabled),
               }
             : category
         ),
@@ -383,6 +408,9 @@ export function createDemoActions(
       const parsed = moveFolderSchema.safeParse(input)
       if (!parsed.success) return failValidation(parsed.error.issues)
       const state = get()
+      if (isInbox(state.categories.find((category) => category.id === parsed.data.id))) {
+        return no(INBOX_LOCKED_MESSAGE)
+      }
       commit({
         ...state,
         categories: state.categories.map((category) =>
@@ -397,6 +425,10 @@ export function createDemoActions(
     async deleteCategory(input): Result {
       const parsed = idSchema.safeParse(input)
       if (!parsed.success) return failValidation(parsed.error.issues)
+      // Mesma trava do banco (migração 17): a "A organizar" fica.
+      if (isInbox(get().categories.find((category) => category.id === parsed.data.id))) {
+        return no(INBOX_LOCKED_MESSAGE)
+      }
       commit(withoutCategories(get(), new Set([parsed.data.id])))
       return ok()
     },
@@ -922,6 +954,41 @@ export function createDemoActions(
           (entry) => ({ ...entry, entry_tags: [...entry.entry_tags, { tag_id: tagId }] })
         )
       )
+      return ok()
+    },
+
+    // -----------------------------------------------------------------------
+    // Favoritos
+    // -----------------------------------------------------------------------
+    async setFavoriteEntry(input): Result {
+      const parsed = favoriteEntrySchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      const { categoryId, entryId } = parsed.data
+      const state = get()
+      if (!state.categories.some((category) => category.id === categoryId)) return no(GONE)
+      if (
+        entryId &&
+        !state.entries.some((entry) => entry.id === entryId && entry.category_id === categoryId)
+      ) {
+        return no("Esse item não é desta categoria.")
+      }
+      commit({
+        ...state,
+        favorites: withFavorite(state.favorites, DEMO_OWNER_ID, categoryId, entryId),
+      })
+      return ok()
+    },
+
+    async setFavoritesTab(input): Result {
+      const parsed = favoritesTabSchema.safeParse(input)
+      if (!parsed.success) return failValidation(parsed.error.issues)
+      const state = get()
+      const known = new Set(state.categories.map((category) => category.id))
+      if (parsed.data.categoryIds.some((id) => !known.has(id))) return no(GONE)
+      commit({
+        ...state,
+        favorites: withTab(state.favorites, DEMO_OWNER_ID, parsed.data.categoryIds),
+      })
       return ok()
     },
   }

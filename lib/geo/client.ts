@@ -3,12 +3,19 @@ import "server-only"
 import { unstable_cache } from "next/cache"
 
 import type { LatLng } from "@/lib/domain/map"
+import {
+  NEARBY_CATEGORIES,
+  NEARBY_RADIUS_METERS,
+  nearbyCacheCenter,
+  type NearbyPlace,
+} from "@/lib/domain/nearby"
 import type { TravelMode } from "@/lib/domain/maps-links"
 import type { PlaceDetails, RouteInfo } from "@/lib/domain/place-details"
 
 import {
   geoHttpErrorReason,
   parseGeocodeResponse,
+  parseNearbyPlaces,
   parsePlaceDetails,
   parseRouteMatrix,
   type GeoErrorReason,
@@ -28,11 +35,13 @@ import {
 const GEOCODE_URL = "https://api.geoapify.com/v1/geocode/search"
 const DETAILS_URL = "https://api.geoapify.com/v2/place-details"
 const ROUTE_MATRIX_URL = "https://api.geoapify.com/v1/routematrix"
+const PLACES_URL = "https://api.geoapify.com/v2/places"
 const TIMEOUT_MS = 8000
 
 /** Cache curto no servidor: abrir as Sugestões de novo no mesmo dia não gasta crédito. */
 const DETAILS_CACHE_SECONDS = 24 * 60 * 60
 const ROUTES_CACHE_SECONDS = 15 * 60
+const NEARBY_CACHE_SECONDS = 24 * 60 * 60
 
 /** A chave do servidor, ou `null` quando o mapa não foi configurado. */
 export function serverKey(): string | null {
@@ -176,6 +185,40 @@ export async function routeMatrix(
   const rounded = { lat: Math.round(origin.lat * 1000) / 1000, lng: Math.round(origin.lng * 1000) / 1000 }
   try {
     return { status: "ok", routes: await cachedRouteMatrix(rounded, destinations, mode) }
+  } catch (error) {
+    return { status: "error", reason: reasonOf(error) }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Places (lugares por perto)
+// ---------------------------------------------------------------------------
+
+/** Os lugares com nome num raio de ~150 m (1 crédito por pedido, até 20 lugares). */
+async function fetchNearbyPlaces(center: LatLng): Promise<NearbyPlace[]> {
+  const key = serverKey()
+  if (!key) throw new GeoRequestError("no-key")
+  const point = `${center.lng},${center.lat}`
+  const body = await requestJson(
+    `${PLACES_URL}?categories=${NEARBY_CATEGORIES}` +
+      `&filter=circle:${point},${NEARBY_RADIUS_METERS}&bias=proximity:${point}` +
+      `&limit=20&lang=pt&apiKey=${encodeURIComponent(key)}`
+  )
+  return parseNearbyPlaces(body)
+}
+
+/** Guardado por até 24 h por pedaço do mapa (~55 m): o mesmo quarteirão não gasta de novo. */
+const cachedNearbyPlaces = unstable_cache(fetchNearbyPlaces, ["geoapify-nearby-v1"], {
+  revalidate: NEARBY_CACHE_SECONDS,
+})
+
+export type NearbyOutcome =
+  | { status: "ok"; places: NearbyPlace[] }
+  | { status: "error"; reason: GeoErrorReason }
+
+export async function nearbyPlaces(position: LatLng): Promise<NearbyOutcome> {
+  try {
+    return { status: "ok", places: await cachedNearbyPlaces(nearbyCacheCenter(position)) }
   } catch (error) {
     return { status: "error", reason: reasonOf(error) }
   }

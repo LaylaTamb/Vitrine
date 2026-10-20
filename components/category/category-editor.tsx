@@ -22,7 +22,9 @@ import { toast } from "sonner"
 
 import { CategoryColorPicker } from "@/components/category/category-color-picker"
 import { FieldRow } from "@/components/category/field-row"
-import { PrivacyToggle } from "@/components/collection/privacy-switch"
+import { FieldSuggestions } from "@/components/category/field-suggestions"
+import { TemplatePicker } from "@/components/category/template-picker"
+import { VisibilityPicker } from "@/components/collection/privacy-switch"
 import { runPendingGeocode } from "@/components/map/geocode-runner"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
@@ -52,6 +54,13 @@ import {
 } from "@/lib/domain/fields"
 import { isRatingSort, sortOptionsFor, type SortKey } from "@/lib/domain/filter"
 import { plural } from "@/lib/domain/format"
+import { visibilityHint, type Visibility } from "@/lib/domain/privacy"
+import {
+  normalizeQuickField,
+  QUICK_FIELD_NAME,
+  quickFieldOptions,
+} from "@/lib/domain/quick-field"
+import type { CategoryTemplate } from "@/lib/domain/templates"
 import { FIELD_TYPES, type Estrutura, type FieldDef, type FieldType } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
 
@@ -64,6 +73,8 @@ export interface CategoryEditorValue {
   /** `false` = lista simples, sem nota de estrelas. */
   ratingEnabled: boolean
   defaultSort: SortKey
+  /** O campo principal do acesso rápido ("name", "rating" ou id de campo). */
+  quickField: string
 }
 
 /** O ponto de partida de uma categoria nova. */
@@ -74,6 +85,7 @@ export const NEW_CATEGORY: CategoryEditorValue = {
   estrutura: [],
   ratingEnabled: true,
   defaultSort: "rating_desc",
+  quickField: QUICK_FIELD_NAME,
 }
 
 interface ImpactLine {
@@ -86,7 +98,7 @@ export function CategoryEditor({
   initial,
   folderId = null,
   onSaved,
-  defaultPublic = true,
+  defaultVisibility = "public",
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -94,21 +106,30 @@ export function CategoryEditor({
   initial: CategoryEditorValue
   folderId?: string | null
   onSaved?: (id?: string) => void
-  /** O padrão do perfil para categoria nova (`true` = pública). */
-  defaultPublic?: boolean
+  /** O padrão do perfil para categoria nova. */
+  defaultVisibility?: Visibility
 }) {
   const { actions, isDemo } = useVitrine()
   const editing = Boolean(initial.id)
+  // Modelos são de outras contas: só ao criar, e fora da demonstração.
+  const canUseTemplates = !editing && !isDemo
 
   const [tab, setTab] = useState<"visual" | "json">("visual")
+  /** "template" = escolhendo um modelo (no lugar do formulário). */
+  const [start, setStart] = useState<"blank" | "template">("blank")
+  /** O modelo usado: a categoria nova lembra de onde veio (migração 25). */
+  const [source, setSource] = useState<{ id: string; name: string; username: string } | null>(
+    null
+  )
   const [name, setName] = useState(initial.name)
   const [icon, setIcon] = useState(initial.icon ?? "")
   const [color, setColor] = useState<string | null>(initial.color)
   const [fields, setFields] = useState<Estrutura>(initial.estrutura)
   const [ratingEnabled, setRatingEnabled] = useState(initial.ratingEnabled)
   const [defaultSort, setDefaultSort] = useState<SortKey>(initial.defaultSort)
-  // Só categoria NOVA escolhe aqui; a que já existe troca pelo botão no topo dela.
-  const [isPublic, setIsPublic] = useState(defaultPublic)
+  const [quickField, setQuickField] = useState(initial.quickField)
+  // Só categoria NOVA escolhe aqui; a que já existe troca pelo seletor no topo dela.
+  const [visibility, setVisibility] = useState(defaultVisibility)
   const [jsonText, setJsonText] = useState(() => serializeEstrutura(initial.estrutura))
   const [jsonError, setJsonError] = useState<string | null>(null)
 
@@ -141,20 +162,23 @@ export function CategoryEditor({
   // digitado aqui dentro.
   const initialRef = useRef(initial)
   initialRef.current = initial
-  const defaultPublicRef = useRef(defaultPublic)
-  defaultPublicRef.current = defaultPublic
+  const defaultVisibilityRef = useRef(defaultVisibility)
+  defaultVisibilityRef.current = defaultVisibility
 
   useEffect(() => {
     if (!open) return
     const current = initialRef.current
     setTab("visual")
+    setStart("blank")
+    setSource(null)
     setName(current.name)
     setIcon(current.icon ?? "")
     setColor(current.color)
     setFields(current.estrutura)
     setRatingEnabled(current.ratingEnabled)
     setDefaultSort(current.defaultSort)
-    setIsPublic(defaultPublicRef.current)
+    setQuickField(current.quickField)
+    setVisibility(defaultVisibilityRef.current)
     setJsonText(serializeEstrutura(current.estrutura))
     setJsonError(null)
     setFieldError(null)
@@ -165,6 +189,41 @@ export function CategoryEditor({
     setEditingFieldId(null)
     setImpact(null)
   }, [open])
+
+  /**
+   * "Usar" um modelo: traz nome, ícone, cor, estrelas, ordem padrão, campo
+   * principal e os campos COM OS MESMOS IDS — e volta para o formulário, para
+   * a pessoa mudar o que quiser antes de criar.
+   */
+  function applyTemplate(template: CategoryTemplate) {
+    setName(template.name)
+    setIcon(template.icon ?? "")
+    setColor(template.color)
+    setFields(template.estrutura)
+    setRatingEnabled(template.ratingEnabled)
+    setDefaultSort(template.defaultSort)
+    setQuickField(template.quickField)
+    setJsonText(serializeEstrutura(template.estrutura))
+    setJsonError(null)
+    setTab("visual")
+    resetFieldForm()
+    setSource({ id: template.id, name: template.name, username: template.owner.username })
+    setStart("blank")
+  }
+
+  /** Volta ao ponto de partida (desfaz o modelo). */
+  function clearTemplate() {
+    const current = initialRef.current
+    setName(current.name)
+    setIcon(current.icon ?? "")
+    setColor(current.color)
+    setFields(current.estrutura)
+    setRatingEnabled(current.ratingEnabled)
+    setDefaultSort(current.defaultSort)
+    setQuickField(current.quickField)
+    setJsonText(serializeEstrutura(current.estrutura))
+    setSource(null)
+  }
 
   function resetFieldForm() {
     setEditingFieldId(null)
@@ -420,6 +479,7 @@ export function CategoryEditor({
           estrutura,
           ratingEnabled,
           defaultSort,
+          quickField,
           removedFieldIds,
         })
       : await actions.createCategory({
@@ -430,8 +490,10 @@ export function CategoryEditor({
           estrutura,
           ratingEnabled,
           defaultSort,
-          // Igual ao padrão: quem decide é o banco (vale também antes da migração 12).
-          isPublic: isPublic === defaultPublic ? undefined : isPublic,
+          quickField,
+          // Igual ao padrão: quem decide é o banco (vale também antes da migração 14).
+          visibility: visibility === defaultVisibility ? undefined : visibility,
+          ...(source ? { sourceCategoryId: source.id } : {}),
         })
     setPending(false)
 
@@ -454,6 +516,8 @@ export function CategoryEditor({
 
   // `null` = adicionando (qualquer tipo); editando, o que o campo pode virar.
   const editTypes = editingFieldId ? editableTypesOf(editingFieldId) : null
+  // Campo removido ou estrelas desligadas: o seletor já mostra o Nome (e o servidor grava assim).
+  const effectiveQuickField = normalizeQuickField(quickField, fields, ratingEnabled)
 
   return (
     <>
@@ -469,7 +533,12 @@ export function CategoryEditor({
               </DialogDescription>
             </div>
 
-            <div className="inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5">
+            <div
+              className={cn(
+                "inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5",
+                start === "template" && "invisible"
+              )}
+            >
               {(["visual", "json"] as const).map((mode) => (
                 <button
                   key={mode}
@@ -489,289 +558,370 @@ export function CategoryEditor({
             </div>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-[3fr_1fr] gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="cat-name" className="plaque">
-                  Nome da categoria
-                </Label>
-                <Input
-                  id="cat-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Restaurantes"
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cat-icon" className="plaque">
-                  Ícone
-                </Label>
-                <Input
-                  id="cat-icon"
-                  value={icon}
-                  maxLength={4}
-                  onChange={(event) => setIcon(event.target.value)}
-                  placeholder="🍽️"
-                  className="text-center"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="plaque block">Cor (opcional)</span>
-              <CategoryColorPicker value={color} onChange={setColor} />
-              <p className="text-xs leading-relaxed text-faint">
-                Tinge o card dos itens desta categoria — o brilho e a borda ficam nessa cor.
-              </p>
-            </div>
-
-            {!editing ? (
-              <div className="space-y-1.5">
-                <span className="plaque block">Visibilidade</span>
-                <PrivacyToggle kind="category" checked={isPublic} onChange={setIsPublic} />
-                <p className="text-xs leading-relaxed text-faint">
-                  {isPublic
-                    ? "Quem tem acesso ao app vê a categoria e os itens dela. Dá para mudar depois, no topo da categoria."
-                    : "Só você vê a categoria e os itens dela. Dá para mudar depois, no topo da categoria."}
-                </p>
-              </div>
-            ) : null}
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <span className="plaque block">Avaliação por estrelas</span>
-                <div
-                  role="radiogroup"
-                  aria-label="Avaliação por estrelas"
-                  className="inline-flex rounded-md border border-line bg-bg-soft p-0.5 text-sm"
+          {canUseTemplates ? (
+            <div
+              role="group"
+              aria-label="Como começar"
+              className="mt-4 inline-flex items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5"
+            >
+              {(["blank", "template"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setStart(mode)}
+                  aria-pressed={start === mode}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm transition-colors",
+                    start === mode
+                      ? "bg-brand-wash text-brand"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  {(
-                    [
-                      { value: true, label: "★ Estrelas" },
-                      { value: false, label: "Nula" },
-                    ] as const
-                  ).map((option) => (
-                    <button
-                      key={option.label}
-                      type="button"
-                      role="radio"
-                      aria-checked={ratingEnabled === option.value}
-                      onClick={() => {
-                        setRatingEnabled(option.value)
-                        // Sem estrelas não dá para abrir ordenado por nota.
-                        if (!option.value && isRatingSort(defaultSort)) setDefaultSort("recent")
-                      }}
-                      className={cn(
-                        "rounded px-3 py-1 transition-colors",
-                        ratingEnabled === option.value
-                          ? "bg-brand-wash text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs leading-relaxed text-faint">
-                  {ratingEnabled
-                    ? "Cada item ganha uma nota de 0 a 5 — dá para filtrar, ordenar e comparar."
-                    : "Lista simples: nenhum item tem nota. Bom para organizar sem comparar."}
-                  {editing && initial.ratingEnabled && !ratingEnabled
-                    ? " As notas que já existem serão apagadas ao salvar."
-                    : ""}
+                  {mode === "blank" ? "Do zero" : "Começar de um modelo"}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          {start === "template" ? (
+            <div className="min-w-0 py-4">
+              <TemplatePicker onUse={applyTemplate} />
+            </div>
+          ) : (
+            // min-w-0: sem ele, a lista de campos alargava o diálogo além da tela no celular.
+            <div className="min-w-0 space-y-4 py-4">
+              {source ? (
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-brand-dim bg-brand-wash px-3 py-2 text-sm text-foreground">
+                  <span className="min-w-0 flex-1 break-words">
+                    Estrutura de “{source.name}”, de @{source.username}. Mude o que quiser antes
+                    de criar.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearTemplate}
+                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Desfazer
+                  </button>
                 </p>
+              ) : null}
+              <div className="grid grid-cols-[3fr_1fr] gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat-name" className="plaque">
+                    Nome da categoria
+                  </Label>
+                  <Input
+                    id="cat-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Restaurantes"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat-icon" className="plaque">
+                    Ícone
+                  </Label>
+                  <Input
+                    id="cat-icon"
+                    value={icon}
+                    maxLength={4}
+                    onChange={(event) => setIcon(event.target.value)}
+                    placeholder="🍽️"
+                    className="text-center"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="cat-sort" className="plaque">
-                  Ordem padrão dos itens
+                <span className="plaque block">Cor (opcional)</span>
+                <CategoryColorPicker value={color} onChange={setColor} />
+                <p className="text-xs leading-relaxed text-faint">
+                  Tinge o card dos itens desta categoria — o brilho e a borda ficam nessa cor.
+                </p>
+              </div>
+
+              {!editing ? (
+                <div className="space-y-1.5">
+                  <span className="plaque block">Visibilidade</span>
+                  <VisibilityPicker kind="category" value={visibility} onChange={setVisibility} />
+                  <p className="text-xs leading-relaxed text-faint">
+                    {visibilityHint("category", visibility)} Dá para mudar depois, no topo da
+                    categoria.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <span className="plaque block">Avaliação por estrelas</span>
+                  <div
+                    role="radiogroup"
+                    aria-label="Avaliação por estrelas"
+                    className="inline-flex rounded-md border border-line bg-bg-soft p-0.5 text-sm"
+                  >
+                    {(
+                      [
+                        { value: true, label: "★ Estrelas" },
+                        { value: false, label: "Nula" },
+                      ] as const
+                    ).map((option) => (
+                      <button
+                        key={option.label}
+                        type="button"
+                        role="radio"
+                        aria-checked={ratingEnabled === option.value}
+                        onClick={() => {
+                          setRatingEnabled(option.value)
+                          // Sem estrelas não dá para abrir ordenado por nota.
+                          if (!option.value && isRatingSort(defaultSort)) setDefaultSort("recent")
+                        }}
+                        className={cn(
+                          "rounded px-3 py-1 transition-colors",
+                          ratingEnabled === option.value
+                            ? "bg-brand-wash text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs leading-relaxed text-faint">
+                    {ratingEnabled
+                      ? "Cada item ganha uma nota de 0 a 5 — dá para filtrar, ordenar e comparar."
+                      : "Lista simples: nenhum item tem nota. Bom para organizar sem comparar."}
+                    {editing && initial.ratingEnabled && !ratingEnabled
+                      ? " As notas que já existem serão apagadas ao salvar."
+                      : ""}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat-sort" className="plaque">
+                    Ordem padrão dos itens
+                  </Label>
+                  <select
+                    id="cat-sort"
+                    value={defaultSort}
+                    onChange={(event) => setDefaultSort(event.target.value as SortKey)}
+                    className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+                  >
+                    {sortOptionsFor(ratingEnabled).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs leading-relaxed text-faint">
+                    Como a categoria abre. “Ordem manual” é a que você define arrastando os itens.
+                  </p>
+                </div>
+              </div>
+
+              <p className="rounded-lg border border-brand-dim/40 bg-brand-wash px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                Toda categoria já vem com <span className="text-foreground">Nome</span> e{" "}
+                <span className="text-foreground">Imagem</span>
+                {ratingEnabled ? (
+                  <>
+                    {" "}
+                    — e <span className="text-foreground">Avaliação</span>, enquanto as estrelas
+                    estiverem ligadas
+                  </>
+                ) : null}
+                . Os campos abaixo são os que só existem nesta categoria.
+              </p>
+
+              {tab === "visual" ? (
+                <div className="space-y-4">
+                  {fields.length > 0 ? (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                      onDragEnd={onDragEnd}
+                    >
+                      <SortableContext
+                        items={fields.map((field) => field.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <ul className="space-y-1.5">
+                          {fields.map((field) => (
+                            <FieldRow
+                              key={field.id}
+                              field={field}
+                              editing={editingFieldId === field.id}
+                              onEdit={() =>
+                                editingFieldId === field.id ? resetFieldForm() : startEditField(field)
+                              }
+                              onRemove={() => {
+                                setFields(fields.filter((item) => item.id !== field.id))
+                                if (editingFieldId === field.id) resetFieldForm()
+                              }}
+                            />
+                          ))}
+                        </ul>
+                      </SortableContext>
+                    </DndContext>
+                  ) : (
+                    <p className="rounded-lg border border-dashed border-line px-3 py-6 text-center text-sm text-muted-foreground">
+                      Nenhum campo extra ainda.
+                    </p>
+                  )}
+
+                  {/* Sugestões de campos (migração 27): só ao criar, e fora da demonstração. */}
+                  {canUseTemplates ? (
+                    <FieldSuggestions
+                      name={name}
+                      fields={fields}
+                      onAdd={(added) => setFields((current) => [...current, ...added])}
+                    />
+                  ) : null}
+
+                  <div
+                    className={cn(
+                      "space-y-2 rounded-lg border p-3",
+                      editingFieldId ? "border-brand-dim bg-brand-wash" : "border-line bg-bg-soft"
+                    )}
+                  >
+                    <p className="plaque">{editingFieldId ? "Editar campo" : "Adicionar campo"}</p>
+                    <div className="grid gap-2 sm:grid-cols-[10rem_1fr_auto]">
+                      <select
+                        value={newType}
+                        onChange={(event) => setNewType(event.target.value as FieldType)}
+                        disabled={editTypes !== null && editTypes.length < 2}
+                        aria-label="Tipo do campo"
+                        className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim disabled:opacity-60"
+                      >
+                        {(editTypes !== null && editTypes.length > 1 ? editTypes : FIELD_TYPES).map((type) => (
+                          <option key={type} value={type}>
+                            {FIELD_TYPE_LABELS[type]}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        value={newName}
+                        onChange={(event) => setNewName(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault()
+                            if (editingFieldId) saveEditField()
+                            else addField()
+                          }
+                        }}
+                        placeholder="Nome do campo"
+                        autoFocus={editingFieldId !== null}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={editingFieldId ? saveEditField : addField}
+                          className="flex-1"
+                        >
+                          {editingFieldId ? "Salvar" : "Adicionar"}
+                        </Button>
+                        {editingFieldId ? (
+                          <Button type="button" variant="ghost" size="icon" onClick={resetFieldForm}>
+                            <X className="size-4" />
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {newType === "select" ? (
+                      <Textarea
+                        value={newOptions}
+                        onChange={(event) => setNewOptions(event.target.value)}
+                        placeholder={"Uma opção por linha, ou separadas por vírgula:\nSalão, Delivery"}
+                        rows={3}
+                        className="text-sm"
+                      />
+                    ) : null}
+
+                    {newType === "currency" ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="plaque shrink-0">Moeda</span>
+                        {CURRENCY_SYMBOLS.map((symbol) => (
+                          <button
+                            key={symbol}
+                            type="button"
+                            onClick={() => setNewCurrency(symbol)}
+                            aria-pressed={newCurrency === symbol}
+                            className={cn(
+                              "h-8 min-w-9 rounded-md border px-2 text-sm transition-colors",
+                              newCurrency === symbol
+                                ? "border-brand-dim bg-brand-wash text-foreground"
+                                : "border-line text-muted-foreground hover:border-line-hi hover:text-foreground"
+                            )}
+                          >
+                            {symbol}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {editTypes !== null && editTypes.length > 1 && editTypes.includes("location") ? (
+                      <p className="text-xs leading-relaxed text-faint">
+                        Um campo de Texto pode virar Localização (mapa): os endereços já escritos
+                        {isDemo ? " ganham o botão “Abrir no Maps”." : " são procurados e passam a aparecer no mapa."}
+                      </p>
+                    ) : null}
+
+                    {fieldError ? <p className="text-xs text-danger">{fieldError}</p> : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Textarea
+                    value={jsonText}
+                    onChange={(event) => {
+                      setJsonText(event.target.value)
+                      setJsonError(null)
+                    }}
+                    spellCheck={false}
+                    rows={14}
+                    className="font-mono text-xs leading-relaxed"
+                  />
+                  {jsonError ? <p className="text-xs text-danger">{jsonError}</p> : null}
+                  <p className="text-xs text-faint">
+                    Tipos: {FIELD_TYPES.join(", ")}. O <code>id</code> de cada campo é o que liga o
+                    valor aos itens — mantenha os que já existem.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-1.5 border-t border-line pt-4">
+                <Label htmlFor="cat-quick" className="plaque">
+                  Campo do acesso rápido
                 </Label>
                 <select
-                  id="cat-sort"
-                  value={defaultSort}
-                  onChange={(event) => setDefaultSort(event.target.value as SortKey)}
-                  className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+                  id="cat-quick"
+                  value={effectiveQuickField}
+                  onChange={(event) => setQuickField(event.target.value)}
+                  className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim sm:max-w-xs"
                 >
-                  {sortOptionsFor(ratingEnabled).map((option) => (
+                  {quickFieldOptions(fields, ratingEnabled).map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
                 <p className="text-xs leading-relaxed text-faint">
-                  Como a categoria abre. “Ordem manual” é a que você define arrastando os itens.
+                  Quando você salvar algo às pressas aqui (compartilhar do celular, um lugar por
+                  perto), o que veio vira o Nome e o Vitrine pede só este campo. Não muda nada nos
+                  cards.
                 </p>
               </div>
+
             </div>
-
-            <p className="rounded-lg border border-brand-dim/40 bg-brand-wash px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-              Toda categoria já vem com <span className="text-foreground">Nome</span> e{" "}
-              <span className="text-foreground">Imagem</span>
-              {ratingEnabled ? (
-                <>
-                  {" "}
-                  — e <span className="text-foreground">Avaliação</span>, enquanto as estrelas
-                  estiverem ligadas
-                </>
-              ) : null}
-              . Os campos abaixo são os que só existem nesta categoria.
-            </p>
-
-            {tab === "visual" ? (
-              <div className="space-y-4">
-                {fields.length > 0 ? (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                    onDragEnd={onDragEnd}
-                  >
-                    <SortableContext
-                      items={fields.map((field) => field.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <ul className="space-y-1.5">
-                        {fields.map((field) => (
-                          <FieldRow
-                            key={field.id}
-                            field={field}
-                            editing={editingFieldId === field.id}
-                            onEdit={() =>
-                              editingFieldId === field.id ? resetFieldForm() : startEditField(field)
-                            }
-                            onRemove={() => {
-                              setFields(fields.filter((item) => item.id !== field.id))
-                              if (editingFieldId === field.id) resetFieldForm()
-                            }}
-                          />
-                        ))}
-                      </ul>
-                    </SortableContext>
-                  </DndContext>
-                ) : (
-                  <p className="rounded-lg border border-dashed border-line px-3 py-6 text-center text-sm text-muted-foreground">
-                    Nenhum campo extra ainda.
-                  </p>
-                )}
-
-                <div
-                  className={cn(
-                    "space-y-2 rounded-lg border p-3",
-                    editingFieldId ? "border-brand-dim bg-brand-wash" : "border-line bg-bg-soft"
-                  )}
-                >
-                  <p className="plaque">{editingFieldId ? "Editar campo" : "Adicionar campo"}</p>
-                  <div className="grid gap-2 sm:grid-cols-[10rem_1fr_auto]">
-                    <select
-                      value={newType}
-                      onChange={(event) => setNewType(event.target.value as FieldType)}
-                      disabled={editTypes !== null && editTypes.length < 2}
-                      aria-label="Tipo do campo"
-                      className="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim disabled:opacity-60"
-                    >
-                      {(editTypes !== null && editTypes.length > 1 ? editTypes : FIELD_TYPES).map((type) => (
-                        <option key={type} value={type}>
-                          {FIELD_TYPE_LABELS[type]}
-                        </option>
-                      ))}
-                    </select>
-                    <Input
-                      value={newName}
-                      onChange={(event) => setNewName(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault()
-                          if (editingFieldId) saveEditField()
-                          else addField()
-                        }
-                      }}
-                      placeholder="Nome do campo"
-                      autoFocus={editingFieldId !== null}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={editingFieldId ? saveEditField : addField}
-                        className="flex-1"
-                      >
-                        {editingFieldId ? "Salvar" : "Adicionar"}
-                      </Button>
-                      {editingFieldId ? (
-                        <Button type="button" variant="ghost" size="icon" onClick={resetFieldForm}>
-                          <X className="size-4" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {newType === "select" ? (
-                    <Textarea
-                      value={newOptions}
-                      onChange={(event) => setNewOptions(event.target.value)}
-                      placeholder={"Uma opção por linha, ou separadas por vírgula:\nSalão, Delivery"}
-                      rows={3}
-                      className="text-sm"
-                    />
-                  ) : null}
-
-                  {newType === "currency" ? (
-                    <div className="flex items-center gap-1.5">
-                      <span className="plaque shrink-0">Moeda</span>
-                      {CURRENCY_SYMBOLS.map((symbol) => (
-                        <button
-                          key={symbol}
-                          type="button"
-                          onClick={() => setNewCurrency(symbol)}
-                          aria-pressed={newCurrency === symbol}
-                          className={cn(
-                            "h-8 min-w-9 rounded-md border px-2 text-sm transition-colors",
-                            newCurrency === symbol
-                              ? "border-brand-dim bg-brand-wash text-foreground"
-                              : "border-line text-muted-foreground hover:border-line-hi hover:text-foreground"
-                          )}
-                        >
-                          {symbol}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {editTypes !== null && editTypes.length > 1 && editTypes.includes("location") ? (
-                    <p className="text-xs leading-relaxed text-faint">
-                      Um campo de Texto pode virar Localização (mapa): os endereços já escritos
-                      {isDemo ? " ganham o botão “Abrir no Maps”." : " são procurados e passam a aparecer no mapa."}
-                    </p>
-                  ) : null}
-
-                  {fieldError ? <p className="text-xs text-danger">{fieldError}</p> : null}
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Textarea
-                  value={jsonText}
-                  onChange={(event) => {
-                    setJsonText(event.target.value)
-                    setJsonError(null)
-                  }}
-                  spellCheck={false}
-                  rows={14}
-                  className="font-mono text-xs leading-relaxed"
-                />
-                {jsonError ? <p className="text-xs text-danger">{jsonError}</p> : null}
-                <p className="text-xs text-faint">
-                  Tipos: {FIELD_TYPES.join(", ")}. O <code>id</code> de cada campo é o que liga o
-                  valor aos itens — mantenha os que já existem.
-                </p>
-              </div>
-            )}
-          </div>
+          )}
 
           <DialogFooter className="items-center justify-between sm:justify-between">
             <span className="text-xs text-faint">
-              {plural(tab === "visual" ? fields.length : fields.length, "campo extra", "campos extras")}
+              {start === "template"
+                ? "Traz só a estrutura, sem os itens."
+                : plural(fields.length, "campo extra", "campos extras")}
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -782,9 +932,11 @@ export function CategoryEditor({
               >
                 Cancelar
               </Button>
-              <Button type="button" onClick={handleSave} disabled={pending}>
-                {pending ? "Salvando…" : "Salvar"}
-              </Button>
+              {start === "template" ? null : (
+                <Button type="button" onClick={handleSave} disabled={pending}>
+                  {pending ? "Salvando…" : editing ? "Salvar" : "Criar"}
+                </Button>
+              )}
             </div>
           </DialogFooter>
         </DialogContent>

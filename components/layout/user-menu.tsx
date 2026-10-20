@@ -1,7 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { Filter, LogOut, MapIcon, Settings, Tags, User, Users } from "lucide-react"
+import {
+  Compass,
+  Filter,
+  HeartHandshake,
+  LogOut,
+  MapIcon,
+  QrCode,
+  Settings,
+  Star,
+  Tags,
+  User,
+  Users,
+} from "lucide-react"
 
 import { signOutAction } from "@/app/actions"
 import {
@@ -13,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar } from "@/components/ui/avatar-image"
+import { profilePath } from "@/lib/domain/username"
 
 export function UserMenu({
   name,
@@ -25,10 +38,12 @@ export function UserMenu({
 }) {
   return (
     <DropdownMenu>
+      {/* O @ fica sempre à vista: é por ele que as pessoas se acham. */}
       <DropdownMenuTrigger
-        aria-label="Abrir menu da conta"
-        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-brand-dim"
+        aria-label={`Abrir menu da conta @${username}`}
+        className="flex min-w-0 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-brand-dim"
       >
+        <span className="max-w-[10rem] truncate text-sm text-muted-foreground">@{username}</span>
         <Avatar name={name} src={avatarUrl} size={32} />
       </DropdownMenuTrigger>
 
@@ -40,8 +55,13 @@ export function UserMenu({
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href={`/u/${username}`}>
+          <Link href={profilePath(username)}>
             <User className="size-4" /> Meu perfil
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/qr">
+            <QrCode className="size-4" /> Meu QR
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -52,6 +72,11 @@ export function UserMenu({
 
         <DropdownMenuSeparator />
 
+        <DropdownMenuItem asChild>
+          <Link href="/explorar">
+            <Compass className="size-4" /> Explorar
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/filtro">
             <Filter className="size-4" /> Filtro geral
@@ -69,8 +94,18 @@ export function UserMenu({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link href="/favoritos">
+            <Star className="size-4" /> Favoritos
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/usuarios">
             <Users className="size-4" /> Pessoas
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/matches">
+            <HeartHandshake className="size-4" /> Matches
           </Link>
         </DropdownMenuItem>
 
