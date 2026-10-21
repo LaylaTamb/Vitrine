@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# o guia técnico (rodar, SQLs, chaves, Cron): só no computador da dona
+/GUIA-LOCAL.md

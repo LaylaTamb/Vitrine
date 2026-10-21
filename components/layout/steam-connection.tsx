@@ -126,7 +126,7 @@ export function SteamConnection({
       ) : !configured ? (
         <p className={NOTE}>
           A conexão com a Steam ainda não foi ativada neste Vitrine (faltam a STEAM_API_KEY e o
-          CRON_SECRET no servidor — veja o README).
+          CRON_SECRET no servidor).
         </p>
       ) : (
         <>

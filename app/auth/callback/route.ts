@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { authMethodsOf, needsNewPassword, safeNextPath } from "@/lib/domain/auth"
 import { createClient } from "@/lib/supabase/server"
 
-/** Os tipos de link que os e-mails do app mandam (ver "Modelos de e-mail" no README). */
+/** Os tipos de link que os e-mails do app mandam (ver "Templates" de e-mail no GUIA-LOCAL.md). */
 const LINK_TYPES: EmailOtpType[] = ["email", "signup", "recovery", "invite", "email_change"]
 
 /**
@@ -12,7 +12,7 @@ const LINK_TYPES: EmailOtpType[] = ["email", "signup", "recovery", "invite", "em
  * aceitar um convite. Troca o token do link por uma sessão (cookies httpOnly)
  * e segue:
  *
- * - `?token_hash=…&type=…` — o formato dos modelos de e-mail do README. Vale
+ * - `?token_hash=…&type=…` — o formato dos modelos de e-mail do GUIA-LOCAL.md. Vale
  *   em qualquer navegador, mesmo outro que não o do pedido.
  * - `?code=…` — o fluxo PKCE, com os modelos padrão do Supabase. Só vale no
  *   mesmo navegador que pediu o e-mail (o verificador fica num cookie dele).
