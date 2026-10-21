@@ -9,7 +9,8 @@ import { requireUser } from "@/lib/queries/session"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * Favoritos (migração 20): o favorito de cada categoria e a aba Favoritos.
+ * Favoritos (migração 20): a estrelinha do item preferido de cada categoria e
+ * a aba Favoritos (categorias inteiras, na ordem).
  * Tudo numa tabela que só o dono lê — ninguém mais vê o que é favorito.
  */
 
@@ -53,7 +54,7 @@ export async function setFavoriteEntryAction(input: {
 }
 
 /**
- * Grava a aba Favoritos inteira, na ordem. Quem saiu da lista sai da aba —
+ * Grava a aba Favoritos inteira (as categorias), na ordem. Quem saiu da lista sai da aba —
  * o favorito da categoria continua marcado.
  */
 export async function setFavoritesTabAction(input: {

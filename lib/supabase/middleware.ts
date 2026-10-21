@@ -17,7 +17,6 @@ const AUTH_PAGES = ["/login", "/cadastro", "/recuperar-senha"]
 const PUBLIC_PREFIXES = [
   ...AUTH_PAGES,
   "/auth",
-  "/demo",
   "/v",
   "/categoria",
   "/termos",

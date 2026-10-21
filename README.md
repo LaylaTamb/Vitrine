@@ -27,7 +27,7 @@ ou mais cria conta com e-mail e senha. Cada pasta e categoria é **Pública**
 | Mapa | MapLibre GL + `supercluster`, com o mapa do [OpenFreeMap](https://openfreemap.org/) (sem chave, sem limite). Endereços, horário e trajetos: [Geoapify](https://www.geoapify.com/) (dados do OpenStreetMap), só no servidor, plano grátis |
 | Ícones | lucide-react · **Toasts** sonner · **Fontes** next/font (Fraunces + Inter) |
 | QR | `qrcode` (MIT), só no servidor: a tela recebe o QR pronto em SVG (e o story leva o QR desenhado) |
-| Testes | Vitest, só nas funções puras: `lib/domain/`, `lib/demo/`, o tratamento das respostas da Geoapify (`lib/geo/parse.ts`) e os leitores das importações (`lib/import/`) |
+| Testes | Vitest, só nas funções puras: `lib/domain/`, o tratamento das respostas da Geoapify (`lib/geo/parse.ts`) e os leitores das importações (`lib/import/`) |
 
 Sem biblioteca de estado global, sem biblioteca de data fetching, sem ORM, sem
 CSS-in-JS: Server Components + Server Actions + estado local otimista cobrem
@@ -202,9 +202,15 @@ No **SQL Editor**, rode nesta ordem:
     `build_my_match_copy` — a **cópia de cada pessoa**; refaz também o
     `place_ratings` do 28 para ignorar as cópias). Precisa do 18, do 24, do
     25, do 28 e do 30. Sem ele o "Abrir a sua cópia" avisa que falta rodar
+26. `supabase/32_refinements.sql` (refaz duas funções: `field_suggestions`
+    — um campo sugerido aparece com **uma** pessoa, não mais três — e
+    `build_my_match_copy` — a cópia do match vira **lista solta**, sem
+    subpastas —; e tira das subpastas os itens das cópias que já existiam).
+    Precisa do 27 e do 31
 
 **Fase 5 (30 e 31), em uma linha cada:** 30 = o convite e o aceite do Match;
 31 = a cópia de cada um (com as marcações e a % calculadas na tela).
+**Refinamentos (32):** sugestões de campos com uma pessoa e o match solto.
 
 **Fase 4 (25 a 29), em uma linha cada:** 25 = modelos (começar da estrutura
 de outra); 26 = Explorar e cópias ligadas; 27 = sugestões de campos (e a IA);
@@ -406,7 +412,7 @@ quando o texto dele muda.
 
 ## Configuração da Steam
 
-O "Conectar Steam" das Configurações (Aplicativos conectados) usa o **login da
+O "Conectar Steam" (Meu perfil → **Editar cartão** → Steam) usa o **login da
 própria Steam** (OpenID — a senha nunca passa pelo Vitrine) e a **Web API**
 gratuita para ler os jogos e as horas. Tudo opcional.
 
@@ -502,8 +508,7 @@ impede isso de voltar:
 8. **Sessão em cookies httpOnly** (`@supabase/ssr`). O `middleware.ts` renova a
    sessão e barra rota protegida antes de renderizar.
 9. **Toda mutação dá feedback instantâneo** e reverte com toast em caso de erro.
-10. **Todo `page.tsx` tem um `loading.tsx`** com esqueleto fiel ao layout
-    (exceto os de `/demo`, que não esperam dado nenhum).
+10. **Todo `page.tsx` tem um `loading.tsx`** com esqueleto fiel ao layout.
 11. **Lógica de domínio é TypeScript puro** em `lib/domain/`, sem React nem
     Supabase. É o que os testes cobrem.
 12. **Imagem de item é `<img>` nativa**, com `loading="lazy"`. As URLs são
@@ -516,10 +521,9 @@ impede isso de voltar:
 app/            rotas (Server Components) e actions.ts ao lado de cada rota
 components/     ui/ (shadcn) · layout/ · collection/ · category/ · entry/ · tag/ · filter/
 components/     … · map/ (página do Mapa, Sugestões, links do Google Maps)
-components/     … · demo/ (provider e banner da demonstração) · providers/ (useVitrine)
+components/     … · providers/ (useVitrine: as escritas do app num objeto só)
 lib/
   actions/      contrato das escritas, schemas zod compartilhados, ActionResult
-  demo/         acervo em memória da demonstração: seed, estado, operações
   domain/       TS puro e testado: tipos, campos, formatação, filtro, stats, erros,
                 grade e tier list, localização, pinos, links e dados do Mapa
   geo/          só servidor: chamadas à Geoapify (client.ts) e o tratamento das
@@ -633,7 +637,8 @@ O cálculo é puro e testado (`lib/domain/stats.ts`).
 - **Tier list**: terceiro modo da tela de uma categoria **com estrelas**. Uma
   fileira por faixa de nota — S (5), A (4,5–4), B (3,5–3), C (2,5–2),
   D (1,5–1), E (0,5–0) —, com os itens que passam pelo filtro, na ordem dele.
-  Item sem nota fica de fora (e é contado embaixo). É **somente leitura**:
+  Item sem nota vai para a faixa **"Sem nota"**, no fim (uma lista importada
+  do Google, sem notas, aparece inteira ali). É **somente leitura**:
   sem arrastar, sem seleção — mudar de fileira seria mudar a nota. O tamanho
   das miniaturas segue o P / M / G.
 
@@ -641,16 +646,15 @@ O cálculo é puro e testado (`lib/domain/stats.ts`).
 
 - Mostra num mapa escuro (MapLibre + OpenFreeMap) tudo que **eu** marquei com
   Localização: um pino com a cor e o ícone da categoria, agrupados quando
-  ficam perto. A página de outra pessoa (`/v/...`) e a demonstração não têm
-  mapa. O filtro é o mesmo do Filtro geral; no celular, recolhido atrás do
+  ficam perto. A página de outra pessoa (`/v/...`) não tem mapa. O filtro é o mesmo do Filtro geral; no celular, recolhido atrás do
   botão "Filtros".
 - **O filtro do Mapa só oferece o que pode virar pino** (`mapScope`, em
   `lib/domain/map.ts`): as categorias com campo de Localização — mesmo as
   ainda sem endereço —, com o número de lugares de cada uma ao lado; as tags
   usadas pelos itens delas; e os campos delas no "Adicionar campo…". A nota
   some quando nenhuma dessas categorias usa estrelas.
-- **"Ver no mapa"** na tela de uma categoria com Localização (só para o dono,
-  e fora da demonstração) abre `/mapa?categoria=<id>`, com ela já marcada no
+- **"Ver no mapa"** na tela de uma categoria com Localização (só para o dono)
+  abre `/mapa?categoria=<id>`, com ela já marcada no
   filtro. O `?categoria=` só vale na abertura e sai da URL em seguida.
 - **`entry_places` é um cache.** O endereço continua em `custom_fields`; a
   tabela guarda, por (item, campo), o texto que foi procurado (`address`), as
@@ -686,30 +690,23 @@ O cálculo é puro e testado (`lib/domain/stats.ts`).
   (`lib/domain/place-summary.ts`), isolada para um dia virar texto de IA.
 - **"Abrir no Maps" / "Como chegar"** são links comuns para o Google Maps (as
   Maps URLs oficiais, sem chave): as coordenadas e, sem elas, o texto do
-  endereço — funcionam até sem localização (e na demonstração). O `place_id`
+  endereço — funcionam até sem localização (e sem login). O `place_id`
   da Geoapify não vai para o Google.
 
-### Demonstração (`/demo`)
+### Sem conta: só pelo link
 
-A demo roda **inteira no navegador**: não existe conta demo no Supabase e
-nada do que o visitante faz sai da aba. Recarregar (F5) volta ao acervo de
-exemplo (`lib/demo/seed-data.json`).
+Não existe demonstração nem "entrar sem conta": quem não tem conta vê **só o
+que é público, pelo link** que alguém compartilhou — o perfil (`/v/<@>`), uma
+categoria (`/categoria/<id>`) ou um item (`/categoria/<id>/<item>`), somente
+leitura, com Entrar e Criar conta no topo. Criar pasta, categoria, item,
+seguir, mexer nas próprias configurações — tudo pede conta.
 
-- Os componentes não importam Server Action nenhuma direto: pedem
-  `useVitrine().actions` (`components/providers/vitrine-context.tsx`), que tem
-  a forma do contrato `VitrineActions` (`lib/actions/contracts.ts`). No app,
-  aponta para as Server Actions; em `/demo`, o `DemoProvider` troca por
-  `createDemoActions` (`lib/demo/store.ts`), que transforma o acervo em
-  memória com os **mesmos schemas zod** (`lib/actions/schemas.ts`) e as mesmas
-  regras de domínio.
-- Os ids do seed são UUIDs determinísticos (`demoId`), então o HTML do
-  servidor bate com o do navegador e um link direto para uma categoria de
-  exemplo sobrevive ao F5.
-- A demo tem as próprias tags — nunca enxerga as do grupo.
-- A demo tem o tamanho da grade e o tier list (são os mesmos componentes), mas
-  **não tem o Mapa**: não pode gastar crédito nem ter chave. As ações da Geoapify
-  respondem "Indisponível na demonstração.", e "Abrir no Maps" usa o texto do
-  endereço.
+- A leitura sem login vai pelas funções `public_profile` e `public_category`
+  (migração 14): `anon` não lê tabela nenhuma.
+- Os componentes pedem as escritas a `useVitrine().actions`
+  (`components/providers/vitrine-context.tsx`), um objeto com a forma do
+  contrato `VitrineActions` (`lib/actions/contracts.ts`) que aponta para as
+  Server Actions; os schemas zod ficam em `lib/actions/schemas.ts`.
 
 ### `estrutura` e `custom_fields`
 
@@ -806,6 +803,14 @@ todo mundo.
 - **`/v/<@>` abre sem login**: mostra o cartão (abaixo) e as pastas e
   categorias **públicas** (pela função `public_profile`), com um convite
   para entrar. Com login, a leitura é a normal (a RLS decide — Amigos inclusive).
+- **O perfil de outra pessoa** mostra o cartão e, embaixo, as coleções dela
+  (o que você pode ver). **O seu perfil (Meu perfil) é só o cartão** — as suas
+  coleções ficam em **Coleções** (`/`) — e é ali que ele se edita.
+- **O menu da conta** (o @ e a foto, no canto da barra): **Meu perfil**,
+  **Coleções**, **Meu QR**, **Matches**, **Configurações** e **Sair**. Os
+  links da barra de cima (Explorar, Filtro, Mapa, Tags, Favoritos, Pessoas)
+  não se repetem nele — só no celular (abaixo de 768 px), onde a barra não os
+  mostra. `/perfil` é um atalho para o seu perfil (leva a query junto).
 - **Categoria e item públicos também abrem sem login**, somente leitura, no
   mesmo endereço de sempre (`/categoria/<id>` e `/categoria/<id>/<item>`):
   sem login, a página lê pela função `public_category`; com login, pelas
@@ -843,8 +848,7 @@ todo mundo.
   não gera dois avisos de novo seguidor em 24 horas, e aviso de quem está
   bloqueado não aparece. Os avisos nascem no banco (gatilho da migração 21
   e `redeem_qr` da 22), então nenhuma tela precisa lembrar de criá-los.
-- Sem login, os botões viram um convite para entrar; na demonstração não há
-  seguir (ela não tem outras contas). As ações ficam em `app/v/actions.ts`;
+- Sem login, os botões viram um convite para entrar. As ações ficam em `app/v/actions.ts`;
   as frases, em `lib/domain/social.ts`.
 
 ### QR pessoal (`/qr`)
@@ -879,15 +883,18 @@ todo mundo.
   sem login: foto (por link), nome, @, **bio** de até 220 caracteres, os
   **links das redes**, a faixa de seguir e até **5 categorias** com os **3
   melhores** itens de cada uma (maior nota, empate pelo nome; em categoria
-  sem estrelas, os 3 primeiros da ordem manual). Embaixo dele, as coleções.
+  sem estrelas, os 3 primeiros da ordem manual). No perfil de outra pessoa,
+  embaixo dele vêm as coleções dela.
 - **Só categorias públicas de fato** entram: a função `profile_card`
   (migração 23) confere o nível da categoria e de todas as pastas acima a
   cada leitura — categoria que deixou de ser pública some do cartão na hora
   e volta sozinha se ficar pública de novo. A "A organizar" nunca entra.
-- **Configurações → Cartão de apresentação** (`/configuracoes#cartao`): a
-  bio e as categorias (só as públicas aparecem para escolher; subir, descer e
-  tirar). As **redes** ficam em Aplicativos conectados (abaixo).
-  **Instagram, X, Discord, Spotify e YouTube**: aceita o @ ou o link e grava
+- **Meu perfil → Editar cartão** (`/v/<@>?editar=1`, o painel abre embaixo
+  do cartão; **Concluir** fecha): **foto e nome**; a **bio** e as categorias
+  (só as públicas aparecem para escolher; subir, descer e tirar); as
+  **redes**; e a **Steam** (abaixo). O **@**, a senha e o resto da conta
+  ficam nas Configurações.
+  **Redes — Instagram, X, Discord, Spotify e YouTube**: aceita o @ ou o link e grava
   normalizado (`normalizeSocialLink`, em
   `lib/domain/card.ts`); ao mostrar, normaliza de novo, então um link
   estranho gravado direto pela API nunca vira `href`. Nome do Discord não
@@ -896,8 +903,10 @@ todo mundo.
   nome, @, bio, as categorias com os 3 melhores e o **QR do perfil** (o link
   simples, sem código de amizade — o story fica no ar 24 horas). O botão
   **Compartilhar no story** (no próprio perfil) abre o compartilhar do
-  celular com a imagem (dali, Instagram → Story); no computador, baixa a
-  imagem.
+  celular com a imagem (dali, Instagram → Story). No computador ele vira
+  **Copiar imagem do story**: copia a imagem para a área de transferência
+  (Ctrl+V onde quiser; o aviso tem **Baixar**) e, se o navegador não deixar
+  copiar, baixa.
 - A foto do story é buscada pelo **servidor**, então só vale endereço de
   internet de verdade (`publicImageUrl`, em `lib/domain/remote-image.ts`):
   nada de IP solto, `localhost` ou rede interna, cada redirecionamento é
@@ -907,10 +916,9 @@ todo mundo.
 
 ### Aplicativos conectados (Steam)
 
-- **Configurações → Aplicativos conectados** (`/configuracoes#aplicativos`):
-  a **Steam** (conectar, sincronizar agora, ver os jogos, desconectar) e os
-  links das **outras redes** (Instagram, X, Discord, Spotify, YouTube — só
-  link, mostrados no cartão).
+- **Meu perfil → Editar cartão → Steam**: conectar, sincronizar agora, ver
+  os jogos, desconectar. A volta do login da Steam cai no mesmo painel
+  (`/perfil?editar=1&steam=…`, com o recado).
 - **Conectar**: `/api/steam/conectar` manda para o login da Steam com um
   "estado" aleatório num cookie httpOnly; `/api/steam/retorno` confere o
   estado e a mensagem do OpenID, pergunta à Steam se ela é legítima
@@ -959,26 +967,27 @@ todo mundo.
 
 ### Favoritos (`/favoritos`)
 
-- **Um favorito por categoria**: a estrela nas ações do card e da linha, e o
-  botão na página do item — tocar marca, marcar outro troca, tocar de novo
-  desmarca. O favorito ganha uma estrelinha ao lado do nome. **Só o dono vê**
-  (não vai para o perfil nem para o cartão).
-- A **aba Favoritos** (no menu, depois de Tags) mostra o favorito de cada
-  categoria que a pessoa pôs nela, na ordem dela. Marcar a estrela **não** põe
-  a categoria na aba; **categoria sem favorito não aparece** — só no modo
-  **Editar aba**, onde se adiciona, tira e arrasta para ordenar (grava a cada
-  mudança).
+- **A aba Favoritos** (na barra, depois de Tags) mostra **categorias
+  inteiras**, como nas Coleções — um toque abre a categoria. **Adicionar
+  categoria** lista as suas categorias que ainda não estão lá (com busca,
+  quando são muitas; a "A organizar" não entra): um toque adiciona, e a lista
+  fica aberta para pôr mais. Arrastar ordena; o **X** tira da aba (não apaga
+  nada). Cada mudança grava na hora.
+- **A estrelinha de um item** é outra coisa: o item preferido de uma
+  categoria (no máximo um). A estrela nas ações do card e da linha, e o botão
+  na página do item — tocar marca, marcar outro troca, tocar de novo
+  desmarca. É só uma marca ao lado do nome: **não** põe nada na aba.
+  **Só o dono vê** (não vai para o perfil nem para o cartão).
 - Tudo numa tabela à parte, `category_favorites` (migração 20), com RLS só
   do dono — e não em colunas de `categories`/`profiles`, que outras pessoas
   leem. Item apagado ou que muda de categoria deixa de ser o favorito (o banco
-  cuida); categoria apagada sai da aba. As mesmas regras na demonstração
-  (`pruneFavorites`, em `lib/domain/favorites.ts`), que já vem com uma aba de
-  exemplo. O backup ainda não leva os favoritos.
+  cuida); categoria apagada sai da aba. O backup ainda não leva os favoritos.
+  A ordem da aba é `tab_position` (`tabOrder`, `tabCategories` e
+  `addableCategories`, em `lib/domain/favorites.ts`).
 
 ### Começar de um modelo
 
-- **Nova categoria → "Começar de um modelo"** (só ao criar, e fora da
-  demonstração): busca entre as **categorias públicas de outras pessoas** que
+- **Nova categoria → "Começar de um modelo"** (só ao criar): busca entre as **categorias públicas de outras pessoas** que
   têm pelo menos um campo — sem busca, as **mais usadas** (ou as mais novas);
   com busca, as de nome mais parecido primeiro. Cada cartão mostra o **@ do
   autor**, os campos e o **"usado por N"**.
@@ -1001,7 +1010,7 @@ todo mundo.
 
 ### Explorar (`/explorar`) e cópias ligadas
 
-- **Explorar** fica no menu principal (e no menu da conta, no celular): as
+- **Explorar** fica na barra de cima (e no menu da conta, no celular): as
   **categorias públicas de outras pessoas que têm itens**, com busca (nome
   normalizado, como nos modelos) e, sem busca, as **mais copiadas** ou as
   **mais novas**. Cada cartão: ícone, nome, @ do autor, quantos itens,
@@ -1031,7 +1040,7 @@ todo mundo.
   - **Desligar** (na faixa "Ligada a @autor", com confirmação) faz o mesmo à
     mão. Não tem religar — é só pegar de novo.
 - Cada cópia conta no "usado por N" da original (o mesmo gatilho dos modelos,
-  com `mode = 'linked'`). Nada disso existe na demonstração.
+  com `mode = 'linked'`).
 
 ### Match (`/matches`): convite e aceite
 
@@ -1049,7 +1058,7 @@ todo mundo.
   a mesma lista).
 - As regras moram nas funções do banco (`create_match`, `respond_match`);
   ninguém escreve nas tabelas direto, e só quem está no match o lê. Freio:
-  no máximo 20 matches criados por dia. Não existe na demonstração.
+  no máximo 20 matches criados por dia.
 
 ### Match: a cópia de cada um e a % de compatibilidade
 
@@ -1061,7 +1070,9 @@ todo mundo.
   pode renomear ou apagar — o próximo match recria), com o nome
   **"@você & @amigo · DD/MM/AAAA"** (grupo: todos os @; nome longo demais
   vira "@você & mais N pessoas") e a data em que o match ficou pronto. Por
-  dentro, uma **subpasta por categoria de origem** (as equivalentes juntas).
+  dentro, uma **lista solta** — sem subpastas (migração 32) —, com o que é a
+  mesma coisa lado a lado (o "Duna" de cada pessoa, um junto do outro).
+  Cópia montada antes do SQL 32 é achatada por ele.
 - **O que entra** (até 500 itens por pessoa, os mexidos por último): de você,
   o que alguém do match pode ver; dos outros, só o que **você** pode ver —
   público e, se for amigo, o de Amigos. **Privado nunca**, e nada de quem tem
@@ -1074,8 +1085,7 @@ todo mundo.
   `lib/domain/match.ts`, testado): card com a **cor de quem é** o item;
   **"Em comum"** (2+ pessoas têm); **"Sugestão para você"** (nota ≥ 4 de quem
   tem, e você não tem); a legenda de cores (tocar numa pessoa mostra só os
-  itens dela) e os filtros rápidos **Em comum** e **Sugestões para mim**
-  (filtrando, a lista junta as subpastas).
+  itens dela) e os filtros rápidos **Em comum** e **Sugestões para mim**.
 - **% de compatibilidade** (a fórmula da Parte 2 do plano): sobreposição =
   itens em comum ÷ 25% da coleção menor (no máximo 1); concordância = média
   de (1 − |nota A − nota B| ÷ 5) no que os dois avaliaram; compatibilidade =
@@ -1084,8 +1094,8 @@ todo mundo.
   a média dos pares (e cada par ao lado).
 - **O item da cópia**: nome, imagem, a **nota do dono** e os **campos do
   original, só leitura** (a Localização com "Abrir no Maps"). Dá para pôr
-  **tags suas**, mover entre as subpastas e excluir da cópia; nome, nota e
-  campos não se editam.
+  **tags suas** e excluir da cópia (a seleção também faz isso em lote); nome,
+  nota e campos não se editam, e não há pasta nem item novo ali.
 - **Trazer** (no card das sugestões, à vista; nos outros, no hover e na
   página do item): copia **nome, imagem e localização** (já encontrada, se o
   original tinha) para a sua **A organizar** — sem a nota do outro. Trazer de
@@ -1162,18 +1172,20 @@ todo mundo.
   já prontos, com as coordenadas e ligado ao catálogo — **sem gastar busca de
   endereço**. O lugar é lido de novo no servidor (do cache da busca), nunca do
   que o navegador mandou: nome e coordenadas não dá para inventar.
-- Nada disso existe na demonstração.
 
 ### Sugestões de campos (ao criar uma categoria)
 
-- No editor de **categoria nova** (fora da demonstração), embaixo da lista de
+- No editor de **categoria nova**, embaixo da lista de
   campos: **"Campos usados em categorias como essa"**. Enquanto você digita o
   nome, o banco (`field_suggestions`, migração 27) procura categorias
   **públicas** de outras pessoas com nome parecido — o mesmo nome normalizado,
   ou ele no começo ou no fim ("Filmes" acha "Filmes de terror") — e conta
-  **pessoas distintas** por campo (nome normalizado + tipo). Só aparece o que
-  **pelo menos 3 pessoas** usam, com as opções mais comuns (listas) e a moeda
-  mais usada. Ninguém é exposto sozinho.
+  **pessoas distintas** por campo (nome normalizado + tipo). Basta **uma
+  pessoa** (migração 32; antes eram 3): a categoria é pública e já aparece no
+  Explorar com os campos, então não se expõe nada novo. Vêm as opções mais
+  comuns (listas) e a moeda mais usada. Sem nada parecido e sem a IA ligada
+  no servidor, o painel diz isso (em vez de sumir); erro do banco aparece ali
+  também.
 - **Trazer** põe o campo na lista com as opções e a moeda (e um id novo, como
   todo campo novo); **Trazer todos** traz o que sobrou. O que já está na
   categoria (mesmo nome) some da lista.
@@ -1264,13 +1276,13 @@ todo mundo.
   recentemente" e nasce **privada** (é rascunho — dá para abrir no seletor do
   topo, se quiser).
 - Fica **fixa no topo das Coleções**, com cara de caixa de entrada, fora da
-  grade arrastável. **Não pode ser apagada, renomeada, ter a estrutura ou as
+  grade arrastável — **só quando tem item**: vazia, ela some das Coleções (e
+  continua aparecendo como destino no "Salvar em…" e no "Mover"). **Não pode ser apagada, renomeada, ter a estrutura ou as
   estrelas trocadas, nem ir para dentro de uma pasta** — a tela não oferece,
   e o banco recusa (`inbox_locked`). Os itens dela, sim: marque e use
   **Mover** para levá-los à categoria certa.
 - **Backup:** a "A organizar" sai marcada (`"inbox": true`) e, na importação,
   os itens dela entram na "A organizar" de quem importa.
-- A **demonstração** tem a sua, com três itens de exemplo, e as mesmas travas.
 
 ### Termos, privacidade e excluir a conta
 
@@ -1301,10 +1313,10 @@ todo mundo.
   acesso irrestrito ao banco a qualquer autenticado — removida de propósito);
 - upload de imagem (só links externos);
 - login social (Google etc.) e verificação em duas etapas;
-- modo claro, paleta de comandos, notificações, comentários, favoritos;
+- modo claro, paleta de comandos, comentários;
 - no Mapa, por enquanto: descobrir lugares **novos** por perto ("Descobrir",
   com "Salvar no Vitrine") e resumo escrito por IA — próxima fase; mapa na
-  página de outras pessoas e na demonstração;
+  página de outras pessoas;
 - na privacidade: compartilhar com uma lista escolhida de pessoas (os níveis
   são só Pública, Amigos e Privada), e levar a privacidade no backup — o
   arquivo não guarda o nível, e a importação segue o padrão do perfil;

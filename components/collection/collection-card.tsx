@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import Link from "next/link"
-import { FolderOpen, GripVertical, MoveRight, Pencil, Trash2 } from "lucide-react"
+import { FolderOpen, GripVertical, MoveRight, Pencil, Trash2, X } from "lucide-react"
 
 import { VISIBILITY_ICONS } from "@/components/collection/privacy-switch"
 import type { ViewMode } from "@/components/layout/view-toggle"
@@ -24,6 +24,10 @@ export interface CollectionCardProps {
   onMove?: () => void
   onEdit?: () => void
   onDelete?: () => void
+  /** Tirar de uma lista (a aba Favoritos): o X, que não apaga nada. */
+  onRemove?: () => void
+  /** O texto do X — leitor de tela e dica. */
+  removeLabel?: string
   /**
    * O nível, para o ícone ao lado do nome: cadeado na Privada, pessoas na de
    * Amigos, nada na Pública. Só o dono passa (e chega a ver).
@@ -45,6 +49,8 @@ export function CollectionCard({
   onMove,
   onEdit,
   onDelete,
+  onRemove,
+  removeLabel,
   visibility = "public",
 }: CollectionCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -75,6 +81,11 @@ export function CollectionCard({
       {onDelete ? (
         <IconButton label={`Excluir ${name}`} onClick={onDelete} danger>
           <Trash2 className="size-3.5" />
+        </IconButton>
+      ) : null}
+      {onRemove ? (
+        <IconButton label={removeLabel ?? `Tirar ${name}`} onClick={onRemove} danger>
+          <X className="size-3.5" />
         </IconButton>
       ) : null}
     </div>

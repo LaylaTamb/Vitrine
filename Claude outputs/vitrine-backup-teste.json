@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "exportedAt": "2026-10-20T12:00:00.000Z",
+  "folders": [
+    { "id": "p_cultura", "name": "Cultura", "parentId": null },
+    { "id": "p_lugares", "name": "Lugares", "parentId": null },
+    { "id": "p_sp", "name": "São Paulo", "parentId": "p_lugares" }
+  ],
+  "categories": [
+    {
+      "id": "c_filmes",
+      "name": "Filmes",
+      "icon": "🎬",
+      "color": "#B98CC2",
+      "folderId": "p_cultura",
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc",
+      "estrutura": [
+        { "id": "f_ano", "nome": "Ano", "tipo": "int" },
+        { "id": "f_diretor", "nome": "Diretor", "tipo": "str" },
+        { "id": "f_genero", "nome": "Gênero", "tipo": "select", "opcoes": ["Ficção científica", "Drama", "Comédia", "Terror", "Animação"] },
+        { "id": "f_visto", "nome": "Assisti em", "tipo": "date" },
+        { "id": "f_duracao", "nome": "Duração", "tipo": "time" }
+      ]
+    },
+    {
+      "id": "c_livros",
+      "name": "Livros",
+      "icon": "📚",
+      "color": "#D6C08A",
+      "folderId": "p_cultura",
+      "ratingEnabled": true,
+      "estrutura": [
+        { "id": "f_autor", "nome": "Autor", "tipo": "str" },
+        { "id": "f_paginas", "nome": "Páginas", "tipo": "int" }
+      ]
+    },
+    {
+      "id": "c_restaurantes",
+      "name": "Restaurantes",
+      "icon": "🍽️",
+      "color": "#8FC9A6",
+      "folderId": "p_sp",
+      "ratingEnabled": true,
+      "quickField": "f_endereco",
+      "estrutura": [
+        { "id": "f_endereco", "nome": "Endereço", "tipo": "location" },
+        { "id": "f_bairro", "nome": "Bairro", "tipo": "str" },
+        { "id": "f_preco", "nome": "Preço médio", "tipo": "currency" },
+        { "id": "f_tipo", "nome": "Tipo", "tipo": "select", "opcoes": ["Brasileira", "Japonesa", "Italiana", "Café", "Bar"] }
+      ]
+    },
+    {
+      "id": "c_compras",
+      "name": "Lista de compras",
+      "icon": "🛒",
+      "color": null,
+      "folderId": null,
+      "ratingEnabled": false,
+      "estrutura": [
+        { "id": "f_qtd", "nome": "Quantidade", "tipo": "int" }
+      ]
+    },
+    {
+      "id": "c_inbox",
+      "name": "A organizar",
+      "icon": "📥",
+      "color": null,
+      "folderId": null,
+      "ratingEnabled": true,
+      "inbox": true,
+      "estrutura": [
+        { "id": "f_inbox_loc", "nome": "Localização", "tipo": "location" }
+      ]
+    }
+  ],
+  "entryFolders": [
+    { "id": "s_favoritos", "categoryId": "c_filmes", "name": "Favoritos da vida", "parentId": null },
+    { "id": "s_rever", "categoryId": "c_filmes", "name": "Para rever", "parentId": null }
+  ],
+  "entries": [
+    { "categoryId": "c_filmes", "folderId": "s_favoritos", "name": "Duna: Parte Dois", "rating": 5, "customFields": { "f_ano": 2024, "f_diretor": "Denis Villeneuve", "f_genero": "Ficção científica", "f_visto": "2024-03-02", "f_duracao": 166 }, "tags": [{ "name": "cinema", "color": "#B98CC2" }] },
+    { "categoryId": "c_filmes", "folderId": "s_favoritos", "name": "Aftersun", "rating": 4.5, "customFields": { "f_ano": 2022, "f_diretor": "Charlotte Wells", "f_genero": "Drama", "f_duracao": 101 }, "tags": [{ "name": "chorei", "color": "#8FB3C9" }] },
+    { "categoryId": "c_filmes", "folderId": "s_rever", "name": "A Viagem de Chihiro", "rating": 5, "customFields": { "f_ano": 2001, "f_diretor": "Hayao Miyazaki", "f_genero": "Animação", "f_duracao": 125 }, "tags": [] },
+    { "categoryId": "c_filmes", "folderId": null, "name": "Retratos Fantasmas", "rating": 4, "customFields": { "f_ano": 2023, "f_diretor": "Kleber Mendonça Filho", "f_genero": "Drama" }, "tags": [{ "name": "nacional", "color": "#8FC9A6" }] },
+    { "categoryId": "c_filmes", "folderId": null, "name": "Não! Não Olhe!", "rating": 3.5, "customFields": { "f_ano": 2022, "f_diretor": "Jordan Peele", "f_genero": "Terror" }, "tags": [{ "name": "cinema", "color": "#B98CC2" }] },
+    { "categoryId": "c_filmes", "folderId": null, "name": "Ainda Estou Aqui", "rating": 5, "customFields": { "f_ano": 2024, "f_diretor": "Walter Salles", "f_genero": "Drama", "f_visto": "2024-11-10" }, "tags": [{ "name": "nacional", "color": "#8FC9A6" }, { "name": "chorei", "color": "#8FB3C9" }] },
+
+    { "categoryId": "c_livros", "folderId": null, "name": "Torto Arado", "rating": 5, "customFields": { "f_autor": "Itamar Vieira Junior", "f_paginas": 264 }, "tags": [{ "name": "nacional", "color": "#8FC9A6" }] },
+    { "categoryId": "c_livros", "folderId": null, "name": "O Avesso da Pele", "rating": 4.5, "customFields": { "f_autor": "Jeferson Tenório", "f_paginas": 192 }, "tags": [{ "name": "nacional", "color": "#8FC9A6" }] },
+    { "categoryId": "c_livros", "folderId": null, "name": "Duna", "rating": 4, "customFields": { "f_autor": "Frank Herbert", "f_paginas": 680 }, "tags": [] },
+    { "categoryId": "c_livros", "folderId": null, "name": "Tudo é Rio", "rating": 3, "customFields": { "f_autor": "Carla Madeira", "f_paginas": 210 }, "tags": [] },
+
+    { "categoryId": "c_restaurantes", "folderId": null, "name": "Mercado Municipal de São Paulo", "rating": 4.5, "customFields": { "f_endereco": "Rua da Cantareira, 306 - Centro, São Paulo - SP", "f_bairro": "Centro", "f_preco": 60, "f_tipo": "Brasileira" }, "tags": [{ "name": "com amigos", "color": "#D6C08A" }] },
+    { "categoryId": "c_restaurantes", "folderId": null, "name": "Café Girondino", "rating": 4, "customFields": { "f_endereco": "Rua Boa Vista, 365 - Centro, São Paulo - SP", "f_bairro": "Centro", "f_preco": 45, "f_tipo": "Café" }, "tags": [] },
+    { "categoryId": "c_restaurantes", "folderId": null, "name": "Bar Brahma", "rating": 3.5, "customFields": { "f_endereco": "Avenida São João, 677 - República, São Paulo - SP", "f_bairro": "República", "f_preco": 90, "f_tipo": "Bar" }, "tags": [{ "name": "com amigos", "color": "#D6C08A" }] },
+    { "categoryId": "c_restaurantes", "folderId": null, "name": "Liberdade (lugar sem endereço)", "rating": null, "customFields": { "f_bairro": "Liberdade", "f_tipo": "Japonesa" }, "tags": [] },
+
+    { "categoryId": "c_compras", "folderId": null, "name": "Café em grão", "rating": null, "customFields": { "f_qtd": 2 }, "tags": [] },
+    { "categoryId": "c_compras", "folderId": null, "name": "Pão de forma", "rating": null, "customFields": { "f_qtd": 1 }, "tags": [] },
+
+    { "categoryId": "c_inbox", "folderId": null, "name": "Indicação do trabalho: Pinacoteca", "rating": null, "customFields": { "f_inbox_loc": "Praça da Luz, 2 - Luz, São Paulo - SP" }, "tags": [] },
+    { "categoryId": "c_inbox", "folderId": null, "name": "Série que a Ana falou", "rating": null, "customFields": {}, "tags": [] }
+  ]
+}

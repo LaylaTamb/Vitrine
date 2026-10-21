@@ -8,32 +8,15 @@ import { Wordmark } from "@/components/layout/wordmark"
 import { NotificationsBell } from "@/components/social/notifications-bell"
 import { NotificationsMenu } from "@/components/social/notifications-menu"
 import { buttonVariants } from "@/components/ui/button"
-import { DEMO_BASE_PATH } from "@/lib/demo/config"
 import { displayNameOf } from "@/lib/queries/session"
 import type { Profile } from "@/lib/domain/types"
 
-const OUTLINE_LINK =
-  "rounded-md border border-line px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground"
-
 /**
- * `isDemo`: a demonstração em `/demo` — links com o prefixo, sem "Pessoas"
- * nem "Mapa" e, no lugar do menu da conta, um convite para entrar.
- *
  * `visitor`: página pública sem login — sem os links do app (todos pedem
  * conta) e, no lugar do menu, Entrar (que volta para esta página) e Criar
  * conta.
  */
-export function Navbar({
-  profile,
-  isDemo = false,
-  visitor,
-}: {
-  profile: Profile | null
-  isDemo?: boolean
-  visitor?: VisitorInfo
-}) {
-  const basePath = isDemo ? DEMO_BASE_PATH : ""
-
+export function Navbar({ profile, visitor }: { profile: Profile | null; visitor?: VisitorInfo }) {
   return (
     <header
       className="sticky top-0 z-40 border-b border-line"
@@ -46,19 +29,15 @@ export function Navbar({
       <div className="shell flex h-14 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4 lg:gap-6">
           <Link
-            href={basePath || "/"}
+            href="/"
             className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-brand-dim"
           >
             <Wordmark />
           </Link>
-          {visitor ? null : <NavLinks hideUsers={isDemo} hideMap={isDemo} basePath={basePath} />}
+          {visitor ? null : <NavLinks />}
         </div>
 
-        {isDemo ? (
-          <a href="/login" className={OUTLINE_LINK}>
-            Entrar
-          </a>
-        ) : visitor ? (
+        {visitor ? (
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href={`/login?proximo=${encodeURIComponent(visitor.next)}`}

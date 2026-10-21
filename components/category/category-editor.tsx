@@ -109,10 +109,10 @@ export function CategoryEditor({
   /** O padrão do perfil para categoria nova. */
   defaultVisibility?: Visibility
 }) {
-  const { actions, isDemo } = useVitrine()
+  const { actions } = useVitrine()
   const editing = Boolean(initial.id)
-  // Modelos são de outras contas: só ao criar, e fora da demonstração.
-  const canUseTemplates = !editing && !isDemo
+  // Modelos e sugestões de campos: só ao criar.
+  const canUseTemplates = !editing
 
   const [tab, setTab] = useState<"visual" | "json">("visual")
   /** "template" = escolhendo um modelo (no lugar do formulário). */
@@ -402,7 +402,7 @@ export function CategoryEditor({
     }
 
     // Texto → Localização com endereços já escritos: eles são procurados
-    // depois de salvar (fora da demonstração, que não tem mapa).
+    // depois de salvar.
     const addressesToLocate = diff.retyped
       .filter((change) => change.to === "location")
       .reduce((sum, change) => sum + (filled[change.field.id] ?? 0), 0)
@@ -449,9 +449,7 @@ export function CategoryEditor({
           text:
             count === 0
               ? `"${field.nome}": vira Localização — nenhum item tem endereço aqui ainda.`
-              : isDemo
-                ? `"${field.nome}": vira Localização — ${plural(count, "item ganha", "itens ganham")} o botão “Abrir no Maps”.`
-                : `"${field.nome}": ${plural(count, "endereço vai ser procurado", "endereços vão ser procurados")} para aparecer no mapa.`,
+              : `"${field.nome}": ${plural(count, "endereço vai ser procurado", "endereços vão ser procurados")} para aparecer no mapa.`,
         }
       }),
     ]
@@ -509,7 +507,7 @@ export function CategoryEditor({
     onSaved?.(result.ok ? (result.data as { id?: string } | undefined)?.id : undefined)
 
     // A categoria já está salva; os endereços são procurados em seguida, em lotes.
-    if (geocode && editing && !isDemo) {
+    if (geocode && editing) {
       void runPendingGeocode(actions, { categoryId: initial.id!, mode: "pending" })
     }
   }
@@ -769,7 +767,7 @@ export function CategoryEditor({
                     </p>
                   )}
 
-                  {/* Sugestões de campos (migração 27): só ao criar, e fora da demonstração. */}
+                  {/* Sugestões de campos (migração 27): só ao criar. */}
                   {canUseTemplates ? (
                     <FieldSuggestions
                       name={name}
@@ -864,7 +862,7 @@ export function CategoryEditor({
                     {editTypes !== null && editTypes.length > 1 && editTypes.includes("location") ? (
                       <p className="text-xs leading-relaxed text-faint">
                         Um campo de Texto pode virar Localização (mapa): os endereços já escritos
-                        {isDemo ? " ganham o botão “Abrir no Maps”." : " são procurados e passam a aparecer no mapa."}
+                        são procurados e passam a aparecer no mapa.
                       </p>
                     ) : null}
 

@@ -1,12 +1,9 @@
 /**
  * O contrato de toda escrita que um componente pode pedir.
  *
- * Os componentes não importam Server Action nenhuma direto: pedem
- * `useVitrine().actions` e recebem um objeto com esta forma. No app de
- * verdade ele aponta para as Server Actions (Supabase); na demonstração
- * (`/demo`), para o acervo em memória do navegador. Os dois lados são
- * checados contra esta interface pelo TypeScript — se um ganhar método novo
- * e o outro não, o build quebra.
+ * Os componentes pedem `useVitrine().actions` e recebem um objeto com esta
+ * forma, que aponta para as Server Actions (Supabase) — checado contra esta
+ * interface pelo TypeScript.
  */
 import type { ActionResult } from "@/lib/actions/result"
 import type { SortKey } from "@/lib/domain/filter"
@@ -116,7 +113,7 @@ export interface VitrineActions {
     input: CategoryInput & {
       folderId: string | null
       visibility?: Visibility
-      /** O modelo de onde a estrutura veio (migração 25). A demonstração ignora. */
+      /** O modelo de onde a estrutura veio (migração 25). */
       sourceCategoryId?: string
     }
   ): Result<{ id: string }>

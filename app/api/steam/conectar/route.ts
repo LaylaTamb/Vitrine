@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server"
 export const dynamic = "force-dynamic"
 
 /**
- * `/api/steam/conectar` — o botão "Conectar Steam" das Configurações. Manda
+ * `/api/steam/conectar` — o botão "Conectar Steam" do Meu perfil (Editar cartão). Manda
  * para o login da própria Steam (OpenID): a senha da Steam nunca passa pelo
  * Vitrine. Volta em `/api/steam/retorno`.
  */
@@ -21,10 +21,10 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.redirect(`${origin}/login?proximo=${encodeURIComponent("/configuracoes")}`)
+    return NextResponse.redirect(`${origin}/login?proximo=${encodeURIComponent("/perfil?editar=1")}`)
   }
   if (!steamConfigured()) {
-    return NextResponse.redirect(`${origin}/configuracoes?steam=sem-chave#aplicativos`)
+    return NextResponse.redirect(`${origin}/perfil?editar=1&steam=sem-chave#steam`)
   }
 
   const state = randomBytes(16).toString("hex")

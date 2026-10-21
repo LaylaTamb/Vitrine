@@ -1,9 +1,8 @@
 import { fileURLToPath } from "node:url"
 import { defineConfig } from "vitest/config"
 
-// Os testes cobrem `lib/domain/`, o acervo em memória da demonstração
-// (`lib/demo/`), o tratamento das respostas da Geoapify (`lib/geo/`, só as
-// funções puras de `parse.ts`) e os leitores das importações (`lib/import/`:
+// Os testes cobrem `lib/domain/`, o tratamento das respostas da Geoapify
+// (`lib/geo/`, só as funções puras de `parse.ts`) e os leitores das importações (`lib/import/`:
 // CSV, .zip, Google Takeout, Letterboxd) — TypeScript puro, sem React, sem
 // Supabase e sem rede. Nada aqui precisa de DOM.
 export default defineConfig({
@@ -16,7 +15,6 @@ export default defineConfig({
     environment: "node",
     include: [
       "lib/domain/**/*.test.ts",
-      "lib/demo/**/*.test.ts",
       "lib/geo/**/*.test.ts",
       "lib/import/**/*.test.ts",
     ],

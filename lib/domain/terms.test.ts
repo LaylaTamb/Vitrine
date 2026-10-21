@@ -41,7 +41,6 @@ describe("aceite dos termos", () => {
     expect(needsTermsAcceptance("/privacidade", {})).toBe(false)
     expect(needsTermsAcceptance("/redefinir-senha", {})).toBe(false)
     expect(needsTermsAcceptance("/auth/callback", {})).toBe(false)
-    expect(needsTermsAcceptance("/demo/categoria/x", {})).toBe(false)
     // prefixo inteiro, não pedaço de nome
     expect(needsTermsAcceptance("/termos-falsos", {})).toBe(true)
   })

@@ -1,10 +1,7 @@
 /**
  * O formato de backup (exportar/importar o acervo inteiro) e a lógica de
- * gravação — compartilhada entre a Server Action de importar
- * (`app/configuracoes/actions.ts`) e a semeadura/reset da conta demo
- * (`app/demo/*`). Não é "use server": é chamado tanto de dentro de uma Server
- * Action quanto de uma Route Handler, com clientes Supabase diferentes (o do
- * cookie da sessão, ou o admin/`service_role` da conta demo).
+ * gravação, usada pela Server Action de importar (`app/configuracoes/actions.ts`).
+ * Não é "use server": recebe o cliente Supabase da sessão.
  */
 import { z } from "zod"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -244,9 +241,8 @@ export async function wipeOwnerData(
  * trava. Tag casa por nome com o vocabulário já compartilhado do grupo; a que
  * não existir ainda é criada.
  *
- * `supabase` tanto pode ser o cliente da sessão (respeitando RLS, para quem
- * está autenticado como `ownerId`) quanto o cliente admin/`service_role`
- * (ignora RLS, usado só na primeira semeadura da conta demo).
+ * `supabase` é o cliente da sessão (respeitando a RLS, para quem está
+ * autenticado como `ownerId`).
  */
 export async function performImport(
   supabase: SupabaseClient,

@@ -26,14 +26,14 @@ import { profilePath } from "@/lib/domain/username"
 import { withFolder } from "@/lib/navigation"
 
 /**
- * A plaqueta completa do item. Sem estado e sem hook: a página do app
- * (Server Component) e a da demonstração (cliente) usam a mesma.
+ * A plaqueta completa do item. Sem estado e sem hook (Server Component): a
+ * página com login e a de quem não tem conta usam a mesma.
  *
  * O "voltar" sobe um nível: para a subpasta onde o item está, ou para a raiz
  * da categoria.
  *
  * Campo de Localização ganha "Abrir no Maps" — que funciona até sem
- * `places` (na demonstração, ou quando o endereço não foi encontrado): vai o
+ * `places` (sem login, ou quando o endereço não foi encontrado): vai o
  * texto do endereço.
  */
 export function EntryDetail({
@@ -43,7 +43,6 @@ export function EntryDetail({
   tags,
   entryFolders,
   canEdit,
-  basePath = "",
   places = [],
   showMapLink = false,
   categories = [],
@@ -52,15 +51,14 @@ export function EntryDetail({
 }: {
   view: EntryView
   category: Category
-  /** Sem dono (demonstração): some o link "acervo de …". */
+  /** Sem dono: some o link "acervo de …". */
   owner: Profile | null
   tags: Tag[]
   entryFolders: EntryFolder[]
   canEdit: boolean
-  basePath?: string
   /** As linhas de `entry_places` deste item (place_id e coordenadas para os links). */
   places?: EntryPlace[]
-  /** "Ver no mapa do Vitrine": só para o dono, e nunca na demonstração. */
+  /** "Ver no mapa do Vitrine": só para o dono. */
   showMapLink?: boolean
   /** As categorias do dono — o seletor "Categoria" da edição (trocar o item de categoria). */
   categories?: CategorySummary[]
@@ -74,7 +72,7 @@ export function EntryDetail({
 }) {
   const placeOf = (fieldId: string) => places.find((place) => place.field_id === fieldId)
   const folder = entryFolders.find((item) => item.id === view.folderId) ?? null
-  const backHref = withFolder(`${basePath}/categoria/${category.id}`, folder?.id ?? null)
+  const backHref = withFolder(`/categoria/${category.id}`, folder?.id ?? null)
   const backLabel = folder
     ? `📁 ${folder.name}`
     : `${category.icon ? `${category.icon} ` : ""}${category.name}`

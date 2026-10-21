@@ -1,6 +1,9 @@
 /**
  * Tier list: a nota (estrelas) de cada item decide a fileira, como no Tier
- * Maker. Só leitura — mudar um item de fileira seria mudar a nota dele.
+ * Maker. Só leitura — mudar um item de fileira seria mudar a nota dele. O que
+ * não tem nota vai para uma faixa "Sem nota" no fim (antes ficava de fora, e
+ * uma categoria inteira sem notas — uma lista importada do Google — parecia
+ * vazia).
  */
 
 import type { EntryView } from "./types"
@@ -52,18 +55,18 @@ export interface TierRow {
 export interface TierGroups {
   /** Sempre as 6 fileiras, de S a E — vazias também, como no Tier Maker. */
   rows: TierRow[]
-  /** Quantos itens ficaram de fora por não ter nota. */
-  unrated: number
+  /** Os itens sem nota, na ordem em que chegaram — a faixa "Sem nota". */
+  unrated: EntryView[]
 }
 
 /** Distribui os itens nas fileiras mantendo a ordem em que chegaram (a do filtro). */
 export function groupByTier(views: EntryView[]): TierGroups {
   const byTier = new Map<TierId, EntryView[]>(TIERS.map((tier) => [tier.id, []]))
-  let unrated = 0
+  const unrated: EntryView[] = []
 
   for (const view of views) {
     const id = tierOf(view.rating)
-    if (id === null) unrated += 1
+    if (id === null) unrated.push(view)
     else byTier.get(id)!.push(view)
   }
 

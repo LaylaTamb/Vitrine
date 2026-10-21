@@ -16,8 +16,7 @@ type SearchParams = Promise<{ item?: string; aba?: string; categoria?: string }>
 
 /**
  * `/mapa` — tudo que eu marquei com Localização, com o mesmo filtro do
- * Filtro geral. Só do dono: a tela de outra pessoa (`/v/...`) e a
- * demonstração não têm mapa.
+ * Filtro geral. Só do dono: a tela de outra pessoa (`/v/...`) não tem mapa.
  *
  * O acervo, o perfil e a localização dos itens vêm juntos; o mapa
  * (MapLibre + OpenFreeMap) só carrega no navegador, e só nesta página.

@@ -1,10 +1,6 @@
 /**
- * Os schemas zod de toda escrita do app, num lugar só.
- *
- * Moram fora dos arquivos `"use server"` porque dois implementadores usam os
- * mesmos: as Server Actions de verdade (que gravam no Supabase) e o acervo em
- * memória da demonstração (`lib/demo/store.ts`). As regras e as mensagens de
- * erro ficam idênticas nos dois.
+ * Os schemas zod de toda escrita do app, num lugar só (fora dos arquivos
+ * `"use server"`, que só podem exportar funções assíncronas).
  */
 import { z } from "zod"
 

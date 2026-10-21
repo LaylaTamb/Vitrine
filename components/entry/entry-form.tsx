@@ -66,7 +66,7 @@ export function EntryForm({
    */
   categories?: CategorySummary[]
 }) {
-  const { actions, basePath, isDemo } = useVitrine()
+  const { actions } = useVitrine()
   const router = useRouter()
   const editing = Boolean(entry)
   /** O destino escolhido no seletor "Categoria", esperando a confirmação. */
@@ -192,10 +192,10 @@ export function EntryForm({
 
     toast.success(`“${payload.name}” agora está em “${target.name}”. Complete o que faltar.`)
     onOpenChange(false)
-    if (!isDemo && locationFieldsOf(target.estrutura).length > 0) {
+    if (locationFieldsOf(target.estrutura).length > 0) {
       void geocodeAfterSave(actions, entry.id)
     }
-    router.push(`${basePath}/categoria/${target.id}?editar=${entry.id}`)
+    router.push(`/categoria/${target.id}?editar=${entry.id}`)
   }
 
   async function submit(event: React.FormEvent) {
@@ -224,7 +224,7 @@ export function EntryForm({
       (field) =>
         (values[field.id] ?? "").trim() !== String(entry?.values[field.id] ?? "").trim()
     )
-    if (!isDemo && savedId && addressChanged) void geocodeAfterSave(actions, savedId)
+    if (savedId && addressChanged) void geocodeAfterSave(actions, savedId)
   }
 
   return (

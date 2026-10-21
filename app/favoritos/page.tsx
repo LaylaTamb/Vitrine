@@ -8,8 +8,8 @@ import { getMyProfile, requireUser } from "@/lib/queries/session"
 export const metadata: Metadata = { title: "Favoritos · Vitrine" }
 
 /**
- * `/favoritos` — o favorito de cada categoria que a pessoa pôs na aba, na
- * ordem dela. Só ela vê (a tabela tem RLS só do dono).
+ * `/favoritos` — as categorias que a pessoa escolheu para a aba, na ordem
+ * dela, como nas Coleções. Só ela vê (a tabela tem RLS só do dono).
  */
 export default async function FavoritesPage() {
   const user = await requireUser()
@@ -19,10 +19,9 @@ export default async function FavoritesPage() {
     <AppShell profile={profile}>
       <FavoritesView
         ready={data.ready}
-        rows={data.rows}
+        order={data.order}
         categories={data.categories}
-        entries={data.entries}
-        tags={data.tags}
+        counts={data.counts}
       />
     </AppShell>
   )

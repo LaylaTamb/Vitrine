@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils"
 
 /*
  * Os atalhos para o Google Maps. Só links — sem estado e sem hook — para
- * servirem tanto na página do item (Server Component, e a mesma página na
- * demonstração) quanto no cartão do pino e no da Sugestão.
+ * servirem tanto na página do item (Server Component) quanto no cartão do
+ * pino e no da Sugestão.
  */
 
 const LINK_CLASS = buttonVariants({ variant: "outline", size: "sm" })

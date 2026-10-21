@@ -1,66 +1,37 @@
-import { parseEstrutura } from "@/lib/domain/fields"
-import type { FavoriteRow } from "@/lib/domain/favorites"
-import type { Category, EntryWithTags, Tag } from "@/lib/domain/types"
+import { tabOrder } from "@/lib/domain/favorites"
+import type { Category } from "@/lib/domain/types"
+import { getCollections } from "@/lib/queries/collections"
 import { createClient } from "@/lib/supabase/server"
 
 export interface FavoritesPageData {
   /** `false` = a migração 20 ainda não rodou (a tabela não existe). */
   ready: boolean
-  rows: FavoriteRow[]
-  /** Os itens favoritos (de todas as categorias), com os vínculos de tag. */
-  entries: EntryWithTags[]
-  /** Todas as categorias da pessoa — o "Editar aba" escolhe entre elas. */
+  /** Os ids das categorias da aba, na ordem. */
+  order: string[]
+  /** Todas as categorias da pessoa — a aba mostra as escolhidas, o "Adicionar" as outras. */
   categories: Category[]
-  tags: Tag[]
+  /** category_id → total de itens. */
+  counts: Record<string, number>
 }
 
-type CategoryRow = Omit<Category, "estrutura"> & { estrutura: unknown }
-
 /**
- * A aba Favoritos em UMA ida ao banco: as linhas de favoritos já trazem o
- * item por embedding; as categorias e as tags vão em paralelo.
+ * A aba Favoritos: as categorias da pessoa (com as contagens, como nas
+ * Coleções) e, em paralelo, a ordem da aba em `category_favorites`.
  */
 export async function getFavoritesPage(ownerId: string): Promise<FavoritesPageData> {
   const supabase = await createClient()
-
-  const [favoritesResult, categoriesResult, tagsResult] = await Promise.all([
+  const [collections, favoritesResult] = await Promise.all([
+    getCollections(ownerId),
     supabase
       .from("category_favorites")
-      .select("category_id, owner_id, entry_id, tab_position, entry:entries(*, entry_tags(tag_id))")
-      .eq("owner_id", ownerId),
-    supabase
-      .from("categories")
-      .select("*")
+      .select("category_id, tab_position")
       .eq("owner_id", ownerId)
-      .order("display_order", { ascending: true }),
-    supabase.from("tags").select("id, name, color"),
+      .not("tab_position", "is", null),
   ])
 
-  const categories = ((categoriesResult.data ?? []) as CategoryRow[])
-    .map((row) => ({ ...row, estrutura: parseEstrutura(row.estrutura) }))
-    .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name, "pt-BR"))
-  const tags = ((tagsResult.data ?? []) as Tag[]).sort((a, b) =>
-    a.name.localeCompare(b.name, "pt-BR")
-  )
+  const { categories, counts } = collections
+  if (favoritesResult.error) return { ready: false, order: [], categories, counts }
 
-  if (favoritesResult.error) {
-    return { ready: false, rows: [], entries: [], categories, tags }
-  }
-
-  // O PostgREST devolve o item embutido como objeto (a FK é de um para um).
-  const raw = (favoritesResult.data ?? []) as unknown as (FavoriteRow & {
-    entry: EntryWithTags | null
-  })[]
-  return {
-    ready: true,
-    rows: raw.map((row) => ({
-      category_id: row.category_id,
-      owner_id: row.owner_id,
-      entry_id: row.entry_id,
-      tab_position: row.tab_position,
-    })),
-    entries: raw.map((row) => row.entry).filter((entry): entry is EntryWithTags => entry !== null),
-    categories,
-    tags,
-  }
+  const rows = (favoritesResult.data ?? []) as { category_id: string; tab_position: number | null }[]
+  return { ready: true, order: tabOrder(rows), categories, counts }
 }

@@ -24,7 +24,10 @@ export default async function ExplorePage() {
         title="Explorar"
         subtitle="Categorias públicas de outras pessoas. Pegue com os itens: a sua cópia continua recebendo as novidades de quem fez."
       />
-      <ExploreView initial={explore.results} notReady={explore.ready ? null : EXPLORE_NOT_READY} />
+      <ExploreView
+        initial={explore.results}
+        notReady={explore.ready ? explore.error : EXPLORE_NOT_READY}
+      />
     </AppShell>
   )
 }

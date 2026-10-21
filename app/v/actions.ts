@@ -20,8 +20,7 @@ import { createClient } from "@/lib/supabase/server"
 
 /**
  * Seguir, remover seguidor, bloquear (migração 14), o sininho (migração 21)
- * e o QR pessoal (migração 22).
- * Não existem na demonstração: os componentes importam direto daqui.
+ * e o QR pessoal (migração 22). Os componentes importam direto daqui.
  */
 
 const SOCIAL_NOT_READY =

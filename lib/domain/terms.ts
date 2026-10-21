@@ -43,7 +43,7 @@ export function hasAcceptedCurrentTerms(metadata: unknown): boolean {
 
 /**
  * Onde quem ainda não aceitou pode estar: a própria tela de aceite, os dois
- * textos, as telas de conta, os links dos e-mails e a demonstração.
+ * textos, as telas de conta e os links dos e-mails.
  */
 const TERMS_FREE_PREFIXES = [
   "/aceitar-termos",
@@ -54,7 +54,6 @@ const TERMS_FREE_PREFIXES = [
   "/cadastro",
   "/recuperar-senha",
   "/redefinir-senha",
-  "/demo",
 ]
 
 /** Quem está logado e ainda não aceitou a versão em vigor vai para /aceitar-termos? */

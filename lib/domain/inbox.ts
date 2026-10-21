@@ -40,22 +40,3 @@ export function splitInbox<T extends Pick<Category, "kind">>(
   const inbox = inboxOf(categories)
   return { inbox, others: inbox ? categories.filter((category) => category !== inbox) : categories }
 }
-
-/** A linha da caixa de entrada — para a demonstração, que não tem banco. */
-export function newInboxCategory(id: string, ownerId: string, createdAt: string): Category {
-  return {
-    id,
-    owner_id: ownerId,
-    name: INBOX_NAME,
-    icon: INBOX_ICON,
-    color: null,
-    folder_id: null,
-    display_order: 0,
-    estrutura: INBOX_ESTRUTURA,
-    rating_enabled: true,
-    default_sort: "recent",
-    created_at: createdAt,
-    visibility: "private",
-    kind: "inbox",
-  }
-}

@@ -2,12 +2,8 @@
 
 import { Lock } from "lucide-react"
 
-import {
-  isMatchFilterActive,
-  type MatchCopyInfo,
-  type MatchFilter,
-} from "@/lib/domain/match"
 import { itemCount } from "@/lib/domain/format"
+import type { MatchCopyInfo, MatchFilter } from "@/lib/domain/match"
 import { cn } from "@/lib/utils"
 
 const MODES: { mode: MatchFilter["mode"]; label: string }[] = [
@@ -19,7 +15,7 @@ const MODES: { mode: MatchFilter["mode"]; label: string }[] = [
 /**
  * O topo da cópia de um match: a % de compatibilidade (do par ou do grupo),
  * a legenda de cores (tocar numa pessoa mostra só os itens dela) e os filtros
- * rápidos. Filtrando, a lista junta as subpastas.
+ * rápidos "Em comum" e "Sugestões para mim".
  */
 export function MatchPanel({
   info,
@@ -123,9 +119,6 @@ export function MatchPanel({
             </button>
           )
         })}
-        {isMatchFilterActive(filter) ? (
-          <span className="text-xs text-faint">juntando todas as pastas</span>
-        ) : null}
       </div>
 
       <p className="flex items-start gap-1.5 text-xs leading-relaxed text-faint">

@@ -140,7 +140,7 @@ export function CategoryView({
     Folder,
     "id" | "name" | "parent_folder_id" | "display_order" | "visibility" | "is_public"
   >[]
-  /** Onde ficam as Coleções do dono: `/`, `/v/<username>` ou `/demo`. */
+  /** Onde ficam as Coleções do dono: `/` ou `/v/<username>`. */
   collectionsHref: string
   canEdit: boolean
   initialFilter: CategoryFilter
@@ -161,7 +161,7 @@ export function CategoryView({
    */
   match?: MatchCopyInfo | null
 }) {
-  const { actions, isDemo } = useVitrine()
+  const { actions } = useVitrine()
   const matchMode = match !== null
   // Na cópia de um match o dono organiza (pastas, tags, excluir), mas não edita os itens.
   const editItems = canEdit && !matchMode
@@ -286,7 +286,8 @@ export function CategoryView({
   }, [views, currentFolderId])
 
   // O filtro olha só os itens soltos no nível aberto — subpastas são navegação.
-  // Os filtros rápidos do match juntam a cópia inteira (as subpastas somem).
+  // Os filtros rápidos do match olham a cópia inteira (cópia antiga, de antes do
+  // SQL 32, ainda pode ter subpastas: elas somem enquanto filtra).
   const levelViews = useMemo(
     () => (matchActive ? applyMatchFilter(views, matchFilter) : itemsAt(views, currentFolderId)),
     [views, currentFolderId, matchActive, matchFilter]
@@ -518,15 +519,8 @@ export function CategoryView({
             : itemCount(views.length)
         }
         actions={
-          canEdit && matchMode ? (
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setFolderDialog({ open: true, folder: null })}
-            >
-              <FolderPlus className="size-4" /> Nova pasta
-            </Button>
-          ) : canEdit ? (
+          // A cópia de um match é uma lista solta: nada de pasta nem item novo.
+          canEdit && matchMode ? null : canEdit ? (
             <>
               <PrivacySwitch
                 kind="category"
@@ -534,8 +528,8 @@ export function CategoryView({
                 name={category.name}
                 visibility={visibility}
               />
-              {/* O Mapa só mostra o que é meu, e a demonstração não tem mapa. */}
-              {!isDemo && locationFieldsOf(category.estrutura).length > 0 ? (
+              {/* O Mapa só mostra o que é meu. */}
+              {locationFieldsOf(category.estrutura).length > 0 ? (
                 <Link
                   href={`/mapa?categoria=${category.id}`}
                   className={buttonVariants({ variant: "outline", size: "lg" })}

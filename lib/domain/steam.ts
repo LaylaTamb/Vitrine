@@ -143,7 +143,7 @@ export function syncSummary(created: number, updated: number): string {
   return `Steam sincronizada: ${parts.join(" e ")}.`
 }
 
-/** O recado da volta da Steam (`/configuracoes?steam=…`). */
+/** O recado da volta da Steam (`/perfil?editar=1&steam=…`). */
 export const STEAM_RETURN_MESSAGES: Record<string, { text: string; good: boolean }> = {
   ok: { text: "Steam conectada. Seus jogos estão na categoria da pasta “Steam”.", good: true },
   privado: { text: STEAM_PRIVATE, good: false },

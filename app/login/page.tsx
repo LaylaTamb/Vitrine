@@ -29,20 +29,12 @@ export default async function LoginPage({
     <AuthShell
       title="Entrar"
       footer={
-        <>
-          <p>
-            Ainda não tem conta?{" "}
-            <Link href="/cadastro" className={AUTH_LINK_CLASS}>
-              Criar conta
-            </Link>
-          </p>
-          <p>
-            Só quer dar uma olhada?{" "}
-            <Link href="/demo" className={AUTH_LINK_CLASS}>
-              Testar sem conta
-            </Link>
-          </p>
-        </>
+        <p>
+          Ainda não tem conta?{" "}
+          <Link href="/cadastro" className={AUTH_LINK_CLASS}>
+            Criar conta
+          </Link>
+        </p>
       }
     >
       <LoginForm initialError={error} initialNotice={notice} next={next} />

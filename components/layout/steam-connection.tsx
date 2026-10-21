@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 const NOTE = "rounded-lg border border-line bg-surface-hi px-3 py-2.5 text-sm text-muted-foreground"
 
 /**
- * A Steam nas Configurações: conectar (login da própria Steam), sincronizar
+ * A Steam no Meu perfil (Editar cartão): conectar (login da própria Steam), sincronizar
  * agora, ver os jogos e desconectar. A sincronização também roda sozinha uma
  * vez por dia.
  */

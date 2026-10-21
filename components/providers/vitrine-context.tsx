@@ -1,6 +1,5 @@
 "use client"
 
-import { createContext, useContext, type ReactNode } from "react"
 
 import {
   createCategoryAction,
@@ -99,34 +98,13 @@ const serverActions: VitrineActions = {
 }
 
 export interface VitrineRuntime {
-  /** Para onde vai cada escrita. */
+  /** Para onde vai cada escrita: as Server Actions. */
   actions: VitrineActions
-  /** Prefixo de todo link interno: `""` no app, `"/demo"` na demonstração. */
-  basePath: string
-  /** Demonstração em memória: nada é gravado, tudo some no F5. */
-  isDemo: boolean
 }
 
-/**
- * O padrão é o app de verdade — nenhuma página do app precisa de provider.
- * Só `/demo` embrulha a árvore num `VitrineProvider` com o acervo em memória.
- */
-const VitrineContext = createContext<VitrineRuntime>({
-  actions: serverActions,
-  basePath: "",
-  isDemo: false,
-})
+const runtime: VitrineRuntime = { actions: serverActions }
 
-export function VitrineProvider({
-  value,
-  children,
-}: {
-  value: VitrineRuntime
-  children: ReactNode
-}) {
-  return <VitrineContext.Provider value={value}>{children}</VitrineContext.Provider>
-}
-
+/** As escritas do app, num objeto só (checado contra `VitrineActions`). */
 export function useVitrine(): VitrineRuntime {
-  return useContext(VitrineContext)
+  return runtime
 }

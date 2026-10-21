@@ -6,21 +6,31 @@ import { CollectionsView } from "@/components/collection/collections-view"
 import { AppShell, type VisitorInfo } from "@/components/layout/app-shell"
 import { EmptyState } from "@/components/layout/empty-state"
 import { ProfileCardView } from "@/components/social/profile-card"
+import { ProfileEditPanel } from "@/components/social/profile-edit-panel"
 import { ProfileSocialBar, VisitorFollowInvite } from "@/components/social/profile-social-bar"
 import { QrRedeem } from "@/components/social/qr-redeem"
 import type { ProfileCard } from "@/lib/domain/card"
 import { itemCount, plural } from "@/lib/domain/format"
 import { defaultVisibilityOf } from "@/lib/domain/privacy"
 import { isQrToken } from "@/lib/domain/qr"
+import { STEAM_RETURN_MESSAGES } from "@/lib/domain/steam"
 import type { Profile } from "@/lib/domain/types"
 import { normalizeUsername, profilePath, USERNAME_PATTERN } from "@/lib/domain/username"
+import { getSteamAccount } from "@/lib/queries/connected"
 import { getCollectionsByUsername } from "@/lib/queries/profiles"
 import { getProfileCard, getPublicProfile, resolveUsername } from "@/lib/queries/public"
 import { getProfileSocial } from "@/lib/queries/social"
 import { getMyProfile, getSessionUser } from "@/lib/queries/session"
+import { steamConfigured } from "@/lib/steam/client"
 
 type Params = Promise<{ username: string }>
-type SearchParams = Promise<{ qr?: string | string[] }>
+type SearchParams = Promise<{
+  qr?: string | string[]
+  /** `?editar=1`: o painel de edição do cartão (só no seu perfil). */
+  editar?: string | string[]
+  /** O recado da volta do login da Steam. */
+  steam?: string | string[]
+}>
 
 function decoded(raw: string): string {
   try {
@@ -72,6 +82,10 @@ function bareCard(profile: Profile): ProfileCard {
  *
  * `?qr=<código>` é o link do QR pessoal (migração 22): com login, quem abriu
  * vira amigo do dono (`QrRedeem`); sem login, vai entrar e volta para cá.
+ *
+ * O SEU perfil é só o cartão (as suas coleções ficam em Coleções, `/`), e é
+ * ali que ele se edita: `?editar=1` abre o painel com foto e nome, bio e
+ * destaques, as redes e a Steam.
  */
 export default async function ProfilePage({
   params,
@@ -135,6 +149,57 @@ export default async function ProfilePage({
   const social = await getProfileSocial(profile.id, user.id)
   const name = profile.display_name || profile.username
   const total = Object.values(counts).reduce((acc, value) => acc + value, 0)
+  const socialBar = (
+    // A chave muda com a relação: depois de virar amigo pelo QR (ou de
+    // seguir), a faixa recomeça do que o banco diz agora.
+    <ProfileSocialBar
+      key={`${social.iFollow}-${social.followsMe}-${social.iBlocked}`}
+      profileId={profile.id}
+      username={profile.username}
+      social={social}
+      isMe={isMe}
+    />
+  )
+
+  if (isMe && myProfile) {
+    const editing = query.editar === "1"
+    const steam = editing ? await getSteamAccount(user.id) : null
+    // "sem-chave" e "sem-banco" o próprio bloco da Steam já explica: sem recado em dobro.
+    const steamStatus = typeof query.steam === "string" ? query.steam : ""
+    const steamNotice = ["sem-chave", "sem-banco"].includes(steamStatus)
+      ? null
+      : (STEAM_RETURN_MESSAGES[steamStatus] ?? null)
+
+    return (
+      <AppShell profile={myProfile}>
+        <div className="pt-6 pb-16">
+          <QrRedeem token={qr} path={path} />
+          <ProfileCardView
+            card={card ?? bareCard(profile)}
+            isMe
+            ready={card !== null}
+            editing={editing}
+            social={socialBar}
+          />
+          {editing && steam ? (
+            <ProfileEditPanel
+              profile={myProfile}
+              categories={categories}
+              folders={folders}
+              counts={counts}
+              closeHref={path}
+              steam={{
+                ready: steam.ready,
+                configured: steamConfigured(),
+                account: steam.account,
+                notice: steamNotice,
+              }}
+            />
+          ) : null}
+        </div>
+      </AppShell>
+    )
+  }
 
   return (
     <AppShell profile={myProfile}>
@@ -142,29 +207,19 @@ export default async function ProfilePage({
         folders={folders}
         categories={categories}
         counts={counts}
-        canEdit={isMe}
+        canEdit={false}
         defaultVisibility={defaultVisibilityOf(myProfile)}
         headerLabel="Coleções"
-        headerTitle={isMe ? "Suas coleções" : `Coleções de ${name}`}
+        headerTitle={`Coleções de ${name}`}
         headerSubtitle={subtitleOf(categories.length, total, "Nada por aqui ainda.")}
         top={
           <>
             <QrRedeem token={qr} path={path} />
             <ProfileCardView
               card={card ?? bareCard(profile)}
-              isMe={isMe}
+              isMe={false}
               ready={card !== null}
-              social={
-                // A chave muda com a relação: depois de virar amigo pelo QR (ou
-                // de seguir), a faixa recomeça do que o banco diz agora.
-                <ProfileSocialBar
-                  key={`${social.iFollow}-${social.followsMe}-${social.iBlocked}`}
-                  profileId={profile.id}
-                  username={profile.username}
-                  social={social}
-                  isMe={isMe}
-                />
-              }
+              social={socialBar}
             />
           </>
         }

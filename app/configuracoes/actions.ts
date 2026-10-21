@@ -40,13 +40,16 @@ import { requireUser } from "@/lib/queries/session"
 import { steamConfigured } from "@/lib/steam/client"
 import { syncSteamAccount } from "@/lib/steam/sync"
 
-const profileSchema = z.object({
-  displayName: z.string().trim().max(80, "Nome muito longo."),
-  // As mesmas regras da tela (`usernameProblem`); o banco confere de novo.
+// As mesmas regras da tela (`usernameProblem`); o banco confere de novo.
+const usernameSchema = z.object({
   username: z.string().superRefine((value, context) => {
     const problem = usernameProblem(value)
     if (problem) context.addIssue({ code: "custom", message: problem })
   }),
+})
+
+const identitySchema = z.object({
+  displayName: z.string().trim().max(80, "Nome muito longo."),
   avatarUrl: z.string().trim().max(2048).nullable(),
 })
 
@@ -54,19 +57,12 @@ const USERNAME_NOT_READY =
   "A troca de @ ainda não está no banco: rode supabase/15_username_handles.sql no SQL Editor do Supabase."
 
 /**
- * Salva o perfil. O @ só muda pela função `change_username` (migração 15),
- * que confere o limite de 2 trocas a cada 14 dias e deixa o @ antigo
- * redirecionando — e é o primeiro passo: se ele for recusado, nada muda.
+ * Troca o @ (Configurações). Só muda pela função `change_username`
+ * (migração 15), que confere o limite de 2 trocas a cada 14 dias e deixa o @
+ * antigo redirecionando.
  */
-export async function updateProfileAction(input: {
-  displayName: string
-  username: string
-  avatarUrl: string | null
-}): Promise<ActionResult> {
-  const parsed = profileSchema.safeParse({
-    ...input,
-    username: normalizeUsername(input.username),
-  })
+export async function updateUsernameAction(input: { username: string }): Promise<ActionResult> {
+  const parsed = usernameSchema.safeParse({ username: normalizeUsername(input.username) })
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const user = await requireUser()
@@ -85,6 +81,20 @@ export async function updateProfileAction(input: {
     }
   }
 
+  revalidatePath("/", "layout")
+  return ok()
+}
+
+/** A foto (por link) e o nome de exibição — editados no próprio cartão, no Meu perfil. */
+export async function updateIdentityAction(input: {
+  displayName: string
+  avatarUrl: string | null
+}): Promise<ActionResult> {
+  const parsed = identitySchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const user = await requireUser()
+  const supabase = await createClient()
   const { error } = await supabase
     .from("profiles")
     .update({
@@ -137,7 +147,6 @@ export async function updateProfileCardAction(input: {
   if (error) return isMissingColumn(error) ? { ok: false, error: CARD_NOT_READY } : fail(error)
 
   revalidatePath("/v", "layout")
-  revalidatePath("/configuracoes")
   return ok()
 }
 
@@ -168,7 +177,6 @@ export async function updateSocialLinksAction(input: {
   if (error) return isMissingColumn(error) ? { ok: false, error: CARD_NOT_READY } : fail(error)
 
   revalidatePath("/v", "layout")
-  revalidatePath("/configuracoes")
   return ok()
 }
 
@@ -212,7 +220,7 @@ export async function disconnectSteamAction(): Promise<ActionResult> {
     .eq("user_id", user.id)
     .eq("provider", "steam")
   if (error) return isMissingSchema(error) ? { ok: false, error: STEAM_NOT_READY } : fail(error)
-  revalidatePath("/configuracoes")
+  revalidatePath("/v", "layout")
   return ok()
 }
 
@@ -393,8 +401,7 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
 
 /**
  * Importa sempre criando estrutura nova — nunca mistura com o que já existe.
- * A validação e a gravação em si vivem em `lib/backup/import.ts`; a validação
- * também lê o acervo de exemplo da demonstração (`lib/demo/seed.ts`).
+ * A validação e a gravação em si vivem em `lib/backup/import.ts`.
  */
 export async function importCollectionAction(input: {
   json: string

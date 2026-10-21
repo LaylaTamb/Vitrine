@@ -27,7 +27,7 @@ import type { Tag } from "@/lib/domain/types"
 import type { TagWithUsage } from "@/lib/queries/tags"
 
 export function TagsView({ tags }: { tags: TagWithUsage[] }) {
-  const { actions, isDemo } = useVitrine()
+  const { actions } = useVitrine()
   const [editing, setEditing] = useState<TagWithUsage | null>(null)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<TagWithUsage | null>(null)
@@ -72,11 +72,7 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
       <PageHeader
         label="Vocabulário"
         title="Tags"
-        subtitle={
-          isDemo
-            ? "Na demonstração as tags são só desta visita: crie, edite e apague à vontade — nada é salvo."
-            : "As tags são do grupo inteiro: qualquer pessoa cria, edita e apaga, e a mudança vale para o acervo de todo mundo."
-        }
+        subtitle="As tags são do grupo inteiro: qualquer pessoa cria, edita e apaga, e a mudança vale para o acervo de todo mundo."
         actions={
           <Button size="lg" onClick={() => setCreating(true)}>
             <Plus className="size-4" /> Nova tag
@@ -165,7 +161,7 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
                 {editing ? "Editar tag" : "Nova tag"}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
-                {isDemo ? "Só nesta demonstração." : "Vale para o acervo de todo mundo."}
+                Vale para o acervo de todo mundo.
               </DialogDescription>
             </DialogHeader>
 

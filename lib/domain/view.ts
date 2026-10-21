@@ -94,15 +94,12 @@ export interface EntryLike extends Entry {
  *
  * `estrutura` decide quais campos aparecem e em que ordem — valor de campo que
  * não existe mais simplesmente não é exibido.
- *
- * `basePath` prefixa o link do item: `""` no app, `"/demo"` na demonstração.
  */
 export function toView(
   entry: EntryLike,
   estrutura: Estrutura | unknown,
   tagsById: Map<string, Tag> | Record<string, Tag>,
-  categoryName: string,
-  basePath = ""
+  categoryName: string
 ): EntryView {
   const fields = Array.isArray(estrutura)
     ? (estrutura as Estrutura)
@@ -180,7 +177,7 @@ export function toView(
     displayOrder: Number(entry.display_order) || 0,
     createdAt: entry.created_at,
     search,
-    href: `${basePath}/categoria/${entry.category_id}/${entry.id}`,
+    href: `/categoria/${entry.category_id}/${entry.id}`,
     sourceRemoved: Boolean(entry.source_removed_at),
   }
 }

@@ -17,15 +17,15 @@ export const maxDuration = 60
  * `/api/steam/retorno` — a volta do login da Steam. Confere o estado (o
  * cookie), a mensagem do OpenID e pergunta à Steam se ela é legítima
  * (`check_authentication`); só então liga o SteamID ao perfil
- * (`steam_connect`) e faz a primeira sincronização. Termina sempre nas
- * Configurações, com o recado em `?steam=`.
+ * (`steam_connect`) e faz a primeira sincronização. Termina sempre no
+ * painel de edição do Meu perfil (`/perfil?editar=1`), com o recado em `?steam=`.
  */
 export async function GET(request: NextRequest) {
   const origin = await appOrigin()
   const params = request.nextUrl.searchParams
 
   function back(status: string) {
-    const response = NextResponse.redirect(`${origin}/configuracoes?steam=${status}#aplicativos`)
+    const response = NextResponse.redirect(`${origin}/perfil?editar=1&steam=${status}#steam`)
     response.cookies.set(STEAM_STATE_COOKIE, "", { path: STEAM_STATE_PATH, maxAge: 0 })
     return response
   }
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.redirect(`${origin}/login?proximo=${encodeURIComponent("/configuracoes")}`)
+    return NextResponse.redirect(`${origin}/login?proximo=${encodeURIComponent("/perfil?editar=1")}`)
   }
 
   const expected = request.cookies.get(STEAM_STATE_COOKIE)?.value

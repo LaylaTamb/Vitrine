@@ -22,6 +22,8 @@ interface Found {
   suggestions: FieldSuggestion[]
   aiAvailable: boolean
   source: "community" | "ai"
+  /** O banco recusou a busca: a frase, no lugar das sugestões. */
+  error?: string
 }
 
 /** "Lista de opções: Tinto, Branco, Rosé…" — o resumo de uma sugestão. */
@@ -37,8 +39,9 @@ function detailOf(suggestion: FieldSuggestion): string {
 
 /**
  * "Campos usados em categorias como essa" (migração 27), só ao criar: o que
- * outras pessoas usam em categorias públicas de nome parecido (≥ 3 pessoas).
- * Sem nada, um botão pede à IA — que recebe só o nome da categoria.
+ * outras pessoas usam em categorias públicas de nome parecido (basta uma
+ * pessoa — migração 32). Sem nada, um botão pede à IA — que recebe só o nome
+ * da categoria —, ou, sem a IA no servidor, um recado dizendo que não há.
  * "Trazer" põe o campo na lista, com as opções e a moeda (e um id novo).
  */
 export function FieldSuggestions({
@@ -64,8 +67,18 @@ export function FieldSuggestions({
     let alive = true
     const timer = setTimeout(async () => {
       const result = await communityFieldsAction({ name: nameRef.current })
-      if (!alive || !result.ok || !result.data) return
+      if (!alive) return
       setAiError(null)
+      if (!result.ok || !result.data) {
+        setFound({
+          key,
+          suggestions: [],
+          aiAvailable: false,
+          source: "community",
+          error: result.ok ? undefined : result.error,
+        })
+        return
+      }
       setFound({ key, ...result.data, source: "community" })
     }, 600)
     return () => {
@@ -97,8 +110,23 @@ export function FieldSuggestions({
 
   const visible = newSuggestions(found.suggestions, fields)
 
+  if (found.error) {
+    return (
+      <p className="rounded-lg border border-dashed border-line p-3 text-xs text-muted-foreground">
+        Não deu para buscar campos sugeridos agora: {found.error}
+      </p>
+    )
+  }
+
   if (found.suggestions.length === 0) {
-    if (!found.aiAvailable) return null
+    if (!found.aiAvailable) {
+      return (
+        <p className="rounded-lg border border-dashed border-line p-3 text-xs leading-relaxed text-muted-foreground">
+          Ninguém tem uma categoria pública assim ainda para sugerir campos. (A sugestão por IA
+          não está ligada neste servidor.)
+        </p>
+      )
+    }
     return (
       <div className="space-y-2 rounded-lg border border-dashed border-line p-3">
         <p className="text-sm text-muted-foreground">

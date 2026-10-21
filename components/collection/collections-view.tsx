@@ -102,7 +102,7 @@ export function CollectionsView({
    */
   top?: ReactNode
 }) {
-  const { actions, basePath } = useVitrine()
+  const { actions } = useVitrine()
   const [folderParam, setCurrentFolderId] = useFolderParam()
   // Link velho de uma pasta que não existe mais (ou de outra pessoa): raiz.
   const currentFolderId =
@@ -294,11 +294,12 @@ export function CollectionsView({
         <PrivacyNote>{restrictionNote("folder", restrictedBy)}</PrivacyNote>
       ) : null}
 
-      {inbox && currentFolderId === null ? (
+      {/* A "A organizar" só aparece quando tem algo a organizar. */}
+      {inbox && currentFolderId === null && (counts[inbox.id] ?? 0) > 0 ? (
         <InboxCard
           category={inbox}
           count={counts[inbox.id] ?? 0}
-          href={`${basePath}/categoria/${inbox.id}`}
+          href={`/categoria/${inbox.id}`}
           canEdit={canEdit}
         />
       ) : null}
@@ -389,7 +390,7 @@ export function CollectionsView({
                     visibility={canEdit ? visibilityOf(item.category) : undefined}
                     icon={item.category.icon}
                     subtitle={itemCount(counts[item.id] ?? 0)}
-                    href={`${basePath}/categoria/${item.id}`}
+                    href={`/categoria/${item.id}`}
                     canEdit={canEdit}
                     sortable={canEdit}
                     view={view}

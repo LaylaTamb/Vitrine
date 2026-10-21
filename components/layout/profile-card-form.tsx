@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { ArrowDown, ArrowUp, Plus, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -16,7 +15,6 @@ import {
   moveCardId,
 } from "@/lib/domain/card"
 import { itemCount } from "@/lib/domain/format"
-import { profilePath } from "@/lib/domain/username"
 
 export interface CardCategoryOption {
   id: string
@@ -29,19 +27,17 @@ const ICON_BUTTON =
   "flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
 
 /**
- * Configurações → Cartão: a bio e as categorias do cartão (só as públicas
- * aparecem para escolher; até 5, na ordem). Os links das redes ficam em
- * "Aplicativos conectados" (`SocialLinksForm`).
+ * Meu perfil → Editar cartão: a bio e as categorias do cartão (só as
+ * públicas aparecem para escolher; até 5, na ordem). Os links das redes são
+ * o `SocialLinksForm`, logo abaixo.
  */
 export function ProfileCardForm({
-  username,
   ready,
   initialBio,
   initialIds,
   options,
   names,
 }: {
-  username: string
   /** A migração 23 já rodou? */
   ready: boolean
   initialBio: string
@@ -197,13 +193,7 @@ export function ProfileCardForm({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <Link
-          href={profilePath(username)}
-          className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
-        >
-          Ver o cartão no perfil
-        </Link>
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-1">
         <div className="flex items-center gap-3">
           {saved ? <span className="text-xs text-muted-foreground">Cartão salvo.</span> : null}
           <Button type="submit" disabled={pending}>

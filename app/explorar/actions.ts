@@ -33,9 +33,8 @@ import { serverSecret } from "@/lib/steam/client"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * Modelos, Explorar e sugestões de campos (migrações 25 a 27). Não existem
- * na demonstração (ela não tem outras contas): os componentes importam direto
- * daqui.
+ * Modelos, Explorar e sugestões de campos (migrações 25 a 27). Os
+ * componentes importam direto daqui.
  */
 
 /** Categorias públicas de outras pessoas, para começar uma nova a partir delas. */
@@ -137,9 +136,9 @@ export async function unlinkCategoryAction(input: { categoryId: string }): Promi
 // ---------------------------------------------------------------------------
 
 /**
- * Os campos que outras pessoas usam em categorias públicas parecidas (≥ 3
- * pessoas). `aiAvailable`: dá para pedir à IA quando não vier nada. Antes da
- * migração 27, nada — e o painel nem aparece.
+ * Os campos que outras pessoas usam em categorias públicas parecidas (basta
+ * uma pessoa — migração 32). `aiAvailable`: dá para pedir à IA quando não
+ * vier nada. Antes da migração 27, nada — e o painel nem aparece.
  */
 export async function communityFieldsAction(input: {
   name: string

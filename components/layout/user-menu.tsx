@@ -5,6 +5,7 @@ import {
   Compass,
   Filter,
   HeartHandshake,
+  Library,
   LogOut,
   MapIcon,
   QrCode,
@@ -13,7 +14,9 @@ import {
   Tags,
   User,
   Users,
+  type LucideIcon,
 } from "lucide-react"
+import { useSyncExternalStore } from "react"
 
 import { signOutAction } from "@/app/actions"
 import {
@@ -27,6 +30,42 @@ import {
 import { Avatar } from "@/components/ui/avatar-image"
 import { profilePath } from "@/lib/domain/username"
 
+/** Os links da barra de cima — que no celular (abaixo de 768 px) ela esconde. */
+const MOBILE_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/explorar", label: "Explorar", icon: Compass },
+  { href: "/filtro", label: "Filtro geral", icon: Filter },
+  { href: "/mapa", label: "Mapa", icon: MapIcon },
+  { href: "/tags", label: "Tags", icon: Tags },
+  { href: "/favoritos", label: "Favoritos", icon: Star },
+  { href: "/usuarios", label: "Pessoas", icon: Users },
+]
+
+/** O mesmo corte do `md:` do Tailwind, que mostra a barra de links. */
+const MOBILE_QUERY = "(max-width: 767.98px)"
+
+function subscribeMobile(onChange: () => void) {
+  const query = window.matchMedia(MOBILE_QUERY)
+  query.addEventListener("change", onChange)
+  return () => query.removeEventListener("change", onChange)
+}
+
+/**
+ * Celular? Só no navegador (no servidor, não). Melhor que esconder com
+ * `md:hidden`: item escondido ainda entraria na navegação pelas setas.
+ */
+function useMobileNav(): boolean {
+  return useSyncExternalStore(
+    subscribeMobile,
+    () => window.matchMedia(MOBILE_QUERY).matches,
+    () => false
+  )
+}
+
+/**
+ * O menu da conta: o seu perfil, as suas Coleções, o QR, os Matches, as
+ * Configurações e Sair. O que já está na barra de cima não se repete (só no
+ * celular, onde a barra não mostra os links).
+ */
 export function UserMenu({
   name,
   username,
@@ -36,6 +75,8 @@ export function UserMenu({
   username: string
   avatarUrl: string | null
 }) {
+  const mobile = useMobileNav()
+
   return (
     <DropdownMenu>
       {/* O @ fica sempre à vista: é por ele que as pessoas se acham. */}
@@ -60,8 +101,18 @@ export function UserMenu({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link href="/">
+            <Library className="size-4" /> Coleções
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/qr">
             <QrCode className="size-4" /> Meu QR
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/matches">
+            <HeartHandshake className="size-4" /> Matches
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -70,44 +121,19 @@ export function UserMenu({
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem asChild>
-          <Link href="/explorar">
-            <Compass className="size-4" /> Explorar
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/filtro">
-            <Filter className="size-4" /> Filtro geral
-          </Link>
-        </DropdownMenuItem>
-        {/* O menu da conta não existe na demonstração — o Mapa também não. */}
-        <DropdownMenuItem asChild>
-          <Link href="/mapa">
-            <MapIcon className="size-4" /> Mapa
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/tags">
-            <Tags className="size-4" /> Tags
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/favoritos">
-            <Star className="size-4" /> Favoritos
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/usuarios">
-            <Users className="size-4" /> Pessoas
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/matches">
-            <HeartHandshake className="size-4" /> Matches
-          </Link>
-        </DropdownMenuItem>
+        {/* No celular a barra de cima não tem os links: eles vêm aqui. */}
+        {mobile ? (
+          <>
+            <DropdownMenuSeparator />
+            {MOBILE_LINKS.map((link) => (
+              <DropdownMenuItem key={link.href} asChild>
+                <Link href={link.href}>
+                  <link.icon className="size-4" /> {link.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </>
+        ) : null}
 
         <DropdownMenuSeparator />
 

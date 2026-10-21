@@ -123,7 +123,7 @@ export function ExploreView({
           description={
             query.trim()
               ? "Nenhuma categoria pública com esse nome. Tente outra palavra."
-              : "Quando outras pessoas deixarem categorias públicas com itens, elas aparecem aqui."
+              : "Aqui aparecem as categorias Públicas, com pelo menos um item, de outras pessoas (as suas não entram). Quando alguém deixar uma assim, ela aparece aqui."
           }
         />
       ) : (

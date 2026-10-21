@@ -84,7 +84,7 @@ describe("tier list", () => {
     ])
   })
 
-  it("agrupa mantendo a ordem de entrada e conta os sem nota", () => {
+  it("agrupa mantendo a ordem de entrada e junta os sem nota", () => {
     const views = [
       rated("a", 4),
       rated("b", null),
@@ -101,13 +101,13 @@ describe("tier list", () => {
       rows.map((row) => [row.tier.id, row.views.map((view) => view.id)])
     )
     expect(ids).toEqual({ S: ["c"], A: ["a", "d"], B: ["f"], C: [], D: [], E: ["e"] })
-    expect(unrated).toBe(2)
+    expect(unrated.map((view) => view.id)).toEqual(["b", "g"])
   })
 
   it("devolve as seis fileiras vazias quando não há nada", () => {
     const { rows, unrated } = groupByTier([])
     expect(rows).toHaveLength(6)
     expect(rows.every((row) => row.views.length === 0)).toBe(true)
-    expect(unrated).toBe(0)
+    expect(unrated).toEqual([])
   })
 })

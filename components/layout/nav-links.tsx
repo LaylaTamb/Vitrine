@@ -15,34 +15,14 @@ const LINKS = [
   { href: "/usuarios", label: "Pessoas" },
 ]
 
-/**
- * `basePath` prefixa os links (`/demo` na demonstração); `hideUsers` tira
- * "Pessoas" (e o "Explorar", que também depende de outras contas) e
- * `hideMap` tira o "Mapa" — nenhum deles existe na demo.
- */
-export function NavLinks({
-  hideUsers = false,
-  hideMap = false,
-  basePath = "",
-}: {
-  hideUsers?: boolean
-  hideMap?: boolean
-  basePath?: string
-}) {
-  const fullPath = usePathname()
-  // O caminho sem o prefixo, para a regra de "ativo" ser a mesma nos dois.
-  const pathname =
-    basePath && fullPath.startsWith(basePath) ? fullPath.slice(basePath.length) || "/" : fullPath
-  const links = LINKS.filter(
-    (link) =>
-      !(hideUsers && (link.href === "/usuarios" || link.href === "/explorar")) &&
-      !(hideMap && link.href === "/mapa")
-  )
+/** Os links do app na barra de cima (do tablet para cima; no celular, no menu da conta). */
+export function NavLinks() {
+  const pathname = usePathname()
 
   return (
     // Entre 768 e 1024 px são 7 links, o sininho e o @: mais justos ali.
     <nav className="hidden items-center gap-0.5 md:flex lg:gap-1">
-      {links.map((link) => {
+      {LINKS.map((link) => {
         const active =
           link.href === "/"
             ? pathname === "/" || pathname.startsWith("/categoria")
@@ -51,7 +31,7 @@ export function NavLinks({
         return (
           <Link
             key={link.href}
-            href={link.href === "/" ? basePath || "/" : `${basePath}${link.href}`}
+            href={link.href}
             className={cn(
               "rounded-md px-2 py-1.5 text-sm transition-colors lg:px-2.5",
               active

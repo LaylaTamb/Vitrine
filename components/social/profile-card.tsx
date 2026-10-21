@@ -23,6 +23,7 @@ import {
   type SocialProvider,
 } from "@/lib/domain/card"
 import { formatRating, itemCount } from "@/lib/domain/format"
+import { profilePath } from "@/lib/domain/username"
 
 const SOCIAL_ICONS: Record<SocialProvider, LucideIcon> = {
   instagram: AtSign,
@@ -42,16 +43,22 @@ const CHIP =
  *
  * `ready = false`: a migração 23 ainda não rodou — o cartão mostra só o
  * nome e o @, e o dono não ganha o botão do story.
+ *
+ * O dono edita aqui mesmo: "Editar cartão" abre `?editar=1`, e o painel de
+ * edição aparece logo abaixo (`ProfileEditPanel`).
  */
 export function ProfileCardView({
   card,
   isMe,
   ready,
   social,
+  editing = false,
 }: {
   card: ProfileCard
   isMe: boolean
   ready: boolean
+  /** O painel de edição está aberto embaixo: o botão Editar sai. */
+  editing?: boolean
   /** A faixa social (seguir, contagens) ou o convite para entrar. */
   social?: ReactNode
 }) {
@@ -105,14 +112,16 @@ export function ProfileCardView({
       {isMe ? (
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
           {ready ? <ShareStoryButton username={profile.username} /> : null}
-          <Link
-            href="/configuracoes#cartao"
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-          >
-            <Pencil className="size-4" />
-            {cardHasContent(card) ? "Editar cartão" : "Montar cartão"}
-          </Link>
-          {cardHasContent(card) ? null : (
+          {editing ? null : (
+            <Link
+              href={`${profilePath(profile.username)}?editar=1#editar`}
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              <Pencil className="size-4" />
+              {cardHasContent(card) ? "Editar cartão" : "Montar cartão"}
+            </Link>
+          )}
+          {cardHasContent(card) || editing ? null : (
             <p className="w-full text-xs text-faint sm:w-auto">
               Uma bio, seus links e até 5 categorias públicas com os 3 melhores itens.
             </p>

@@ -44,7 +44,7 @@ export function SharePanel({
   categories: Category[]
   suggestedId: string | null
 }) {
-  const { actions, basePath, isDemo } = useVitrine()
+  const { actions } = useVitrine()
   const router = useRouter()
   const [name, setName] = useState(initialName)
   const [query, setQuery] = useState("")
@@ -127,10 +127,10 @@ export function SharePanel({
     })
     // Endereço no campo principal: procura no mapa em segundo plano.
     const field = category.estrutura.find((item) => item.id === quick)
-    if (!isDemo && entryId && field?.tipo === "location" && value.trim()) {
+    if (entryId && field?.tipo === "location" && value.trim()) {
       void geocodeAfterSave(actions, entryId)
     }
-    router.replace(`${basePath}/categoria/${category.id}`)
+    router.replace(`/categoria/${category.id}`)
   }
 
   async function createAndSave() {

@@ -29,7 +29,7 @@ import { createClient } from "@/lib/supabase/server"
 /**
  * Match (migração 30). As regras — só amigos, até 8 pessoas, todos aceitam,
  * uma recusa cancela — moram nas funções do banco; aqui só validamos a
- * entrada e traduzimos o erro. Não existe na demonstração.
+ * entrada e traduzimos o erro.
  */
 
 function failMatch(error: unknown): ActionResult<never> {

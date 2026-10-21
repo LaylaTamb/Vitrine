@@ -8,7 +8,6 @@ import {
   INBOX_LOCKED_MESSAGE,
   inboxOf,
   isInbox,
-  newInboxCategory,
   splitInbox,
 } from "./inbox"
 
@@ -37,15 +36,6 @@ describe("A organizar", () => {
     expect(INBOX_ESTRUTURA).toEqual([
       { id: INBOX_LOCATION_FIELD_ID, nome: "Localização", tipo: "location" },
     ])
-    const linha = newInboxCategory("id", "dono", "2026-10-19T00:00:00Z")
-    expect(linha).toMatchObject({
-      name: "A organizar",
-      icon: "📥",
-      kind: "inbox",
-      rating_enabled: true,
-      folder_id: null,
-      visibility: "private",
-    })
   })
 
   it("a trava do banco vira frase", () => {

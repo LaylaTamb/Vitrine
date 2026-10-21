@@ -31,7 +31,7 @@ export function EntryDetailActions({
   /** As categorias do dono: com elas, a edição pode trocar o item de categoria. */
   categories?: CategorySummary[]
 }) {
-  const { actions, basePath } = useVitrine()
+  const { actions } = useVitrine()
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -72,7 +72,7 @@ export function EntryDetailActions({
           }
           toast.success("Item excluído.")
           // Volta para o nível onde o item estava.
-          router.push(withFolder(`${basePath}/categoria/${categoryId}`, view.folderId))
+          router.push(withFolder(`/categoria/${categoryId}`, view.folderId))
         }}
       />
     </>

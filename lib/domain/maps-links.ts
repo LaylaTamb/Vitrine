@@ -1,8 +1,7 @@
 /**
  * Links para o app/site do Google Maps — as "Maps URLs" oficiais: só links,
- * sem API, sem chave e sem custo. Funcionam até sem localização (na
- * demonstração, ou quando o endereço não foi encontrado): aí vai o texto do
- * endereço.
+ * sem API, sem chave e sem custo. Funcionam até sem localização (sem login,
+ * ou quando o endereço não foi encontrado): aí vai o texto do endereço.
  *
  * Prioridade do destino: coordenadas, depois o texto. (O `place_id` guardado
  * é da Geoapify, não do Google — não serve para estes links.)

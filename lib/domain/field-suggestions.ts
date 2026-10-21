@@ -1,6 +1,6 @@
 /**
  * Sugestões de campos ao criar uma categoria (migração 27): primeiro o que
- * outras pessoas usam em categorias públicas parecidas (≥ 3 pessoas); sem
+ * outras pessoas usam em categorias públicas parecidas (basta uma); sem
  * nada, a IA (Google Gemini, plano gratuito), que recebe SÓ o nome da
  * categoria. Aqui fica a leitura cuidadosa das duas respostas (a da IA
  * inclusive: ela pode inventar tipo, moeda ou lista vazia) e o pedido à IA.
