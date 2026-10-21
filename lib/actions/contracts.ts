@@ -100,7 +100,8 @@ export interface VitrineActions {
   }): Result<{ id: string }>
   renameFolder(input: { id: string; name: string }): Result
   moveFolder(input: { id: string; targetFolderId: string | null }): Result
-  deleteFolder(input: { id: string }): Result
+  /** Vai para a Lixeira (migração 37); `trashId` = o "Desfazer" (nulo antes da migração). */
+  deleteFolder(input: { id: string }): Result<{ trashId: string | null }>
   reorderLevel(input: { items: { kind: "folder" | "category"; id: string }[] }): Result
 
   // ---- privacidade: Pública (qualquer pessoa), Amigos ou Privada (só o dono)
@@ -121,7 +122,8 @@ export interface VitrineActions {
     input: CategoryInput & { id: string; removedFieldIds?: string[] }
   ): Result
   moveCategory(input: { id: string; targetFolderId: string | null }): Result
-  deleteCategory(input: { id: string }): Result
+  /** Vai para a Lixeira (migração 37); `trashId` = o "Desfazer" (nulo antes da migração). */
+  deleteCategory(input: { id: string }): Result<{ trashId: string | null }>
   structureImpact(input: {
     categoryId: string
     fieldIds: string[]

@@ -59,6 +59,7 @@ function subtitleOf(categories: number, entries: number, empty: string): string 
 /** Antes da migração 23 (sem cartão no banco): só o nome, o @ e a foto. */
 function bareCard(profile: Profile): ProfileCard {
   return {
+    banner: null,
     profile: {
       id: profile.id,
       username: profile.username,

@@ -1,7 +1,7 @@
 /**
- * Cartão de apresentação do perfil (migração 23): bio, links das redes e até
- * 5 categorias públicas com os 3 melhores itens. Quem monta o cartão é o
- * banco (`profile_card`); aqui ficam as regras do formulário e a leitura
+ * Cartão de apresentação do perfil (migração 23): bio, links das redes, até
+ * 5 categorias públicas com os 3 melhores itens e o banner (migração 36).
+ * Quem monta o cartão é o banco (`profile_card`); aqui ficam as regras do formulário e a leitura
  * cuidadosa do que volta (um link estranho gravado direto pela API nunca vira
  * `href`).
  */
@@ -12,6 +12,55 @@ import type { Category, Folder } from "./types"
 
 export const BIO_MAX = 220
 export const CARD_MAX_CATEGORIES = 5
+
+/** O erro de gravar o banner antes de a migração 36 rodar. */
+export const BANNER_NOT_READY =
+  "O banner ainda não está no banco: rode supabase/36_profile_banner.sql no SQL Editor do Supabase."
+
+/** A posição do banner sem ajuste: o meio da imagem. */
+export const BANNER_DEFAULT_POSITION = 50
+
+/** O banner: o link e que parte da imagem aparece (0 = topo, 100 = pé). */
+export interface CardBanner {
+  url: string
+  position: number
+}
+
+/** 0 a 100, inteiro; o que não for número vira o meio. */
+export function clampBannerPosition(raw: unknown): number {
+  const value = Number(raw)
+  if (!Number.isFinite(value)) return BANNER_DEFAULT_POSITION
+  return Math.round(Math.min(100, Math.max(0, value)))
+}
+
+/**
+ * O link do banner como vai para o banco: vazio = sem banner; senão, só
+ * endereço http(s) de verdade, até 2048 caracteres (o banco confere de novo).
+ */
+export function normalizeBannerUrl(
+  raw: string
+): { ok: true; value: string | null } | { ok: false; error: string } {
+  const trimmed = raw.trim()
+  if (!trimmed) return { ok: true, value: null }
+  if (trimmed.length > 2048) return { ok: false, error: "Link longo demais." }
+  try {
+    const url = new URL(trimmed)
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
+      return { ok: false, error: "Use um link que comece com https://." }
+    }
+    return { ok: true, value: url.toString() }
+  } catch {
+    return { ok: false, error: "Isso não parece um link de imagem (https://…)." }
+  }
+}
+
+/** O banner lido do banco (`profile_card`) — link estranho fica de fora. */
+export function bannerFrom(raw: unknown): CardBanner | null {
+  const row = (raw && typeof raw === "object" ? raw : null) as Record<string, unknown> | null
+  const url = typeof row?.url === "string" ? normalizeBannerUrl(row.url) : null
+  if (!url || !url.ok || !url.value) return null
+  return { url: url.value, position: clampBannerPosition(row?.position) }
+}
 
 /** O erro de gravar o cartão antes de a migração 23 rodar. */
 export const CARD_NOT_READY =
@@ -304,6 +353,8 @@ export interface CardCategory {
 }
 
 export interface ProfileCard {
+  /** `null` = sem banner (a faixa fica na cor da casa). */
+  banner: CardBanner | null
   profile: {
     id: string
     username: string
@@ -364,6 +415,7 @@ export function parseProfileCard(raw: unknown): ProfileCard | null {
   if (!id || !username) return null
   const bio = text(row.bio)
   return {
+    banner: bannerFrom(row.banner),
     profile: {
       id,
       username,

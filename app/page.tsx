@@ -6,6 +6,7 @@ import { itemCount, plural } from "@/lib/domain/format"
 import { placeTargets } from "@/lib/domain/nearby"
 import { defaultVisibilityOf, needsPublicNotice } from "@/lib/domain/privacy"
 import { getCollections } from "@/lib/queries/collections"
+import { getMyTrashCount } from "@/lib/queries/trash"
 import { displayNameOf, requireUser } from "@/lib/queries/session"
 
 /**
@@ -18,7 +19,10 @@ import { displayNameOf, requireUser } from "@/lib/queries/session"
  */
 export default async function CollectionsPage() {
   const user = await requireUser()
-  const { profile, folders, categories, counts } = await getCollections(user.id)
+  const [{ profile, folders, categories, counts }, trashCount] = await Promise.all([
+    getCollections(user.id),
+    getMyTrashCount(),
+  ])
 
   const totalEntries = Object.values(counts).reduce((acc, value) => acc + value, 0)
   // O @ sempre à vista, também no próprio perfil.
@@ -42,6 +46,8 @@ export default async function CollectionsPage() {
         headerTitle={displayNameOf(profile)}
         headerSubtitle={subtitle}
         defaultVisibility={defaultVisibilityOf(profile)}
+        searchable
+        trashCount={trashCount}
       />
     </AppShell>
   )

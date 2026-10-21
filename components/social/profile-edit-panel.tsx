@@ -2,12 +2,19 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import { Check } from "lucide-react"
 
+import { BannerForm } from "@/components/layout/banner-form"
 import { IdentityForm } from "@/components/layout/identity-form"
 import { ProfileCardForm } from "@/components/layout/profile-card-form"
 import { SocialLinksForm } from "@/components/layout/social-links-form"
 import { SteamConnection } from "@/components/layout/steam-connection"
 import { buttonVariants } from "@/components/ui/button"
-import { cardCategoryOptions, socialInputValue, SOCIAL_PROVIDERS } from "@/lib/domain/card"
+import {
+  BANNER_DEFAULT_POSITION,
+  cardCategoryOptions,
+  clampBannerPosition,
+  socialInputValue,
+  SOCIAL_PROVIDERS,
+} from "@/lib/domain/card"
 import { timeAgo } from "@/lib/domain/social"
 import type { Category, Folder, Profile } from "@/lib/domain/types"
 import type { SteamAccountView } from "@/lib/queries/connected"
@@ -16,8 +23,8 @@ const LINK = "text-foreground underline underline-offset-2 transition-colors hov
 
 /**
  * Meu perfil → Editar cartão (`/v/<@>?editar=1`): tudo o que aparece no
- * cartão, no próprio perfil — foto e nome, bio e destaques, as redes e a
- * Steam. O @, a senha e o resto da conta ficam nas Configurações.
+ * cartão, no próprio perfil — o banner, foto e nome, bio e destaques, as
+ * redes e a Steam. O @, a senha e o resto da conta ficam nas Configurações.
  */
 export function ProfileEditPanel({
   profile,
@@ -57,6 +64,21 @@ export function ProfileEditPanel({
           .
         </p>
       </div>
+
+      <Block
+        id="banner"
+        title="Banner"
+        description="A faixa no topo do cartão, como no Twitter. Também vai para o story."
+      >
+        <BannerForm
+          initialUrl={profile.banner_url ?? ""}
+          initialPosition={
+            profile.banner_position === undefined
+              ? BANNER_DEFAULT_POSITION
+              : clampBannerPosition(profile.banner_position)
+          }
+        />
+      </Block>
 
       <Block title="Foto e nome">
         <IdentityForm

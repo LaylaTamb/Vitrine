@@ -1,12 +1,19 @@
 import type { CardCategory, ProfileCard } from "@/lib/domain/card"
 import { formatRating, itemCount } from "@/lib/domain/format"
+import { coverBox } from "@/lib/domain/remote-image"
 
 /**
- * A imagem do story (1080×1920) desenhada pelo `next/og`: foto, nome, @, bio,
- * as categorias do cartão com os 3 melhores itens e o QR do perfil (o link
- * simples, sem código de amizade). Só estilos inline — é o que o gerador
- * entende; as cores são as do tema escuro do app.
+ * A imagem do story (1080×1920) desenhada pelo `next/og`: o banner no topo
+ * (migração 36), a foto por cima da borda dele, nome, @, bio, as categorias
+ * do cartão com os 3 melhores itens e o QR do perfil (o link simples, sem
+ * código de amizade). Só estilos inline — é o que o gerador entende; as cores
+ * são as do tema escuro do app.
  */
+
+/** A altura da faixa do banner (largura inteira: 1080). */
+const BANNER_HEIGHT = 330
+/** A foto: metade dela por cima do banner. */
+const AVATAR = 176
 
 const COLORS = {
   bg: "#131315",
@@ -45,7 +52,7 @@ function CategoryBlock({ category, compact }: { category: CardCategory; compact:
     <div
       style={{
         ...COLUMN,
-        width: compact ? 452 : 920,
+        width: compact ? 460 : 936,
         padding: compact ? "26px 26px" : "28px 32px",
         borderRadius: 28,
         backgroundColor: COLORS.surface,
@@ -71,9 +78,7 @@ function CategoryBlock({ category, compact }: { category: CardCategory; compact:
       </div>
       <div style={{ ...COLUMN, gap: 10, marginTop: 18 }}>
         {category.top.length === 0 ? (
-          <div style={{ display: "flex", fontSize: 30, color: COLORS.faint }}>
-            Ainda sem itens.
-          </div>
+          <div style={{ display: "flex", fontSize: 30, color: COLORS.faint }}>Ainda sem itens.</div>
         ) : (
           category.top.map((item, index) => (
             <div key={item.id} style={{ ...ROW, gap: 12 }}>
@@ -108,12 +113,21 @@ function CategoryBlock({ category, compact }: { category: CardCategory; compact:
 export function StoryImage({
   card,
   avatar,
+  banner,
+  bannerSize,
   qr,
   site,
 }: {
   card: ProfileCard
   /** A foto já como `data:` (ou `null`: usa a inicial). */
   avatar: string | null
+  /** O banner já como `data:` (ou `null`: a faixa fica na cor da casa). */
+  banner: string | null
+  /**
+   * O tamanho do banner (`imageSizeOf`): o gerador não entende
+   * `object-position`, então o recorte é calculado (`coverBox`). Sem ele, centrado.
+   */
+  bannerSize: { width: number; height: number } | null
   /** O QR do perfil como `data:image/svg+xml`. */
   qr: string
   /** O endereço do perfil sem `https://`, escrito embaixo do QR. */
@@ -124,6 +138,9 @@ export function StoryImage({
   // Até 2 categorias, uma por linha; mais que isso, duas colunas (senão uma
   // bio longa com 5 categorias não cabe na altura).
   const compact = categories.length > 2
+  const bannerBox = bannerSize
+    ? coverBox(bannerSize, { width: 1080, height: BANNER_HEIGHT }, card.banner?.position ?? 50)
+    : null
 
   return (
     <div
@@ -131,92 +148,151 @@ export function StoryImage({
         ...COLUMN,
         width: 1080,
         height: 1920,
-        padding: "96px 80px 88px",
         backgroundColor: COLORS.bg,
-        backgroundImage: `linear-gradient(180deg, #221a26 0%, ${COLORS.bg} 38%)`,
         color: COLORS.ink,
       }}
     >
-      <div style={{ ...ROW, gap: 14, fontSize: 34, color: COLORS.brand }}>
-        <div
-          style={{
-            display: "flex",
-            width: 16,
-            height: 16,
-            borderRadius: 8,
-            backgroundColor: COLORS.brand,
-          }}
-        />
-        Vitrine
-      </div>
-
-      <div style={{ ...ROW, gap: 36, marginTop: 64 }}>
-        {avatar ? (
+      {/* O banner de ponta a ponta; sem ele, a faixa na cor da casa. */}
+      <div
+        style={{
+          display: "flex",
+          position: "relative",
+          width: 1080,
+          height: BANNER_HEIGHT,
+          overflow: "hidden",
+          backgroundImage: "linear-gradient(135deg, #3a2a40 0%, #221a26 55%, #1d1d20 100%)",
+        }}
+      >
+        {banner && bannerBox ? (
           // eslint-disable-next-line @next/next/no-img-element -- desenhada pelo next/og, não é página
           <img
-            src={avatar}
-            width={184}
-            height={184}
+            src={banner}
+            width={bannerBox.width}
+            height={bannerBox.height}
             alt=""
-            style={{ borderRadius: 92, objectFit: "cover", border: `4px solid ${COLORS.line}` }}
+            style={{ position: "absolute", left: bannerBox.left, top: bannerBox.top }}
           />
-        ) : (
+        ) : banner ? (
+          // eslint-disable-next-line @next/next/no-img-element -- desenhada pelo next/og, não é página
+          <img
+            src={banner}
+            width={1080}
+            height={BANNER_HEIGHT}
+            alt=""
+            style={{ objectFit: "cover" }}
+          />
+        ) : null}
+        <div
+          style={{
+            ...ROW,
+            position: "absolute",
+            top: 48,
+            left: 64,
+            gap: 12,
+            padding: "10px 22px",
+            borderRadius: 999,
+            backgroundColor: "rgba(19, 19, 21, 0.72)",
+            fontSize: 32,
+            color: COLORS.brand,
+          }}
+        >
           <div
             style={{
-              ...ROW,
-              justifyContent: "center",
-              width: 184,
-              height: 184,
-              borderRadius: 92,
-              backgroundColor: COLORS.wash,
-              color: COLORS.brand,
-              fontSize: 88,
+              display: "flex",
+              width: 14,
+              height: 14,
+              borderRadius: 7,
+              backgroundColor: COLORS.brand,
             }}
-          >
-            {(name.trim()[0] ?? "?").toUpperCase()}
-          </div>
-        )}
-        <div style={{ ...COLUMN, flex: 1, minWidth: 0 }}>
-          {/* O nome quebra linha em vez de ser cortado (até 80 caracteres). */}
-          <div style={{ display: "flex", fontSize: 60, lineHeight: 1.12, color: COLORS.ink }}>
-            {name}
-          </div>
-          <div style={{ display: "flex", fontSize: 38, color: COLORS.muted, marginTop: 10 }}>
-            @{profile.username}
-          </div>
+          />
+          Vitrine
         </div>
       </div>
 
-      {bio ? (
-        <div
-          style={{ display: "flex", fontSize: 38, lineHeight: 1.4, color: COLORS.ink, marginTop: 48 }}
-        >
-          {bio}
-        </div>
-      ) : null}
-
-      {categories.length > 0 ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 56 }}>
-          {categories.map((category) => (
-            <CategoryBlock key={category.id} category={category} compact={compact} />
-          ))}
-        </div>
-      ) : null}
-
-      <div style={{ display: "flex", flex: 1 }} />
-
-      <div style={{ ...ROW, gap: 40 }}>
-        <div style={{ display: "flex", padding: 16, borderRadius: 28, backgroundColor: "#ffffff" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- desenhada pelo next/og, não é página */}
-          <img src={qr} width={232} height={232} alt="" />
-        </div>
-        <div style={{ ...COLUMN, flex: 1 }}>
-          <div style={{ display: "flex", fontSize: 44, color: COLORS.ink }}>Me acha no Vitrine</div>
-          <div style={{ display: "flex", fontSize: 32, color: COLORS.brand, marginTop: 12 }}>
-            {site}
+      <div style={{ ...COLUMN, flex: 1, padding: "0 72px 64px" }}>
+        <div style={{ ...ROW, alignItems: "flex-end", gap: 32, marginTop: -(AVATAR / 2) }}>
+          {avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element -- desenhada pelo next/og, não é página
+            <img
+              src={avatar}
+              width={AVATAR}
+              height={AVATAR}
+              alt=""
+              style={{
+                borderRadius: AVATAR / 2,
+                objectFit: "cover",
+                border: `8px solid ${COLORS.bg}`,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                ...ROW,
+                justifyContent: "center",
+                width: AVATAR,
+                height: AVATAR,
+                borderRadius: AVATAR / 2,
+                backgroundColor: "#2a2230",
+                border: `8px solid ${COLORS.bg}`,
+                color: COLORS.brand,
+                fontSize: 84,
+              }}
+            >
+              {(name.trim()[0] ?? "?").toUpperCase()}
+            </div>
+          )}
+          <div style={{ ...COLUMN, flex: 1, minWidth: 0, paddingBottom: 6 }}>
+            {/* O nome quebra linha em vez de ser cortado (até 80 caracteres). */}
+            <div style={{ display: "flex", fontSize: 56, lineHeight: 1.12, color: COLORS.ink }}>
+              {name}
+            </div>
+            <div style={{ display: "flex", fontSize: 36, color: COLORS.muted, marginTop: 8 }}>
+              @{profile.username}
+            </div>
           </div>
-          <div style={{ display: "flex", fontSize: 28, color: COLORS.faint, marginTop: 16 }}>
-            Aponte a câmera para o QR
+        </div>
+
+        {bio ? (
+          <div
+            style={{
+              display: "flex",
+              fontSize: 36,
+              lineHeight: 1.38,
+              color: COLORS.ink,
+              marginTop: 32,
+            }}
+          >
+            {bio}
+          </div>
+        ) : null}
+
+        {categories.length > 0 ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 36 }}>
+            {categories.map((category) => (
+              <CategoryBlock key={category.id} category={category} compact={compact} />
+            ))}
+          </div>
+        ) : null}
+
+        <div style={{ display: "flex", flex: 1 }} />
+
+        <div style={{ ...ROW, gap: 40 }}>
+          <div
+            style={{ display: "flex", padding: 14, borderRadius: 26, backgroundColor: "#ffffff" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- desenhada pelo next/og, não é página */}
+            <img src={qr} width={208} height={208} alt="" />
+          </div>
+          <div style={{ ...COLUMN, flex: 1 }}>
+            <div style={{ display: "flex", fontSize: 44, color: COLORS.ink }}>
+              Me acha no Vitrine
+            </div>
+            <div style={{ display: "flex", fontSize: 32, color: COLORS.brand, marginTop: 12 }}>
+              {site}
+            </div>
+            <div style={{ display: "flex", fontSize: 28, color: COLORS.faint, marginTop: 16 }}>
+              Aponte a câmera para o QR
+            </div>
           </div>
         </div>
       </div>

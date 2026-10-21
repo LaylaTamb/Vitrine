@@ -47,7 +47,11 @@ export function DeleteEntryFolderDialog({
       toast.error(result.error)
       return
     }
-    toast.success(keepContents ? "Pasta excluída. O conteúdo subiu um nível." : "Pasta excluída.")
+    toast.success(
+      keepContents
+        ? "Pasta excluída. O conteúdo subiu um nível."
+        : "Pasta na Lixeira por 30 dias, com o que tinha dentro."
+    )
     onOpenChange(false)
   }
 
@@ -74,8 +78,8 @@ export function DeleteEntryFolderDialog({
                   <p>
                     <span className="text-foreground">Manter conteúdo</span>: só a pasta some, e o
                     que estava nela vai para {parentLabel}.{" "}
-                    <span className="text-foreground">Excluir tudo</span>: apaga a pasta com tudo
-                    dentro — não dá para desfazer.
+                    <span className="text-foreground">Excluir tudo</span>: a pasta vai para a
+                    Lixeira com tudo dentro, onde dá para restaurar por 30 dias.
                   </p>
                 </>
               )}

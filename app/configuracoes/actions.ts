@@ -5,6 +5,7 @@ import { z } from "zod"
 
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import {
+  bannerSchema,
   defaultVisibilitySchema,
   profileCardSchema,
   socialLinksSchema,
@@ -20,8 +21,11 @@ import {
   type ImportSummary,
 } from "@/lib/backup/import"
 import {
+  BANNER_NOT_READY,
   CARD_NOT_READY,
+  clampBannerPosition,
   cleanCardIds,
+  normalizeBannerUrl,
   normalizeSocialLink,
   SOCIAL_LABELS,
   SOCIAL_PROVIDERS,
@@ -82,6 +86,32 @@ export async function updateUsernameAction(input: { username: string }): Promise
   }
 
   revalidatePath("/", "layout")
+  return ok()
+}
+
+/**
+ * O banner do cartão (migração 36): o link (vazio tira) e a posição (0 =
+ * topo, 100 = pé). O link é conferido aqui e no banco.
+ */
+export async function updateBannerAction(input: {
+  url: string
+  position: number
+}): Promise<ActionResult> {
+  const parsed = bannerSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+  const url = normalizeBannerUrl(parsed.data.url)
+  if (!url.ok) return { ok: false, error: url.error }
+
+  const user = await requireUser()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("profiles")
+    .update({ banner_url: url.value, banner_position: clampBannerPosition(parsed.data.position) })
+    .eq("id", user.id)
+
+  if (error) return isMissingColumn(error) ? { ok: false, error: BANNER_NOT_READY } : fail(error)
+
+  revalidatePath("/v", "layout")
   return ok()
 }
 

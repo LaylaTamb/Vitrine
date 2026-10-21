@@ -87,6 +87,10 @@ export interface Profile {
   card_category_ids?: string[]
   /** Os links das redes, já normalizados (migração 23). Ler com `socialLinksFrom()`. */
   social_links?: Record<string, unknown>
+  /** O banner do cartão, por link (migração 36). */
+  banner_url?: string | null
+  /** Que parte do banner aparece: 0 = topo, 100 = pé (migração 36). */
+  banner_position?: number
 }
 
 export interface Folder {

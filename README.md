@@ -217,12 +217,25 @@ No **SQL Editor**, rode nesta ordem:
     `categories.match_rule = 2` —; apaga as cópias montadas antes, que se
     remontam ao abrir; e o **Excluir da lista**: `match_members.hidden_at` e
     a função `hide_my_match`). Precisa do 30, do 31 e do 32
+29. `supabase/35_search_collections.sql` (aditivo: `search_text` e
+    `search_my_items` — a **busca de itens** nas Coleções, por nome, tag ou
+    valor de campo). Sem ele a busca acha pastas e categorias e avisa que a
+    de itens falta rodar
+30. `supabase/36_profile_banner.sql` (aditivo: `profiles.banner_url` e
+    `profiles.banner_position`, e o `profile_card` do 23 com o **banner**
+    junto). Precisa do 23. Sem ele salvar o banner avisa que falta rodar
+31. `supabase/37_trash.sql` (aditivo: a tabela `trash_items` e as funções da
+    **Lixeira** — apagar pasta, categoria ou subpasta para ela, restaurar,
+    excluir de vez, esvaziar e a limpeza dos 30 dias). Precisa de 01 a 36.
+    Sem ele apagar continua direto, como antes, e a tela da Lixeira avisa
+    que falta rodar
 
 **Fase 5 (30 e 31), em uma linha cada:** 30 = o convite e o aceite do Match;
 31 = a cópia de cada um (com as marcações e a % calculadas na tela).
-**Refinamentos (32 a 34):** sugestões de campos com uma pessoa e o match
+**Refinamentos (32 a 37):** sugestões de campos com uma pessoa e o match
 solto; o conserto do Explorar e dos modelos; o match só com as categorias em
-comum, e o Excluir da lista.
+comum, e o Excluir da lista; a busca de itens nas Coleções; o banner do perfil;
+a Lixeira.
 
 **Fase 4 (25 a 29), em uma linha cada:** 25 = modelos (começar da estrutura
 de outra); 26 = Explorar e cópias ligadas; 27 = sugestões de campos (e a IA);
@@ -462,7 +475,8 @@ restrito à sincronização da Steam.
 
 O `vercel.json` agenda o **Cron da Vercel** (grátis no plano Hobby, uma vez
 por dia — por volta das 06h de Brasília; a Vercel escolhe o minuto dentro da
-hora) chamando `/api/cron/steam`. Com a variável `CRON_SECRET` cadastrada, a
+hora) chamando `/api/cron/steam` — e, logo depois, `/api/cron/lixeira` (a
+limpeza dos 30 dias da Lixeira, com o mesmo segredo). Com a variável `CRON_SECRET` cadastrada, a
 Vercel manda `Authorization: Bearer <CRON_SECRET>` sozinha; sem o cabeçalho
 certo, a rota responde 401. Cada rodada atualiza até 25 contas (as mais
 antigas primeiro) e para antes dos 60 s da função — o resto vai na rodada
@@ -545,6 +559,52 @@ lib/
 supabase/       01_schema.sql … 20_favorites.sql
 scripts/        supabase-keep-alive.mjs (rodado pelo .github/workflows/)
 ```
+
+### Lixeira (`/lixeira`)
+
+- **Apagar uma pasta, uma categoria ou uma subpasta** (com o conteúdo) não
+  apaga na hora: vai para a **Lixeira**, onde fica **30 dias**. Itens soltos
+  continuam sendo apagados direto, com a confirmação de sempre. O aviso de
+  "na Lixeira" tem **Desfazer** (restaura na hora). Na subpasta, "Manter
+  conteúdo" esvazia antes e apaga direto — não sobra nada para guardar.
+- **Onde fica**: o ícone de lixeira no canto das **Coleções** (com quantas
+  coisas há nela).
+- **Restaurar** devolve tudo como estava — com os mesmos ids, então o cartão
+  do perfil, os Favoritos, a cópia de match e a categoria da Steam voltam a
+  apontar para ela: itens, subpastas, tags, localizações, o favorito e as
+  ligações das cópias. Se o lugar de origem não existe mais (a pasta foi
+  apagada), volta para a **raiz** das Coleções (ou da categoria, na
+  subpasta); nome de categoria repetido ganha **"(restaurada)"**. Subpasta
+  precisa da categoria dela de volta antes. O que pode ter sumido nesse
+  meio-tempo (um lugar do catálogo, a conta de um amigo, a original de uma
+  cópia) volta em branco, em vez de travar.
+- **Excluir agora** apaga um de vez; **Esvaziar lixeira**, todos — com
+  confirmação, porque aí não tem volta.
+- **Os 30 dias**: o que passa do prazo some ao abrir a Lixeira
+  (`purge_my_expired_trash`) e, para todo mundo, no **Cron da Vercel** diário
+  (`/api/cron/lixeira`, com o mesmo `CRON_SECRET` da Steam e o hash dele em
+  `app_secrets` — veja "Configuração da Steam"). Sem o `CRON_SECRET`, a
+  limpeza acontece só quando cada pessoa abre a própria lixeira.
+- Tudo numa tabela (`trash_items`) com a "foto" completa de cada coisa
+  apagada; só o dono lê (RLS), ninguém escreve direto — só as funções da
+  migração 37. Ao excluir a conta, a lixeira vai junto.
+
+### Busca nas Coleções
+
+- **Coleções** (`/`) tem uma barra de busca embaixo do cabeçalho. Com 2
+  letras ou mais, a grade dá lugar aos **resultados**, agrupados em
+  **Pastas**, **Categorias** e **Itens**, cada um com o caminho até ele
+  ("Coleções › Comida › Restaurantes favoritos"). Apagar o texto (ou Esc)
+  volta à grade; tocar numa pasta abre a pasta e limpa a busca.
+- Acento, maiúscula e espaço sobrando não importam ("cafe" acha "Café"):
+  `normalizeSearch` (`lib/domain/search.ts`) e `search_text` (SQL 35)
+  seguem a mesma regra — mudou uma, mude a outra.
+- **Pastas e categorias**: pelo nome, procuradas na própria tela (ela já tem
+  as duas listas); as que começam com o texto vêm primeiro.
+- **Itens**: pelo **nome**, pelas **tags** e pelos **valores dos campos**
+  (`search_my_items`, migração 35), até 40 por vez; cada um diz por que
+  apareceu ("Bairro: Pinheiros", "tag barato"). Os itens das cópias de match
+  ficam de fora (são dos amigos).
 
 ### Organização: pastas, categorias e subpastas
 
@@ -892,7 +952,7 @@ todo mundo.
 ### Cartão de apresentação e story
 
 - **O cartão** fica no topo do perfil (`/v/<@>`) e **todo mundo vê**, com ou
-  sem login: foto (por link), nome, @, **bio** de até 220 caracteres, os
+  sem login: o **banner** (abaixo), foto (por link), nome, @, **bio** de até 220 caracteres, os
   **links das redes**, a faixa de seguir e até **5 categorias** com os **3
   melhores** itens de cada uma (maior nota, empate pelo nome; em categoria
   sem estrelas, os 3 primeiros da ordem manual). No perfil de outra pessoa,
@@ -901,8 +961,16 @@ todo mundo.
   (migração 23) confere o nível da categoria e de todas as pastas acima a
   cada leitura — categoria que deixou de ser pública some do cartão na hora
   e volta sozinha se ficar pública de novo. A "A organizar" nunca entra.
+- **Banner** (migração 36), no estilo do Twitter: a faixa 3:1 no topo do
+  cartão (no máximo 240 px de altura em tela larga), com a foto por cima da
+  borda dela. A imagem vem **pelo link**, como a foto (nada é enviado nem
+  guardado), e a **posição** (0 = topo da imagem, 100 = pé) escolhe o pedaço
+  que aparece — `object-position` na página. Sem banner, ou com um link que
+  não carrega, a faixa fica na cor da casa. O link é conferido na tela, na
+  ação e no banco (só `http(s)`, até 2048 caracteres).
 - **Meu perfil → Editar cartão** (`/v/<@>?editar=1`, o painel abre embaixo
-  do cartão; **Concluir** fecha): **foto e nome**; a **bio** e as categorias
+  do cartão; **Concluir** fecha): o **banner** (link e posição, com a prévia
+  na hora; campo vazio e salvar tira); **foto e nome**; a **bio** e as categorias
   (só as públicas aparecem para escolher; subir, descer e tirar); as
   **redes**; e a **Steam** (abaixo). O **@**, a senha e o resto da conta
   ficam nas Configurações.
@@ -911,7 +979,11 @@ todo mundo.
   `lib/domain/card.ts`); ao mostrar, normaliza de novo, então um link
   estranho gravado direto pela API nunca vira `href`. Nome do Discord não
   tem página pública: o toque copia.
-- **Story 9:16** (`/v/<@>/story`, PNG 1080×1920 gerado com `next/og`): foto,
+- **Story 9:16** (`/v/<@>/story`, PNG 1080×1920 gerado com `next/og`): o
+  **banner** de ponta a ponta no topo (com a mesma posição — o gerador não
+  entende `object-position`, então o servidor lê o tamanho do PNG/JPEG e
+  calcula o recorte: `imageSizeOf` e `coverBox`, em
+  `lib/domain/remote-image.ts`), a foto por cima da borda dele,
   nome, @, bio, as categorias com os 3 melhores e o **QR do perfil** (o link
   simples, sem código de amizade — o story fica no ar 24 horas). O botão
   **Compartilhar no story** (no próprio perfil) abre o compartilhar do
@@ -919,7 +991,7 @@ todo mundo.
   **Copiar imagem do story**: copia a imagem para a área de transferência
   (Ctrl+V onde quiser; o aviso tem **Baixar**) e, se o navegador não deixar
   copiar, baixa.
-- A foto do story é buscada pelo **servidor**, então só vale endereço de
+- A foto e o banner do story são buscados pelo **servidor**, então só vale endereço de
   internet de verdade (`publicImageUrl`, em `lib/domain/remote-image.ts`):
   nada de IP solto, `localhost` ou rede interna, cada redirecionamento é
   conferido, no máximo 2 MB e 3 segundos, só PNG ou JPEG. Fora disso, a

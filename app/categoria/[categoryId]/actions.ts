@@ -520,6 +520,20 @@ export async function deleteEntryFolderAction(input: {
   const folder = await loadEntryFolder(supabase, parsed.data.id)
   if (!folder) return { ok: false, error: "Essa pasta não existe mais." }
 
+  // "Excluir tudo": a subpasta vai para a Lixeira com o que tem dentro
+  // (migração 37). "Manter conteúdo" esvazia antes e apaga direto: não sobra
+  // nada para guardar.
+  if (!parsed.data.keepContents) {
+    const trashed = await supabase.rpc("trash_entry_folder", { p_entry_folder_id: folder.id })
+    if (trashed.error && !isMissingSchema(trashed.error)) return fail(trashed.error)
+    if (!trashed.error) {
+      revalidatePath(`/categoria/${folder.category_id}`)
+      revalidatePath("/")
+      revalidatePath("/lixeira")
+      return ok()
+    }
+  }
+
   if (parsed.data.keepContents) {
     const [foldersMove, entriesMove] = await Promise.all([
       supabase

@@ -275,6 +275,15 @@ export const respondMatchSchema = z.object({ matchId: uuid, accept: z.boolean() 
 /** Abrir (montar, na 1ª vez) a sua cópia de um match pronto (migração 31). */
 export const openMatchSchema = z.object({ matchId: uuid })
 
+/** O banner do cartão (migração 36): o link (vazio = sem banner) e a posição. */
+export const bannerSchema = z.object({
+  url: z.string().max(2100),
+  position: z.number().finite(),
+})
+
+/** A busca de itens nas Coleções (migração 35). */
+export const searchItemsSchema = z.object({ query: z.string().max(80) })
+
 /** Tirar um match pronto ou cancelado da sua lista (migração 34). */
 export const hideMatchSchema = z.object({ matchId: uuid })
 

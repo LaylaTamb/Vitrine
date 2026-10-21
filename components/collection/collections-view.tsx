@@ -16,9 +16,12 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
-import { FolderPlus, Library, Plus } from "lucide-react"
+import Link from "next/link"
+import { FolderPlus, Library, Plus, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { toast } from "sonner"
+
+import { restoreTrashAction } from "@/app/lixeira/actions"
 
 import {
   CategoryEditor,
@@ -26,6 +29,10 @@ import {
   type CategoryEditorValue,
 } from "@/components/category/category-editor"
 import { CollectionCard } from "@/components/collection/collection-card"
+import {
+  CollectionsSearchBar,
+  CollectionsSearchResults,
+} from "@/components/collection/collections-search"
 import { FolderDialog } from "@/components/collection/folder-dialog"
 import { InboxCard } from "@/components/collection/inbox-card"
 import { MoveDialog } from "@/components/collection/move-dialog"
@@ -53,6 +60,7 @@ import {
   type Visibility,
 } from "@/lib/domain/privacy"
 import type { Category, Folder } from "@/lib/domain/types"
+import { isSearching } from "@/lib/domain/search"
 import { cn } from "@/lib/utils"
 
 const VIEW_STORAGE_KEY = "vitrine:colecoes:view"
@@ -86,6 +94,8 @@ export function CollectionsView({
   headerSubtitle,
   defaultVisibility = "public",
   top,
+  searchable = false,
+  trashCount,
 }: {
   folders: Folder[]
   categories: Category[]
@@ -101,8 +111,15 @@ export function CollectionsView({
    * coleções desce para `h2`).
    */
   top?: ReactNode
+  /** As suas Coleções: a barra de busca (pastas, categorias e itens). */
+  searchable?: boolean
+  /** As suas Coleções: o ícone da Lixeira no canto, com quantas coisas há nela. */
+  trashCount?: number
 }) {
   const { actions } = useVitrine()
+  // Com 2 letras ou mais, os resultados ficam no lugar da grade.
+  const [query, setQuery] = useState("")
+  const searching = searchable && isSearching(query)
   const [folderParam, setCurrentFolderId] = useFolderParam()
   // Link velho de uma pasta que não existe mais (ou de outra pessoa): raiz.
   const currentFolderId =
@@ -222,7 +239,23 @@ export function CollectionsView({
       toast.error(result.error)
       return
     }
-    toast.success(deleteTarget.kind === "folder" ? "Pasta excluída." : "Categoria excluída.")
+    const trashId = result.data?.trashId ?? null
+    const what = deleteTarget.kind === "folder" ? "Pasta" : "Categoria"
+    if (trashId) {
+      // Apagou sem querer: um toque traz de volta, sem ir até a Lixeira.
+      toast.success(`${what} na Lixeira por 30 dias.`, {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            const restored = await restoreTrashAction({ id: trashId })
+            if (restored.ok) toast.success(`${what} de volta.`)
+            else toast.error(restored.error)
+          },
+        },
+      })
+    } else {
+      toast.success(`${what} excluída.`)
+    }
     setDeleteTarget(null)
   }
 
@@ -274,179 +307,211 @@ export function CollectionsView({
               {view === "grid" ? (
                 <GridSizeToggle value={gridSize} onChange={changeGridSize} />
               ) : null}
+              {trashCount !== undefined ? (
+                <Link
+                  href="/lixeira"
+                  title="Lixeira"
+                  aria-label={trashCount > 0 ? `Lixeira (${trashCount})` : "Lixeira"}
+                  className="relative flex size-8 items-center justify-center rounded-md border border-line text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
+                >
+                  <Trash2 className="size-4" />
+                  {trashCount > 0 ? (
+                    <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-brand px-1 text-center text-[0.6rem] leading-4 font-medium text-background">
+                      {trashCount > 99 ? "99+" : trashCount}
+                    </span>
+                  ) : null}
+                </Link>
+              ) : null}
             </div>
           </>
         }
       />
 
-      <LevelNav
-        trail={[
-          { key: "colecoes", label: "Coleções", onClick: () => setCurrentFolderId(null) },
-          ...trail.map((folder) => ({
-            key: folder.id,
-            label: folder.name,
-            onClick: () => setCurrentFolderId(folder.id),
-          })),
-        ]}
-      />
+      {searchable ? <CollectionsSearchBar value={query} onChange={setQuery} /> : null}
 
-      {canEdit && restrictedBy ? (
-        <PrivacyNote>{restrictionNote("folder", restrictedBy)}</PrivacyNote>
-      ) : null}
-
-      {/* A "A organizar" só aparece quando tem algo a organizar. */}
-      {inbox && currentFolderId === null && (counts[inbox.id] ?? 0) > 0 ? (
-        <InboxCard
-          category={inbox}
-          count={counts[inbox.id] ?? 0}
-          href={`/categoria/${inbox.id}`}
-          canEdit={canEdit}
-        />
-      ) : null}
-
-      {items.length === 0 && !canEdit ? (
-        <EmptyState
-          icon={Library}
-          title="Nada por aqui"
-          description="Esta pasta não tem nenhuma categoria."
-        />
-      ) : items.length === 0 && canEdit ? (
-        <EmptyState
-          icon={Library}
-          title="Vitrine vazia"
-          description="Crie a primeira categoria e comece a catalogar o que você consome."
-          action={
-            <Button
-              onClick={() =>
-                setCategoryEditor({ open: true, initial: NEW_CATEGORY })
-              }
-            >
-              <Plus className="size-4" /> Nova categoria
-            </Button>
-          }
+      {searching ? (
+        <CollectionsSearchResults
+          query={query}
+          folders={folders}
+          categories={categories}
+          counts={counts}
+          onOpenFolder={(folderId) => {
+            setQuery("")
+            setCurrentFolderId(folderId)
+          }}
         />
       ) : (
-        // `id` fixo: sem ele o dnd-kit numera os ids de acessibilidade com um
-        // contador global, e o HTML do servidor não bate com o do navegador.
-        <DndContext
-          id="dnd-colecoes"
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={onDragEnd}
-        >
-          <SortableContext items={items.map((item) => item.id)} strategy={strategy}>
-            <div
-              className={cn(
-                view === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2"
-              )}
-            >
-              {items.map((item) =>
-                item.kind === "folder" ? (
-                  <CollectionCard
-                    key={item.id}
-                    id={item.id}
-                    kind="folder"
-                    name={item.folder.name}
-                    visibility={canEdit ? visibilityOf(item.folder) : undefined}
-                    icon={null}
-                    subtitle={folderSubtitle(item.id)}
-                    onOpen={() => setCurrentFolderId(item.id)}
-                    canEdit={canEdit}
-                    sortable={canEdit}
-                    view={view}
-                    onMove={() =>
-                      setMoveTarget({
-                        kind: "folder",
-                        id: item.id,
-                        name: item.folder.name,
-                        parentId: item.folder.parent_folder_id,
-                      })
-                    }
-                    onEdit={() =>
-                      setFolderDialog({
-                        open: true,
-                        folder: { id: item.id, name: item.folder.name },
-                      })
-                    }
-                    onDelete={() => {
-                      const total = totals.get(item.id)
-                      setDeleteTarget({
-                        kind: "folder",
-                        id: item.id,
-                        name: item.folder.name,
-                        description:
-                          total && (total.categories > 0 || total.entries > 0)
-                            ? `Essa pasta contém ${plural(total.categories, "categoria", "categorias")} e ${itemCount(total.entries)} no total. Excluir tudo?`
-                            : "Essa pasta está vazia. Excluir?",
-                      })
-                    }}
-                  />
-                ) : (
-                  <CollectionCard
-                    key={item.id}
-                    id={item.id}
-                    kind="category"
-                    name={item.category.name}
-                    visibility={canEdit ? visibilityOf(item.category) : undefined}
-                    icon={item.category.icon}
-                    subtitle={itemCount(counts[item.id] ?? 0)}
-                    href={`/categoria/${item.id}`}
-                    canEdit={canEdit}
-                    sortable={canEdit}
-                    view={view}
-                    onMove={() =>
-                      setMoveTarget({
-                        kind: "category",
-                        id: item.id,
-                        name: item.category.name,
-                        parentId: item.category.folder_id,
-                      })
-                    }
-                    onEdit={() =>
-                      setCategoryEditor({
-                        open: true,
-                        initial: {
-                          id: item.id,
-                          name: item.category.name,
-                          icon: item.category.icon,
-                          color: item.category.color,
-                          estrutura: item.category.estrutura,
-                          ratingEnabled: item.category.rating_enabled,
-                          defaultSort: defaultSortOf(item.category),
-                          quickField: quickFieldOf(item.category),
-                        },
-                      })
-                    }
-                    onDelete={() =>
-                      setDeleteTarget({
-                        kind: "category",
-                        id: item.id,
-                        name: item.category.name,
-                        description: `Isso apaga a categoria e ${itemCount(counts[item.id] ?? 0)} dentro dela. Não dá para desfazer.`,
-                      })
-                    }
-                  />
-                )
-              )}
+        <>
+          <LevelNav
+            trail={[
+              { key: "colecoes", label: "Coleções", onClick: () => setCurrentFolderId(null) },
+              ...trail.map((folder) => ({
+                key: folder.id,
+                label: folder.name,
+                onClick: () => setCurrentFolderId(folder.id),
+              })),
+            ]}
+          />
 
-              {canEdit && view === "grid" ? (
-                <button
-                  type="button"
+          {canEdit && restrictedBy ? (
+            <PrivacyNote>{restrictionNote("folder", restrictedBy)}</PrivacyNote>
+          ) : null}
+
+          {/* A "A organizar" só aparece quando tem algo a organizar. */}
+          {inbox && currentFolderId === null && (counts[inbox.id] ?? 0) > 0 ? (
+            <InboxCard
+              category={inbox}
+              count={counts[inbox.id] ?? 0}
+              href={`/categoria/${inbox.id}`}
+              canEdit={canEdit}
+            />
+          ) : null}
+
+          {items.length === 0 && !canEdit ? (
+            <EmptyState
+              icon={Library}
+              title="Nada por aqui"
+              description="Esta pasta não tem nenhuma categoria."
+            />
+          ) : items.length === 0 && canEdit ? (
+            <EmptyState
+              icon={Library}
+              title="Vitrine vazia"
+              description="Crie a primeira categoria e comece a catalogar o que você consome."
+              action={
+                <Button
                   onClick={() =>
-                    setCategoryEditor({
-                      open: true,
-                      initial: NEW_CATEGORY,
-                    })
+                    setCategoryEditor({ open: true, initial: NEW_CATEGORY })
                   }
-                  className="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-line bg-transparent text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground"
                 >
-                  <Plus className="size-4" />
-                  <span className="text-xs">Nova categoria</span>
-                </button>
-              ) : null}
-            </div>
-          </SortableContext>
-        </DndContext>
+                  <Plus className="size-4" /> Nova categoria
+                </Button>
+              }
+            />
+          ) : (
+            // `id` fixo: sem ele o dnd-kit numera os ids de acessibilidade com um
+            // contador global, e o HTML do servidor não bate com o do navegador.
+            <DndContext
+              id="dnd-colecoes"
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onDragEnd}
+            >
+              <SortableContext items={items.map((item) => item.id)} strategy={strategy}>
+                <div
+                  className={cn(
+                    view === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2"
+                  )}
+                >
+                  {items.map((item) =>
+                    item.kind === "folder" ? (
+                      <CollectionCard
+                        key={item.id}
+                        id={item.id}
+                        kind="folder"
+                        name={item.folder.name}
+                        visibility={canEdit ? visibilityOf(item.folder) : undefined}
+                        icon={null}
+                        subtitle={folderSubtitle(item.id)}
+                        onOpen={() => setCurrentFolderId(item.id)}
+                        canEdit={canEdit}
+                        sortable={canEdit}
+                        view={view}
+                        onMove={() =>
+                          setMoveTarget({
+                            kind: "folder",
+                            id: item.id,
+                            name: item.folder.name,
+                            parentId: item.folder.parent_folder_id,
+                          })
+                        }
+                        onEdit={() =>
+                          setFolderDialog({
+                            open: true,
+                            folder: { id: item.id, name: item.folder.name },
+                          })
+                        }
+                        onDelete={() => {
+                          const total = totals.get(item.id)
+                          setDeleteTarget({
+                            kind: "folder",
+                            id: item.id,
+                            name: item.folder.name,
+                            description:
+                              total && (total.categories > 0 || total.entries > 0)
+                                ? `Essa pasta contém ${plural(total.categories, "categoria", "categorias")} e ${itemCount(total.entries)} no total. Tudo vai para a Lixeira, onde dá para restaurar por 30 dias.`
+                                : "Essa pasta está vazia. Ela vai para a Lixeira por 30 dias.",
+                          })
+                        }}
+                      />
+                    ) : (
+                      <CollectionCard
+                        key={item.id}
+                        id={item.id}
+                        kind="category"
+                        name={item.category.name}
+                        visibility={canEdit ? visibilityOf(item.category) : undefined}
+                        icon={item.category.icon}
+                        subtitle={itemCount(counts[item.id] ?? 0)}
+                        href={`/categoria/${item.id}`}
+                        canEdit={canEdit}
+                        sortable={canEdit}
+                        view={view}
+                        onMove={() =>
+                          setMoveTarget({
+                            kind: "category",
+                            id: item.id,
+                            name: item.category.name,
+                            parentId: item.category.folder_id,
+                          })
+                        }
+                        onEdit={() =>
+                          setCategoryEditor({
+                            open: true,
+                            initial: {
+                              id: item.id,
+                              name: item.category.name,
+                              icon: item.category.icon,
+                              color: item.category.color,
+                              estrutura: item.category.estrutura,
+                              ratingEnabled: item.category.rating_enabled,
+                              defaultSort: defaultSortOf(item.category),
+                              quickField: quickFieldOf(item.category),
+                            },
+                          })
+                        }
+                        onDelete={() =>
+                          setDeleteTarget({
+                            kind: "category",
+                            id: item.id,
+                            name: item.category.name,
+                            description: `A categoria e ${itemCount(counts[item.id] ?? 0)} dentro dela vão para a Lixeira, onde dá para restaurar por 30 dias.`,
+                          })
+                        }
+                      />
+                    )
+                  )}
+
+                  {canEdit && view === "grid" ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCategoryEditor({
+                          open: true,
+                          initial: NEW_CATEGORY,
+                        })
+                      }
+                      className="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-line bg-transparent text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground"
+                    >
+                      <Plus className="size-4" />
+                      <span className="text-xs">Nova categoria</span>
+                    </button>
+                  ) : null}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </>
       )}
 
       {canEdit ? (

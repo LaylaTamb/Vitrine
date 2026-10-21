@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/steam",
       "schedule": "23 9 * * *"
+    },
+    {
+      "path": "/api/cron/lixeira",
+      "schedule": "41 9 * * *"
     }
   ]
 }

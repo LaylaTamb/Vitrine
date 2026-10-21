@@ -5,6 +5,7 @@ import { StoryImage } from "@/components/social/story-image"
 import { appOrigin } from "@/lib/actions/origin"
 import { qrLink } from "@/lib/domain/qr"
 import { normalizeUsername, USERNAME_PATTERN } from "@/lib/domain/username"
+import { imageSizeOf } from "@/lib/domain/remote-image"
 import { remoteImageDataUri } from "@/lib/og/remote-image"
 import { getProfileCard } from "@/lib/queries/public"
 
@@ -36,7 +37,7 @@ export async function GET(_request: Request, { params }: { params: Params }) {
   if (!card) return notFound()
 
   const link = qrLink(await appOrigin(), card.profile.username)
-  const [svg, avatar] = await Promise.all([
+  const [svg, avatar, banner] = await Promise.all([
     qrSvg(link, {
       type: "svg",
       errorCorrectionLevel: "M",
@@ -44,13 +45,21 @@ export async function GET(_request: Request, { params }: { params: Params }) {
       color: { dark: "#131315", light: "#ffffff" },
     }),
     remoteImageDataUri(card.profile.avatar_url),
+    remoteImageDataUri(card.banner?.url),
   ])
+
+  // O tamanho do banner, lido do próprio arquivo: o recorte da posição é feito na mão.
+  const bannerSize = banner
+    ? imageSizeOf(Buffer.from(banner.slice(banner.indexOf(",") + 1), "base64"))
+    : null
 
   return new ImageResponse(
     (
       <StoryImage
         card={card}
         avatar={avatar}
+        banner={banner}
+        bannerSize={bannerSize}
         qr={`data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`}
         site={link.replace(/^https?:\/\//, "")}
       />

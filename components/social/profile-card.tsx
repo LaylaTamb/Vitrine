@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { CopyHandleChip } from "@/components/social/copy-handle-chip"
+import { ProfileBanner } from "@/components/social/profile-banner"
 import { ShareStoryButton } from "@/components/social/share-story-button"
 import { Avatar } from "@/components/ui/avatar-image"
 import { buttonVariants } from "@/components/ui/button"
@@ -62,72 +63,79 @@ export function ProfileCardView({
   /** A faixa social (seguir, contagens) ou o convite para entrar. */
   social?: ReactNode
 }) {
-  const { profile, bio, links, categories } = card
+  const { banner, profile, bio, links, categories } = card
   const name = profile.display_name || profile.username
 
   return (
     <section
       aria-label={`Cartão de @${profile.username}`}
-      className="rounded-2xl border border-line bg-surface p-4 sm:p-6"
+      className="overflow-hidden rounded-2xl border border-line bg-surface"
     >
-      <div className="flex items-center gap-4">
-        <Avatar name={name} src={profile.avatar_url} size={64} className="shrink-0" />
-        <div className="min-w-0 flex-1">
+      {/* O banner no topo e a foto por cima da borda dele, como no Twitter. */}
+      <ProfileBanner banner={banner} />
+      <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+        <Avatar
+          name={name}
+          src={profile.avatar_url}
+          size={88}
+          className="relative -mt-11 border-4 border-surface"
+        />
+        <div className="mt-2 min-w-0">
           <h1 className="display text-2xl leading-tight break-words sm:text-3xl">{name}</h1>
           <p className="truncate text-sm text-muted-foreground">@{profile.username}</p>
         </div>
-      </div>
 
-      {bio ? (
-        <p className="mt-4 text-sm leading-relaxed break-words whitespace-pre-line text-foreground">
-          {bio}
-        </p>
-      ) : null}
+        {bio ? (
+          <p className="mt-4 text-sm leading-relaxed break-words whitespace-pre-line text-foreground">
+            {bio}
+          </p>
+        ) : null}
 
-      {links.length > 0 ? (
-        <ul className="mt-3 flex flex-wrap gap-2" aria-label="Redes">
-          {links.map((link) => (
-            <li key={link.provider} className="max-w-full">
-              <SocialChip link={link} />
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {social ? <div className="mt-4">{social}</div> : null}
-
-      {categories.length > 0 ? (
-        <div className="mt-5">
-          <p className="plaque mb-2">Destaques</p>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((category) => (
-              <li key={category.id} className="min-w-0">
-                <CardCategoryBox category={category} />
+        {links.length > 0 ? (
+          <ul className="mt-3 flex flex-wrap gap-2" aria-label="Redes">
+            {links.map((link) => (
+              <li key={link.provider} className="max-w-full">
+                <SocialChip link={link} />
               </li>
             ))}
           </ul>
-        </div>
-      ) : null}
+        ) : null}
 
-      {isMe ? (
-        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
-          {ready ? <ShareStoryButton username={profile.username} /> : null}
-          {editing ? null : (
-            <Link
-              href={`${profilePath(profile.username)}?editar=1#editar`}
-              className={buttonVariants({ variant: "ghost", size: "sm" })}
-            >
-              <Pencil className="size-4" />
-              {cardHasContent(card) ? "Editar cartão" : "Montar cartão"}
-            </Link>
-          )}
-          {cardHasContent(card) || editing ? null : (
-            <p className="w-full text-xs text-faint sm:w-auto">
-              Uma bio, seus links e até 5 categorias públicas com os 3 melhores itens.
-            </p>
-          )}
-        </div>
-      ) : null}
+        {social ? <div className="mt-4">{social}</div> : null}
+
+        {categories.length > 0 ? (
+          <div className="mt-5">
+            <p className="plaque mb-2">Destaques</p>
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {categories.map((category) => (
+                <li key={category.id} className="min-w-0">
+                  <CardCategoryBox category={category} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {isMe ? (
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+            {ready ? <ShareStoryButton username={profile.username} /> : null}
+            {editing ? null : (
+              <Link
+                href={`${profilePath(profile.username)}?editar=1#editar`}
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+              >
+                <Pencil className="size-4" />
+                {cardHasContent(card) ? "Editar cartão" : "Montar cartão"}
+              </Link>
+            )}
+            {cardHasContent(card) || editing ? null : (
+              <p className="w-full text-xs text-faint sm:w-auto">
+                Uma bio, seus links e até 5 categorias públicas com os 3 melhores itens.
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
     </section>
   )
 }

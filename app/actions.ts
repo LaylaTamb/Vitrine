@@ -12,6 +12,7 @@ import {
   moveFolderSchema,
   renameFolderSchema,
   reorderSchema,
+  searchItemsSchema,
   structureImpactSchema,
   updateCategorySchema,
   visibilitySchema,
@@ -19,10 +20,42 @@ import {
 import { isMissingColumn, isMissingSchema } from "@/lib/domain/errors"
 import { locationFieldsOf, parseEstrutura } from "@/lib/domain/fields"
 import { VISIBILITY_NOT_READY, type Visibility } from "@/lib/domain/privacy"
+import {
+  parseItemHits,
+  SEARCH_MIN,
+  SEARCH_NOT_READY,
+  normalizeSearch,
+  type ItemHit,
+} from "@/lib/domain/search"
 import { normalizeQuickField, QUICK_FIELD_NAME } from "@/lib/domain/quick-field"
 import { normalizeCategoryColor } from "@/lib/domain/tags"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
+
+// ---------------------------------------------------------------------------
+// Busca nas Coleções
+// ---------------------------------------------------------------------------
+
+/**
+ * Os seus itens cujo nome, tag ou valor de campo tem o texto (migração 35).
+ * Pastas e categorias a tela procura sozinha (ela já tem as duas listas).
+ */
+export async function searchMyItemsAction(input: {
+  query: string
+}): Promise<ActionResult<ItemHit[]>> {
+  const parsed = searchItemsSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+  if (normalizeSearch(parsed.data.query).length < SEARCH_MIN) return ok([])
+
+  await requireUser()
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("search_my_items", {
+    p_query: parsed.data.query,
+    p_limit: 40,
+  })
+  if (error) return isMissingSchema(error) ? { ok: false, error: SEARCH_NOT_READY } : fail(error)
+  return ok(parseItemHits(data))
+}
 
 // ---------------------------------------------------------------------------
 // Sessão
@@ -220,17 +253,28 @@ export async function moveFolderAction(input: {
   return ok()
 }
 
-export async function deleteFolderAction(input: { id: string }): Promise<ActionResult> {
+/**
+ * Apagar uma pasta: vai para a Lixeira (migração 37), com as subpastas, as
+ * categorias e os itens — dá para restaurar por 30 dias. Antes da migração,
+ * apaga direto (o `on delete cascade` leva tudo junto).
+ */
+export async function deleteFolderAction(input: {
+  id: string
+}): Promise<ActionResult<{ trashId: string | null }>> {
   const parsed = idSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
-  // O `on delete cascade` do banco leva subpastas, categorias e itens junto.
-  const { error } = await supabase.from("folders").delete().eq("id", parsed.data.id)
+  const trashed = await supabase.rpc("trash_folder", { p_folder_id: parsed.data.id })
+  if (trashed.error && !isMissingSchema(trashed.error)) return fail(trashed.error)
+  if (trashed.error) {
+    const { error } = await supabase.from("folders").delete().eq("id", parsed.data.id)
+    if (error) return fail(error)
+  }
 
-  if (error) return fail(error)
   revalidatePath("/")
-  return ok()
+  revalidatePath("/lixeira")
+  return ok({ trashId: typeof trashed.data === "string" ? trashed.data : null })
 }
 
 // ---------------------------------------------------------------------------
@@ -436,16 +480,27 @@ export async function moveCategoryAction(input: {
   return ok()
 }
 
-export async function deleteCategoryAction(input: { id: string }): Promise<ActionResult> {
+/**
+ * Apagar uma categoria: vai para a Lixeira (migração 37), com os itens —
+ * dá para restaurar por 30 dias. Antes da migração, apaga direto.
+ */
+export async function deleteCategoryAction(input: {
+  id: string
+}): Promise<ActionResult<{ trashId: string | null }>> {
   const parsed = idSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
   const supabase = await createClient()
-  const { error } = await supabase.from("categories").delete().eq("id", parsed.data.id)
+  const trashed = await supabase.rpc("trash_category", { p_category_id: parsed.data.id })
+  if (trashed.error && !isMissingSchema(trashed.error)) return fail(trashed.error)
+  if (trashed.error) {
+    const { error } = await supabase.from("categories").delete().eq("id", parsed.data.id)
+    if (error) return fail(error)
+  }
 
-  if (error) return fail(error)
   revalidatePath("/")
-  return ok()
+  revalidatePath("/lixeira")
+  return ok({ trashId: typeof trashed.data === "string" ? trashed.data : null })
 }
 
 // ---------------------------------------------------------------------------

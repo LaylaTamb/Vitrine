@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  bannerFrom,
   cardCategoryOptions,
+  clampBannerPosition,
   cardHasContent,
   cleanCardIds,
   moveCardId,
+  normalizeBannerUrl,
   normalizeSocialLink,
   parseProfileCard,
   socialInputValue,
@@ -126,6 +129,34 @@ describe("categorias do cartão", () => {
   })
 })
 
+describe("banner", () => {
+  it("o link: vazio tira, só http(s)", () => {
+    expect(normalizeBannerUrl("  ")).toEqual({ ok: true, value: null })
+    expect(normalizeBannerUrl(" https://i.imgur.com/a.png ")).toEqual({
+      ok: true,
+      value: "https://i.imgur.com/a.png",
+    })
+    expect(normalizeBannerUrl("javascript:alert(1)").ok).toBe(false)
+    expect(normalizeBannerUrl("não é link").ok).toBe(false)
+  })
+
+  it("a posição fica entre 0 e 100", () => {
+    expect(clampBannerPosition(30.6)).toBe(31)
+    expect(clampBannerPosition(-5)).toBe(0)
+    expect(clampBannerPosition(250)).toBe(100)
+    expect(clampBannerPosition("x")).toBe(50)
+  })
+
+  it("lido do banco: link estranho fica de fora", () => {
+    expect(bannerFrom({ url: "https://x.com/b.jpg", position: 20 })).toEqual({
+      url: "https://x.com/b.jpg",
+      position: 20,
+    })
+    expect(bannerFrom({ url: "data:image/png;base64,AAA", position: 20 })).toBeNull()
+    expect(bannerFrom(null)).toBeNull()
+  })
+})
+
 describe("cartão lido do banco", () => {
   it("confere campo a campo", () => {
     const card = parseProfileCard({
@@ -145,6 +176,7 @@ describe("cartão lido do banco", () => {
       ],
     })
     expect(card?.bio).toHaveLength(220)
+    expect(card?.banner).toBeNull()
     expect(card?.profile.display_name).toBeNull()
     expect(card?.links).toHaveLength(1)
     expect(card?.categories).toEqual([
