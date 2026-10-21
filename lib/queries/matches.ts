@@ -15,17 +15,30 @@ export const MATCH_SELECT =
 
 /**
  * Os matches de quem está logado (a RLS só devolve os seus), do mais novo
- * para o mais velho. `ready = false`: a migração 30 ainda não rodou.
+ * para o mais velho, sem os que a pessoa excluiu da lista (`hidden_at`,
+ * migração 34). `ready = false`: a migração 30 ainda não rodou.
  */
-export async function getMyMatches(): Promise<{ ready: boolean; matches: MatchView[] }> {
+export async function getMyMatches(
+  userId: string
+): Promise<{ ready: boolean; matches: MatchView[] }> {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("matches")
-    .select(MATCH_SELECT)
-    .order("created_at", { ascending: false })
-    .limit(50)
+  const [matchesResult, hiddenResult] = await Promise.all([
+    supabase.from("matches").select(MATCH_SELECT).order("created_at", { ascending: false }).limit(50),
+    // Antes da migração 34 a coluna não existe: nada escondido.
+    supabase
+      .from("match_members")
+      .select("match_id")
+      .eq("user_id", userId)
+      .not("hidden_at", "is", null),
+  ])
+  const { data, error } = matchesResult
   if (error) return { ready: !isMissingSchema(error), matches: [] }
-  return { ready: true, matches: parseMatches(data) }
+  const hidden = new Set(
+    hiddenResult.error
+      ? []
+      : ((hiddenResult.data ?? []) as { match_id: string }[]).map((row) => row.match_id)
+  )
+  return { ready: true, matches: parseMatches(data).filter((match) => !hidden.has(match.id)) }
 }
 
 /** Um match (só quem está nele lê — a RLS). `null`: não existe ou não é seu. */

@@ -94,7 +94,7 @@ export function EntryRow({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1">
             <h3 className="display min-w-0 truncate text-base leading-snug">{view.name}</h3>
-            {favorite ? <FavoriteMark /> : null}
+            {favorite && !onToggleFavorite ? <FavoriteMark /> : null}
             {view.sourceRemoved ? <RemovedMark /> : null}
           </div>
           {view.match ? <MatchOwnerLine match={view.match} className="mt-0.5" /> : null}
@@ -113,7 +113,10 @@ export function EntryRow({
 
         {showRating ? (
           <div className="flex shrink-0 items-center gap-2">
-            <Stars percent={view.ratingPercent} size="sm" />
+            {/* No celular, só o número: o nome precisa do espaço. */}
+            <span className="hidden sm:inline-flex">
+              <Stars percent={view.ratingPercent} size="sm" />
+            </span>
             <span
               className={cn(
                 "display w-8 text-right text-sm",
@@ -126,12 +129,16 @@ export function EntryRow({
         ) : null}
       </Link>
 
+      {/* A estrela fica sempre à vista; as outras ações, no hover. */}
+      {onToggleFavorite ? (
+        <FavoriteToggle active={favorite} name={view.name} onToggle={onToggleFavorite} />
+      ) : null}
+
       {canEdit ? (
-        <div className="card-actions flex shrink-0 items-center gap-0.5">
+        // No celular (sem hover) estas ações nem aparecem: fora da linha, o nome
+        // ganha o espaço. Editar e excluir seguem na página do item.
+        <div className="card-actions hidden shrink-0 items-center gap-0.5 sm:flex">
           {dragHandle}
-          {onToggleFavorite ? (
-            <FavoriteToggle active={favorite} name={view.name} onToggle={onToggleFavorite} />
-          ) : null}
           <button
             type="button"
             title={`Editar ${view.name}`}

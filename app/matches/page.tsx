@@ -16,7 +16,7 @@ export default async function MatchesPage() {
   const user = await requireUser()
   const [profile, { ready, matches }, friends] = await Promise.all([
     getMyProfile(),
-    getMyMatches(),
+    getMyMatches(user.id),
     getMyFriends(user.id),
   ])
 

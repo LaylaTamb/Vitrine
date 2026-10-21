@@ -207,10 +207,22 @@ No **SQL Editor**, rode nesta ordem:
     `build_my_match_copy` — a cópia do match vira **lista solta**, sem
     subpastas —; e tira das subpastas os itens das cópias que já existiam).
     Precisa do 27 e do 31
+27. `supabase/33_fix_explore.sql` (conserto: refaz `search_public_categories`
+    e `explore_public_categories`, que davam à subconsulta o nome `found` —
+    o mesmo da variável `FOUND` do PL/pgSQL — e por isso falhavam sempre:
+    "Algo deu errado." no Explorar e no "Começar de um modelo"). Precisa do
+    25 e do 26
+28. `supabase/34_match_common.sql` (o match passa a ter **só as categorias
+    em comum** — refaz `build_my_match_copy` e marca a cópia nova com
+    `categories.match_rule = 2` —; apaga as cópias montadas antes, que se
+    remontam ao abrir; e o **Excluir da lista**: `match_members.hidden_at` e
+    a função `hide_my_match`). Precisa do 30, do 31 e do 32
 
 **Fase 5 (30 e 31), em uma linha cada:** 30 = o convite e o aceite do Match;
 31 = a cópia de cada um (com as marcações e a % calculadas na tela).
-**Refinamentos (32):** sugestões de campos com uma pessoa e o match solto.
+**Refinamentos (32 a 34):** sugestões de campos com uma pessoa e o match
+solto; o conserto do Explorar e dos modelos; o match só com as categorias em
+comum, e o Excluir da lista.
 
 **Fase 4 (25 a 29), em uma linha cada:** 25 = modelos (começar da estrutura
 de outra); 26 = Explorar e cópias ligadas; 27 = sugestões de campos (e a IA);
@@ -974,9 +986,10 @@ todo mundo.
   fica aberta para pôr mais. Arrastar ordena; o **X** tira da aba (não apaga
   nada). Cada mudança grava na hora.
 - **A estrelinha de um item** é outra coisa: o item preferido de uma
-  categoria (no máximo um). A estrela nas ações do card e da linha, e o botão
-  na página do item — tocar marca, marcar outro troca, tocar de novo
-  desmarca. É só uma marca ao lado do nome: **não** põe nada na aba.
+  categoria (no máximo um). A estrela fica **sempre à vista** — no canto do
+  card e na ponta da linha (vazada nos outros itens, cheia no favorito) — e
+  há o botão na página do item: tocar marca, marcar outro troca, tocar de
+  novo desmarca. É só uma marca: **não** põe nada na aba.
   **Só o dono vê** (não vai para o perfil nem para o cartão).
 - Tudo numa tabela à parte, `category_favorites` (migração 20), com RLS só
   do dono — e não em colunas de `categories`/`profiles`, que outras pessoas
@@ -1053,6 +1066,10 @@ todo mundo.
   com aviso; quem criou pode cancelar, e quem aceitou pode desistir
   (cancela também), enquanto ele estiver pendente. Todos aceitaram: o match
   fica **pronto** e todos são avisados.
+- **Excluir da lista** (a lixeira no canto do cartão, só em match pronto ou
+  cancelado, com confirmação): some **só para você** — para os outros, nada
+  muda — e a sua cópia continua em Coleções › Matches (`hide_my_match`,
+  migração 34). O pendente se responde antes (aceitar, recusar, cancelar).
 - Cada pessoa tem uma **cor automática** (pela ordem: quem criou primeiro;
   `MATCH_COLORS` em `lib/domain/match.ts` e `match_color` no SQL 30 seguem
   a mesma lista).
@@ -1073,14 +1090,20 @@ todo mundo.
   dentro, uma **lista solta** — sem subpastas (migração 32) —, com o que é a
   mesma coisa lado a lado (o "Duna" de cada pessoa, um junto do outro).
   Cópia montada antes do SQL 32 é achatada por ele.
-- **O que entra** (até 500 itens por pessoa, os mexidos por último): de você,
-  o que alguém do match pode ver; dos outros, só o que **você** pode ver —
-  público e, se for amigo, o de Amigos. **Privado nunca**, e nada de quem tem
-  bloqueio com você. É uma **foto**: não atualiza depois.
+- **O que entra: só as categorias em comum** (migração 34) — as que duas ou
+  mais pessoas do match têm com **nome equivalente**: o mesmo nome sem
+  acento, maiúscula e plural ("Restaurante" = "restaurantes"), o mesmo
+  modelo de origem, ou uma contida na outra como palavra inteira no começo ou
+  no fim ("Restaurantes" e "Restaurantes japoneses"; a família leva o nome
+  mais curto). Categoria que só uma pessoa tem fica de fora. Dentro delas
+  entram os itens de cada um (até 500 por pessoa, os mexidos por último): de
+  você, o que alguém do match pode ver; dos outros, só o que **você** pode
+  ver — público e, se for amigo, o de Amigos. **Privado nunca**, e nada de
+  quem tem bloqueio com você. É uma **foto**: não atualiza depois. Sem
+  nenhuma categoria em comum, a cópia abre vazia, dizendo isso.
 - **"Mesma coisa"** (`entries.match_key`, feita pelo banco): o mesmo lugar do
-  catálogo comum; o mesmo item do catálogo; ou o mesmo título normalizado em
-  **categorias equivalentes** (mesmo nome normalizado, ou o mesmo modelo de
-  origem do Explorar).
+  catálogo comum; o mesmo item do catálogo; ou o mesmo título normalizado
+  (sem acento, maiúscula e plural) na mesma família de categorias.
 - **Na tela** (calculado na hora, com o que está na cópia —
   `lib/domain/match.ts`, testado): card com a **cor de quem é** o item;
   **"Em comum"** (2+ pessoas têm); **"Sugestão para você"** (nota ≥ 4 de quem

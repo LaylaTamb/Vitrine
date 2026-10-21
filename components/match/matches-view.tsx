@@ -1,11 +1,11 @@
 "use client"
 
-import { ArrowRight, Check, Clock, HeartHandshake, Plus, X } from "lucide-react"
+import { ArrowRight, Check, Clock, HeartHandshake, Plus, Trash2, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { openMatchAction, respondMatchAction } from "@/app/matches/actions"
+import { hideMatchAction, openMatchAction, respondMatchAction } from "@/app/matches/actions"
 import { EmptyState } from "@/components/layout/empty-state"
 import { PageHeader } from "@/components/layout/page-header"
 import { NewMatchDialog } from "@/components/match/new-match-dialog"
@@ -133,6 +133,7 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
   const router = useRouter()
   const [pending, setPending] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [hiding, setHiding] = useState(false)
   const state = matchState(match, meId)
   const creator = match.createdBy === meId
 
@@ -151,6 +152,16 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
     router.refresh()
   }
 
+  async function hide() {
+    const result = await hideMatchAction({ matchId: match.id })
+    if (!result.ok) {
+      toast.error(result.error)
+      return
+    }
+    toast.success("Match excluído da sua lista.")
+    router.refresh()
+  }
+
   // A cópia é montada na primeira vez que a pessoa abre (pode levar uns segundos).
   async function open() {
     setPending(true)
@@ -166,11 +177,16 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
   return (
     <div
       className={cn(
-        "space-y-3 rounded-xl border border-line bg-surface p-4",
+        "relative space-y-3 rounded-xl border border-line bg-surface p-4",
         state === "canceled" && "opacity-60"
       )}
     >
-      <div className="flex items-center gap-3">
+      <div
+        className={cn(
+          "flex items-center gap-3",
+          (state === "ready" || state === "canceled") && "pr-8"
+        )}
+      >
         <div className="flex shrink-0 -space-x-2">
           {match.members.slice(0, 4).map((member) => (
             <span
@@ -200,6 +216,18 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
           <MemberChip key={member.userId} member={member} isMe={member.userId === meId} />
         ))}
       </ul>
+
+      {state === "ready" || state === "canceled" ? (
+        <button
+          type="button"
+          onClick={() => setHiding(true)}
+          aria-label="Excluir este match da sua lista"
+          title="Excluir da sua lista"
+          className="absolute right-3 top-3 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-danger"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      ) : null}
 
       {state === "answer" ? (
         <div className="flex flex-wrap gap-2">
@@ -239,6 +267,21 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
         confirmLabel={state === "answer" ? "Recusar" : creator ? "Cancelar o match" : "Desistir"}
         pendingLabel="Cancelando…"
         onConfirm={() => respond(false)}
+      />
+
+      <ConfirmDialog
+        open={hiding}
+        onOpenChange={setHiding}
+        title="Excluir da sua lista"
+        description={
+          <p>
+            O match some só da sua lista: para os outros, nada muda. A sua cópia continua em
+            Coleções › Matches.
+          </p>
+        }
+        confirmLabel="Excluir"
+        pendingLabel="Excluindo…"
+        onConfirm={hide}
       />
     </div>
   )

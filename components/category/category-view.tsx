@@ -685,7 +685,7 @@ export function CategoryView({
             title="Vitrine vazia"
             description={
               matchMode
-                ? "Ninguém do match tinha itens à vista dos outros quando ele ficou pronto."
+                ? "Vocês não têm categorias em comum à vista um do outro — com nomes equivalentes, como Restaurante e Restaurantes."
                 : canEdit
                   ? "Nenhum item por aqui ainda. Adicione o primeiro."
                   : "Esta coleção ainda não tem itens."

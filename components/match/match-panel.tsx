@@ -124,9 +124,10 @@ export function MatchPanel({
       <p className="flex items-start gap-1.5 text-xs leading-relaxed text-faint">
         <Lock aria-hidden className="mt-0.5 size-3 shrink-0" />
         <span>
-          Só você vê esta cópia ({itemCount(info.people.reduce((sum, p) => sum + p.items, 0))}). É
-          uma foto de quando o match ficou pronto: não atualiza. Para levar algo para o seu acervo,
-          use <span className="text-muted-foreground">Trazer</span>.
+          Só você vê esta cópia ({itemCount(info.people.reduce((sum, p) => sum + p.items, 0))}):
+          só as categorias que vocês têm em comum. É uma foto de quando o match ficou pronto: não
+          atualiza. Para levar algo para o seu acervo, use{" "}
+          <span className="text-muted-foreground">Trazer</span>.
         </span>
       </p>
     </section>

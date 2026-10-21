@@ -275,6 +275,9 @@ export const respondMatchSchema = z.object({ matchId: uuid, accept: z.boolean() 
 /** Abrir (montar, na 1ª vez) a sua cópia de um match pronto (migração 31). */
 export const openMatchSchema = z.object({ matchId: uuid })
 
+/** Tirar um match pronto ou cancelado da sua lista (migração 34). */
+export const hideMatchSchema = z.object({ matchId: uuid })
+
 /** "Trazer" um item da cópia de um match para a A organizar. */
 export const bringFromMatchSchema = z.object({ entryId: uuid })
 

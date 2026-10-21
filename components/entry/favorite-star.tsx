@@ -12,15 +12,21 @@ import { cn } from "@/lib/utils"
  * Tocar marca; marcar outro troca; tocar de novo desmarca.
  */
 
-/** O botão da estrela, para o grupo de ações do card e da linha. */
+/**
+ * O botão da estrela — sempre à vista no card e na linha (vazada nos outros,
+ * cheia no favorito), para ninguém precisar procurar onde marcar.
+ * `floating`: o selo no canto do card, por cima da imagem.
+ */
 export function FavoriteToggle({
   active,
   name,
   onToggle,
+  floating = false,
 }: {
   active: boolean
   name: string
   onToggle: () => void
+  floating?: boolean
 }) {
   const label = active
     ? `Tirar “${name}” de favorito da categoria`
@@ -36,9 +42,15 @@ export function FavoriteToggle({
         event.stopPropagation()
         onToggle()
       }}
-      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-brand"
+      className={cn(
+        "transition-colors hover:text-brand",
+        floating
+          ? "rounded-lg border border-line bg-bg/85 p-1.5 backdrop-blur-sm"
+          : "rounded-md p-1.5 hover:bg-surface-hi",
+        active ? "text-brand" : "text-muted-foreground"
+      )}
     >
-      <Star className={cn("size-3.5", active && "fill-current text-brand")} />
+      <Star className={cn("size-3.5", active && "fill-current")} />
     </button>
   )
 }

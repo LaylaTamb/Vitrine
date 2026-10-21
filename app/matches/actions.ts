@@ -6,6 +6,7 @@ import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/resul
 import {
   bringFromMatchSchema,
   createMatchSchema,
+  hideMatchSchema,
   openMatchSchema,
   respondMatchSchema,
 } from "@/lib/actions/schemas"
@@ -112,6 +113,31 @@ export async function openMatchAction(input: {
   // A pasta "Matches" e a categoria nova aparecem nas Coleções.
   revalidatePath("/")
   return ok({ categoryId: String(data) })
+}
+
+/** O erro de excluir da lista antes de a migração 34 rodar. */
+const HIDE_NOT_READY =
+  "Excluir da lista ainda não está no banco: rode supabase/34_match_common.sql no SQL Editor do Supabase."
+
+/**
+ * "Excluir" um match da sua lista (migração 34): some só para você — para os
+ * outros, nada muda — e a sua cópia continua nas Coleções. Só pronto ou
+ * cancelado (o pendente se responde antes).
+ */
+export async function hideMatchAction(input: { matchId: string }): Promise<ActionResult> {
+  const parsed = hideMatchSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  await requireUser()
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("hide_my_match", { p_match_id: parsed.data.matchId })
+  if (error) {
+    return isMissingSchema(error) || isMissingColumn(error)
+      ? { ok: false, error: HIDE_NOT_READY }
+      : failMatch(error)
+  }
+  revalidatePath("/matches")
+  return ok()
 }
 
 /** Quem trouxe fica registrado assim: "trazer" + o item da cópia (trazer de novo não duplica). */
