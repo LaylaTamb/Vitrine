@@ -150,6 +150,22 @@ async function nextOrder(
   return (top?.display_order ?? -1) + 1
 }
 
+/**
+ * A posição no fim de um nível das Coleções. Pastas e categorias dividem a
+ * mesma sequência de `display_order` (`reorderLevelAction`): conta as duas.
+ */
+async function nextLevelOrder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ownerId: string,
+  folderId: string | null
+): Promise<number> {
+  const [folders, categories] = await Promise.all([
+    nextOrder(supabase, "folders", ownerId, "parent_folder_id", folderId),
+    nextOrder(supabase, "categories", ownerId, "folder_id", folderId),
+  ])
+  return Math.max(folders, categories)
+}
+
 export async function createFolderAction(input: {
   name: string
   parentFolderId: string | null
@@ -243,9 +259,11 @@ export async function moveFolderAction(input: {
     }
   }
 
+  // Chega no fim do nível de destino.
+  const display_order = await nextLevelOrder(supabase, user.id, parsed.data.targetFolderId)
   const { error } = await supabase
     .from("folders")
-    .update({ parent_folder_id: parsed.data.targetFolderId })
+    .update({ parent_folder_id: parsed.data.targetFolderId, display_order })
     .eq("id", parsed.data.id)
 
   if (error) return fail(error)
@@ -469,10 +487,13 @@ export async function moveCategoryAction(input: {
   const parsed = moveFolderSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
+  const user = await requireUser()
   const supabase = await createClient()
+  // Chega no fim do nível de destino.
+  const display_order = await nextLevelOrder(supabase, user.id, parsed.data.targetFolderId)
   const { error } = await supabase
     .from("categories")
-    .update({ folder_id: parsed.data.targetFolderId })
+    .update({ folder_id: parsed.data.targetFolderId, display_order })
     .eq("id", parsed.data.id)
 
   if (error) return fail(error)

@@ -3,7 +3,6 @@ import { ArrowLeft } from "lucide-react"
 
 import { EntryDetailActions } from "@/components/entry/entry-detail-actions"
 import { EntryImage } from "@/components/entry/entry-image"
-import { FavoriteDetailToggle } from "@/components/entry/favorite-star"
 import { Stars } from "@/components/entry/stars"
 import { OpenInMapsLink, VitrineMapLink } from "@/components/map/maps-links"
 import { MatchEntryActions } from "@/components/match/match-entry-actions"
@@ -46,7 +45,6 @@ export function EntryDetail({
   places = [],
   showMapLink = false,
   categories = [],
-  isFavorite = false,
   match = null,
 }: {
   view: EntryView
@@ -62,8 +60,6 @@ export function EntryDetail({
   showMapLink?: boolean
   /** As categorias do dono — o seletor "Categoria" da edição (trocar o item de categoria). */
   categories?: CategorySummary[]
-  /** É o favorito da categoria — só vem para o dono. */
-  isFavorite?: boolean
   /**
    * Item da cópia de um match (migração 31): de quem é, as marcações e os
    * campos do original, só leitura.
@@ -120,16 +116,6 @@ export function EntryDetail({
 
         {match && match.entry.suggestionFor.length > 0 ? (
           <p className="text-sm text-muted-foreground">{suggestionText(match.entry)}</p>
-        ) : null}
-
-        {canEdit && !match ? (
-          <FavoriteDetailToggle
-            categoryId={category.id}
-            categoryName={category.name}
-            entryId={view.id}
-            entryName={view.name}
-            isFavorite={isFavorite}
-          />
         ) : null}
 
         {category.rating_enabled ? (

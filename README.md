@@ -22,7 +22,8 @@ mais cria conta com e-mail e senha.
 - **Itens completos.** Cada item tem nome, imagem (por link), nota, os campos
   da categoria e **tags** (um vocabulário comum, para achar coisas parecidas
   em categorias diferentes). Dá para organizar os itens em **subpastas**
-  dentro da categoria e arrastar para pôr na ordem que quiser.
+  dentro da categoria e arrastar para pôr na ordem que quiser — ou para dentro
+  de outra pasta.
 - **Várias formas de ver.** Grade (em três tamanhos), lista ou **tier list**
   (S, A, B…, montada pelas notas). A aba **Números** resume a categoria: nota
   média, as notas por faixa, os destaques, o resumo de cada campo e as tags
@@ -34,8 +35,9 @@ mais cria conta com e-mail e senha.
   o Vitrine mostra o que dos seus lugares salvos fica perto, com horário e
   tempo de trajeto. Com a localização liberada, ele também pergunta **"Você
   está em…?"** quando você chega num lugar — e salva em um toque.
-- **Favoritos.** Marque com uma estrelinha o item preferido de cada categoria,
-  e monte a aba **Favoritos** com as categorias que você mais abre.
+- **Favoritos.** Toque na estrela de qualquer categoria, em qualquer pasta. A
+  estrela no canto das Coleções junta só as favoritas — e elas continuam nas
+  pastas delas.
 - **"A organizar".** A caixa de entrada para o que você salva às pressas
   (do celular, por exemplo). Depois é só mover para a categoria certa.
 - **Lixeira.** Pasta, categoria ou subpasta apagada fica **30 dias** na
@@ -48,7 +50,7 @@ mais cria conta com e-mail e senha.
   todo mundo (inclusive sem conta), só os seus amigos, ou só você.
 - **Seu perfil** (`/v/seu-arroba`): um **cartão de apresentação** no estilo do
   Twitter, com **banner**, foto, nome, bio, os links das suas redes
-  (Instagram, X, Discord, Spotify, YouTube) e até **5 categorias em
+  (Instagram, X, Discord, Spotify, YouTube) e até **6 categorias em
   destaque** com os 3 melhores itens de cada uma. Você edita tudo no próprio
   perfil, em **Editar cartão**.
 - **Story.** Um toque gera uma imagem pronta para o story do Instagram, com o
@@ -87,8 +89,9 @@ mais cria conta com e-mail e senha.
 
 - **Importar** as listas salvas do **Google Maps** e os filmes do
   **Letterboxd** (pelo arquivo que cada serviço exporta).
-- **Conectar a Steam** e trazer seus jogos com as horas jogadas, atualizados
-  todo dia.
+- **Conectar a Steam** e trazer seus jogos com as horas jogadas, e **conectar
+  o Letterboxd pelo seu @** para os filmes novos do diário chegarem sozinhos —
+  os dois se atualizam todo dia e quando você abre a categoria deles.
 - **No celular:** instale o Vitrine como app e use o **Compartilhar** de
   qualquer outro app (no Android) para salvar algo em um toque.
 - **Backup:** exporte o acervo inteiro num arquivo e importe quando quiser.
@@ -117,8 +120,8 @@ mais cria conta com e-mail e senha.
 7. **Explore e compare.** Veja o que os outros catalogam em **Explorar** e,
    com amigos, abra um **Match** (menu da sua foto → Matches).
 8. **Volte quando quiser.** A busca das Coleções acha qualquer coisa; o
-   **Mapa** mostra o que fica perto; os **Favoritos** guardam o que você mais
-   abre.
+   **Mapa** mostra o que fica perto; a **estrela** junta as categorias que
+   você mais abre.
 
 ---
 

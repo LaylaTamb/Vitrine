@@ -6,22 +6,24 @@ import { itemCount, plural } from "@/lib/domain/format"
 import { placeTargets } from "@/lib/domain/nearby"
 import { defaultVisibilityOf, needsPublicNotice } from "@/lib/domain/privacy"
 import { getCollections } from "@/lib/queries/collections"
+import { getMyFavoriteIds } from "@/lib/queries/favorites"
 import { getMyTrashCount } from "@/lib/queries/trash"
 import { displayNameOf, requireUser } from "@/lib/queries/session"
 
 /**
  * `/` — Coleções.
  *
- * Server Component: perfil, pastas, categorias e contagens chegam em uma única
- * ida ao banco (as quatro consultas vão juntas em `Promise.all`), e o HTML da
+ * Server Component: perfil, pastas, categorias, contagens, a Lixeira e as
+ * favoritas chegam em uma única ida ao banco (tudo junto em `Promise.all`), e o HTML da
  * primeira resposta já sai com tudo. Daqui para frente, navegar entre níveis é
  * estado de cliente: não recarrega do servidor.
  */
 export default async function CollectionsPage() {
   const user = await requireUser()
-  const [{ profile, folders, categories, counts }, trashCount] = await Promise.all([
+  const [{ profile, folders, categories, counts }, trashCount, favoriteIds] = await Promise.all([
     getCollections(user.id),
     getMyTrashCount(),
+    getMyFavoriteIds(user.id),
   ])
 
   const totalEntries = Object.values(counts).reduce((acc, value) => acc + value, 0)
@@ -48,6 +50,8 @@ export default async function CollectionsPage() {
         defaultVisibility={defaultVisibilityOf(profile)}
         searchable
         trashCount={trashCount}
+        // Sem a migração 20, nada de estrela.
+        favoriteIds={favoriteIds ?? undefined}
       />
     </AppShell>
   )

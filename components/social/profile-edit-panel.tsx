@@ -4,6 +4,7 @@ import { Check } from "lucide-react"
 
 import { BannerForm } from "@/components/layout/banner-form"
 import { IdentityForm } from "@/components/layout/identity-form"
+import { LetterboxdConnection } from "@/components/layout/letterboxd-connection"
 import { ProfileCardForm } from "@/components/layout/profile-card-form"
 import { SocialLinksForm } from "@/components/layout/social-links-form"
 import { SteamConnection } from "@/components/layout/steam-connection"
@@ -17,14 +18,14 @@ import {
 } from "@/lib/domain/card"
 import { timeAgo } from "@/lib/domain/social"
 import type { Category, Folder, Profile } from "@/lib/domain/types"
-import type { SteamAccountView } from "@/lib/queries/connected"
+import type { ConnectedAccountView, SteamAccountView } from "@/lib/queries/connected"
 
 const LINK = "text-foreground underline underline-offset-2 transition-colors hover:text-brand"
 
 /**
  * Meu perfil → Editar cartão (`/v/<@>?editar=1`): tudo o que aparece no
  * cartão, no próprio perfil — o banner, foto e nome, bio e destaques, as
- * redes e a Steam. O @, a senha e o resto da conta ficam nas Configurações.
+ * redes, a Steam e o Letterboxd. O @, a senha e o resto da conta ficam nas Configurações.
  */
 export function ProfileEditPanel({
   profile,
@@ -33,6 +34,7 @@ export function ProfileEditPanel({
   counts,
   closeHref,
   steam,
+  letterboxd,
 }: {
   profile: Profile
   categories: Category[]
@@ -45,6 +47,11 @@ export function ProfileEditPanel({
     configured: boolean
     account: SteamAccountView | null
     notice: { text: string; good: boolean } | null
+  }
+  letterboxd: {
+    ready: boolean
+    configured: boolean
+    account: ConnectedAccountView | null
   }
 }) {
   return (
@@ -121,6 +128,19 @@ export function ProfileEditPanel({
         />
       </Block>
 
+      <Block
+        id="letterboxd"
+        title="Letterboxd"
+        description="Traz os filmes do seu diário, com nota e pôster, para uma categoria sua."
+      >
+        <LetterboxdConnection
+          ready={letterboxd.ready}
+          configured={letterboxd.configured}
+          account={letterboxd.account}
+          syncedLabel={syncedLabel(letterboxd.account?.lastSyncedAt ?? null, true)}
+        />
+      </Block>
+
       <div className="flex justify-end border-t border-line pt-5">
         <Link href={closeHref} className={buttonVariants()}>
           <Check className="size-4" /> Concluir
@@ -154,12 +174,16 @@ function Block({
   )
 }
 
-/** "atualizada há 3 h" — calculado aqui, no servidor, para a hidratação bater. */
-function syncedLabel(lastSyncedAt: string | null): string {
+/**
+ * "atualizada há 3 h" (a Steam) / "atualizado há 3 h" (o Letterboxd) —
+ * calculado aqui, no servidor, para a hidratação bater.
+ */
+function syncedLabel(lastSyncedAt: string | null, masculine = false): string {
   if (!lastSyncedAt) return "ainda não sincronizou"
   const label = timeAgo(lastSyncedAt, new Date())
   const relative = label === "agora" || label.startsWith("há")
-  return relative ? `atualizada ${label}` : `atualizada em ${label}`
+  const word = masculine ? "atualizado" : "atualizada"
+  return relative ? `${word} ${label}` : `${word} em ${label}`
 }
 
 /** Os links gravados, do jeito que cada campo mostra ao abrir. */

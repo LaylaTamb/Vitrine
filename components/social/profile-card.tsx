@@ -16,6 +16,7 @@ import { ShareStoryButton } from "@/components/social/share-story-button"
 import { Avatar } from "@/components/ui/avatar-image"
 import { buttonVariants } from "@/components/ui/button"
 import {
+  CARD_MAX_CATEGORIES,
   cardHasContent,
   SOCIAL_LABELS,
   type CardCategory,
@@ -39,7 +40,7 @@ const CHIP =
 
 /**
  * O cartão de apresentação no topo do perfil (migração 23): foto, nome, @,
- * bio, links das redes, a faixa social e até 5 categorias públicas com os 3
+ * bio, links das redes, a faixa social e até 6 categorias públicas com os 3
  * melhores itens. Todo mundo vê, com ou sem login.
  *
  * `ready = false`: a migração 23 ainda não rodou — o cartão mostra só o
@@ -130,7 +131,8 @@ export function ProfileCardView({
             )}
             {cardHasContent(card) || editing ? null : (
               <p className="w-full text-xs text-faint sm:w-auto">
-                Uma bio, seus links e até 5 categorias públicas com os 3 melhores itens.
+                Uma bio, seus links e até {CARD_MAX_CATEGORIES} categorias públicas com os 3
+                melhores itens.
               </p>
             )}
           </div>

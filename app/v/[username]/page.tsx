@@ -16,12 +16,12 @@ import { isQrToken } from "@/lib/domain/qr"
 import { STEAM_RETURN_MESSAGES } from "@/lib/domain/steam"
 import type { Profile } from "@/lib/domain/types"
 import { normalizeUsername, profilePath, USERNAME_PATTERN } from "@/lib/domain/username"
-import { getSteamAccount } from "@/lib/queries/connected"
+import { getLetterboxdAccount, getSteamAccount } from "@/lib/queries/connected"
 import { getCollectionsByUsername } from "@/lib/queries/profiles"
 import { getProfileCard, getPublicProfile, resolveUsername } from "@/lib/queries/public"
 import { getProfileSocial } from "@/lib/queries/social"
 import { getMyProfile, getSessionUser } from "@/lib/queries/session"
-import { steamConfigured } from "@/lib/steam/client"
+import { serverSecret, steamConfigured } from "@/lib/steam/client"
 
 type Params = Promise<{ username: string }>
 type SearchParams = Promise<{
@@ -164,7 +164,9 @@ export default async function ProfilePage({
 
   if (isMe && myProfile) {
     const editing = query.editar === "1"
-    const steam = editing ? await getSteamAccount(user.id) : null
+    const [steam, letterboxd] = editing
+      ? await Promise.all([getSteamAccount(user.id), getLetterboxdAccount(user.id)])
+      : [null, null]
     // "sem-chave" e "sem-banco" o próprio bloco da Steam já explica: sem recado em dobro.
     const steamStatus = typeof query.steam === "string" ? query.steam : ""
     const steamNotice = ["sem-chave", "sem-banco"].includes(steamStatus)
@@ -182,7 +184,7 @@ export default async function ProfilePage({
             editing={editing}
             social={socialBar}
           />
-          {editing && steam ? (
+          {editing && steam && letterboxd ? (
             <ProfileEditPanel
               profile={myProfile}
               categories={categories}
@@ -194,6 +196,11 @@ export default async function ProfilePage({
                 configured: steamConfigured(),
                 account: steam.account,
                 notice: steamNotice,
+              }}
+              letterboxd={{
+                ready: letterboxd.ready,
+                configured: serverSecret() !== null,
+                account: letterboxd.account,
               }}
             />
           ) : null}

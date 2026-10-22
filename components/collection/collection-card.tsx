@@ -1,12 +1,15 @@
 "use client"
 
+import { useDroppable } from "@dnd-kit/core"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import Link from "next/link"
-import { FolderOpen, GripVertical, MoveRight, Pencil, Trash2, X } from "lucide-react"
+import { FolderOpen, GripVertical, Pencil, Trash2 } from "lucide-react"
 
 import { VISIBILITY_ICONS } from "@/components/collection/privacy-switch"
+import { FavoriteToggle } from "@/components/favorites/favorite-star"
 import type { ViewMode } from "@/components/layout/view-toggle"
+import { intoTargetId } from "@/lib/domain/drag"
 import { visibilityLabel, type Visibility } from "@/lib/domain/privacy"
 import { cn } from "@/lib/utils"
 
@@ -21,13 +24,17 @@ export interface CollectionCardProps {
   canEdit: boolean
   sortable: boolean
   view: ViewMode
-  onMove?: () => void
+  /**
+   * Pasta que recebe o que é arrastado para cima dela (soltar no miolo do card
+   * põe dentro). Só vale dentro de um `DndContext`.
+   */
+  dropInto?: boolean
   onEdit?: () => void
   onDelete?: () => void
-  /** Tirar de uma lista (a aba Favoritos): o X, que não apaga nada. */
-  onRemove?: () => void
-  /** O texto do X — leitor de tela e dica. */
-  removeLabel?: string
+  /** A categoria tem a estrela (só o dono recebe). */
+  favorite?: boolean
+  /** Com ela, a estrela fica sempre à vista no card (só categoria, só o dono). */
+  onToggleFavorite?: () => void
   /**
    * O nível, para o ícone ao lado do nome: cadeado na Privada, pessoas na de
    * Amigos, nada na Pública. Só o dono passa (e chega a ver).
@@ -46,16 +53,22 @@ export function CollectionCard({
   canEdit,
   sortable,
   view,
-  onMove,
+  dropInto = false,
   onEdit,
   onDelete,
-  onRemove,
-  removeLabel,
+  favorite = false,
+  onToggleFavorite,
   visibility = "public",
 }: CollectionCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled: !sortable,
+  })
+
+  // O miolo do card (não a borda): a borda continua servindo para reordenar.
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: intoTargetId(id),
+    disabled: !dropInto,
   })
 
   const glyph = kind === "folder" ? "📁" : (icon ?? "")
@@ -64,15 +77,16 @@ export function CollectionCard({
   const actions = canEdit ? (
     <div
       className={cn(
-        "card-actions absolute right-2 top-2 flex items-center gap-0.5 rounded-lg border border-line bg-surface-hi/90 p-0.5 backdrop-blur-sm",
-        isList && "relative right-auto top-auto border-0 bg-transparent p-0 backdrop-blur-none"
+        // Em tela de toque (sem hover), à vista: senão ninguém acha editar e excluir.
+        "card-actions absolute top-2 flex items-center gap-0.5 rounded-lg border border-line bg-surface-hi/90 p-0.5 backdrop-blur-sm [@media(hover:none)]:opacity-100",
+        // As outras ações abrem ao lado da estrela, que fica sempre no canto.
+        onToggleFavorite ? "right-11" : "right-2",
+        // Na lista, no celular (sem hover), as ações nem entram na linha: o nome
+        // ganha o espaço — como nas linhas de item.
+        isList &&
+          "relative right-auto top-auto hidden border-0 bg-transparent p-0 backdrop-blur-none sm:flex"
       )}
     >
-      {onMove ? (
-        <IconButton label={`Mover ${name}`} onClick={onMove}>
-          <MoveRight className="size-3.5" />
-        </IconButton>
-      ) : null}
       {onEdit ? (
         <IconButton label={`Editar ${name}`} onClick={onEdit}>
           <Pencil className="size-3.5" />
@@ -83,12 +97,16 @@ export function CollectionCard({
           <Trash2 className="size-3.5" />
         </IconButton>
       ) : null}
-      {onRemove ? (
-        <IconButton label={removeLabel ?? `Tirar ${name}`} onClick={onRemove} danger>
-          <X className="size-3.5" />
-        </IconButton>
-      ) : null}
     </div>
+  ) : null
+
+  const star = onToggleFavorite ? (
+    <FavoriteToggle
+      active={favorite}
+      name={name}
+      onToggle={onToggleFavorite}
+      className={cn("z-10 shrink-0", !isList && "absolute right-2 top-2")}
+    />
   ) : null
 
   const handle = sortable ? (
@@ -96,9 +114,11 @@ export function CollectionCard({
       type="button"
       {...attributes}
       {...listeners}
-      aria-label={`Reordenar ${name}`}
+      aria-label={`Arrastar ${name}`}
+      title="Arraste para reordenar ou para dentro de uma pasta"
       className={cn(
-        "card-actions absolute left-1.5 top-2 cursor-grab touch-none rounded p-1 text-faint hover:text-foreground active:cursor-grabbing",
+        // Em tela de toque a alça fica à vista: é por ela que se arrasta.
+        "card-actions absolute left-1.5 top-2 cursor-grab touch-none rounded p-1 text-faint hover:text-foreground active:cursor-grabbing [@media(hover:none)]:opacity-100",
         isList && "relative left-auto top-auto"
       )}
     >
@@ -142,18 +162,24 @@ export function CollectionCard({
       className={cn(
         "group/card vitrine-card relative",
         isList ? "flex items-center gap-2 px-3 py-2.5" : "p-4",
-        isDragging && "z-10 border-line-hi opacity-90"
+        isDragging && "z-10 border-line-hi opacity-90",
+        isOver && "border-brand ring-2 ring-brand-dim"
       )}
     >
+      {dropInto ? (
+        <div ref={setDropRef} aria-hidden className="pointer-events-none absolute inset-[20%]" />
+      ) : null}
       {isList ? (
         <>
           {handle}
           {body}
+          {star}
           {actions}
         </>
       ) : (
         <>
           {handle}
+          {star}
           {actions}
           {body}
         </>

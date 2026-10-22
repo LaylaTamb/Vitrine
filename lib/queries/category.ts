@@ -23,8 +23,8 @@ export interface CategoryPageData {
   entryFolders: EntryFolder[]
   /** As pastas das Coleções do dono — a trilha "Coleções › Bebidas › Suco". */
   collectionFolders: Folder[]
-  /** O favorito da categoria — só o dono recebe (a RLS esconde de todo o resto). */
-  favoriteEntryId: string | null
+  /** A categoria tem a estrela? Só o dono recebe (a RLS esconde de todo o resto). */
+  isFavorite: boolean
 }
 
 /**
@@ -52,16 +52,16 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
       .order("created_at", { referencedTable: "entries", ascending: false })
       .maybeSingle(),
     supabase.from("tags").select("id, name, color").order("name", { ascending: true }),
-    // Sem a migração 20 (tabela ausente): nenhum favorito.
+    // Sem a migração 20 (tabela ausente): não é favorita.
     supabase
       .from("category_favorites")
-      .select("entry_id")
+      .select("tab_position")
       .eq("category_id", categoryId)
       .maybeSingle(),
   ])
-  const favoriteEntryId = favoriteResult.error
-    ? null
-    : ((favoriteResult.data as { entry_id: string | null } | null)?.entry_id ?? null)
+  const isFavorite =
+    !favoriteResult.error &&
+    ((favoriteResult.data as { tab_position: number | null } | null)?.tab_position ?? null) !== null
 
   const tags = ((tagsResult.data ?? []) as Tag[]).sort((a, b) =>
     a.name.localeCompare(b.name, "pt-BR")
@@ -85,7 +85,7 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
       tags,
       entryFolders: [],
       collectionFolders: [],
-      favoriteEntryId: null,
+      isFavorite: false,
     }
   }
 
@@ -112,7 +112,7 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
     tags,
     entryFolders: entryFolders ?? [],
     collectionFolders: owner?.folders ?? [],
-    favoriteEntryId,
+    isFavorite,
   }
 }
 

@@ -36,7 +36,7 @@ export default async function EntryPage({ params }: { params: Params }) {
   const user = await getSessionUser()
   if (!user) return <VisitorEntryPage categoryId={categoryId} entryId={entryId} />
 
-  const [{ entry, category, owner, categories, tags, entryFolders, places, isFavorite }, profile] =
+  const [{ entry, category, owner, categories, tags, entryFolders, places }, profile] =
     await Promise.all([getEntryPage(entryId), getMyProfile()])
 
   if (!entry || !category) {
@@ -81,7 +81,6 @@ export default async function EntryPage({ params }: { params: Params }) {
         // O Mapa só mostra os itens de quem está logado.
         showMapLink={isOwner}
         categories={isOwner ? categories : []}
-        isFavorite={isOwner && isFavorite}
         match={match}
       />
     </AppShell>

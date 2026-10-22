@@ -10,7 +10,6 @@ import {
   MapIcon,
   QrCode,
   Settings,
-  Star,
   Tags,
   User,
   Users,
@@ -36,7 +35,6 @@ const MOBILE_LINKS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/filtro", label: "Filtro geral", icon: Filter },
   { href: "/mapa", label: "Mapa", icon: MapIcon },
   { href: "/tags", label: "Tags", icon: Tags },
-  { href: "/favoritos", label: "Favoritos", icon: Star },
   { href: "/usuarios", label: "Pessoas", icon: Users },
 ]
 

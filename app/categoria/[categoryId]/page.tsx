@@ -14,6 +14,7 @@ import type { Tag } from "@/lib/domain/types"
 import { profilePath } from "@/lib/domain/username"
 import { toView } from "@/lib/domain/view"
 import { getCategoryPage, loadCategoryPage } from "@/lib/queries/category"
+import { getCategorySync } from "@/lib/queries/connected"
 import { syncLinkedCategory } from "@/lib/queries/explore"
 import { getMatchCopy } from "@/lib/queries/matches"
 import { getPublicCategory } from "@/lib/queries/public"
@@ -63,10 +64,13 @@ export default async function CategoryPage({
   const user = await getSessionUser()
   if (!user) return <VisitorCategoryPage categoryId={categoryId} searchParams={searchParams} />
 
-  const [firstRead, profile, query] = await Promise.all([
+  // Junto, sem ida a mais: é a categoria da Steam ou do Letterboxd? (só a do
+  // próprio dono volta — a RLS esconde o resto.)
+  const [firstRead, profile, query, connected] = await Promise.all([
     getCategoryPage(categoryId),
     getMyProfile(),
     searchParams,
+    getCategorySync(user.id, categoryId),
   ])
 
   // Cópia do Explorar ainda ligada: traz as novidades da original antes de
@@ -90,7 +94,7 @@ export default async function CategoryPage({
     tags,
     entryFolders,
     collectionFolders,
-    favoriteEntryId,
+    isFavorite,
   } = data
 
   if (!category) {
@@ -141,8 +145,10 @@ export default async function CategoryPage({
         initialFilter={initialFilter}
         initialTab={query.aba === "numeros" ? "numeros" : "itens"}
         initialEditId={query.editar ?? null}
-        favoriteEntryId={canEdit ? favoriteEntryId : null}
+        isFavorite={canEdit && isFavorite}
         link={canEdit ? link : null}
+        // Passou 1 hora: a tela busca as novidades depois de pintar.
+        autoRefresh={canEdit && connected?.due ? connected.provider : null}
         match={matchCopy?.info ?? null}
       />
     </AppShell>

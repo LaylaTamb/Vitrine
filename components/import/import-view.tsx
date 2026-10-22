@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { ExternalLink, Film, FolderOpen, MapPin, type LucideIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useId, useState, type ReactNode } from "react"
@@ -420,6 +421,17 @@ function LetterboxdImport() {
       <p className="text-xs leading-relaxed text-faint">
         Vira a categoria “Filmes” na pasta “Letterboxd”, com Nome, Ano, Nota, Data em que assistiu e
         Resenha. Importar de novo acrescenta os filmes novos e atualiza as notas que mudaram.
+      </p>
+
+      <p className="text-xs leading-relaxed text-faint">
+        Para os próximos filmes chegarem sozinhos, conecte o seu @ em{" "}
+        <Link
+          href="/perfil?editar=1#letterboxd"
+          className="text-foreground underline underline-offset-2 hover:text-brand"
+        >
+          Meu perfil → Editar cartão
+        </Link>
+        : o arquivo traz o histórico inteiro, e o @ mantém em dia.
       </p>
 
       <FilePicker onFiles={read} disabled={busy !== null} label="Escolher o .zip ou os arquivos" />

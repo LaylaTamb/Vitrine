@@ -20,7 +20,11 @@ import {
   googleSourceId,
   STARRED_LIST,
 } from "@/lib/import/google"
-import { LETTERBOXD_ESTRUTURA, LETTERBOXD_FOLDER } from "@/lib/import/letterboxd"
+import {
+  LETTERBOXD_ESTRUTURA,
+  LETTERBOXD_FOLDER,
+  letterboxdTitleKey,
+} from "@/lib/import/letterboxd"
 import { requireUser } from "@/lib/queries/session"
 import { createClient } from "@/lib/supabase/server"
 
@@ -258,7 +262,8 @@ export async function importGoogleRowsAction(input: {
 
 /**
  * Um lote de filmes do Letterboxd: os novos entram; os que já estavam
- * (mesma URI) só têm a NOTA atualizada, se ela mudou.
+ * (mesma URI — ou mesmo nome + ano, a chave dos que vieram pelo @, migração
+ * 39) só têm a NOTA atualizada, se ela mudou.
  */
 export async function importLetterboxdRowsAction(input: {
   categoryId: string
@@ -285,7 +290,12 @@ export async function importLetterboxdRowsAction(input: {
   const ratingOf = (rating: number | null) =>
     category.ratingEnabled ? normalizeRating(rating) : null
 
-  const keys = parsed.data.rows.map((film) => film.key)
+  // A chave do arquivo (a URI) e a do @ (nome + ano): o mesmo filme não entra duas vezes.
+  const titleKeyOf = (film: { name: string; year: number | null }) =>
+    letterboxdTitleKey(film.name, film.year)
+  const keys = [
+    ...new Set(parsed.data.rows.flatMap((film) => [film.key, titleKeyOf(film)])),
+  ]
   const existingResult = await supabase
     .from("entries")
     .select("id, source_id, rating")
@@ -293,10 +303,16 @@ export async function importLetterboxdRowsAction(input: {
     .eq("source", "letterboxd")
     .in("source_id", keys)
   if (existingResult.error) return failImport(existingResult.error)
-  const existing = new Map(
+  const bySource = new Map(
     ((existingResult.data ?? []) as { id: string; source_id: string; rating: number | null }[]).map(
       (row) => [row.source_id, row]
     )
+  )
+  const existing = new Map(
+    parsed.data.rows.flatMap((film) => {
+      const row = bySource.get(film.key) ?? bySource.get(titleKeyOf(film))
+      return row ? [[film.key, row] as const] : []
+    })
   )
 
   const fresh = parsed.data.rows.filter((film) => !existing.has(film.key))

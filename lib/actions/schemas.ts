@@ -302,18 +302,27 @@ export const qrTokenSchema = z.object({
 })
 
 // ---------------------------------------------------------------------------
+// Letterboxd pelo @ (migração 39)
+// ---------------------------------------------------------------------------
+
+/** O que a pessoa digitou (o @, o nome ou o link do perfil); quem normaliza é a action. */
+export const letterboxdUsernameSchema = z.object({
+  username: z.string().trim().min(1, "Digite o seu @ do Letterboxd.").max(200, "@ comprido demais."),
+})
+
+// ---------------------------------------------------------------------------
 // Favoritos (migração 20)
 // ---------------------------------------------------------------------------
 
-/** O favorito de uma categoria. `null` = desmarcar. */
-export const favoriteEntrySchema = z.object({ categoryId: uuid, entryId: uuid.nullable() })
+/** A estrela de uma categoria: marcar ou desmarcar. */
+export const categoryFavoriteSchema = z.object({ categoryId: uuid, favorite: z.boolean() })
 
-/** As categorias da aba Favoritos, na ordem. Lista vazia = aba vazia. */
+/** As categorias favoritas, na ordem. Lista vazia = nenhuma. */
 export const favoritesTabSchema = z.object({
   categoryIds: z
     .array(uuid)
-    .max(500, "Categorias demais na aba.")
-    .refine((ids) => new Set(ids).size === ids.length, "Categoria repetida na aba."),
+    .max(500, "Categorias demais nos favoritos.")
+    .refine((ids) => new Set(ids).size === ids.length, "Categoria repetida nos favoritos."),
 })
 
 // ---------------------------------------------------------------------------

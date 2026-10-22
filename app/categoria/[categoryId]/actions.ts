@@ -12,6 +12,7 @@ import {
   deleteEntryFolderSchema,
   deleteEntrySchema,
   entrySchema,
+  idSchema,
   moveEntriesToFolderSchema,
   moveFolderSchema,
   normalizeRating,
@@ -20,11 +21,16 @@ import {
   updateEntrySchema,
 } from "@/lib/actions/schemas"
 import { descendantFolderIds } from "@/lib/domain/collections"
+import { isSyncDue, letterboxdSummary } from "@/lib/domain/connected"
 import { isMissingSchema } from "@/lib/domain/errors"
 import { coerceCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { migrateCustomFields } from "@/lib/domain/migrate"
 import { remapPlaces } from "@/lib/domain/places"
 import type { CustomFields, EntryFolder, EntryPlace, Estrutura } from "@/lib/domain/types"
+import { syncSummary } from "@/lib/domain/steam"
+import { syncLetterboxdAccount } from "@/lib/letterboxd/sync"
+import { serverSecret, steamConfigured } from "@/lib/steam/client"
+import { syncSteamAccount } from "@/lib/steam/sync"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
 
@@ -646,4 +652,63 @@ export async function reorderEntriesAction(input: {
   if (error) return fail(error)
   revalidatePath(`/categoria/${parsed.data.categoryId}`)
   return ok()
+}
+
+// ---------------------------------------------------------------------------
+// Steam e Letterboxd: atualizar ao abrir a categoria que eles mantêm
+// ---------------------------------------------------------------------------
+
+/**
+ * Abriu a categoria da Steam ou do Letterboxd: se a última tentativa foi há
+ * mais de 1 hora, busca as novidades agora (a tela chama depois de pintar,
+ * sem segurar a página). `changed` = vale recarregar a lista.
+ */
+export async function refreshConnectedCategoryAction(input: {
+  id: string
+}): Promise<ActionResult<{ changed: boolean; summary: string | null }>> {
+  const parsed = idSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+
+  const user = await requireUser()
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("connected_accounts")
+    .select("provider, external_id, last_attempt_at")
+    .eq("user_id", user.id)
+    .eq("category_id", parsed.data.id)
+    .limit(1)
+    .maybeSingle()
+  if (error) return isMissingSchema(error) ? ok({ changed: false, summary: null }) : fail(error)
+  const account = data as {
+    provider: string
+    external_id: string
+    last_attempt_at: string | null
+  } | null
+  // Outra categoria, ou atualizada há pouco (por outra aba, pelo Cron…): nada a fazer.
+  if (!account || !isSyncDue(account.last_attempt_at, new Date())) {
+    return ok({ changed: false, summary: null })
+  }
+
+  if (account.provider === "steam") {
+    if (!steamConfigured()) return ok({ changed: false, summary: null })
+    const result = await syncSteamAccount(supabase, user.id, account.external_id)
+    if (!result.ok) return { ok: false, error: result.error }
+    const changed = result.created + result.updated > 0
+    if (changed) revalidatePath(`/categoria/${parsed.data.id}`)
+    return ok({ changed, summary: changed ? syncSummary(result.created, result.updated) : null })
+  }
+
+  if (account.provider === "letterboxd") {
+    if (!serverSecret()) return ok({ changed: false, summary: null })
+    const result = await syncLetterboxdAccount(supabase, user.id, account.external_id)
+    if (!result.ok) return { ok: false, error: result.error }
+    const changed = result.created + result.updated > 0
+    if (changed) revalidatePath(`/categoria/${parsed.data.id}`)
+    return ok({
+      changed,
+      summary: changed ? letterboxdSummary(result.created, result.updated) : null,
+    })
+  }
+
+  return ok({ changed: false, summary: null })
 }

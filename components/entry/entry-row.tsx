@@ -5,7 +5,6 @@ import { Pencil, Trash2 } from "lucide-react"
 import type { ReactNode } from "react"
 
 import { EntryImage } from "@/components/entry/entry-image"
-import { FavoriteMark, FavoriteToggle } from "@/components/entry/favorite-star"
 import { Stars } from "@/components/entry/stars"
 import { RemovedMark } from "@/components/explore/removed-mark"
 import { MatchOwnerLine } from "@/components/match/match-marks"
@@ -27,8 +26,6 @@ export function EntryRow({
   categoryColor,
   showRating = true,
   dragHandle,
-  favorite = false,
-  onToggleFavorite,
   extraAction,
 }: {
   view: EntryView
@@ -44,10 +41,6 @@ export function EntryRow({
   showRating?: boolean
   /** Alça para arrastar (ordem manual). */
   dragHandle?: ReactNode
-  /** É o favorito da categoria (só o dono recebe): a estrela ao lado do nome. */
-  favorite?: boolean
-  /** Com ela, a estrela entra nas ações da linha (só o dono). */
-  onToggleFavorite?: () => void
   /** Na ponta da linha quando não há as ações de edição (o "Trazer" do match). */
   extraAction?: ReactNode
 }) {
@@ -94,7 +87,6 @@ export function EntryRow({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1">
             <h3 className="display min-w-0 truncate text-base leading-snug">{view.name}</h3>
-            {favorite && !onToggleFavorite ? <FavoriteMark /> : null}
             {view.sourceRemoved ? <RemovedMark /> : null}
           </div>
           {view.match ? <MatchOwnerLine match={view.match} className="mt-0.5" /> : null}
@@ -129,15 +121,14 @@ export function EntryRow({
         ) : null}
       </Link>
 
-      {/* A estrela fica sempre à vista; as outras ações, no hover. */}
-      {onToggleFavorite ? (
-        <FavoriteToggle active={favorite} name={view.name} onToggle={onToggleFavorite} />
-      ) : null}
+      {/* No celular as ações saem da linha, mas a alça fica: é por ela que se arrasta. */}
+      {canEdit && dragHandle ? <div className="shrink-0 sm:hidden">{dragHandle}</div> : null}
 
       {canEdit ? (
         // No celular (sem hover) estas ações nem aparecem: fora da linha, o nome
-        // ganha o espaço. Editar e excluir seguem na página do item.
-        <div className="card-actions hidden shrink-0 items-center gap-0.5 sm:flex">
+        // ganha o espaço. Editar e excluir seguem na página do item. Em tablet
+        // de toque, à vista.
+        <div className="card-actions hidden shrink-0 items-center gap-0.5 sm:flex [@media(hover:none)]:opacity-100">
           {dragHandle}
           <button
             type="button"

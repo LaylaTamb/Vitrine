@@ -50,6 +50,15 @@ function titleKey(name: string, year: number | null): string {
   return `${name.trim().toLowerCase()}|${year ?? ""}`
 }
 
+/**
+ * A chave de um filme pelo nome + ano ("titulo:duna|2021"). É a do arquivo
+ * quando falta a URI, e a do feed do @ (que não traz a URI do arquivo): é por
+ * ela que um e outro se reconhecem e não duplicam.
+ */
+export function letterboxdTitleKey(name: string, year: number | null): string {
+  return `titulo:${titleKey(name, year)}`.slice(0, 200)
+}
+
 function yearOf(value: string): number | null {
   const year = Number(value)
   return Number.isInteger(year) && year > 1850 && year < 2200 ? year : null
@@ -83,7 +92,7 @@ export function mergeLetterboxd(files: Partial<Record<LetterboxdKind, string>>):
     const existing = (uri && byKey.get(uri)) || byTitle.get(titleKey(name, year))
     if (existing) return existing
     const created: LetterboxdFilm = {
-      key: (uri || `titulo:${titleKey(name, year)}`).slice(0, 200),
+      key: (uri || letterboxdTitleKey(name, year)).slice(0, 200),
       name: name.slice(0, 200),
       year,
       rating: null,

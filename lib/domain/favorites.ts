@@ -1,27 +1,22 @@
 /**
- * Favoritos (migração 20), duas coisas independentes:
- *   - a **estrelinha** de um item: o favorito da categoria (no máximo um, só
- *     o dono vê). É só uma marca no item — não leva nada para a aba;
- *   - a **aba Favoritos**: as categorias que a pessoa escolheu ("Adicionar
- *     categoria"), inteiras, na ordem dela — como nas Coleções.
+ * Favoritos (migração 20): a **estrela de uma categoria**. Qualquer categoria
+ * da própria pessoa (menos a "A organizar") pode ser marcada, em qualquer
+ * pasta — e continua onde está. A estrela no canto das Coleções abre só as
+ * marcadas, na ordem da pessoa. Só ela vê.
+ *
+ * Mora em `category_favorites.tab_position`: um número = favorita (e a
+ * posição na tela das favoritas); `null` = não. A coluna `entry_id` (a antiga
+ * estrelinha de um item) ficou no banco, mas o app não usa mais.
  */
 
-/** Uma linha de `category_favorites`. */
+/** Uma linha de `category_favorites` — o que o app lê dela. */
 export interface FavoriteRow {
   category_id: string
-  owner_id: string
-  /** O favorito da categoria (a estrelinha). `null` = nenhum. */
-  entry_id: string | null
-  /** A posição na aba Favoritos. `null` = fora da aba. */
+  /** A posição entre as favoritas. `null` = não é favorita. */
   tab_position: number | null
 }
 
-/** Tocar a estrela: marca; marcar outro troca; tocar de novo desmarca. */
-export function nextFavorite(current: string | null, entryId: string): string | null {
-  return current === entryId ? null : entryId
-}
-
-/** As categorias da aba, na ordem (ids). */
+/** As favoritas, na ordem (ids). */
 export function tabOrder(rows: Pick<FavoriteRow, "category_id" | "tab_position">[]): string[] {
   return rows
     .filter((row) => row.tab_position !== null)
@@ -29,7 +24,7 @@ export function tabOrder(rows: Pick<FavoriteRow, "category_id" | "tab_position">
     .map((row) => row.category_id)
 }
 
-/** As categorias da aba, na ordem dada; as que não existem mais ficam de fora. */
+/** As favoritas, na ordem dada; as que não existem mais ficam de fora. */
 export function tabCategories<T extends { id: string }>(order: string[], categories: T[]): T[] {
   const byId = new Map(categories.map((category) => [category.id, category]))
   return order.flatMap((id) => {
@@ -38,11 +33,19 @@ export function tabCategories<T extends { id: string }>(order: string[], categor
   })
 }
 
-/** O que dá para pôr na aba: as categorias que ainda não estão nela (sem a "A organizar"). */
-export function addableCategories<T extends { id: string; kind?: string | null }>(
-  order: string[],
-  categories: T[]
-): T[] {
-  const inTab = new Set(order)
-  return categories.filter((category) => !inTab.has(category.id) && category.kind !== "inbox")
+/** Dá para favoritar? Toda categoria, menos a "A organizar" (ela tem lugar fixo). */
+export function canFavorite(category: { kind?: string | null }): boolean {
+  return category.kind !== "inbox"
+}
+
+/** Tocar a estrela: marcar põe no fim da lista; desmarcar tira. */
+export function withFavorite(order: string[], categoryId: string, favorite: boolean): string[] {
+  const without = order.filter((id) => id !== categoryId)
+  return favorite ? [...without, categoryId] : without
+}
+
+/** A posição de quem acabou de ser marcada: depois de todas as outras. */
+export function nextTabPosition(positions: (number | null)[]): number {
+  const taken = positions.filter((position): position is number => position !== null)
+  return taken.length === 0 ? 0 : Math.max(...taken) + 1
 }

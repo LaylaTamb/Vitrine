@@ -6,6 +6,7 @@ import {
   clampBannerPosition,
   cardHasContent,
   cleanCardIds,
+  isCardLimitError,
   moveCardId,
   normalizeBannerUrl,
   normalizeSocialLink,
@@ -122,8 +123,27 @@ describe("categorias do cartão", () => {
     expect(cardCategoryOptions(categories, folders).map((category) => category.id)).toEqual(["a"])
   })
 
-  it("sem repetir, no máximo 5, e reordena", () => {
-    expect(cleanCardIds(["a", "b", "a", "c", "d", "e", "f"])).toEqual(["a", "b", "c", "d", "e"])
+  it("reconhece a trava antiga de 5 categorias do banco", () => {
+    expect(
+      isCardLimitError({
+        code: "23514",
+        message:
+          'new row for relation "profiles" violates check constraint "profiles_card_categories_check"',
+      })
+    ).toBe(true)
+    expect(isCardLimitError({ message: "outro erro" })).toBe(false)
+    expect(isCardLimitError(null)).toBe(false)
+  })
+
+  it("sem repetir, no máximo 6, e reordena", () => {
+    expect(cleanCardIds(["a", "b", "a", "c", "d", "e", "f", "g"])).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+    ])
     expect(moveCardId(["a", "b", "c"], 2, -1)).toEqual(["a", "c", "b"])
     expect(moveCardId(["a", "b", "c"], 0, -1)).toEqual(["a", "b", "c"])
   })

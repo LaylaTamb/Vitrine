@@ -11,7 +11,6 @@ const LINKS = [
   { href: "/filtro", label: "Filtro" },
   { href: "/mapa", label: "Mapa" },
   { href: "/tags", label: "Tags" },
-  { href: "/favoritos", label: "Favoritos" },
   { href: "/usuarios", label: "Pessoas" },
 ]
 
@@ -20,7 +19,7 @@ export function NavLinks() {
   const pathname = usePathname()
 
   return (
-    // Entre 768 e 1024 px são 7 links, o sininho e o @: mais justos ali.
+    // Entre 768 e 1024 px são 6 links, o sininho e o @: mais justos ali.
     <nav className="hidden items-center gap-0.5 md:flex lg:gap-1">
       {LINKS.map((link) => {
         const active =

@@ -5,7 +5,6 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -39,8 +38,9 @@ import { FilterBar } from "@/components/category/filter-bar"
 import { StatsPanel } from "@/components/category/stats-panel"
 import { CollectionCard } from "@/components/collection/collection-card"
 import { PrivacyNote, PrivacySwitch } from "@/components/collection/privacy-switch"
+import { ConnectedRefresh } from "@/components/category/connected-refresh"
+import { CategoryFavoriteButton } from "@/components/favorites/favorite-star"
 import { FolderDialog } from "@/components/collection/folder-dialog"
-import { MoveDialog } from "@/components/collection/move-dialog"
 import { BulkBar } from "@/components/entry/bulk-bar"
 import { EntryCard } from "@/components/entry/entry-card"
 import { EntryForm } from "@/components/entry/entry-form"
@@ -50,6 +50,7 @@ import { LinkedBar, type LinkView } from "@/components/explore/linked-bar"
 import { BringButton } from "@/components/match/match-marks"
 import { MatchPanel } from "@/components/match/match-panel"
 import { EmptyState } from "@/components/layout/empty-state"
+import { moveCollision, noShiftStrategy } from "@/components/layout/drag-move"
 import { LevelNav, type Crumb } from "@/components/layout/level-nav"
 import { PageHeader } from "@/components/layout/page-header"
 import { useFolderParam } from "@/components/layout/use-folder-param"
@@ -59,10 +60,12 @@ import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { applyOrder, breadcrumbOf, foldersOf } from "@/lib/domain/collections"
+import { readDropTarget } from "@/lib/domain/drag"
 import { entryFolderTotals, itemsAt, itemsUnder, resolveFolderId } from "@/lib/domain/entry-folders"
 import { locationFieldsOf } from "@/lib/domain/fields"
 import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
-import { nextFavorite } from "@/lib/domain/favorites"
+import type { ConnectedProvider } from "@/lib/domain/connected"
+import { canFavorite } from "@/lib/domain/favorites"
 import { isInbox } from "@/lib/domain/inbox"
 import {
   applyMatchFilter,
@@ -124,7 +127,8 @@ export function CategoryView({
   initialFilter,
   initialTab,
   initialEditId = null,
-  favoriteEntryId = null,
+  isFavorite = false,
+  autoRefresh = null,
   link = null,
   match = null,
 }: {
@@ -150,8 +154,13 @@ export function CategoryView({
    * formulário já aberto, para completar os campos daqui.
    */
   initialEditId?: string | null
-  /** O favorito da categoria — só vem para o dono. */
-  favoriteEntryId?: string | null
+  /** A categoria tem a estrela — só vem para o dono. */
+  isFavorite?: boolean
+  /**
+   * A categoria da Steam ou do Letterboxd, aberta depois de 1 hora: busca as
+   * novidades depois de pintar. Só vem para o dono.
+   */
+  autoRefresh?: ConnectedProvider | null
   /** Cópia do Explorar: a ligação com a original, já sincronizada (migração 26). */
   link?: LinkView | null
   /**
@@ -189,31 +198,6 @@ export function CategoryView({
   const [formOpen, setFormOpen] = useState(arrivingEdit !== null)
   const [editing, setEditing] = useState<EntryView | null>(arrivingEdit)
 
-  // O favorito da categoria: troca na hora (otimista) e volta atrás se o
-  // servidor recusar. `undefined` = vale o que veio do servidor.
-  const [favoriteOptimistic, setFavoriteOptimistic] = useState<string | null | undefined>(
-    undefined
-  )
-  const favoriteId = favoriteOptimistic === undefined ? favoriteEntryId : favoriteOptimistic
-
-  useEffect(() => {
-    setFavoriteOptimistic(undefined)
-  }, [favoriteEntryId])
-
-  async function toggleFavorite(item: EntryView) {
-    const next = nextFavorite(favoriteId, item.id)
-    setFavoriteOptimistic(next)
-    const result = await actions.setFavoriteEntry({ categoryId: category.id, entryId: next })
-    if (!result.ok) {
-      setFavoriteOptimistic(undefined)
-      toast.error(result.error)
-      return
-    }
-    toast.success(
-      next ? `“${item.name}” é o favorito de “${category.name}”.` : "Favorito desmarcado."
-    )
-  }
-
   // O `editar` só vale na chegada: sai da URL para um F5 não reabrir o formulário.
   useEffect(() => {
     if (!initialEditId) return
@@ -229,7 +213,9 @@ export function CategoryView({
     open: boolean
     folder?: { id: string; name: string } | null
   }>({ open: false })
-  const [movingFolder, setMovingFolder] = useState<FolderTarget | null>(null)
+  // Arrastado para outra subpasta: some do nível na hora (otimista); o dado
+  // novo do servidor manda de novo.
+  const [movedAway, setMovedAway] = useState<string[]>([])
   const [deletingFolder, setDeletingFolder] = useState<FolderTarget | null>(null)
 
   const [selected, setSelected] = useState<string[]>([])
@@ -284,19 +270,31 @@ export function CategoryView({
   useEffect(() => {
     setItemOrder(null)
   }, [views, currentFolderId])
+  useEffect(() => {
+    setMovedAway([])
+  }, [views, entryFolders])
 
   // O filtro olha só os itens soltos no nível aberto — subpastas são navegação.
   // Os filtros rápidos do match olham a cópia inteira (cópia antiga, de antes do
   // SQL 32, ainda pode ter subpastas: elas somem enquanto filtra).
-  const levelViews = useMemo(
-    () => (matchActive ? applyMatchFilter(views, matchFilter) : itemsAt(views, currentFolderId)),
-    [views, currentFolderId, matchActive, matchFilter]
-  )
+  const levelViews = useMemo(() => {
+    const base = matchActive
+      ? applyMatchFilter(views, matchFilter)
+      : itemsAt(views, currentFolderId)
+    return movedAway.length > 0 ? base.filter((view) => !movedAway.includes(view.id)) : base
+  }, [views, currentFolderId, matchActive, matchFilter, movedAway])
   // Subpastas na ordem salva (arrastar); empate, por nome.
   const levelFolders = useMemo(
     () =>
-      matchActive ? [] : applyOrder(foldersOf(entryFolders, currentFolderId), folderOrder),
-    [entryFolders, currentFolderId, folderOrder, matchActive]
+      matchActive
+        ? []
+        : applyOrder(
+            foldersOf(entryFolders, currentFolderId).filter(
+              (folder) => !movedAway.includes(folder.id)
+            ),
+            folderOrder
+          ),
+    [entryFolders, currentFolderId, folderOrder, matchActive, movedAway]
   )
   const totals = useMemo(() => entryFolderTotals(entryFolders, views), [entryFolders, views])
   const active = isCategoryFilterActive(filter)
@@ -323,12 +321,64 @@ export function CategoryView({
   const canDragItems =
     editItems && manual && !active && !matchActive && !selecting && !isTier && filtered.length > 1
   const dragStrategy = cardView === "grid" ? rectSortingStrategy : verticalListSortingStrategy
+  // Levar um item para uma subpasta (ou subir um nível) arrastando vale em
+  // qualquer ordenação, até com filtro; reordenar, só na ordem manual.
+  const canMoveItems =
+    editItems &&
+    !matchActive &&
+    !selecting &&
+    !isTier &&
+    (levelFolders.length > 0 || currentFolderId !== null)
+  const itemsDraggable = canDragItems || (canMoveItems && filtered.length > 0)
+  const itemStrategy = canDragItems ? dragStrategy : noShiftStrategy
+  // Subpastas e trilha recebem o que é arrastado (não na cópia de um match).
+  const canDropHere = canEdit && !matchMode
 
-  async function onFolderDragEnd({ active: dragged, over }: DragEndEvent) {
+  async function onDragEnd({ active: dragged, over }: DragEndEvent) {
     if (!over || dragged.id === over.id) return
+    const id = String(dragged.id)
+    const isFolder = levelFolders.some((folder) => folder.id === id)
+
+    // Soltou no miolo de uma subpasta ou num degrau da trilha: muda de pasta.
+    const target = readDropTarget(over.id)
+    if (target) {
+      await moveTo(id, isFolder, target.folderId)
+      return
+    }
+    if (isFolder) await reorderFolders(id, String(over.id))
+    else if (canDragItems) await reorderItems(id, String(over.id))
+  }
+
+  /** Leva uma subpasta ou um item deste nível para outra subpasta (ou para a raiz). */
+  async function moveTo(id: string, isFolder: boolean, folderId: string | null) {
+    if (folderId === currentFolderId) return
+    const destination = folderId ? entryFolders.find((folder) => folder.id === folderId) : null
+    if (folderId && !destination) return
+    const name = isFolder
+      ? levelFolders.find((folder) => folder.id === id)?.name
+      : filtered.find((item) => item.id === id)?.name
+
+    setMovedAway((current) => [...current, id])
+    const result = isFolder
+      ? await actions.moveEntryFolder({ id, targetFolderId: folderId })
+      : await actions.moveEntriesToFolder({ ids: [id], categoryId: category.id, folderId })
+    if (!result.ok) {
+      setMovedAway((current) => current.filter((moved) => moved !== id))
+      toast.error(result.error)
+      return
+    }
+    toast.success(
+      destination
+        ? `“${name ?? "Item"}” foi para “${destination.name}”.`
+        : `“${name ?? "Item"}” foi para a raiz de “${category.name}”.`,
+      { action: { label: "Abrir", onClick: () => setFolderParam(folderId) } }
+    )
+  }
+
+  async function reorderFolders(draggedId: string, overId: string) {
     const ids = levelFolders.map((folder) => folder.id)
-    const from = ids.indexOf(String(dragged.id))
-    const to = ids.indexOf(String(over.id))
+    const from = ids.indexOf(draggedId)
+    const to = ids.indexOf(overId)
     if (from < 0 || to < 0) return
 
     const previous = folderOrder
@@ -341,11 +391,10 @@ export function CategoryView({
     }
   }
 
-  async function onItemDragEnd({ active: dragged, over }: DragEndEvent) {
-    if (!over || dragged.id === over.id) return
+  async function reorderItems(draggedId: string, overId: string) {
     const ids = filtered.map((item) => item.id)
-    const from = ids.indexOf(String(dragged.id))
-    const to = ids.indexOf(String(over.id))
+    const from = ids.indexOf(draggedId)
+    const to = ids.indexOf(overId)
     if (from < 0 || to < 0) return
 
     const previous = itemOrder
@@ -395,14 +444,24 @@ export function CategoryView({
         key: "categoria",
         label: `${category.icon ? `${category.icon} ` : ""}${category.name}`,
         onClick: () => setFolderParam(null),
+        ...(canDropHere ? { dropLevel: null } : {}),
       },
       ...folderTrail.map((folder) => ({
         key: `pasta-${folder.id}`,
         label: folder.name,
         onClick: () => setFolderParam(folder.id),
+        ...(canDropHere ? { dropLevel: folder.id } : {}),
       })),
     ]
-  }, [collectionFolders, category, entryFolders, currentFolderId, collectionsHref, setFolderParam])
+  }, [
+    collectionFolders,
+    category,
+    entryFolders,
+    currentFolderId,
+    collectionsHref,
+    setFolderParam,
+    canDropHere,
+  ])
 
   const currentFolder = entryFolders.find((folder) => folder.id === currentFolderId) ?? null
 
@@ -495,6 +554,15 @@ export function CategoryView({
   const visibility = visibilityOf(category)
   const inbox = isInbox(category)
   const restrictedBy = restrictingAncestor(collectionFolders, category.folder_id, visibility)
+  // A estrela da categoria (não da "A organizar", que tem lugar fixo).
+  const favoriteButton =
+    canEdit && canFavorite(category) ? (
+      <CategoryFavoriteButton
+        categoryId={category.id}
+        categoryName={category.name}
+        isFavorite={isFavorite}
+      />
+    ) : null
 
   return (
     <>
@@ -519,9 +587,13 @@ export function CategoryView({
             : itemCount(views.length)
         }
         actions={
-          // A cópia de um match é uma lista solta: nada de pasta nem item novo.
-          canEdit && matchMode ? null : canEdit ? (
+          // A cópia de um match é uma lista solta: nada de pasta nem item novo
+          // (a estrela, sim).
+          canEdit && matchMode ? (
+            favoriteButton
+          ) : canEdit ? (
             <>
+              {favoriteButton}
               <PrivacySwitch
                 kind="category"
                 id={category.id}
@@ -558,77 +630,83 @@ export function CategoryView({
         }
       />
 
-      <LevelNav trail={trail} />
+      {/* Um só `DndContext` da trilha até os itens: arrastar para um degrau sobe de nível. */}
+      <DndContext
+        id="dnd-categoria"
+        sensors={sensors}
+        collisionDetection={moveCollision}
+        onDragEnd={onDragEnd}
+      >
+        <LevelNav trail={trail} />
+
+        {canEdit && autoRefresh ? (
+        <ConnectedRefresh categoryId={category.id} provider={autoRefresh} />
+      ) : null}
 
       {canEdit && link ? <LinkedBar categoryId={category.id} link={link} /> : null}
 
-      {canEdit && match ? (
-        <MatchPanel info={match} filter={matchFilter} onFilterChange={changeMatchFilter} />
-      ) : null}
+        {canEdit && match ? (
+          <MatchPanel info={match} filter={matchFilter} onFilterChange={changeMatchFilter} />
+        ) : null}
 
-      {canEdit && restrictedBy && !matchMode ? (
-        <PrivacyNote>{restrictionNote("category", restrictedBy)}</PrivacyNote>
-      ) : null}
+        {canEdit && restrictedBy && !matchMode ? (
+          <PrivacyNote>{restrictionNote("category", restrictedBy)}</PrivacyNote>
+        ) : null}
 
-      {canEdit && inbox ? (
-        <p className="mb-5 flex items-start gap-2 rounded-lg border border-dashed border-brand-dim bg-brand-wash px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-          <Inbox aria-hidden className="mt-0.5 size-3.5 shrink-0 text-brand" />
-          <span>
-            Sua caixa de entrada: o que você salva às pressas cai aqui. Para organizar, marque os
-            itens (a caixinha no canto de cada um) e use{" "}
-            <span className="text-foreground">Mover</span> para levá-los à categoria certa.
-          </span>
-        </p>
-      ) : null}
+        {canEdit && inbox ? (
+          <p className="mb-5 flex items-start gap-2 rounded-lg border border-dashed border-brand-dim bg-brand-wash px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+            <Inbox aria-hidden className="mt-0.5 size-3.5 shrink-0 text-brand" />
+            <span>
+              Sua caixa de entrada: o que você salva às pressas cai aqui. Para organizar, marque os
+              itens (a caixinha no canto de cada um) e use{" "}
+              <span className="text-foreground">Mover</span> para levá-los à categoria certa.
+            </span>
+          </p>
+        ) : null}
 
-      <div className="mb-5 flex items-center gap-1 border-b border-line">
-        {(
-          [
+        <div className="mb-5 flex items-center gap-1 border-b border-line">
+          {[
             { id: "itens" as const, label: "Itens" },
             { id: "numeros" as const, label: "Números" },
-          ]
-        ).map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setTab(item.id)}
-            aria-current={tab === item.id}
-            className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
-              tab === item.id
-                ? "border-brand text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              aria-current={tab === item.id}
+              className={cn(
+                "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
+                tab === item.id
+                  ? "border-brand text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-      <div className="space-y-5">
-        <FilterBar
-          filter={filter}
-          onChange={setFilter}
-          onClear={clearFilters}
-          tags={levelTags}
-          view={view}
-          onViewChange={selectView}
-          viewModes={ratingEnabled ? MODES_WITH_TIER : MODES_WITHOUT_TIER}
-          gridSize={gridSize}
-          onGridSizeChange={changeGridSize}
-          active={active}
-          ratingEnabled={ratingEnabled}
-          showListControls={tab === "itens"}
-        />
+        <div className="space-y-5">
+          <FilterBar
+            filter={filter}
+            onChange={setFilter}
+            onClear={clearFilters}
+            tags={levelTags}
+            view={view}
+            onViewChange={selectView}
+            viewModes={ratingEnabled ? MODES_WITH_TIER : MODES_WITHOUT_TIER}
+            gridSize={gridSize}
+            onGridSizeChange={changeGridSize}
+            active={active}
+            ratingEnabled={ratingEnabled}
+            showListControls={tab === "itens"}
+          />
 
-        {tab === "itens" && levelFolders.length > 0 ? (
-          <DndContext
-            id="dnd-subpastas"
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={onFolderDragEnd}
-          >
-            <SortableContext items={levelFolders.map((folder) => folder.id)} strategy={dragStrategy}>
+          {tab === "itens" && levelFolders.length > 0 ? (
+            <SortableContext
+              items={levelFolders.map((folder) => folder.id)}
+              strategy={dragStrategy}
+            >
               <div
                 className={cn(
                   cardView === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2"
@@ -646,13 +724,7 @@ export function CategoryView({
                     canEdit={canEdit}
                     sortable={canEdit}
                     view={cardView}
-                    onMove={() =>
-                      setMovingFolder({
-                        id: folder.id,
-                        name: folder.name,
-                        parentId: folder.parent_folder_id,
-                      })
-                    }
+                    dropInto={canDropHere}
                     onEdit={() =>
                       setFolderDialog({ open: true, folder: { id: folder.id, name: folder.name } })
                     }
@@ -667,123 +739,123 @@ export function CategoryView({
                 ))}
               </div>
             </SortableContext>
-          </DndContext>
-        ) : null}
+          ) : null}
 
-        {tab === "numeros" ? (
-          <StatsPanel
-            views={statsViews}
-            estrutura={category.estrutura}
-            filterActive={active}
-            ratingEnabled={ratingEnabled}
-            includesSubfolders={statsBase.length > levelViews.length}
-            categoryColor={category.color}
-          />
-        ) : views.length === 0 && entryFolders.length === 0 ? (
-          <EmptyState
-            icon={ImageOff}
-            title="Vitrine vazia"
-            description={
-              matchMode
-                ? "Vocês não têm categorias em comum à vista um do outro — com nomes equivalentes, como Restaurante e Restaurantes."
-                : canEdit
-                  ? "Nenhum item por aqui ainda. Adicione o primeiro."
-                  : "Esta coleção ainda não tem itens."
-            }
-            action={
-              editItems ? (
-                <Button onClick={openNewEntry}>
-                  <Plus className="size-4" /> Novo item
+          {tab === "numeros" ? (
+            <StatsPanel
+              views={statsViews}
+              estrutura={category.estrutura}
+              filterActive={active}
+              ratingEnabled={ratingEnabled}
+              includesSubfolders={statsBase.length > levelViews.length}
+              categoryColor={category.color}
+            />
+          ) : views.length === 0 && entryFolders.length === 0 ? (
+            <EmptyState
+              icon={ImageOff}
+              title="Vitrine vazia"
+              description={
+                matchMode
+                  ? "Vocês não têm categorias em comum à vista um do outro — com nomes equivalentes, como Restaurante e Restaurantes."
+                  : canEdit
+                    ? "Nenhum item por aqui ainda. Adicione o primeiro."
+                    : "Esta coleção ainda não tem itens."
+              }
+              action={
+                editItems ? (
+                  <Button onClick={openNewEntry}>
+                    <Plus className="size-4" /> Novo item
+                  </Button>
+                ) : null
+              }
+            />
+          ) : levelIsEmpty ? (
+            <EmptyState
+              icon={FolderOpen}
+              title="Pasta vazia"
+              description={
+                matchMode
+                  ? `Nada em “${currentFolder?.name ?? category.name}”. Mova itens para cá pela seleção.`
+                  : canEdit
+                    ? `Nada em “${currentFolder?.name ?? category.name}” ainda. Crie um item aqui ou mova itens para cá pela seleção.`
+                    : "Esta pasta ainda não tem itens."
+              }
+              action={
+                editItems ? (
+                  <Button onClick={openNewEntry}>
+                    <Plus className="size-4" /> Novo item
+                  </Button>
+                ) : null
+              }
+            />
+          ) : levelViews.length === 0 && !matchActive ? null : filtered.length === 0 ? (
+            <EmptyState
+              icon={ImageOff}
+              title="Nada bateu com o filtro"
+              description={
+                matchActive
+                  ? "Nenhum item do match passa por esse recorte."
+                  : currentFolder
+                    ? `Nenhum item de “${currentFolder.name}” passa por esse recorte. O filtro olha só esta pasta.`
+                    : "Nenhum item deste nível passa por esse recorte. O filtro não olha dentro das subpastas."
+              }
+              action={
+                <Button variant="outline" onClick={clearFilters}>
+                  Limpar filtros
                 </Button>
-              ) : null
-            }
-          />
-        ) : levelIsEmpty ? (
-          <EmptyState
-            icon={FolderOpen}
-            title="Pasta vazia"
-            description={
-              matchMode
-                ? `Nada em “${currentFolder?.name ?? category.name}”. Mova itens para cá pela seleção.`
-                : canEdit
-                  ? `Nada em “${currentFolder?.name ?? category.name}” ainda. Crie um item aqui ou mova itens para cá pela seleção.`
-                  : "Esta pasta ainda não tem itens."
-            }
-            action={
-              editItems ? (
-                <Button onClick={openNewEntry}>
-                  <Plus className="size-4" /> Novo item
-                </Button>
-              ) : null
-            }
-          />
-        ) : levelViews.length === 0 && !matchActive ? null : filtered.length === 0 ? (
-          <EmptyState
-            icon={ImageOff}
-            title="Nada bateu com o filtro"
-            description={
-              matchActive
-                ? "Nenhum item do match passa por esse recorte."
-                : currentFolder
-                ? `Nenhum item de “${currentFolder.name}” passa por esse recorte. O filtro olha só esta pasta.`
-                : "Nenhum item deste nível passa por esse recorte. O filtro não olha dentro das subpastas."
-            }
-            action={
-              <Button variant="outline" onClick={clearFilters}>
-                Limpar filtros
-              </Button>
-            }
-          />
-        ) : (
-          <>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                {active
-                  ? `${filtered.length} de ${itemCount(levelViews.length)}`
-                  : itemCount(levelViews.length)}
-                {matchActive
-                  ? " no match todo"
-                  : levelFolders.length > 0 || currentFolder
-                    ? " neste nível"
-                    : ""}
-              </p>
-              {isTier || matchMode ? null : canEdit && manual && active ? (
-                <p className="text-xs text-faint">Limpe os filtros para arrastar e reordenar.</p>
-              ) : canEdit && canDragItems ? (
-                <p className="hidden text-xs text-faint sm:block">
-                  Arraste pela alça <GripVertical className="inline size-3" /> para mudar a ordem.
+              }
+            />
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {active
+                    ? `${filtered.length} de ${itemCount(levelViews.length)}`
+                    : itemCount(levelViews.length)}
+                  {matchActive
+                    ? " no match todo"
+                    : levelFolders.length > 0 || currentFolder
+                      ? " neste nível"
+                      : ""}
                 </p>
-              ) : null}
-              {canEdit && selecting && !isTier ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelected(filtered.map((item) => item.id))}
-                >
-                  <CheckSquare className="size-3.5" /> Selecionar todos (do filtro atual)
-                </Button>
-              ) : null}
-            </div>
+                {isTier || matchMode ? null : canEdit && manual && active ? (
+                  <p className="text-xs text-faint">Limpe os filtros para arrastar e reordenar.</p>
+                ) : canEdit && (canDragItems || canMoveItems) ? (
+                  <p className="hidden text-xs text-faint sm:block">
+                    Arraste pela alça <GripVertical className="inline size-3" />{" "}
+                    {canDragItems && canMoveItems
+                      ? "para mudar a ordem ou levar a uma pasta."
+                      : canDragItems
+                        ? "para mudar a ordem."
+                        : "para levar a uma pasta."}
+                  </p>
+                ) : null}
+                {canEdit && selecting && !isTier ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelected(filtered.map((item) => item.id))}
+                  >
+                    <CheckSquare className="size-3.5" /> Selecionar todos (do filtro atual)
+                  </Button>
+                ) : null}
+              </div>
 
-            {isTier ? (
-              // Fora do DndContext de propósito: nada aqui é arrastável.
-              <TierList views={filtered} gridSize={gridSize} categoryColor={category.color} />
-            ) : (
-              <DndContext
-                id="dnd-itens"
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={onItemDragEnd}
-              >
-                <SortableContext items={filtered.map((item) => item.id)} strategy={dragStrategy}>
+              {isTier ? (
+                // Nada aqui é arrastável.
+                <TierList views={filtered} gridSize={gridSize} categoryColor={category.color} />
+              ) : (
+                <SortableContext items={filtered.map((item) => item.id)} strategy={itemStrategy}>
                   <div
                     className={cn(
-                      cardView === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2",
+                      cardView === "grid"
+                        ? cn("grid", GRID_CLASSES[gridSize])
+                        : "flex flex-col gap-2",
                       selected.length > 0 && "pb-16"
                     )}
                   >
                     {filtered.map((item, index) => (
-                      <SortableEntry key={item.id} id={item.id} disabled={!canDragItems}>
+                      <SortableEntry key={item.id} id={item.id} disabled={!itemsDraggable}>
                         {(dragHandle) =>
                           cardView === "grid" ? (
                             <EntryCard
@@ -801,8 +873,6 @@ export function CategoryView({
                               onDelete={() => setDeleting(item)}
                               dragHandle={dragHandle}
                               compact={gridSize === "small"}
-                              favorite={editItems && favoriteId === item.id}
-                              onToggleFavorite={editItems ? () => toggleFavorite(item) : undefined}
                               extraAction={bringAction(item, "card")}
                             />
                           ) : (
@@ -821,8 +891,6 @@ export function CategoryView({
                               onDelete={() => setDeleting(item)}
                               showRating={ratingEnabled}
                               dragHandle={dragHandle}
-                              favorite={editItems && favoriteId === item.id}
-                              onToggleFavorite={editItems ? () => toggleFavorite(item) : undefined}
                               extraAction={bringAction(item, "row")}
                             />
                           )
@@ -831,11 +899,11 @@ export function CategoryView({
                     ))}
                   </div>
                 </SortableContext>
-              </DndContext>
-            )}
-          </>
-        )}
-      </div>
+              )}
+            </>
+          )}
+        </div>
+      </DndContext>
 
       {editItems ? (
         <>
@@ -876,16 +944,6 @@ export function CategoryView({
             onOpenChange={(open) => setFolderDialog((state) => ({ ...state, open }))}
             folder={folderDialog.folder}
             scope={{ kind: "category", categoryId: category.id, parentFolderId: currentFolderId }}
-          />
-
-          <MoveDialog
-            open={movingFolder !== null}
-            onOpenChange={(open) => {
-              if (!open) setMovingFolder(null)
-            }}
-            folders={entryFolders}
-            rootLabel="Raiz da categoria"
-            target={movingFolder ? { kind: "entryFolder", ...movingFolder } : null}
           />
 
           <DeleteEntryFolderDialog
@@ -948,8 +1006,8 @@ function SortableEntry({
       type="button"
       {...attributes}
       {...listeners}
-      title="Arrastar para reordenar"
-      aria-label="Arrastar para reordenar"
+      title="Arraste para reordenar ou para dentro de uma pasta"
+      aria-label="Arrastar"
       className="cursor-grab touch-none rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground active:cursor-grabbing"
     >
       <GripVertical className="size-3.5" />

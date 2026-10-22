@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  addableCategories,
-  nextFavorite,
+  canFavorite,
+  nextTabPosition,
   tabCategories,
   tabOrder,
+  withFavorite,
   type FavoriteRow,
 } from "./favorites"
 
@@ -15,30 +16,15 @@ const categories = [
   { id: "caixa", kind: "inbox" },
 ]
 
-describe("estrela de favorito", () => {
-  it("marca, troca e desmarca", () => {
-    expect(nextFavorite(null, "kino")).toBe("kino")
-    expect(nextFavorite("kino", "moco")).toBe("moco")
-    expect(nextFavorite("moco", "moco")).toBeNull()
-  })
-
-  it("marcar a estrela não põe a categoria na aba", () => {
-    const rows: FavoriteRow[] = [
-      { category_id: "rest", owner_id: "eu", entry_id: "kino", tab_position: null },
-    ]
-    expect(tabOrder(rows)).toEqual([])
-  })
-})
-
-describe("aba Favoritos: categorias inteiras", () => {
+describe("categorias favoritas", () => {
   const rows: FavoriteRow[] = [
-    { category_id: "rest", owner_id: "eu", entry_id: null, tab_position: 2 },
-    { category_id: "film", owner_id: "eu", entry_id: "matrix", tab_position: 0 },
-    { category_id: "sumiu", owner_id: "eu", entry_id: null, tab_position: 1 },
-    { category_id: "livr", owner_id: "eu", entry_id: null, tab_position: null },
+    { category_id: "rest", tab_position: 2 },
+    { category_id: "film", tab_position: 0 },
+    { category_id: "sumiu", tab_position: 1 },
+    { category_id: "livr", tab_position: null },
   ]
 
-  it("na ordem escolhida — com ou sem estrelinha —, sem as que não existem mais", () => {
+  it("na ordem da pessoa, sem as desmarcadas nem as que não existem mais", () => {
     const order = tabOrder(rows)
     expect(order).toEqual(["film", "sumiu", "rest"])
     expect(tabCategories(order, categories).map((category) => category.id)).toEqual([
@@ -47,9 +33,24 @@ describe("aba Favoritos: categorias inteiras", () => {
     ])
   })
 
-  it("para adicionar: o que não está na aba, sem a A organizar", () => {
-    expect(addableCategories(["film", "rest"], categories).map((category) => category.id)).toEqual(
-      ["livr"]
-    )
+  it("toda categoria pode ser favorita, menos a A organizar", () => {
+    expect(categories.filter(canFavorite).map((category) => category.id)).toEqual([
+      "rest",
+      "film",
+      "livr",
+    ])
+  })
+
+  it("marcar põe no fim; desmarcar tira; marcar de novo não duplica", () => {
+    expect(withFavorite(["film"], "rest", true)).toEqual(["film", "rest"])
+    expect(withFavorite(["film", "rest"], "film", false)).toEqual(["rest"])
+    expect(withFavorite(["film", "rest"], "film", true)).toEqual(["rest", "film"])
+    expect(withFavorite([], "livr", false)).toEqual([])
+  })
+
+  it("a nova favorita vai depois de todas as outras", () => {
+    expect(nextTabPosition([])).toBe(0)
+    expect(nextTabPosition([null, null])).toBe(0)
+    expect(nextTabPosition([2, null, 0, 5])).toBe(6)
   })
 })

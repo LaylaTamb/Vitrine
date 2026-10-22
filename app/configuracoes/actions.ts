@@ -7,6 +7,7 @@ import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/resul
 import {
   bannerSchema,
   defaultVisibilitySchema,
+  letterboxdUsernameSchema,
   profileCardSchema,
   socialLinksSchema,
 } from "@/lib/actions/schemas"
@@ -23,8 +24,10 @@ import {
 import {
   BANNER_NOT_READY,
   CARD_NOT_READY,
+  CARD_SIX_NOT_READY,
   clampBannerPosition,
   cleanCardIds,
+  isCardLimitError,
   normalizeBannerUrl,
   normalizeSocialLink,
   SOCIAL_LABELS,
@@ -32,6 +35,11 @@ import {
   type SocialLinks,
 } from "@/lib/domain/card"
 import { isMissingColumn, isMissingSchema } from "@/lib/domain/errors"
+import {
+  LETTERBOXD_NOT_FOUND,
+  LETTERBOXD_NOT_READY,
+  letterboxdSummary,
+} from "@/lib/domain/connected"
 import { STEAM_NOT_READY, STEAM_RETURN_MESSAGES, syncSummary } from "@/lib/domain/steam"
 import { parseCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeSort } from "@/lib/domain/filter"
@@ -41,7 +49,10 @@ import { normalizeUsername, usernameProblem } from "@/lib/domain/username"
 import { imageDisplayOf } from "@/lib/domain/view"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
-import { steamConfigured } from "@/lib/steam/client"
+import { normalizeLetterboxdUsername } from "@/lib/import/letterboxd-rss"
+import { fetchLetterboxdFeed } from "@/lib/letterboxd/client"
+import { syncLetterboxdAccount } from "@/lib/letterboxd/sync"
+import { serverSecret, steamConfigured } from "@/lib/steam/client"
 import { syncSteamAccount } from "@/lib/steam/sync"
 
 // As mesmas regras da tela (`usernameProblem`); o banco confere de novo.
@@ -174,6 +185,7 @@ export async function updateProfileCardAction(input: {
     .update({ bio: bio || null, card_category_ids: categoryIds })
     .eq("id", user.id)
 
+  if (error && isCardLimitError(error)) return { ok: false, error: CARD_SIX_NOT_READY }
   if (error) return isMissingColumn(error) ? { ok: false, error: CARD_NOT_READY } : fail(error)
 
   revalidatePath("/v", "layout")
@@ -238,6 +250,101 @@ export async function syncSteamNowAction(): Promise<ActionResult<{ summary: stri
   revalidatePath("/", "layout")
   if (!result.ok) return { ok: false, error: result.error }
   return ok({ summary: syncSummary(result.created, result.updated) })
+}
+
+// ---------------------------------------------------------------------------
+// Letterboxd pelo @ (migração 39): o feed público do perfil, sem senha
+// ---------------------------------------------------------------------------
+
+const LETTERBOXD_OFF =
+  "A conexão com o Letterboxd ainda não foi ativada neste Vitrine (falta o CRON_SECRET no servidor)."
+
+/**
+ * Liga o @ e já traz os filmes. O @ é conferido lendo o feed: se não existe,
+ * não liga nada. Quem grava é a função do banco, com o segredo do servidor.
+ */
+export async function connectLetterboxdAction(input: {
+  username: string
+}): Promise<ActionResult<{ summary: string; categoryId: string | null }>> {
+  const parsed = letterboxdUsernameSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+  const username = normalizeLetterboxdUsername(parsed.data.username)
+  if (!username) {
+    return {
+      ok: false,
+      error: "Esse @ não parece do Letterboxd: use o nome que aparece no endereço do seu perfil.",
+    }
+  }
+
+  const user = await requireUser()
+  const secret = serverSecret()
+  if (!secret) return { ok: false, error: LETTERBOXD_OFF }
+
+  let feed
+  try {
+    feed = await fetchLetterboxdFeed(username)
+  } catch {
+    return { ok: false, error: "O Letterboxd não respondeu agora. Tente de novo em alguns minutos." }
+  }
+  if (feed.status === "not_found") return { ok: false, error: LETTERBOXD_NOT_FOUND }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("letterboxd_connect", {
+    p_secret: secret,
+    p_user: user.id,
+    p_username: username,
+    p_display_name: feed.feed.displayName,
+  })
+  if (error) {
+    return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
+  }
+
+  const result = await syncLetterboxdAccount(supabase, user.id, username, { feed: feed.feed })
+  revalidatePath("/", "layout")
+  if (!result.ok) return { ok: false, error: result.error }
+  return ok({
+    summary: `Conectado. ${letterboxdSummary(result.created, result.updated)}`,
+    categoryId: result.categoryId,
+  })
+}
+
+/** "Sincronizar agora" do Letterboxd: no máximo uma vez por minuto. */
+export async function syncLetterboxdNowAction(): Promise<ActionResult<{ summary: string }>> {
+  const user = await requireUser()
+  if (!serverSecret()) return { ok: false, error: LETTERBOXD_OFF }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("connected_accounts")
+    .select("external_id, last_attempt_at")
+    .eq("user_id", user.id)
+    .eq("provider", "letterboxd")
+    .maybeSingle()
+  if (error) return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
+  const account = data as { external_id: string; last_attempt_at: string | null } | null
+  if (!account) return { ok: false, error: "O Letterboxd não está conectado a esta conta." }
+  if (account.last_attempt_at && Date.now() - Date.parse(account.last_attempt_at) < 60_000) {
+    return { ok: false, error: "Acabou de sincronizar: espere um minuto para tentar de novo." }
+  }
+
+  const result = await syncLetterboxdAccount(supabase, user.id, account.external_id)
+  revalidatePath("/", "layout")
+  if (!result.ok) return { ok: false, error: result.error }
+  return ok({ summary: letterboxdSummary(result.created, result.updated) })
+}
+
+/** Desconecta o Letterboxd. A categoria e os filmes ficam (param de atualizar). */
+export async function disconnectLetterboxdAction(): Promise<ActionResult> {
+  const user = await requireUser()
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("connected_accounts")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("provider", "letterboxd")
+  if (error) return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
+  revalidatePath("/v", "layout")
+  return ok()
 }
 
 /** Desconecta a Steam. A categoria e os jogos ficam (param de atualizar). */

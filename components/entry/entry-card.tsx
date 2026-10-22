@@ -5,7 +5,6 @@ import { Pencil, Trash2 } from "lucide-react"
 import type { ReactNode } from "react"
 
 import { EntryImage } from "@/components/entry/entry-image"
-import { FavoriteMark, FavoriteToggle } from "@/components/entry/favorite-star"
 import { Stars } from "@/components/entry/stars"
 import { RemovedMark } from "@/components/explore/removed-mark"
 import { MatchOwnerLine } from "@/components/match/match-marks"
@@ -27,8 +26,6 @@ export function EntryCard({
   categoryLabel,
   dragHandle,
   compact = false,
-  favorite = false,
-  onToggleFavorite,
   extraAction,
 }: {
   view: EntryView
@@ -46,10 +43,6 @@ export function EntryCard({
   dragHandle?: ReactNode
   /** Grade pequena: só imagem, nota e nome — resumo e tags não cabem. */
   compact?: boolean
-  /** É o favorito da categoria (só o dono recebe): a estrela ao lado do nome. */
-  favorite?: boolean
-  /** Com ela, a estrela entra nas ações do card (só o dono). */
-  onToggleFavorite?: () => void
   /** No canto do card quando não há as ações de edição (o "Trazer" do match). */
   extraAction?: ReactNode
 }) {
@@ -78,25 +71,9 @@ export function EntryCard({
         </label>
       ) : null}
 
-      {/* A estrela fica sempre à vista no canto; as outras ações, ao lado dela, no hover. */}
-      {onToggleFavorite ? (
-        <div className="absolute right-3 top-3 z-20">
-          <FavoriteToggle
-            active={favorite}
-            name={view.name}
-            onToggle={onToggleFavorite}
-            floating
-          />
-        </div>
-      ) : null}
-
       {canEdit ? (
-        <div
-          className={cn(
-            "card-actions absolute top-3 z-20 flex items-center gap-0.5 rounded-lg border border-line bg-bg/80 p-0.5 backdrop-blur-sm",
-            onToggleFavorite ? "right-12" : "right-3"
-          )}
-        >
+        // Em tela de toque (sem hover) ficam à vista: é pela alça que se arrasta.
+        <div className="card-actions absolute right-3 top-3 z-20 flex items-center gap-0.5 rounded-lg border border-line bg-bg/80 p-0.5 backdrop-blur-sm [@media(hover:none)]:opacity-100">
           {dragHandle}
           <button
             type="button"
@@ -161,7 +138,6 @@ export function EntryCard({
           ) : null}
           <div className="flex min-w-0 items-center gap-1">
             <h3 className="display min-w-0 truncate text-base leading-snug">{view.name}</h3>
-            {favorite && !onToggleFavorite ? <FavoriteMark /> : null}
             {view.sourceRemoved ? <RemovedMark /> : null}
           </div>
           {view.match ? <MatchOwnerLine match={view.match} compact={compact} /> : null}

@@ -136,7 +136,8 @@ export function StoryImage({
   const { profile, bio, categories } = card
   const name = profile.display_name || profile.username
   // Até 2 categorias, uma por linha; mais que isso, duas colunas (senão uma
-  // bio longa com 5 categorias não cabe na altura).
+  // bio longa com 5 ou 6 categorias não cabe na altura). Com 6, são 3 linhas de
+  // 2 — a mesma altura de 5.
   const compact = categories.length > 2
   const bannerBox = bannerSize
     ? coverBox(bannerSize, { width: 1080, height: BANNER_HEIGHT }, card.banner?.position ?? 50)

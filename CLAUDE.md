@@ -107,7 +107,7 @@ Rotas (nomes em pt-BR):
   instalável) e `/configuracoes`.
 - **Auth e textos legais:** as telas de auth, `/auth/callback`, `/termos`, `/privacidade` e
   `/aceitar-termos`.
-- **APIs:** `/api/steam/{conectar,retorno}` (OpenID) e `/api/cron/{steam,lixeira}`.
+- **APIs:** `/api/steam/{conectar,retorno}` (OpenID) e `/api/cron/{contas,lixeira}`.
 
 ## Integrações (todas só no servidor)
 
@@ -115,7 +115,8 @@ Rotas (nomes em pt-BR):
 | --- | --- | --- |
 | Supabase | `lib/supabase/{server,middleware,anon,env}.ts` | chave anon/publishable apenas; `createAnonClient` para o que roda sem sessão (Cron) |
 | Geoapify | `lib/geo/client.ts` (tem `import "server-only"`), parse puro em `lib/geo/parse.ts` | endereços, horário, trajeto |
-| Steam | `lib/steam/{client,sync,state}.ts`, `/api/steam/*`, `/api/cron/steam` | OpenID + Web API; sincroniza todo dia |
+| Steam | `lib/steam/{client,sync,state}.ts`, `/api/steam/*`, `/api/cron/contas` | OpenID + Web API; sincroniza todo dia e ao abrir a categoria (passada 1 h) |
+| Letterboxd | `lib/letterboxd/{client,sync}.ts`, parse puro em `lib/import/letterboxd-rss.ts`, `/api/cron/contas` | feed RSS público do @ (só os ~50 mais recentes); mesmas regras da Steam (migração 39) |
 | Gemini | `lib/ai/gemini.ts` | só recebe o nome da categoria; limite de 10 por dia no banco (`take_ai_suggestion_quota`, migração 27) |
 | OpenFreeMap | `components/map/` (MapLibre + supercluster) | sem chave |
 | QR / story | `qrcode` no servidor; `app/v/[username]/story/route.tsx` (`next/og`) | o satori ignora `object-position`: corte manual com `imageSizeOf`/`coverBox` (`lib/domain/remote-image.ts`) |
@@ -155,9 +156,9 @@ nas seções do `GUIA-LOCAL.md` com o mesmo nome.
 - **Troca de @** (15): no máximo 2 trocas a cada 14 dias, e só pela função `change_username`
   (um gatilho bloqueia o resto). O @ antigo redireciona para o novo e fica reservado por 14 dias.
 - **Termos** exigem 18+. O aceite fica no `user_metadata` e é copiado para o perfil (16).
-- **Favoritos:**
-  - a estrelinha marca um item por categoria;
-  - a aba Favoritos guarda categorias inteiras, só da própria pessoa.
+- **Favoritos:** a estrela é da categoria (`category_favorites.tab_position`), em qualquer pasta,
+  menos a "A organizar". A estrela no canto das Coleções abre `/favoritos`, só com as favoritas.
+  Só a própria pessoa vê.
 - **Explorar.** "Pegar com os itens" cria uma cópia ligada que recebe as novidades de quem fez
   (26).
 - **Sugestões de campos** aparecem a partir de 1 pessoa com categoria parecida (32), e a IA entra
@@ -194,7 +195,7 @@ nas seções do `GUIA-LOCAL.md` com o mesmo nome.
 ## Deploy e ambiente
 
 - **Vercel.** A dona dá commit e push e testa no site no ar.
-- `vercel.json` tem dois Crons diários (UTC): `/api/cron/steam` às 09:23 e `/api/cron/lixeira` às
+- `vercel.json` tem dois Crons diários (UTC): `/api/cron/contas` (Steam e Letterboxd) às 09:23 e `/api/cron/lixeira` às
   09:41.
 - **GitHub Actions.** `.github/workflows/supabase-keep-alive.yml` roda
   `scripts/supabase-keep-alive.mjs` (cron `17 9 */5 * *`). Ele usa os Secrets `SUPABASE_URL` e

@@ -164,9 +164,9 @@ export interface VitrineActions {
   bulkMoveEntries(input: { ids: string[]; categoryId: string; toCategoryId: string }): Result
 
   // ---- favoritos (só o dono vê) -------------------------------------------
-  /** O favorito de uma categoria: no máximo um. `entryId: null` desmarca. */
-  setFavoriteEntry(input: { categoryId: string; entryId: string | null }): Result
-  /** As categorias da aba Favoritos, na ordem (a estrela não põe na aba sozinha). */
+  /** A estrela de uma categoria: marcar põe no fim das favoritas; desmarcar tira. */
+  setCategoryFavorite(input: { categoryId: string; favorite: boolean }): Result
+  /** As categorias favoritas, na ordem (arrastar na tela das favoritas). */
   setFavoritesTab(input: { categoryIds: string[] }): Result
 
   // ---- mapa: localização dos itens ----------------------------------------

@@ -28,7 +28,7 @@ const ICON_BUTTON =
 
 /**
  * Meu perfil → Editar cartão: a bio e as categorias do cartão (só as
- * públicas aparecem para escolher; até 5, na ordem). Os links das redes são
+ * públicas aparecem para escolher; até 6, na ordem). Os links das redes são
  * o `SocialLinksForm`, logo abaixo.
  */
 export function ProfileCardForm({

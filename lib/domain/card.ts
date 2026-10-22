@@ -1,6 +1,6 @@
 /**
  * Cartão de apresentação do perfil (migração 23): bio, links das redes, até
- * 5 categorias públicas com os 3 melhores itens e o banner (migração 36).
+ * 6 categorias públicas (eram 5 até a migração 38) com os 3 melhores itens e o banner (migração 36).
  * Quem monta o cartão é o banco (`profile_card`); aqui ficam as regras do formulário e a leitura
  * cuidadosa do que volta (um link estranho gravado direto pela API nunca vira
  * `href`).
@@ -11,7 +11,7 @@ import { effectiveVisibility, visibilityOf } from "./privacy"
 import type { Category, Folder } from "./types"
 
 export const BIO_MAX = 220
-export const CARD_MAX_CATEGORIES = 5
+export const CARD_MAX_CATEGORIES = 6
 
 /** O erro de gravar o banner antes de a migração 36 rodar. */
 export const BANNER_NOT_READY =
@@ -65,6 +65,16 @@ export function bannerFrom(raw: unknown): CardBanner | null {
 /** O erro de gravar o cartão antes de a migração 23 rodar. */
 export const CARD_NOT_READY =
   "O cartão ainda não está no banco: rode supabase/23_profile_card.sql no SQL Editor do Supabase (antes dele, do 14 ao 22)."
+
+/** O erro de gravar a 6ª categoria antes de a migração 38 rodar (o banco ainda trava em 5). */
+export const CARD_SIX_NOT_READY =
+  "O cartão ainda aceita só 5 categorias no banco: rode supabase/38_card_six_categories.sql no SQL Editor do Supabase."
+
+/** A trava antiga do banco (5 categorias, migração 23) barrou a gravação? */
+export function isCardLimitError(error: unknown): boolean {
+  const message = (error as { message?: unknown } | null)?.message
+  return typeof message === "string" && message.includes("profiles_card_categories_check")
+}
 
 // ---------------------------------------------------------------------------
 // Links das redes
@@ -317,7 +327,7 @@ export function cardCategoryOptions<
   )
 }
 
-/** Os ids escolhidos, sem repetir e no máximo 5 — a ordem é a do cartão. */
+/** Os ids escolhidos, sem repetir e no máximo 6 — a ordem é a do cartão. */
 export function cleanCardIds(ids: string[]): string[] {
   return [...new Set(ids)].slice(0, CARD_MAX_CATEGORIES)
 }
