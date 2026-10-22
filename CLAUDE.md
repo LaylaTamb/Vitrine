@@ -47,8 +47,8 @@ Documentação existente (consulte em vez de duplicar):
 | `npx vitest run lib/domain/match.test.ts` | roda um arquivo de teste |
 | `npx vitest run -t "nome do teste"` | roda um teste pelo nome |
 
-O Vitest só procura `lib/domain/**/*.test.ts`, `lib/geo/**/*.test.ts` e `lib/import/**/*.test.ts`
-(veja `vitest.config.mts`), em ambiente `node`, sem DOM. Teste fora dessas pastas não roda. Os
+O Vitest só procura `lib/domain/**/*.test.ts`, `lib/geo/**/*.test.ts`, `lib/import/**/*.test.ts` e
+`lib/backup/**/*.test.ts` (veja `vitest.config.mts`), em ambiente `node`, sem DOM. Teste fora dessas pastas não roda. Os
 testes cobrem só funções puras: nada de React, Supabase ou rede.
 
 ## Arquitetura

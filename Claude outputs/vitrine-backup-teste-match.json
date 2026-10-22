@@ -1,0 +1,5415 @@
+{
+  "version": 1,
+  "exportedAt": "2026-10-21T12:00:00.000Z",
+  "folders": [
+    {
+      "id": "p_comes",
+      "name": "Comes e bebes",
+      "parentId": null,
+      "visibility": "friends"
+    },
+    {
+      "id": "p_bebidas",
+      "name": "Bebidas",
+      "parentId": "p_comes",
+      "visibility": "friends"
+    },
+    {
+      "id": "p_alcool",
+      "name": "Com álcool",
+      "parentId": "p_bebidas",
+      "visibility": "friends"
+    },
+    {
+      "id": "p_semalcool",
+      "name": "Sem álcool",
+      "parentId": "p_bebidas",
+      "visibility": "friends"
+    },
+    {
+      "id": "p_cultura",
+      "name": "Cultura pop",
+      "parentId": null,
+      "visibility": "public"
+    },
+    {
+      "id": "p_leituras",
+      "name": "Leituras",
+      "parentId": "p_cultura",
+      "visibility": "public"
+    },
+    {
+      "id": "p_roles",
+      "name": "Rolês em SP",
+      "parentId": null,
+      "visibility": "friends"
+    },
+    {
+      "id": "p_viagens",
+      "name": "Viagens",
+      "parentId": null,
+      "visibility": "private"
+    }
+  ],
+  "categories": [
+    {
+      "id": "c_rest",
+      "name": "Restaurante",
+      "icon": "🍽️",
+      "color": "#9A9AA4",
+      "folderId": "p_comes",
+      "estrutura": [
+        {
+          "id": "f_rest_tipo",
+          "nome": "Tipo de comida",
+          "tipo": "select",
+          "opcoes": [
+            "Brasileira",
+            "Japonesa",
+            "Italiana",
+            "Árabe",
+            "Peruana",
+            "Mexicana",
+            "Hambúrguer",
+            "Pizza",
+            "Vegetariana"
+          ]
+        },
+        {
+          "id": "f_rest_loc",
+          "nome": "Localização",
+          "tipo": "str"
+        },
+        {
+          "id": "f_rest_custo",
+          "nome": "Custo médio",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_rest_espera",
+          "nome": "Tempo de espera",
+          "tipo": "time"
+        },
+        {
+          "id": "f_rest_visita",
+          "nome": "Data de visita",
+          "tipo": "date"
+        },
+        {
+          "id": "f_rest_ambiente",
+          "nome": "Ambiente",
+          "tipo": "star"
+        },
+        {
+          "id": "f_rest_atend",
+          "nome": "Atendimento",
+          "tipo": "star"
+        },
+        {
+          "id": "f_rest_vr",
+          "nome": "Passa VR?",
+          "tipo": "select",
+          "opcoes": [
+            "Sim",
+            "Não"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc",
+      "quickField": "rating",
+      "visibility": "public"
+    },
+    {
+      "id": "c_jap",
+      "name": "Restaurantes japoneses",
+      "icon": "🍣",
+      "color": "#C79BD0",
+      "folderId": "p_comes",
+      "estrutura": [
+        {
+          "id": "f_jap_tipo",
+          "nome": "Estilo",
+          "tipo": "select",
+          "opcoes": [
+            "Sushi",
+            "Lámen",
+            "Izakaya",
+            "Temaki",
+            "Udon"
+          ]
+        },
+        {
+          "id": "f_jap_loc",
+          "nome": "Localização",
+          "tipo": "str"
+        },
+        {
+          "id": "f_jap_custo",
+          "nome": "Custo médio",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_jap_amb",
+          "nome": "Ambiente",
+          "tipo": "star"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_caip",
+      "name": "Caipirinhas",
+      "icon": "🍹",
+      "color": "#B98CC2",
+      "folderId": "p_alcool",
+      "estrutura": [
+        {
+          "id": "f_caip_base",
+          "nome": "Base",
+          "tipo": "select",
+          "opcoes": [
+            "Cachaça",
+            "Vodka",
+            "Saquê"
+          ]
+        },
+        {
+          "id": "f_caip_doce",
+          "nome": "Doce",
+          "tipo": "select",
+          "opcoes": [
+            "Pouco",
+            "Médio",
+            "Muito"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_cerv",
+      "name": "Cervejas",
+      "icon": "🍺",
+      "color": "#B08A6A",
+      "folderId": "p_alcool",
+      "estrutura": [
+        {
+          "id": "f_cerv_estilo",
+          "nome": "Estilo",
+          "tipo": "select",
+          "opcoes": [
+            "Pilsen",
+            "Lager",
+            "Puro Malte",
+            "IPA",
+            "APA",
+            "Weiss",
+            "Witbier",
+            "Stout"
+          ]
+        },
+        {
+          "id": "f_cerv_teor",
+          "nome": "Teor alcoólico (%)",
+          "tipo": "decimal"
+        },
+        {
+          "id": "f_cerv_preco",
+          "nome": "Preço da lata",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_cerv_br",
+          "nome": "Marca brasileira?",
+          "tipo": "select",
+          "opcoes": [
+            "Sim",
+            "Não"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc",
+      "quickField": "f_cerv_estilo",
+      "visibility": "private"
+    },
+    {
+      "id": "c_suco",
+      "name": "Sucos naturais",
+      "icon": "🧃",
+      "color": "#8FC9A6",
+      "folderId": "p_semalcool",
+      "estrutura": [
+        {
+          "id": "f_suco_doce",
+          "nome": "Açúcar",
+          "tipo": "select",
+          "opcoes": [
+            "Sem açúcar",
+            "Pouco",
+            "Médio"
+          ]
+        },
+        {
+          "id": "f_suco_custo",
+          "nome": "Custo",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_suco_onde",
+          "nome": "Onde tomei",
+          "tipo": "str"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "manual",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_gato",
+      "name": "Gatorade",
+      "icon": "🥤",
+      "color": "#8FB3C9",
+      "folderId": "p_semalcool",
+      "estrutura": [
+        {
+          "id": "f_gato_custo",
+          "nome": "Custo",
+          "tipo": "currency",
+          "moeda": "R$"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_caldo",
+      "name": "Caldo de Cana",
+      "icon": "🧊",
+      "color": "#8FC9A6",
+      "folderId": "p_semalcool",
+      "estrutura": [
+        {
+          "id": "f_caldo_custo",
+          "nome": "Custo",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_caldo_enj",
+          "nome": "Enjoativo",
+          "tipo": "select",
+          "opcoes": [
+            "Muito enjoativo",
+            "Médio enjoativo",
+            "Pouco enjoativo",
+            "Nada enjoativo"
+          ]
+        },
+        {
+          "id": "f_caldo_local",
+          "nome": "Local de compra",
+          "tipo": "str"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_manga",
+      "name": "Mangá",
+      "icon": "📖",
+      "color": null,
+      "folderId": "p_leituras",
+      "estrutura": [
+        {
+          "id": "f_manga_estado",
+          "nome": "Estado",
+          "tipo": "select",
+          "opcoes": [
+            "Lido",
+            "Lendo",
+            "Quero ler",
+            "Dropado"
+          ]
+        },
+        {
+          "id": "f_manga_vol",
+          "nome": "Volumes",
+          "tipo": "int"
+        },
+        {
+          "id": "f_manga_autor",
+          "nome": "Autor",
+          "tipo": "str"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc",
+      "visibility": "public"
+    },
+    {
+      "id": "c_anime",
+      "name": "Animes",
+      "icon": "📺",
+      "color": "#8FB3C9",
+      "folderId": "p_cultura",
+      "estrutura": [
+        {
+          "id": "f_anime_estado",
+          "nome": "Estado",
+          "tipo": "select",
+          "opcoes": [
+            "Assistido",
+            "Andamento",
+            "Dropado"
+          ]
+        },
+        {
+          "id": "f_anime_eps",
+          "nome": "Episódios",
+          "tipo": "int"
+        },
+        {
+          "id": "f_anime_estudio",
+          "nome": "Estúdio",
+          "tipo": "str"
+        },
+        {
+          "id": "f_anime_ano",
+          "nome": "Ano",
+          "tipo": "int"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "public"
+    },
+    {
+      "id": "c_jojo",
+      "name": "JoJo",
+      "icon": "🧛",
+      "color": "#C97B7B",
+      "folderId": "p_cultura",
+      "estrutura": [
+        {
+          "id": "f_jojo_tipo",
+          "nome": "Tipo",
+          "tipo": "select",
+          "opcoes": [
+            "Personagem",
+            "Parte"
+          ]
+        },
+        {
+          "id": "f_jojo_parte",
+          "nome": "Parte",
+          "tipo": "select",
+          "opcoes": [
+            "Parte 1",
+            "Parte 2",
+            "Parte 3",
+            "Parte 4",
+            "Parte 5",
+            "Parte 6",
+            "Parte 7",
+            "Parte 8",
+            "Parte 9"
+          ]
+        },
+        {
+          "id": "f_jojo_stand",
+          "nome": "Stand",
+          "tipo": "str"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "manual",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_sesc",
+      "name": "Unidades do Sesc",
+      "icon": "🏗️",
+      "color": "#C97B7B",
+      "folderId": "p_roles",
+      "estrutura": [
+        {
+          "id": "f_sesc_visita",
+          "nome": "Primeira visita",
+          "tipo": "date"
+        },
+        {
+          "id": "f_sesc_loc",
+          "nome": "Localização",
+          "tipo": "str"
+        },
+        {
+          "id": "f_sesc_amb",
+          "nome": "Ambiente",
+          "tipo": "star"
+        },
+        {
+          "id": "f_sesc_estr",
+          "nome": "Estrutura",
+          "tipo": "star"
+        },
+        {
+          "id": "f_sesc_dest",
+          "nome": "Destaque",
+          "tipo": "str"
+        },
+        {
+          "id": "f_sesc_pisc",
+          "nome": "Tem piscina?",
+          "tipo": "select",
+          "opcoes": [
+            "Sim",
+            "Não"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "public"
+    },
+    {
+      "id": "c_cafe",
+      "name": "Cafés",
+      "icon": "☕",
+      "color": "#9A9AA4",
+      "folderId": "p_roles",
+      "estrutura": [
+        {
+          "id": "f_cafe_loc",
+          "nome": "Localização",
+          "tipo": "location"
+        },
+        {
+          "id": "f_cafe_pedido",
+          "nome": "Pedido",
+          "tipo": "str"
+        },
+        {
+          "id": "f_cafe_preco",
+          "nome": "Preço médio",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_cafe_wifi",
+          "nome": "Wi-fi",
+          "tipo": "select",
+          "opcoes": [
+            "Bom",
+            "Fraco",
+            "Não tem"
+          ]
+        },
+        {
+          "id": "f_cafe_tomada",
+          "nome": "Tomada",
+          "tipo": "select",
+          "opcoes": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "f_cafe_barulho",
+          "nome": "Barulho",
+          "tipo": "select",
+          "opcoes": [
+            "Silencioso",
+            "Médio",
+            "Barulhento"
+          ]
+        },
+        {
+          "id": "f_cafe_nota",
+          "nome": "Nota do café",
+          "tipo": "star"
+        },
+        {
+          "id": "f_cafe_visita",
+          "nome": "Última visita",
+          "tipo": "date"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_bar",
+      "name": "Bares",
+      "icon": "🍸",
+      "color": "#D6C08A",
+      "folderId": "p_roles",
+      "estrutura": [
+        {
+          "id": "f_bar_loc",
+          "nome": "Localização",
+          "tipo": "location"
+        },
+        {
+          "id": "f_bar_drink",
+          "nome": "Drink favorito",
+          "tipo": "str"
+        },
+        {
+          "id": "f_bar_preco",
+          "nome": "Preço médio",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_bar_musica",
+          "nome": "Música ao vivo",
+          "tipo": "select",
+          "opcoes": [
+            "Sim",
+            "Não",
+            "Às vezes"
+          ]
+        },
+        {
+          "id": "f_bar_fila",
+          "nome": "Fila",
+          "tipo": "time"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_hamb",
+      "name": "Hambúrgueres",
+      "icon": "🍔",
+      "color": "#B08A6A",
+      "folderId": null,
+      "estrutura": [
+        {
+          "id": "f_hamb_loc",
+          "nome": "Localização",
+          "tipo": "location"
+        },
+        {
+          "id": "f_hamb_ponto",
+          "nome": "Ponto da carne",
+          "tipo": "select",
+          "opcoes": [
+            "Mal passado",
+            "Ao ponto",
+            "Bem passado"
+          ]
+        },
+        {
+          "id": "f_hamb_batata",
+          "nome": "Batata",
+          "tipo": "select",
+          "opcoes": [
+            "Inclusa",
+            "À parte",
+            "Não tem"
+          ]
+        },
+        {
+          "id": "f_hamb_preco",
+          "nome": "Preço",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_hamb_espera",
+          "nome": "Espera",
+          "tipo": "time"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc",
+      "visibility": "public"
+    },
+    {
+      "id": "c_quero",
+      "name": "Quero conhecer em SP",
+      "icon": "📍",
+      "color": "#8FC9A6",
+      "folderId": null,
+      "estrutura": [
+        {
+          "id": "f_quero_loc",
+          "nome": "Localização",
+          "tipo": "location"
+        },
+        {
+          "id": "f_quero_prio",
+          "nome": "Prioridade",
+          "tipo": "select",
+          "opcoes": [
+            "Alta",
+            "Média",
+            "Baixa"
+          ]
+        },
+        {
+          "id": "f_quero_tipo",
+          "nome": "Tipo",
+          "tipo": "select",
+          "opcoes": [
+            "Museu",
+            "Parque",
+            "Passeio",
+            "Comida"
+          ]
+        },
+        {
+          "id": "f_quero_obs",
+          "nome": "Observação",
+          "tipo": "str"
+        }
+      ],
+      "ratingEnabled": false,
+      "defaultSort": "manual",
+      "quickField": "f_quero_prio",
+      "visibility": "private"
+    },
+    {
+      "id": "c_filme",
+      "name": "Filmes",
+      "icon": "🎬",
+      "color": "#B98CC2",
+      "folderId": "p_cultura",
+      "estrutura": [
+        {
+          "id": "f_filme_dir",
+          "nome": "Direção",
+          "tipo": "str"
+        },
+        {
+          "id": "f_filme_ano",
+          "nome": "Ano",
+          "tipo": "int"
+        },
+        {
+          "id": "f_filme_dur",
+          "nome": "Duração",
+          "tipo": "time"
+        },
+        {
+          "id": "f_filme_gen",
+          "nome": "Gênero",
+          "tipo": "select",
+          "opcoes": [
+            "Drama",
+            "Comédia",
+            "Terror",
+            "Ficção científica",
+            "Animação",
+            "Ação",
+            "Suspense",
+            "Romance",
+            "Musical"
+          ]
+        },
+        {
+          "id": "f_filme_onde",
+          "nome": "Onde vi",
+          "tipo": "select",
+          "opcoes": [
+            "Cinema",
+            "Streaming",
+            "TV"
+          ]
+        },
+        {
+          "id": "f_filme_visto",
+          "nome": "Vi em",
+          "tipo": "date"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc",
+      "quickField": "rating",
+      "visibility": "public"
+    },
+    {
+      "id": "c_serie",
+      "name": "Séries",
+      "icon": "🍿",
+      "color": "#8FB3C9",
+      "folderId": "p_cultura",
+      "estrutura": [
+        {
+          "id": "f_serie_temp",
+          "nome": "Temporadas",
+          "tipo": "int"
+        },
+        {
+          "id": "f_serie_plat",
+          "nome": "Plataforma",
+          "tipo": "select",
+          "opcoes": [
+            "Netflix",
+            "HBO Max",
+            "Prime Video",
+            "Disney+",
+            "Apple TV+",
+            "Globoplay"
+          ]
+        },
+        {
+          "id": "f_serie_estado",
+          "nome": "Estado",
+          "tipo": "select",
+          "opcoes": [
+            "Assistindo",
+            "Terminei",
+            "Parei",
+            "Quero ver"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "name_asc",
+      "visibility": "friends"
+    },
+    {
+      "id": "c_livro",
+      "name": "Livros",
+      "icon": "📚",
+      "color": "#D6C08A",
+      "folderId": "p_leituras",
+      "estrutura": [
+        {
+          "id": "f_livro_autor",
+          "nome": "Autor",
+          "tipo": "str"
+        },
+        {
+          "id": "f_livro_ano",
+          "nome": "Ano",
+          "tipo": "int"
+        },
+        {
+          "id": "f_livro_formato",
+          "nome": "Formato",
+          "tipo": "select",
+          "opcoes": [
+            "Físico",
+            "Kindle",
+            "Audiolivro"
+          ]
+        },
+        {
+          "id": "f_livro_fim",
+          "nome": "Terminei em",
+          "tipo": "date"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "public"
+    },
+    {
+      "id": "c_cidade",
+      "name": "Cidades visitadas",
+      "icon": "✈️",
+      "color": "#8FB3C9",
+      "folderId": "p_viagens",
+      "estrutura": [
+        {
+          "id": "f_cid_pais",
+          "nome": "País",
+          "tipo": "str"
+        },
+        {
+          "id": "f_cid_quando",
+          "nome": "Quando",
+          "tipo": "date"
+        },
+        {
+          "id": "f_cid_dias",
+          "nome": "Dias",
+          "tipo": "int"
+        },
+        {
+          "id": "f_cid_gasto",
+          "nome": "Gasto total",
+          "tipo": "currency",
+          "moeda": "R$"
+        },
+        {
+          "id": "f_cid_clima",
+          "nome": "Clima",
+          "tipo": "select",
+          "opcoes": [
+            "Calor",
+            "Frio",
+            "Ameno",
+            "Chuva"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "recent",
+      "visibility": "public"
+    },
+    {
+      "id": "c_inbox",
+      "name": "A organizar",
+      "icon": "📥",
+      "color": null,
+      "folderId": null,
+      "estrutura": [],
+      "ratingEnabled": false,
+      "defaultSort": "recent",
+      "inbox": true
+    }
+  ],
+  "entryFolders": [
+    {
+      "id": "sf_casa",
+      "categoryId": "c_suco",
+      "name": "Feitos em casa",
+      "parentId": null
+    },
+    {
+      "id": "sf_rua",
+      "categoryId": "c_suco",
+      "name": "Da rua",
+      "parentId": null
+    },
+    {
+      "id": "sf_feira",
+      "categoryId": "c_suco",
+      "name": "Feira",
+      "parentId": "sf_rua"
+    },
+    {
+      "id": "sf_jojo_pers",
+      "categoryId": "c_jojo",
+      "name": "Personagens",
+      "parentId": null
+    },
+    {
+      "id": "sf_jojo_partes",
+      "categoryId": "c_jojo",
+      "name": "Partes",
+      "parentId": null
+    }
+  ],
+  "entries": [
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Peppino Cantina",
+      "rating": 4,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQSB0hYc6nVpO-4zZK_Af9YAj4miCTcu9LeZTWg49NyP8tPYnZ8Zc4tXYMU&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. João Cachoeira, 175 - Itaim Bibi",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Italiana",
+        "f_rest_custo": 110,
+        "f_rest_espera": 25,
+        "f_rest_visita": "2026-08-15",
+        "f_rest_ambiente": 4,
+        "f_rest_atend": 4.5
+      },
+      "tags": [
+        {
+          "name": "Itália",
+          "color": "#D6C08A"
+        },
+        {
+          "name": "Encontro",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Taverna",
+      "rating": 3.5,
+      "imageUrl": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi3eNG1tDRyeWTNBZeB1N_ep9O9lm01GUrlD0bT2KwPzPRACbhPLD3ft4_zjqbWIITkcBge-prNDBisZjjEMcdEAhgFrmBYYoafm1jvq6bzIxL92s5EfGCqIr61Cvu8Rl15GHArVmg7lbs/s640/capa.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Gandavo, 456 - Vila Mariana",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Hambúrguer",
+        "f_rest_custo": 90,
+        "f_rest_espera": 30,
+        "f_rest_visita": "2026-08-02",
+        "f_rest_ambiente": 4,
+        "f_rest_atend": 3
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Cortés",
+      "rating": 3,
+      "imageUrl": "https://restaurantecortes.com.br/wp-content/uploads/2020/08/logo-cortes-512x512-1.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "Shopping Eldorado - Pinheiros",
+        "f_rest_vr": "Não",
+        "f_rest_custo": 130,
+        "f_rest_espera": 15,
+        "f_rest_visita": "2026-09-10",
+        "f_rest_ambiente": 3,
+        "f_rest_atend": 3.5
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Ceviche Lima",
+      "rating": 5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-ceviche-lima/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 35,
+        "zoom": 1.35
+      },
+      "customFields": {
+        "f_rest_loc": "R. Joaquim Floriano, 400 - Itaim Bibi",
+        "f_rest_vr": "Não",
+        "f_rest_tipo": "Peruana",
+        "f_rest_custo": 150,
+        "f_rest_espera": 40,
+        "f_rest_visita": "2026-09-20",
+        "f_rest_ambiente": 5,
+        "f_rest_atend": 4.5
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Cantina Bella Nonna",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-cantina-bella-nonna/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Treze de Maio, 120 - Bela Vista",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Italiana",
+        "f_rest_custo": 95,
+        "f_rest_espera": 45,
+        "f_rest_visita": "2026-07-12",
+        "f_rest_ambiente": 4.5,
+        "f_rest_atend": 4
+      },
+      "tags": [
+        {
+          "name": "Itália",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Sabor do Norte",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-sabor-do-norte/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Fradique Coutinho, 300 - Pinheiros",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Brasileira",
+        "f_rest_custo": 70,
+        "f_rest_espera": 20,
+        "f_rest_visita": "2026-06-30",
+        "f_rest_ambiente": 4,
+        "f_rest_atend": 5
+      },
+      "tags": [
+        {
+          "name": "Indicação de amigo",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Verde Que Te Quero",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-verde-que-te-quero/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Harmonia, 250 - Vila Madalena",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Vegetariana",
+        "f_rest_custo": 60,
+        "f_rest_espera": 10,
+        "f_rest_visita": "2026-09-02",
+        "f_rest_ambiente": 4.5,
+        "f_rest_atend": 4.5
+      },
+      "tags": [
+        {
+          "name": "Barato",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Taquería Los Primos",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-taqueria-los-primos/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Augusta, 1500 - Consolação",
+        "f_rest_vr": "Não",
+        "f_rest_tipo": "Mexicana",
+        "f_rest_custo": 80,
+        "f_rest_espera": 15,
+        "f_rest_visita": "2026-05-18",
+        "f_rest_ambiente": 4,
+        "f_rest_atend": 4
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Empório Sírio",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-emporio-sirio/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Tabapuã, 800 - Itaim Bibi",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Árabe",
+        "f_rest_custo": 85,
+        "f_rest_espera": 10,
+        "f_rest_visita": "2026-04-09",
+        "f_rest_ambiente": 3.5,
+        "f_rest_atend": 4
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Forno da Vila",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-forno-da-vila/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Aspicuelta, 200 - Vila Madalena",
+        "f_rest_vr": "Não",
+        "f_rest_tipo": "Pizza",
+        "f_rest_custo": 120,
+        "f_rest_espera": 35,
+        "f_rest_visita": "2026-08-22",
+        "f_rest_ambiente": 4,
+        "f_rest_atend": 3.5
+      },
+      "tags": [
+        {
+          "name": "Encontro",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Prato Feito do Zé",
+      "rating": 3,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-prato-feito-do-ze/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Vergueiro, 1200 - Liberdade",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Brasileira",
+        "f_rest_custo": 30,
+        "f_rest_espera": 5,
+        "f_rest_visita": "2026-10-01",
+        "f_rest_ambiente": 2.5,
+        "f_rest_atend": 4
+      },
+      "tags": [
+        {
+          "name": "Barato",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Burger Rápido",
+      "rating": 2.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-burger-rapido/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "Av. Paulista, 1800 - Bela Vista",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Hambúrguer",
+        "f_rest_custo": 45,
+        "f_rest_espera": 5,
+        "f_rest_visita": "2026-03-11",
+        "f_rest_ambiente": 2,
+        "f_rest_atend": 3
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Pizzaria Express",
+      "rating": 2,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-pizzaria-express/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Domingos de Morais, 900 - Vila Mariana",
+        "f_rest_vr": "Não",
+        "f_rest_tipo": "Pizza",
+        "f_rest_custo": 70,
+        "f_rest_espera": 50,
+        "f_rest_visita": "2026-02-14",
+        "f_rest_ambiente": 2,
+        "f_rest_atend": 1.5
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Rodízio Mais Barato",
+      "rating": 1.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurante-rodizio-mais-barato/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "Av. Ibirapuera, 1500 - Moema",
+        "f_rest_vr": "Sim",
+        "f_rest_tipo": "Brasileira",
+        "f_rest_custo": 55,
+        "f_rest_espera": 20,
+        "f_rest_visita": "2026-01-25",
+        "f_rest_ambiente": 1.5,
+        "f_rest_atend": 2
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_rest",
+      "folderId": null,
+      "name": "Lugar novo da esquina",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_rest_loc": "R. Joaquim Távora, 500 - Vila Mariana",
+        "f_rest_vr": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jap",
+      "folderId": null,
+      "name": "Sapporo",
+      "rating": 4.5,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJvTY9EAalHmVfvt13bkNpabsbvQkF1aNkmDZQdX0UcvyRvMFzoT3izF_j&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jap_tipo": "Sushi",
+        "f_jap_loc": "Praça Nossa Sra. Aparecida, 114 - Moema",
+        "f_jap_custo": 320,
+        "f_jap_amb": 5
+      },
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        },
+        {
+          "name": "Encontro",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_jap",
+      "folderId": null,
+      "name": "Yoshi",
+      "rating": 5,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRg1hEnsU9JTLr1ZFtryBiczdZzZvnZfHFwVVbOD6-JmBExxy8-YQ7R6ArJ&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jap_tipo": "Sushi",
+        "f_jap_loc": "Rua Dr. Sílvio Dante Bertacchi, 291 - Vila Sônia",
+        "f_jap_custo": 130,
+        "f_jap_amb": 4
+      },
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_jap",
+      "folderId": null,
+      "name": "Lámen do Bairro",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurantes-japoneses-lamen-do-bairro/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jap_tipo": "Lámen",
+        "f_jap_loc": "R. Galvão Bueno, 300 - Liberdade",
+        "f_jap_custo": 65,
+        "f_jap_amb": 3.5
+      },
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        },
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_jap",
+      "folderId": null,
+      "name": "Izakaya Hoshi",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurantes-japoneses-izakaya-hoshi/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jap_tipo": "Izakaya",
+        "f_jap_loc": "R. Thomaz Gonzaga, 50 - Liberdade",
+        "f_jap_custo": 140,
+        "f_jap_amb": 4.5
+      },
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_jap",
+      "folderId": null,
+      "name": "Udon Yama",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurantes-japoneses-udon-yama/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jap_tipo": "Udon",
+        "f_jap_loc": "R. dos Estudantes, 80 - Liberdade",
+        "f_jap_custo": 55
+      },
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        },
+        {
+          "name": "Barato",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_jap",
+      "folderId": null,
+      "name": "Temakeria Onda",
+      "rating": 2.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-restaurantes-japoneses-temakeria-onda/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jap_tipo": "Temaki",
+        "f_jap_loc": "R. Augusta, 2000 - Jardins",
+        "f_jap_custo": 60,
+        "f_jap_amb": 2
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Caju",
+      "rating": 4.5,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrLIRP_goducwpcIpOdoW63EBXUZ9mQg4RCxdgI0x-zet-mpiJ-VF3PGW9&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Cachaça",
+        "f_caip_doce": "Médio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Limão",
+      "rating": 4,
+      "imageUrl": "https://www.sabornamesa.com.br/media/k2/items/cache/b003cb6a8c5828399d548e534fa42cc6_XL.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Cachaça",
+        "f_caip_doce": "Pouco"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Frutas Vermelhas",
+      "rating": 4,
+      "imageUrl": "https://bartenderstore.com.br/wp-content/uploads/2022/02/Frutas-vermelhas.ft2_.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Vodka",
+        "f_caip_doce": "Muito"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Maracujá",
+      "rating": 4.5,
+      "imageUrl": "https://monologosdoarroz.com.br/wp-content/uploads/2025/05/caipirinha-de-maracuja-blog-monologos-do-arroz.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Vodka",
+        "f_caip_doce": "Médio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Morango",
+      "rating": 2.5,
+      "imageUrl": "https://boraprovar.com/wp-content/uploads/2024/12/caipirinha-de-morango.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Vodka",
+        "f_caip_doce": "Muito"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Abacaxi",
+      "rating": 3,
+      "imageUrl": "https://i0.wp.com/essareceitafunciona.com.br/wp-content/uploads/2020/09/caipirinha-de-abacaxi-essa-receita-funciona-destaque.jpg?resize=683%2C1024&ssl=1",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Cachaça",
+        "f_caip_doce": "Médio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Tangerina com Pimenta",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Cachaça",
+        "f_caip_doce": "Pouco"
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Kiwi",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Vodka",
+        "f_caip_doce": "Médio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Lichia",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Saquê",
+        "f_caip_doce": "Médio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Limão Siciliano",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Saquê",
+        "f_caip_doce": "Pouco"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caip",
+      "folderId": null,
+      "name": "Uva",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caip_base": "Vodka",
+        "f_caip_doce": "Muito"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Heineken",
+      "rating": 3,
+      "imageUrl": "https://coopsp.vtexassets.com/arquivos/ids/226279-800-auto?v=638042368592400000&width=800&height=auto&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Lager",
+        "f_cerv_teor": 5,
+        "f_cerv_preco": 6.49,
+        "f_cerv_br": "Não"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Stella Artois",
+      "rating": 4.5,
+      "imageUrl": "https://mercantilatacado.vtexassets.com/arquivos/ids/179965-800-auto?v=638349768454270000&width=800&height=auto&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Lager",
+        "f_cerv_teor": 5,
+        "f_cerv_preco": 6.99,
+        "f_cerv_br": "Não"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Original",
+      "rating": 4.5,
+      "imageUrl": "https://choppbrahmaexpress.vtexassets.com/arquivos/ids/155801/cerveja-antarctica-original-600ml_1.jpg?v=637353454967000000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Pilsen",
+        "f_cerv_preco": 5.49,
+        "f_cerv_br": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Corona",
+      "rating": 3.5,
+      "imageUrl": "https://assets.ibecom.com.br/ib.item.image.large/l-64370bd8729f42cd9f55c4a88c1bee19.jpeg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Lager",
+        "f_cerv_teor": 4.5,
+        "f_cerv_preco": 7.99,
+        "f_cerv_br": "Não"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Amstel",
+      "rating": 3,
+      "imageUrl": "https://bistek.vtexassets.com/arquivos/ids/210942/2224119%20Cerveja%20Lager%20Puro%20Malte%20Amstel%20Garrafa%20355ml.png?v=639045391898830000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Lager",
+        "f_cerv_preco": 4.99,
+        "f_cerv_br": "Não"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Brahma",
+      "rating": 2.5,
+      "imageUrl": "https://choppbrahmaexpress.vtexassets.com/arquivos/ids/155702/brahma-lata-350ml.jpg?v=637353454674430000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Pilsen",
+        "f_cerv_preco": 3.99,
+        "f_cerv_br": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Skol",
+      "rating": 1.5,
+      "imageUrl": "https://img.megaboxatacado.com.br/produto/1000X1000/202039_14059.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Pilsen",
+        "f_cerv_preco": 3.79,
+        "f_cerv_br": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Eisenbahn Pilsen",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Pilsen",
+        "f_cerv_preco": 5.99,
+        "f_cerv_br": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Baden Baden Witbier",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Witbier",
+        "f_cerv_preco": 12.9,
+        "f_cerv_br": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Colorado Appia",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Weiss",
+        "f_cerv_preco": 13.9,
+        "f_cerv_br": "Sim"
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Guinness",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Stout",
+        "f_cerv_teor": 4.2,
+        "f_cerv_preco": 15.9,
+        "f_cerv_br": "Não"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cerv",
+      "folderId": null,
+      "name": "Budweiser",
+      "rating": 2.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cerv_estilo": "Lager",
+        "f_cerv_teor": 5,
+        "f_cerv_preco": 4.99,
+        "f_cerv_br": "Não"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_casa",
+      "name": "Laranja - Caseiro",
+      "rating": 4.5,
+      "imageUrl": "https://png.pngtree.com/png-vector/20250805/ourmid/pngtree-fresh-orange-with-leaves-and-slices-png-image_16840772.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Sem açúcar",
+        "f_suco_onde": "Em casa"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_casa",
+      "name": "Melancia - Caseiro",
+      "rating": 4,
+      "imageUrl": "https://agrobr.org/wp-content/uploads/2024/09/melancia.png.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Sem açúcar",
+        "f_suco_onde": "Em casa"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_casa",
+      "name": "Limão - Caseiro",
+      "rating": 3,
+      "imageUrl": "https://png.pngtree.com/png-vector/20250312/ourmid/pngtree-green-lemon-png-image_15759038.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Médio",
+        "f_suco_onde": "Em casa"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_casa",
+      "name": "Morango - Caseiro",
+      "rating": 5,
+      "imageUrl": "https://png.pngtree.com/png-clipart/20241215/original/pngtree-strawberry-png-image_17861728.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Pouco",
+        "f_suco_onde": "Em casa"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_casa",
+      "name": "Tomate - Caseiro",
+      "rating": 1,
+      "imageUrl": "https://png.pngtree.com/png-clipart/20240318/original/pngtree-fresh-red-tomato-png-png-image_14616457.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Sem açúcar",
+        "f_suco_onde": "Em casa"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_casa",
+      "name": "Acerola - Caseiro",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Pouco",
+        "f_suco_onde": "Em casa"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_casa",
+      "name": "Maracujá com Hortelã - Caseiro",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Pouco",
+        "f_suco_onde": "Em casa"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_rua",
+      "name": "Laranja com Cenoura",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Sem açúcar",
+        "f_suco_custo": 9,
+        "f_suco_onde": "Lanchonete perto do metrô"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_feira",
+      "name": "Graviola",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Médio",
+        "f_suco_custo": 10,
+        "f_suco_onde": "Feira de domingo"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": "sf_feira",
+      "name": "Cupuaçu",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Médio",
+        "f_suco_custo": 12,
+        "f_suco_onde": "Feira de domingo"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": null,
+      "name": "Abacaxi com Hortelã",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Sem açúcar",
+        "f_suco_custo": 11
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_suco",
+      "folderId": null,
+      "name": "Caju",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_suco_doce": "Médio",
+        "f_suco_custo": 9
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Limão",
+      "rating": 4,
+      "imageUrl": "https://bistek.vtexassets.com/arquivos/ids/203717-800-800?v=638626970902730000&width=800&height=800&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 5.99
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Laranja",
+      "rating": 3.5,
+      "imageUrl": "https://carrefourbrfood.vtexassets.com/arquivos/ids/106450199/gatorade-sabor-laranja-500ml-1.jpg?v=638144910421000000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 5.99
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Uva",
+      "rating": 4.5,
+      "imageUrl": "https://obahortifruti.vtexassets.com/arquivos/ids/9662633/Gatorade--De-Uva-500-Ml.png?v=638638195114870000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 5.99
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Berry Blue",
+      "rating": 4,
+      "imageUrl": "https://zaffari.vtexassets.com/arquivos/ids/286203/1113836-00.jpg?v=638932895010870000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 5.99
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Tangerina",
+      "rating": 4.5,
+      "imageUrl": "https://mercantilatacado.vtexassets.com/arquivos/ids/175532-800-auto?v=638349591122700000&width=800&height=auto&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 5.99
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Maracujá",
+      "rating": 3,
+      "imageUrl": "https://hortifrutibr.vtexassets.com/arquivos/ids/174028/Isotonico-Gatorade-Maracuja-500ml-gelado.jpg.jpg?v=639034900050170000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 5.99
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Melancia",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 6.49
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gato",
+      "folderId": null,
+      "name": "Frutas Tropicais",
+      "rating": 2.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gato_custo": 6.49
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Caldo de Cana Original Puro",
+      "rating": 5,
+      "imageUrl": "https://static1.minhavida.com.br/recipes/62/8e/70/16/caldo-de-cana-orig-1.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caldo_custo": 10,
+        "f_caldo_enj": "Médio enjoativo",
+        "f_caldo_local": "Feira de domingo"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Limão",
+      "rating": 4,
+      "imageUrl": "https://www.suconosliw.com.br/assets/img/img_dica_saude_nosliw_cana_com_limao.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caldo_custo": 11,
+        "f_caldo_enj": "Pouco enjoativo",
+        "f_caldo_local": "Feira de domingo"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Abacaxi com Hortelã",
+      "rating": 3.5,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBRmUOpQSNKXXFM3-x2h0LUQ_CQ9Yo43EwzJP1_PZAhW48vN_FK0LOwOI&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caldo_custo": 11,
+        "f_caldo_enj": "Pouco enjoativo",
+        "f_caldo_local": "Pastelaria do centro"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Gengibre",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caldo_custo": 12,
+        "f_caldo_enj": "Nada enjoativo",
+        "f_caldo_local": "Pastelaria do centro"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Maracujá",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_caldo_custo": 12,
+        "f_caldo_enj": "Pouco enjoativo",
+        "f_caldo_local": "Feira de domingo"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "One Piece",
+      "rating": 4.5,
+      "imageUrl": "https://m.media-amazon.com/images/I/716EGgqzyOL.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lendo",
+        "f_manga_autor": "Eiichiro Oda"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Chainsaw Man",
+      "rating": 5,
+      "imageUrl": "https://m.media-amazon.com/images/I/71wp0XTXsAL._AC_UF1000,1000_QL80_.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lendo",
+        "f_manga_autor": "Tatsuki Fujimoto"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Solo Leveling",
+      "rating": 3,
+      "imageUrl": "https://blogbbm.com/wp-content/uploads/2020/10/Solo-Leveling-01-1.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lido",
+        "f_manga_autor": "Chugong"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Junji Ito: Uzumaki",
+      "rating": 4.5,
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/pt/8/88/Uzumaki.jpg?utm_source=pt.wikipedia.org&utm_campaign=index&utm_content=original",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lido",
+        "f_manga_autor": "Junji Ito",
+        "f_manga_vol": 3
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Mieruko-chan",
+      "rating": 3.5,
+      "imageUrl": "https://static.wikia.nocookie.net/dublagem/images/6/6e/Mieruko-chan.jpeg/revision/latest?cb=20211023012145&path-prefix=pt-br",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lendo",
+        "f_manga_autor": "Tomoki Izumi"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Berserk",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lendo",
+        "f_manga_autor": "Kentaro Miura"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Vagabond",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lido",
+        "f_manga_autor": "Takehiko Inoue",
+        "f_manga_vol": 37
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Fullmetal Alchemist",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lido",
+        "f_manga_autor": "Hiromu Arakawa",
+        "f_manga_vol": 27
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Oyasumi Punpun",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lido",
+        "f_manga_autor": "Inio Asano",
+        "f_manga_vol": 13
+      },
+      "tags": [
+        {
+          "name": "Chorei",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Frieren",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lendo",
+        "f_manga_autor": "Kanehito Yamada e Tsukasa Abe"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Dandadan",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lendo",
+        "f_manga_autor": "Yukinobu Tatsu"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Dorohedoro",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lido",
+        "f_manga_autor": "Q Hayashida",
+        "f_manga_vol": 23
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Kaguya-sama: Love is War",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Lido",
+        "f_manga_autor": "Aka Akasaka",
+        "f_manga_vol": 28
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Spy x Family",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Dropado",
+        "f_manga_autor": "Tatsuya Endo"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Blue Lock",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_manga_estado": "Quero ler",
+        "f_manga_autor": "Muneyuki Kaneshiro e Yusuke Nomura"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Frieren",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Assistido",
+        "f_anime_estudio": "Madhouse",
+        "f_anime_ano": 2023,
+        "f_anime_eps": 28
+      },
+      "tags": [
+        {
+          "name": "Chorei",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Cowboy Bebop",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Assistido",
+        "f_anime_estudio": "Sunrise",
+        "f_anime_ano": 1998,
+        "f_anime_eps": 26
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "JoJo's Bizarre Adventure",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Andamento",
+        "f_anime_estudio": "David Production",
+        "f_anime_ano": 2012
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Death Note",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Assistido",
+        "f_anime_estudio": "Madhouse",
+        "f_anime_ano": 2006,
+        "f_anime_eps": 37
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Mob Psycho 100",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Assistido",
+        "f_anime_estudio": "Bones",
+        "f_anime_ano": 2016
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Attack on Titan",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Assistido",
+        "f_anime_estudio": "Wit Studio e MAPPA",
+        "f_anime_ano": 2013
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Neon Genesis Evangelion",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Assistido",
+        "f_anime_estudio": "Gainax",
+        "f_anime_ano": 1995,
+        "f_anime_eps": 26
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Jujutsu Kaisen",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Andamento",
+        "f_anime_estudio": "MAPPA",
+        "f_anime_ano": 2020
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Chainsaw Man",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Assistido",
+        "f_anime_estudio": "MAPPA",
+        "f_anime_ano": 2022,
+        "f_anime_eps": 12
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Spy x Family",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Andamento",
+        "f_anime_estudio": "Wit Studio e CloverWorks",
+        "f_anime_ano": 2022
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "One Punch Man",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Andamento",
+        "f_anime_estudio": "Madhouse",
+        "f_anime_ano": 2015
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_anime",
+      "folderId": null,
+      "name": "Naruto",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_anime_estado": "Dropado",
+        "f_anime_estudio": "Pierrot",
+        "f_anime_ano": 2002,
+        "f_anime_eps": 220
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Jotaro Kujo",
+      "rating": 5,
+      "imageUrl": "https://i.pinimg.com/736x/34/43/67/344367ffa26a0bf308806ed9f55613bc.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 3",
+        "f_jojo_stand": "Star Platinum"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Joseph Joestar",
+      "rating": 5,
+      "imageUrl": "https://preview.redd.it/joseph-joestar-fanart-made-by-me-second-pic-is-the-v0-xf5fuf7za8791.jpg?width=640&crop=smart&auto=webp&s=1d78e9b3778d91f00018499e425e3399f012c432",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 2",
+        "f_jojo_stand": "Hermit Purple"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Giorno Giovanna",
+      "rating": 4.5,
+      "imageUrl": "https://i.pinimg.com/736x/58/23/33/582333186a1150973e4031b82f5e0556.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 5",
+        "f_jojo_stand": "Gold Experience"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Jolyne Cujoh",
+      "rating": 4,
+      "imageUrl": "https://i.pinimg.com/564x/ca/31/83/ca3183103d2db5e8501eb73d33f1c397.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 6",
+        "f_jojo_stand": "Stone Free"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Dio Brando",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 1",
+        "f_jojo_stand": "The World"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Bruno Bucciarati",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 5",
+        "f_jojo_stand": "Sticky Fingers"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Rohan Kishibe",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 4",
+        "f_jojo_stand": "Heaven's Door"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Gyro Zeppeli",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 7",
+        "f_jojo_stand": "Ball Breaker"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Kira Yoshikage",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 4",
+        "f_jojo_stand": "Killer Queen"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_pers",
+      "name": "Jean Pierre Polnareff",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Personagem",
+        "f_jojo_parte": "Parte 3",
+        "f_jojo_stand": "Silver Chariot"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_partes",
+      "name": "JJBA: Golden Wind - Parte 5",
+      "rating": 4.5,
+      "imageUrl": "https://static.jojowiki.com/images/thumb/5/55/latest/20211006220829/GoldenWind-Promo.png/1200px-GoldenWind-Promo.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Parte",
+        "f_jojo_parte": "Parte 5"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": "sf_jojo_partes",
+      "name": "JJBA: Stone Ocean - Parte 6",
+      "rating": 3,
+      "imageUrl": "https://static.wikia.nocookie.net/jjba/images/a/a6/Volume_80.jpg/revision/latest?cb=20231005152655&path-prefix=pt-br",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_jojo_tipo": "Parte",
+        "f_jojo_parte": "Parte 6"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc Pompeia",
+      "rating": 5,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6UKoS8isHE_BvRMcMZ3dl2RJ18-bqzpbA-jW2iow3p3d3r2Tfo53hC0o&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2019-03-10",
+        "f_sesc_loc": "R. Clélia, 93 - Pompeia",
+        "f_sesc_amb": 5,
+        "f_sesc_estr": 5,
+        "f_sesc_dest": "Os galpões e o deck",
+        "f_sesc_pisc": "Sim"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc Avenida Paulista",
+      "rating": 5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-unidades-do-sesc-sesc-avenida-paulista/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2021-11-06",
+        "f_sesc_loc": "Av. Paulista, 119 - Bela Vista",
+        "f_sesc_amb": 4.5,
+        "f_sesc_estr": 5,
+        "f_sesc_dest": "Mirante no último andar"
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc 24 de Maio",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-unidades-do-sesc-sesc-24-de-maio/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2022-01-15",
+        "f_sesc_loc": "R. 24 de Maio, 109 - República",
+        "f_sesc_amb": 4.5,
+        "f_sesc_estr": 4.5,
+        "f_sesc_dest": "Piscina na cobertura",
+        "f_sesc_pisc": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc Vila Mariana",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-unidades-do-sesc-sesc-vila-mariana/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2023-05-20",
+        "f_sesc_loc": "R. Pelotas, 141 - Vila Mariana",
+        "f_sesc_amb": 4,
+        "f_sesc_estr": 4.5,
+        "f_sesc_dest": "Teatro e biblioteca"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc Pinheiros",
+      "rating": 4,
+      "imageUrl": "https://www.sescsp.org.br/wp-content/uploads/2022/01/CAPA_01.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2024-02-03",
+        "f_sesc_loc": "Rua Pais Leme, 195 - Pinheiros",
+        "f_sesc_amb": 4,
+        "f_sesc_estr": 4,
+        "f_sesc_dest": "Exposições grandes"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc Consolação",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-unidades-do-sesc-sesc-consolacao/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2024-07-12",
+        "f_sesc_loc": "R. Dr. Vila Nova, 245 - Vila Buarque",
+        "f_sesc_amb": 3.5,
+        "f_sesc_estr": 4,
+        "f_sesc_dest": "Shows no teatro"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc Santana",
+      "rating": 3.5,
+      "imageUrl": "https://artequeacontece.com.br/wp-content/uploads/2023/08/Fotos-Santana-70-PD-1.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2025-06-21",
+        "f_sesc_loc": "Av. Luiz Dumont Villares, 579 - Santana",
+        "f_sesc_amb": 3.5,
+        "f_sesc_estr": 3.5,
+        "f_sesc_dest": "Área de convivência"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc Belenzinho",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-unidades-do-sesc-sesc-belenzinho/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2025-09-14",
+        "f_sesc_loc": "R. Padre Adelino, 1000 - Belenzinho",
+        "f_sesc_amb": 3.5,
+        "f_sesc_estr": 4,
+        "f_sesc_dest": "Espaço enorme",
+        "f_sesc_pisc": "Sim"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sesc",
+      "folderId": null,
+      "name": "Sesc 14 Bis",
+      "rating": 3,
+      "imageUrl": "https://www.sescsp.org.br/wp-content/uploads/2023/09/fachada-dest.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_sesc_visita": "2025-04-13",
+        "f_sesc_loc": "Rua Dr. Plínio Barreto, 285 - Bela Vista",
+        "f_sesc_amb": 3,
+        "f_sesc_estr": 3,
+        "f_sesc_dest": "Cinema"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Torra Fina",
+      "rating": 5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-torra-fina/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. Fradique Coutinho, 1100 - Pinheiros, São Paulo",
+        "f_cafe_pedido": "Coado + pão de queijo",
+        "f_cafe_preco": 28,
+        "f_cafe_wifi": "Bom",
+        "f_cafe_tomada": "Sim",
+        "f_cafe_barulho": "Silencioso",
+        "f_cafe_nota": 5,
+        "f_cafe_visita": "2026-10-12"
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Grão Paulista",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-grao-paulista/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "Al. Santos, 1000 - Jardim Paulista, São Paulo",
+        "f_cafe_pedido": "Cappuccino",
+        "f_cafe_preco": 22,
+        "f_cafe_wifi": "Bom",
+        "f_cafe_tomada": "Sim",
+        "f_cafe_barulho": "Médio",
+        "f_cafe_nota": 4.5,
+        "f_cafe_visita": "2026-09-28"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Café Biblioteca",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-cafe-biblioteca/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. da Consolação, 2000 - Consolação, São Paulo",
+        "f_cafe_pedido": "Mocha",
+        "f_cafe_preco": 25,
+        "f_cafe_wifi": "Bom",
+        "f_cafe_tomada": "Sim",
+        "f_cafe_barulho": "Silencioso",
+        "f_cafe_nota": 4,
+        "f_cafe_visita": "2026-10-05"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Café da Esquina",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-cafe-da-esquina/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. Augusta, 2500 - Jardins, São Paulo",
+        "f_cafe_pedido": "Espresso",
+        "f_cafe_preco": 12,
+        "f_cafe_wifi": "Fraco",
+        "f_cafe_tomada": "Não",
+        "f_cafe_barulho": "Barulhento",
+        "f_cafe_nota": 4,
+        "f_cafe_visita": "2026-08-19"
+      },
+      "tags": [
+        {
+          "name": "Barato",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Espresso Lab",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-espresso-lab/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. Joaquim Floriano, 800 - Itaim Bibi, São Paulo",
+        "f_cafe_pedido": "Espresso tônica",
+        "f_cafe_preco": 24,
+        "f_cafe_wifi": "Bom",
+        "f_cafe_tomada": "Sim",
+        "f_cafe_barulho": "Médio",
+        "f_cafe_nota": 4.5,
+        "f_cafe_visita": "2026-07-30"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Café do Parque",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-cafe-do-parque/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "Av. Pedro Álvares Cabral - Parque Ibirapuera, São Paulo",
+        "f_cafe_pedido": "Café gelado",
+        "f_cafe_preco": 18,
+        "f_cafe_wifi": "Não tem",
+        "f_cafe_tomada": "Não",
+        "f_cafe_barulho": "Médio",
+        "f_cafe_nota": 3.5,
+        "f_cafe_visita": "2026-09-07"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Coado & Cia",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-coado-cia/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. Teodoro Sampaio, 1500 - Pinheiros, São Paulo",
+        "f_cafe_pedido": "Coado do dia",
+        "f_cafe_preco": 15,
+        "f_cafe_wifi": "Bom",
+        "f_cafe_tomada": "Sim",
+        "f_cafe_barulho": "Médio",
+        "f_cafe_nota": 4,
+        "f_cafe_visita": "2026-06-14"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Doce Aclimação",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-doce-aclimacao/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. Muniz de Sousa, 400 - Aclimação, São Paulo",
+        "f_cafe_pedido": "Bolo + café",
+        "f_cafe_preco": 20,
+        "f_cafe_wifi": "Fraco",
+        "f_cafe_tomada": "Sim",
+        "f_cafe_barulho": "Silencioso",
+        "f_cafe_nota": 3,
+        "f_cafe_visita": "2026-05-02"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Padaria Vila Bela",
+      "rating": 3,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-padaria-vila-bela/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. Domingos de Morais, 2000 - Vila Mariana, São Paulo",
+        "f_cafe_pedido": "Pingado + pão na chapa",
+        "f_cafe_preco": 14,
+        "f_cafe_wifi": "Não tem",
+        "f_cafe_tomada": "Não",
+        "f_cafe_barulho": "Barulhento",
+        "f_cafe_nota": 3,
+        "f_cafe_visita": "2026-10-18"
+      },
+      "tags": [
+        {
+          "name": "Barato",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_cafe",
+      "folderId": null,
+      "name": "Mocha Liberdade",
+      "rating": 3,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cafes-mocha-liberdade/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cafe_loc": "R. Galvão Bueno, 500 - Liberdade, São Paulo",
+        "f_cafe_pedido": "Matcha latte",
+        "f_cafe_preco": 21,
+        "f_cafe_wifi": "Fraco",
+        "f_cafe_tomada": "Não",
+        "f_cafe_barulho": "Barulhento",
+        "f_cafe_nota": 2.5,
+        "f_cafe_visita": "2026-04-22"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Esquina do Samba",
+      "rating": 5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-esquina-do-samba/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "R. Treze de Maio, 300 - Bela Vista, São Paulo",
+        "f_bar_drink": "Caipirinha de limão",
+        "f_bar_preco": 70,
+        "f_bar_musica": "Sim",
+        "f_bar_fila": 30
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Boteco da Harmonia",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-boteco-da-harmonia/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "R. Harmonia, 500 - Vila Madalena, São Paulo",
+        "f_bar_drink": "Chope",
+        "f_bar_preco": 60,
+        "f_bar_musica": "Às vezes",
+        "f_bar_fila": 20
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Karaokê Liberdade",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-karaoke-liberdade/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "R. Galvão Bueno, 100 - Liberdade, São Paulo",
+        "f_bar_drink": "Saquerinha",
+        "f_bar_preco": 80,
+        "f_bar_musica": "Sim",
+        "f_bar_fila": 45
+      },
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Bar do Beco",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-bar-do-beco/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "R. Gonçalo Afonso, 100 - Vila Madalena, São Paulo",
+        "f_bar_drink": "Gin tônica",
+        "f_bar_preco": 75,
+        "f_bar_musica": "Não",
+        "f_bar_fila": 10
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Bar da Aclimação",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-bar-da-aclimacao/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "Av. Lins de Vasconcelos, 800 - Aclimação, São Paulo",
+        "f_bar_drink": "Cerveja de garrafa",
+        "f_bar_preco": 45,
+        "f_bar_musica": "Não",
+        "f_bar_fila": 0
+      },
+      "tags": [
+        {
+          "name": "Barato",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Bar Brahma",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-bar-brahma/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "Av. São João, 677 - Centro, São Paulo",
+        "f_bar_drink": "Chope",
+        "f_bar_preco": 90,
+        "f_bar_musica": "Sim",
+        "f_bar_fila": 25
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Rooftop Paulista",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-rooftop-paulista/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "Av. Paulista, 1000 - Bela Vista, São Paulo",
+        "f_bar_drink": "Negroni",
+        "f_bar_preco": 120,
+        "f_bar_musica": "Às vezes",
+        "f_bar_fila": 40
+      },
+      "tags": [
+        {
+          "name": "Encontro",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_bar",
+      "folderId": null,
+      "name": "Chopperia Pinheiros",
+      "rating": 3,
+      "imageUrl": "https://picsum.photos/seed/vitrine-bares-chopperia-pinheiros/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_bar_loc": "R. dos Pinheiros, 600 - Pinheiros, São Paulo",
+        "f_bar_drink": "Chope",
+        "f_bar_preco": 55,
+        "f_bar_musica": "Não",
+        "f_bar_fila": 15
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_hamb",
+      "folderId": null,
+      "name": "Brasa Burger",
+      "rating": 5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-hamburgueres-brasa-burger/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 35,
+        "zoom": 1.35
+      },
+      "customFields": {
+        "f_hamb_loc": "R. Bela Cintra, 1500 - Consolação, São Paulo",
+        "f_hamb_ponto": "Ao ponto",
+        "f_hamb_batata": "Inclusa",
+        "f_hamb_preco": 48,
+        "f_hamb_espera": 25
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_hamb",
+      "folderId": null,
+      "name": "Smash da Vila",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-hamburgueres-smash-da-vila/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_hamb_loc": "R. Aspicuelta, 400 - Vila Madalena, São Paulo",
+        "f_hamb_ponto": "Ao ponto",
+        "f_hamb_batata": "À parte",
+        "f_hamb_preco": 39,
+        "f_hamb_espera": 15
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_hamb",
+      "folderId": null,
+      "name": "Burguer Norte",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-hamburgueres-burguer-norte/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_hamb_loc": "R. Voluntários da Pátria, 1500 - Santana, São Paulo",
+        "f_hamb_ponto": "Bem passado",
+        "f_hamb_batata": "Inclusa",
+        "f_hamb_preco": 35,
+        "f_hamb_espera": 20
+      },
+      "tags": [
+        {
+          "name": "Barato",
+          "color": "#D6C08A"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_hamb",
+      "folderId": null,
+      "name": "Smash Ipiranga",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-hamburgueres-smash-ipiranga/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_hamb_loc": "R. Silva Bueno, 1000 - Ipiranga, São Paulo",
+        "f_hamb_ponto": "Ao ponto",
+        "f_hamb_batata": "Inclusa",
+        "f_hamb_preco": 32,
+        "f_hamb_espera": 10
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_hamb",
+      "folderId": null,
+      "name": "Duplo Cheddar",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-hamburgueres-duplo-cheddar/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_hamb_loc": "R. Vergueiro, 2500 - Vila Mariana, São Paulo",
+        "f_hamb_ponto": "Mal passado",
+        "f_hamb_batata": "À parte",
+        "f_hamb_preco": 42,
+        "f_hamb_espera": 30
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_hamb",
+      "folderId": null,
+      "name": "Cabana Burger",
+      "rating": 3,
+      "imageUrl": "https://picsum.photos/seed/vitrine-hamburgueres-cabana-burger/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_hamb_loc": "R. Haddock Lobo, 1000 - Cerqueira César, São Paulo",
+        "f_hamb_ponto": "Ao ponto",
+        "f_hamb_batata": "Não tem",
+        "f_hamb_preco": 55,
+        "f_hamb_espera": 35
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_hamb",
+      "folderId": null,
+      "name": "Hambúrguer do Parque",
+      "rating": 2.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-hamburgueres-hamburguer-do-parque/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_hamb_loc": "Av. Ibirapuera, 2000 - Moema, São Paulo",
+        "f_hamb_ponto": "Bem passado",
+        "f_hamb_batata": "Inclusa",
+        "f_hamb_preco": 38,
+        "f_hamb_espera": 40
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "MASP",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Av. Paulista, 1578 - Bela Vista, São Paulo",
+        "f_quero_prio": "Alta",
+        "f_quero_tipo": "Museu",
+        "f_quero_obs": "Grátis às terças"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Pinacoteca de São Paulo",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Praça da Luz, 2 - Luz, São Paulo",
+        "f_quero_prio": "Alta",
+        "f_quero_tipo": "Museu"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Japan House",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Av. Paulista, 52 - Bela Vista, São Paulo",
+        "f_quero_prio": "Alta",
+        "f_quero_tipo": "Museu"
+      },
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Museu do Ipiranga",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Parque da Independência - Ipiranga, São Paulo",
+        "f_quero_prio": "Alta",
+        "f_quero_tipo": "Museu"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Instituto Moreira Salles",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Av. Paulista, 2424 - Consolação, São Paulo",
+        "f_quero_prio": "Média",
+        "f_quero_tipo": "Museu"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Mercado Municipal",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "R. da Cantareira, 306 - Centro, São Paulo",
+        "f_quero_prio": "Média",
+        "f_quero_tipo": "Comida",
+        "f_quero_obs": "Sanduíche de mortadela"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Beco do Batman",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "R. Gonçalo Afonso - Vila Madalena, São Paulo",
+        "f_quero_prio": "Média",
+        "f_quero_tipo": "Passeio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Feirinha da Liberdade",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Praça da Liberdade - Liberdade, São Paulo",
+        "f_quero_prio": "Média",
+        "f_quero_tipo": "Passeio",
+        "f_quero_obs": "Só aos fins de semana"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Parque Ibirapuera",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Av. Pedro Álvares Cabral - Vila Mariana, São Paulo",
+        "f_quero_prio": "Média",
+        "f_quero_tipo": "Parque"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Parque Villa-Lobos",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Av. Prof. Fonseca Rodrigues, 2001 - Alto de Pinheiros, São Paulo",
+        "f_quero_prio": "Baixa",
+        "f_quero_tipo": "Parque"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_quero",
+      "folderId": null,
+      "name": "Catedral da Sé",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_quero_loc": "Praça da Sé - Sé, São Paulo",
+        "f_quero_prio": "Baixa",
+        "f_quero_tipo": "Passeio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Parasita",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Bong Joon-ho",
+        "f_filme_ano": 2019,
+        "f_filme_dur": 132,
+        "f_filme_gen": "Suspense",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2019-11-10"
+      },
+      "tags": [
+        {
+          "name": "Rever",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Cidade de Deus",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Fernando Meirelles e Kátia Lund",
+        "f_filme_ano": 2002,
+        "f_filme_dur": 130,
+        "f_filme_gen": "Drama",
+        "f_filme_onde": "TV",
+        "f_filme_visto": "2018-05-04"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "A Viagem de Chihiro",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Hayao Miyazaki",
+        "f_filme_ano": 2001,
+        "f_filme_dur": 125,
+        "f_filme_gen": "Animação",
+        "f_filme_onde": "Streaming",
+        "f_filme_visto": "2020-06-21"
+      },
+      "tags": [
+        {
+          "name": "Rever",
+          "color": "#8FB3C9"
+        },
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "O Auto da Compadecida",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Guel Arraes",
+        "f_filme_ano": 2000,
+        "f_filme_dur": 104,
+        "f_filme_gen": "Comédia",
+        "f_filme_onde": "TV",
+        "f_filme_visto": "2015-12-25"
+      },
+      "tags": [
+        {
+          "name": "Rever",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "O Poderoso Chefão",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Francis Ford Coppola",
+        "f_filme_ano": 1972,
+        "f_filme_dur": 175,
+        "f_filme_gen": "Drama",
+        "f_filme_onde": "Streaming",
+        "f_filme_visto": "2021-03-14"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Interestelar",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Christopher Nolan",
+        "f_filme_ano": 2014,
+        "f_filme_dur": 169,
+        "f_filme_gen": "Ficção científica",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2014-11-08"
+      },
+      "tags": [
+        {
+          "name": "Chorei",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Tudo em Todo o Lugar ao Mesmo Tempo",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Daniel Kwan e Daniel Scheinert",
+        "f_filme_ano": 2022,
+        "f_filme_dur": 139,
+        "f_filme_gen": "Ficção científica",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2023-03-05"
+      },
+      "tags": [
+        {
+          "name": "Chorei",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Ainda Estou Aqui",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Walter Salles",
+        "f_filme_ano": 2024,
+        "f_filme_dur": 137,
+        "f_filme_gen": "Drama",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2024-11-16"
+      },
+      "tags": [
+        {
+          "name": "Chorei",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Matrix",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Lana e Lilly Wachowski",
+        "f_filme_ano": 1999,
+        "f_filme_dur": 136,
+        "f_filme_gen": "Ficção científica",
+        "f_filme_onde": "TV",
+        "f_filme_visto": "2010-07-03"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Duna: Parte Dois",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Denis Villeneuve",
+        "f_filme_ano": 2024,
+        "f_filme_dur": 166,
+        "f_filme_gen": "Ficção científica",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2024-03-02"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Meu Vizinho Totoro",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Hayao Miyazaki",
+        "f_filme_ano": 1988,
+        "f_filme_dur": 86,
+        "f_filme_gen": "Animação",
+        "f_filme_onde": "Streaming",
+        "f_filme_visto": "2021-08-15"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Que Horas Ela Volta?",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Anna Muylaert",
+        "f_filme_ano": 2015,
+        "f_filme_dur": 112,
+        "f_filme_gen": "Drama",
+        "f_filme_onde": "Streaming",
+        "f_filme_visto": "2016-02-20"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Toy Story",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "John Lasseter",
+        "f_filme_ano": 1995,
+        "f_filme_dur": 81,
+        "f_filme_gen": "Animação",
+        "f_filme_onde": "TV",
+        "f_filme_visto": "2005-10-12"
+      },
+      "tags": [
+        {
+          "name": "Rever",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Corra!",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Jordan Peele",
+        "f_filme_ano": 2017,
+        "f_filme_dur": 104,
+        "f_filme_gen": "Terror",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2017-05-20"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Bacurau",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Kleber Mendonça Filho e Juliano Dornelles",
+        "f_filme_ano": 2019,
+        "f_filme_dur": 131,
+        "f_filme_gen": "Suspense",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2019-09-01"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "O Iluminado",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Stanley Kubrick",
+        "f_filme_ano": 1980,
+        "f_filme_dur": 146,
+        "f_filme_gen": "Terror",
+        "f_filme_onde": "Streaming",
+        "f_filme_visto": "2022-10-31"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Pulp Fiction",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Quentin Tarantino",
+        "f_filme_ano": 1994,
+        "f_filme_dur": 154,
+        "f_filme_gen": "Ação",
+        "f_filme_onde": "Streaming",
+        "f_filme_visto": "2019-01-19"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Oppenheimer",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Christopher Nolan",
+        "f_filme_ano": 2023,
+        "f_filme_dur": 180,
+        "f_filme_gen": "Drama",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2023-07-22"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Duna",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Denis Villeneuve",
+        "f_filme_ano": 2021,
+        "f_filme_dur": 155,
+        "f_filme_gen": "Ficção científica",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2021-10-23"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Clube da Luta",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "David Fincher",
+        "f_filme_ano": 1999,
+        "f_filme_dur": 139,
+        "f_filme_gen": "Suspense",
+        "f_filme_onde": "Streaming",
+        "f_filme_visto": "2018-08-11"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Barbie",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Greta Gerwig",
+        "f_filme_ano": 2023,
+        "f_filme_dur": 114,
+        "f_filme_gen": "Comédia",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2023-07-20"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "La La Land",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Damien Chazelle",
+        "f_filme_ano": 2016,
+        "f_filme_dur": 128,
+        "f_filme_gen": "Musical",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2017-01-28"
+      },
+      "tags": [
+        {
+          "name": "Encontro",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Hereditário",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Ari Aster",
+        "f_filme_ano": 2018,
+        "f_filme_dur": 127,
+        "f_filme_gen": "Terror",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2018-06-23"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Coringa",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Todd Phillips",
+        "f_filme_ano": 2019,
+        "f_filme_dur": 122,
+        "f_filme_gen": "Drama",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2019-10-05"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Velozes e Furiosos 7",
+      "rating": 2.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "James Wan",
+        "f_filme_ano": 2015,
+        "f_filme_dur": 137,
+        "f_filme_gen": "Ação",
+        "f_filme_onde": "TV",
+        "f_filme_visto": "2016-04-09"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Cats",
+      "rating": 1,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Tom Hooper",
+        "f_filme_ano": 2019,
+        "f_filme_dur": 110,
+        "f_filme_gen": "Musical",
+        "f_filme_onde": "Cinema",
+        "f_filme_visto": "2019-12-26"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Perfect Days",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Wim Wenders",
+        "f_filme_ano": 2023,
+        "f_filme_dur": 123,
+        "f_filme_gen": "Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filme",
+      "folderId": null,
+      "name": "Central do Brasil",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_filme_dir": "Walter Salles",
+        "f_filme_ano": 1998,
+        "f_filme_gen": "Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Breaking Bad",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Terminei",
+        "f_serie_temp": 5,
+        "f_serie_plat": "Netflix"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Succession",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Terminei",
+        "f_serie_temp": 4,
+        "f_serie_plat": "HBO Max"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Arcane",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Terminei",
+        "f_serie_temp": 2,
+        "f_serie_plat": "Netflix"
+      },
+      "tags": [
+        {
+          "name": "Chorei",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Dark",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Terminei",
+        "f_serie_temp": 3,
+        "f_serie_plat": "Netflix"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Ruptura",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Assistindo",
+        "f_serie_temp": 2,
+        "f_serie_plat": "Apple TV+"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Fleabag",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Terminei",
+        "f_serie_temp": 2,
+        "f_serie_plat": "Prime Video"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "The Office",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Terminei",
+        "f_serie_temp": 9
+      },
+      "tags": [
+        {
+          "name": "Rever",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "The Last of Us",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Assistindo",
+        "f_serie_temp": 2,
+        "f_serie_plat": "HBO Max"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "O Urso",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Assistindo",
+        "f_serie_plat": "Disney+"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Stranger Things",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Parei",
+        "f_serie_plat": "Netflix"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Bom Dia, Verônica",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Terminei",
+        "f_serie_temp": 3,
+        "f_serie_plat": "Netflix"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Cidade Invisível",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Parei",
+        "f_serie_temp": 2,
+        "f_serie_plat": "Netflix"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_serie",
+      "folderId": null,
+      "name": "Xógum",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_serie_estado": "Quero ver",
+        "f_serie_plat": "Disney+"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Memórias Póstumas de Brás Cubas",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Machado de Assis",
+        "f_livro_ano": 1881,
+        "f_livro_formato": "Físico",
+        "f_livro_fim": "2016-09-10"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Cem Anos de Solidão",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Gabriel García Márquez",
+        "f_livro_ano": 1967,
+        "f_livro_formato": "Físico",
+        "f_livro_fim": "2020-04-02"
+      },
+      "tags": [
+        {
+          "name": "Clássico",
+          "color": "#B98CC2"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Torto Arado",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Itamar Vieira Junior",
+        "f_livro_ano": 2019,
+        "f_livro_formato": "Kindle",
+        "f_livro_fim": "2023-02-18"
+      },
+      "tags": [
+        {
+          "name": "Chorei",
+          "color": "#8FB3C9"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "1984",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "George Orwell",
+        "f_livro_ano": 1949,
+        "f_livro_formato": "Físico",
+        "f_livro_fim": "2017-06-30"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Duna",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Frank Herbert",
+        "f_livro_ano": 1965,
+        "f_livro_formato": "Kindle",
+        "f_livro_fim": "2021-09-12"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Ensaio sobre a Cegueira",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "José Saramago",
+        "f_livro_ano": 1995,
+        "f_livro_formato": "Físico",
+        "f_livro_fim": "2019-01-27"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Dom Casmurro",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Machado de Assis",
+        "f_livro_ano": 1899,
+        "f_livro_formato": "Físico",
+        "f_livro_fim": "2015-05-15"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "O Pequeno Príncipe",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Antoine de Saint-Exupéry",
+        "f_livro_ano": 1943,
+        "f_livro_formato": "Físico",
+        "f_livro_fim": "2010-12-01"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "A Hora da Estrela",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Clarice Lispector",
+        "f_livro_ano": 1977,
+        "f_livro_formato": "Audiolivro",
+        "f_livro_fim": "2024-08-08"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "O Hobbit",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "J. R. R. Tolkien",
+        "f_livro_ano": 1937,
+        "f_livro_formato": "Kindle",
+        "f_livro_fim": "2018-03-22"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Capitães da Areia",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Jorge Amado",
+        "f_livro_ano": 1937,
+        "f_livro_formato": "Físico",
+        "f_livro_fim": "2014-10-09"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Sapiens",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Yuval Noah Harari",
+        "f_livro_ano": 2011,
+        "f_livro_formato": "Audiolivro",
+        "f_livro_fim": "2022-05-05"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "É Assim que Acaba",
+      "rating": 2,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "Colleen Hoover",
+        "f_livro_ano": 2016,
+        "f_livro_formato": "Kindle",
+        "f_livro_fim": "2023-07-14"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_livro",
+      "folderId": null,
+      "name": "Grande Sertão: Veredas",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_livro_autor": "João Guimarães Rosa",
+        "f_livro_ano": 1956,
+        "f_livro_formato": "Físico"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Lisboa",
+      "rating": 5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-lisboa/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Portugal",
+        "f_cid_quando": "2025-05-10",
+        "f_cid_dias": 7,
+        "f_cid_gasto": 9800,
+        "f_cid_clima": "Ameno"
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Ouro Preto",
+      "rating": 5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-ouro-preto/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Brasil",
+        "f_cid_quando": "2024-07-19",
+        "f_cid_dias": 4,
+        "f_cid_gasto": 1900,
+        "f_cid_clima": "Frio"
+      },
+      "tags": [
+        {
+          "name": "Quero voltar",
+          "color": "#8FC9A6"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Rio de Janeiro",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-rio-de-janeiro/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Brasil",
+        "f_cid_quando": "2023-12-28",
+        "f_cid_dias": 5,
+        "f_cid_gasto": 2600,
+        "f_cid_clima": "Calor"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Salvador",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-salvador/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Brasil",
+        "f_cid_quando": "2024-02-10",
+        "f_cid_dias": 6,
+        "f_cid_gasto": 3100,
+        "f_cid_clima": "Calor"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Buenos Aires",
+      "rating": 4.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-buenos-aires/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Argentina",
+        "f_cid_quando": "2025-09-05",
+        "f_cid_dias": 5,
+        "f_cid_gasto": 4200,
+        "f_cid_clima": "Frio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Santiago",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-santiago/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Chile",
+        "f_cid_quando": "2023-07-14",
+        "f_cid_dias": 5,
+        "f_cid_gasto": 4800,
+        "f_cid_clima": "Frio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Florianópolis",
+      "rating": 4,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-florianopolis/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Brasil",
+        "f_cid_quando": "2022-01-08",
+        "f_cid_dias": 7,
+        "f_cid_gasto": 3500,
+        "f_cid_clima": "Calor"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Gramado",
+      "rating": 3.5,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-gramado/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Brasil",
+        "f_cid_quando": "2022-06-24",
+        "f_cid_dias": 3,
+        "f_cid_gasto": 2200,
+        "f_cid_clima": "Frio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_cidade",
+      "folderId": null,
+      "name": "Curitiba",
+      "rating": 3,
+      "imageUrl": "https://picsum.photos/seed/vitrine-cidades-visitadas-curitiba/600/600",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_cid_pais": "Brasil",
+        "f_cid_quando": "2021-10-15",
+        "f_cid_dias": 2,
+        "f_cid_gasto": 900,
+        "f_cid_clima": "Chuva"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_inbox",
+      "folderId": null,
+      "name": "Restaurante peruano na Augusta",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_inbox",
+      "folderId": null,
+      "name": "Livro: A Biblioteca da Meia-Noite",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_inbox",
+      "folderId": null,
+      "name": "Filme: Anatomia de uma Queda",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_inbox",
+      "folderId": null,
+      "name": "Bar com música ao vivo na Vila Madalena",
+      "rating": null,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    }
+  ]
+}

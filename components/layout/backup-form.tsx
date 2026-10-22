@@ -77,8 +77,9 @@ export function BackupForm() {
       <div className="space-y-1.5">
         <span className="plaque block">Exportar</span>
         <p className="text-xs leading-relaxed text-faint">
-          Baixa um arquivo com todas as suas pastas, categorias e itens (e as tags que eles usam).
-          Serve de backup e de ponto de partida para editar na mão.
+          Baixa um arquivo com todas as suas pastas, categorias e itens (e as tags que eles usam),
+          com quem vê cada pasta e categoria. Serve de backup e de ponto de partida para editar na
+          mão.
         </p>
         <Button type="button" variant="outline" onClick={handleExport} disabled={exporting}>
           <Download className="size-4" /> {exporting ? "Gerando…" : "Exportar acervo"}
@@ -89,7 +90,8 @@ export function BackupForm() {
           <span className="plaque block">Importar</span>
           <p className="text-xs leading-relaxed text-faint">
             Cole o JSON abaixo, ou suba o arquivo. Sempre cria categorias novas — nunca mistura com
-            o que você já tem. Nome repetido ganha um sufixo.
+            o que você já tem. Nome repetido ganha um sufixo. Pastas e categorias voltam com a
+            mesma visibilidade; as de um arquivo antigo, sem ela, seguem o seu padrão.
           </p>
           <Textarea
             value={json}

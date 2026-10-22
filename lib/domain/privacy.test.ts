@@ -7,6 +7,7 @@ import {
   needsPublicNotice,
   restrictingAncestor,
   restrictionNote,
+  storedVisibility,
   visibilityLabel,
   visibilityOf,
   visibilityOptions,
@@ -23,6 +24,16 @@ describe("nível de visibilidade", () => {
     expect(visibilityOf(null)).toBe("public")
     // valor estranho no banco não vira nível
     expect(visibilityOf({ visibility: "segredo", is_public: false })).toBe("private")
+  })
+
+  it("o backup leva o nível só quando o banco tem um", () => {
+    expect(storedVisibility({ visibility: "friends", is_public: false })).toBe("friends")
+    expect(storedVisibility({ is_public: false })).toBe("private")
+    // a coluna existe, mas veio vazia: vale o mesmo que na tela
+    expect(storedVisibility({ visibility: null, is_public: null })).toBe("public")
+    // antes do 12: sem nível, quem importar fica com o próprio padrão
+    expect(storedVisibility({})).toBeUndefined()
+    expect(storedVisibility(null)).toBeUndefined()
   })
 
   it("lê o padrão do perfil do mesmo jeito", () => {

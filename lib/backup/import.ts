@@ -7,8 +7,10 @@ import { z } from "zod"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { ok, fail, type ActionResult } from "@/lib/actions/result"
+import { isMissingColumn } from "@/lib/domain/errors"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeSort, type SortKey } from "@/lib/domain/filter"
+import { isVisibility, type Visibility } from "@/lib/domain/privacy"
 import { normalizeQuickField, QUICK_FIELD_NAME } from "@/lib/domain/quick-field"
 import { normalizeCategoryColor, normalizeTagColor } from "@/lib/domain/tags"
 import { FIELD_TYPES, type CustomFields, type Estrutura } from "@/lib/domain/types"
@@ -18,6 +20,8 @@ export interface BackupFolder {
   id: string
   name: string
   parentId: string | null
+  /** Quem vê. Ausente (arquivo antigo) = o padrão do perfil de quem importa. */
+  visibility?: Visibility
 }
 
 export interface BackupCategory {
@@ -26,6 +30,8 @@ export interface BackupCategory {
   icon: string | null
   color: string | null
   folderId: string | null
+  /** Quem vê. Ausente (arquivo antigo) = o padrão do perfil de quem importa. */
+  visibility?: Visibility
   estrutura: Estrutura
   /** `false` = lista simples, sem nota. Ausente (arquivo antigo) = com estrelas. */
   ratingEnabled: boolean
@@ -71,12 +77,22 @@ const backupFieldSchema = z.object({
   nome: z.string().min(1),
   tipo: z.enum(FIELD_TYPES),
   opcoes: z.array(z.string()).optional(),
+  // Símbolo fora da lista vira R$ no `parseEstrutura`, como no editor.
+  moeda: z.string().optional(),
 })
+
+// Nível desconhecido (arquivo escrito à mão) não trava a importação: fica o
+// padrão do perfil, como num arquivo sem nível nenhum.
+const backupVisibilitySchema = z
+  .unknown()
+  .optional()
+  .transform((value) => (isVisibility(value) ? value : undefined))
 
 const backupFolderSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1),
   parentId: z.string().nullable().default(null),
+  visibility: backupVisibilitySchema,
 })
 
 const backupCategorySchema = z.object({
@@ -85,6 +101,7 @@ const backupCategorySchema = z.object({
   icon: z.string().nullable().default(null),
   color: z.string().nullable().default(null),
   folderId: z.string().nullable().default(null),
+  visibility: backupVisibilitySchema,
   estrutura: z.array(backupFieldSchema).default([]),
   ratingEnabled: z.boolean().default(true),
   // Sem ordem no arquivo: a de uma categoria nova (nota maior primeiro, ou recentes sem estrelas).
@@ -251,6 +268,17 @@ export async function performImport(
 ): Promise<ActionResult<ImportSummary>> {
   const { folders, categories, entryFolders, entries } = payload
 
+  // 0) o nível de cada pasta e categoria só vai junto se o banco já tem a
+  // coluna (migração 14); antes dela, tudo segue o padrão do perfil.
+  let withVisibility = [...folders, ...categories].some((row) => row.visibility !== undefined)
+  if (withVisibility) {
+    const { error } = await supabase.from("folders").select("visibility").limit(1)
+    if (error && !isMissingColumn(error, "visibility")) return fail(error)
+    withVisibility = !error
+  }
+  const visibilityColumn = (row: { visibility?: Visibility }) =>
+    withVisibility && row.visibility ? { visibility: row.visibility } : {}
+
   // 1) pastas, em ondas: só insere quem já tem a mãe resolvida (ou não tem mãe).
   const folderIdMap = new Map<string, string>()
   let pending = [...folders]
@@ -277,6 +305,7 @@ export async function performImport(
             parent_folder_id: folder.parentId ? (folderIdMap.get(folder.parentId) ?? null) : null,
             // Ordem exata não importa aqui: cai no fim da lista e dá para arrastar depois.
             display_order: 9999,
+            ...visibilityColumn(folder),
           })
           .select("id")
           .single()
@@ -356,6 +385,7 @@ export async function performImport(
         rating_enabled: category.ratingEnabled,
         default_sort: normalizeSort(category.defaultSort, category.ratingEnabled),
         display_order: 9999,
+        ...visibilityColumn(category),
       })
       .select("id")
       .single()

@@ -47,6 +47,16 @@ export function visibilityOf(row: VisibilityRow | null | undefined): Visibility 
   return row?.is_public === false ? "private" : "public"
 }
 
+/**
+ * O nível que o backup leva: só quando o banco já guarda um (`visibility`
+ * do 14, ou `is_public` do 12). Antes do 12 não há nível nenhum, e o arquivo
+ * sai sem ele — quem importar fica com o próprio padrão.
+ */
+export function storedVisibility(row: VisibilityRow | null | undefined): Visibility | undefined {
+  if (!row || (!("visibility" in row) && !("is_public" in row))) return undefined
+  return visibilityOf(row)
+}
+
 /** O padrão de quem cria: públicas, a não ser que o perfil diga outra coisa. */
 export function defaultVisibilityOf(
   profile: Pick<Profile, "default_visibility" | "default_public"> | null | undefined

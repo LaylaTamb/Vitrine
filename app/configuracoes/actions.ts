@@ -35,7 +35,7 @@ import { isMissingColumn, isMissingSchema } from "@/lib/domain/errors"
 import { STEAM_NOT_READY, STEAM_RETURN_MESSAGES, syncSummary } from "@/lib/domain/steam"
 import { parseCustomFields, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeSort } from "@/lib/domain/filter"
-import { VISIBILITY_NOT_READY, type Visibility } from "@/lib/domain/privacy"
+import { storedVisibility, VISIBILITY_NOT_READY, type Visibility } from "@/lib/domain/privacy"
 import { normalizeQuickField, QUICK_FIELD_NAME } from "@/lib/domain/quick-field"
 import { normalizeUsername, usernameProblem } from "@/lib/domain/username"
 import { imageDisplayOf } from "@/lib/domain/view"
@@ -312,8 +312,9 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
 
   const [foldersResult, categoriesResult, entryFoldersResult, entriesResult, tagsResult] =
     await Promise.all([
-      supabase.from("folders").select("id, name, parent_folder_id").eq("owner_id", user.id),
-      // `*`: traz o `kind` (migração 17) quando existe, sem quebrar antes dela.
+      // `*`: traz a visibilidade (migrações 12 e 14) e o `kind` (migração 17)
+      // quando existem, sem quebrar antes delas.
+      supabase.from("folders").select("*").eq("owner_id", user.id),
       supabase.from("categories").select("*").eq("owner_id", user.id),
       // A ordem de exportação É a ordem manual: o import a reconstrói.
       supabase
@@ -346,8 +347,22 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
   )
 
   const folders: BackupFolder[] = (
-    (foldersResult.data ?? []) as { id: string; name: string; parent_folder_id: string | null }[]
-  ).map((row) => ({ id: row.id, name: row.name, parentId: row.parent_folder_id }))
+    (foldersResult.data ?? []) as {
+      id: string
+      name: string
+      parent_folder_id: string | null
+      visibility?: string | null
+      is_public?: boolean | null
+    }[]
+  ).map((row) => {
+    const visibility = storedVisibility(row)
+    return {
+      id: row.id,
+      name: row.name,
+      parentId: row.parent_folder_id,
+      ...(visibility ? { visibility } : {}),
+    }
+  })
 
   const categories: BackupCategory[] = (
     (categoriesResult.data ?? []) as {
@@ -361,17 +376,22 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
       default_sort: string | null
       kind?: string
       quick_field?: string
+      visibility?: string | null
+      is_public?: boolean | null
     }[]
   ).map((row) => {
     const estrutura = parseEstrutura(row.estrutura)
     const ratingEnabled = row.rating_enabled !== false
     const quick = normalizeQuickField(row.quick_field, estrutura, ratingEnabled)
+    // A "A organizar" é sempre a da conta de quem importa: o nível dela não viaja.
+    const visibility = row.kind === "inbox" ? undefined : storedVisibility(row)
     return {
       id: row.id,
       name: row.name,
       icon: row.icon,
       color: row.color,
       folderId: row.folder_id,
+      ...(visibility ? { visibility } : {}),
       estrutura,
       ratingEnabled,
       defaultSort: normalizeSort(row.default_sort, ratingEnabled),
