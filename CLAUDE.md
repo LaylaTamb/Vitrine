@@ -97,14 +97,23 @@ As 12 regras de carregamento estão no `GUIA-LOCAL.md`, seção "Arquitetura". O
 
 Rotas (nomes em pt-BR):
 
-- **Coleções:** `/` (coleções) e `/categoria/[categoryId]/[entryId]`.
+- **Início:** `/` (o feed de quem você segue; `/?pasta=` antigo vai para o perfil).
+- **Categorias:** `/categoria/[categoryId]/[entryId]`. As Coleções moram na aba do seu perfil.
 - **Perfil:**
-  - `/v/[username]` (perfil, seguidores, seguindo e `story/`, a imagem via `next/og`);
+  - `/v/[username]` (perfil, seguidores, seguindo e `story/`, a imagem via `next/og`); o
+    próprio perfil tem as abas Coleções, Favoritas (`?aba=favoritas`) e Mapa (`?aba=mapa`), e
+    o Filtros em `?filtros=1`;
   - `/u/:username` redireciona para `/v/` (`next.config.ts`);
   - `/perfil` leva ao próprio perfil.
-- **Telas logadas:** `/explorar`, `/favoritos`, `/filtro`, `/mapa`, `/matches`, `/importar`,
-  `/lixeira`, `/tags`, `/usuarios` (Pessoas), `/qr`, `/compartilhar` (o share target do app
-  instalável) e `/configuracoes`.
+- **Telas logadas:** `/explorar` (o Descobrir: pessoas e categorias), `/avisos`, `/matches`,
+  `/importar`, `/lixeira`, `/qr`, `/compartilhar` (o share target do app instalável, e o "Item" do
+  ＋ Adicionar) e `/configuracoes` (lista em grupos; cada
+  seção, inclusive o Editar perfil, a Steam e as Tags, abre em `?secao=…`).
+- **Só redirecionam:** `/favoritos`, `/mapa`, `/filtro` (para as abas do perfil), `/tags` (para
+  as Configurações) e `/usuarios` (para o Descobrir).
+- **Navegação** (com login): `AppNav` (`components/layout/app-nav.tsx`) — barra lateral a partir de
+  768px, abas de baixo no celular, o ＋ Adicionar; o item aceso sai de `navSectionOf`
+  (`lib/domain/nav.ts`). Sem login, a `Navbar` de cima.
 - **Auth e textos legais:** as telas de auth, `/auth/callback`, `/termos`, `/privacidade` e
   `/aceitar-termos`.
 - **APIs:** `/api/steam/{conectar,retorno}` (OpenID) e `/api/cron/{contas,lixeira}`.
@@ -157,7 +166,7 @@ nas seções do `GUIA-LOCAL.md` com o mesmo nome.
   (um gatilho bloqueia o resto). O @ antigo redireciona para o novo e fica reservado por 14 dias.
 - **Termos** exigem 18+. O aceite fica no `user_metadata` e é copiado para o perfil (16).
 - **Favoritos:** a estrela é da categoria (`category_favorites.tab_position`), em qualquer pasta,
-  menos a "A organizar". A estrela no canto das Coleções abre `/favoritos`, só com as favoritas.
+  menos a "A organizar". A aba Favoritas do perfil (`?aba=favoritas`) mostra só as favoritas.
   Só a própria pessoa vê.
 - **Explorar.** "Pegar com os itens" cria uma cópia ligada que recebe as novidades de quem fez
   (26).

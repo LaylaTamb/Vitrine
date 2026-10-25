@@ -1,14 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { Ban, Ellipsis, HeartHandshake, QrCode, Users } from "lucide-react"
+import { Ban, Ellipsis, HeartHandshake, Users } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
 import { blockAction, unblockAction } from "@/app/v/actions"
 import { NewMatchDialog } from "@/components/match/new-match-dialog"
 import { FollowButton } from "@/components/social/follow-button"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   DropdownMenu,
@@ -91,11 +91,7 @@ export function ProfileSocialBar({
         <span className="text-xs text-muted-foreground">Segue você</span>
       ) : null}
 
-      {isMe ? (
-        <Link href="/qr" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          <QrCode className="size-4" /> Meu QR
-        </Link>
-      ) : (
+      {isMe ? null : (
         <div className="flex items-center gap-1.5">
           <FollowButton
             profileId={profileId}

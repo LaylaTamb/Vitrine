@@ -29,7 +29,13 @@ export interface NotificationView {
   read_at: string | null
   created_at: string
   payload: Record<string, unknown>
-  actor: { username: string; display_name: string | null; avatar_url: string | null } | null
+  /** `id`: para o "Seguir de volta" dos Avisos. */
+  actor: {
+    id?: string
+    username: string
+    display_name: string | null
+    avatar_url: string | null
+  } | null
 }
 
 /** O texto de uma notificação, em português. */
@@ -85,7 +91,8 @@ export function notificationHref(
   profileHref: (username: string) => string
 ): string {
   if (notification.type.startsWith("match_")) return "/matches"
-  if (notification.type === "import_done") return "/"
+  // A importação caiu nas suas Coleções, que moram no perfil.
+  if (notification.type === "import_done") return "/perfil"
   return notification.actor ? profileHref(notification.actor.username) : "/"
 }
 

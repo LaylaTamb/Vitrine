@@ -75,10 +75,10 @@ export function TrashView({
       />
 
       <Link
-        href="/"
+        href="/configuracoes"
         className="mb-5 inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
       >
-        <ArrowLeft className="size-3.5" /> Coleções
+        <ArrowLeft className="size-3.5" /> Configurações
       </Link>
 
       {notReady ? (

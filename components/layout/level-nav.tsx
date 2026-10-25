@@ -32,6 +32,9 @@ export interface Crumb {
  * Coleções, onde some. O último degrau é onde você está: não é clicável.
  * Degraus com `dropLevel` (e o Voltar deles) também recebem um card
  * arrastado: soltar ali sobe o card para aquele nível.
+ *
+ * No celular, só o Voltar, com o nome de onde ele leva ("← Comes e bebes"):
+ * a trilha inteira ocupava três linhas acima do título.
  */
 export function LevelNav({ trail }: { trail: Crumb[] }) {
   const parent = trail.length > 1 ? trail[trail.length - 2] : null
@@ -41,15 +44,17 @@ export function LevelNav({ trail }: { trail: Crumb[] }) {
       {parent ? (
         <CrumbTarget
           crumb={parent}
-          className="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
+          className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
           ariaLabel="Voltar um nível"
           back
         >
-          <ArrowLeft className="size-3.5" /> Voltar
+          <ArrowLeft className="size-3.5 shrink-0" />
+          <span className="truncate sm:hidden">{parent.label}</span>
+          <span className="hidden sm:inline">Voltar</span>
         </CrumbTarget>
       ) : null}
 
-      <ol className="flex min-w-0 flex-wrap items-center gap-1">
+      <ol className="hidden min-w-0 flex-wrap items-center gap-1 sm:flex">
         {trail.map((crumb, index) => {
           const last = index === trail.length - 1
           return (

@@ -4,7 +4,8 @@ import { useDroppable } from "@dnd-kit/core"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import Link from "next/link"
-import { FolderOpen, GripVertical, Pencil, Trash2 } from "lucide-react"
+import { Folder, FolderOpen, GripVertical } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
 import { VISIBILITY_ICONS } from "@/components/collection/privacy-switch"
 import { FavoriteToggle } from "@/components/favorites/favorite-star"
@@ -21,7 +22,6 @@ export interface CollectionCardProps {
   subtitle: string
   href?: string
   onOpen?: () => void
-  canEdit: boolean
   sortable: boolean
   view: ViewMode
   /**
@@ -29,8 +29,6 @@ export interface CollectionCardProps {
    * põe dentro). Só vale dentro de um `DndContext`.
    */
   dropInto?: boolean
-  onEdit?: () => void
-  onDelete?: () => void
   /** A categoria tem a estrela (só o dono recebe). */
   favorite?: boolean
   /** Com ela, a estrela fica sempre à vista no card (só categoria, só o dono). */
@@ -40,6 +38,10 @@ export interface CollectionCardProps {
    * Amigos, nada na Pública. Só o dono passa (e chega a ver).
    */
   visibility?: Visibility
+  /** Categoria: até 3 fotos dos itens para a capa (migração 40). Sem elas, o ícone grande. */
+  cover?: string[]
+  /** Pasta: os ícones do que está dentro, para a capa. */
+  glyphs?: string[]
 }
 
 export function CollectionCard({
@@ -50,15 +52,14 @@ export function CollectionCard({
   subtitle,
   href,
   onOpen,
-  canEdit,
   sortable,
   view,
   dropInto = false,
-  onEdit,
-  onDelete,
   favorite = false,
   onToggleFavorite,
   visibility = "public",
+  cover,
+  glyphs,
 }: CollectionCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -73,32 +74,6 @@ export function CollectionCard({
 
   const glyph = kind === "folder" ? "📁" : (icon ?? "")
   const isList = view === "list"
-
-  const actions = canEdit ? (
-    <div
-      className={cn(
-        // Em tela de toque (sem hover), à vista: senão ninguém acha editar e excluir.
-        "card-actions absolute top-2 flex items-center gap-0.5 rounded-lg border border-line bg-surface-hi/90 p-0.5 backdrop-blur-sm [@media(hover:none)]:opacity-100",
-        // As outras ações abrem ao lado da estrela, que fica sempre no canto.
-        onToggleFavorite ? "right-11" : "right-2",
-        // Na lista, no celular (sem hover), as ações nem entram na linha: o nome
-        // ganha o espaço — como nas linhas de item.
-        isList &&
-          "relative right-auto top-auto hidden border-0 bg-transparent p-0 backdrop-blur-none sm:flex"
-      )}
-    >
-      {onEdit ? (
-        <IconButton label={`Editar ${name}`} onClick={onEdit}>
-          <Pencil className="size-3.5" />
-        </IconButton>
-      ) : null}
-      {onDelete ? (
-        <IconButton label={`Excluir ${name}`} onClick={onDelete} danger>
-          <Trash2 className="size-3.5" />
-        </IconButton>
-      ) : null}
-    </div>
-  ) : null
 
   const star = onToggleFavorite ? (
     <FavoriteToggle
@@ -118,21 +93,22 @@ export function CollectionCard({
       title="Arraste para reordenar ou para dentro de uma pasta"
       className={cn(
         // Em tela de toque a alça fica à vista: é por ela que se arrasta.
-        "card-actions absolute left-1.5 top-2 cursor-grab touch-none rounded p-1 text-faint hover:text-foreground active:cursor-grabbing [@media(hover:none)]:opacity-100",
-        isList && "relative left-auto top-auto"
+        "card-actions absolute left-2 top-2 z-10 cursor-grab touch-none rounded-lg bg-bg/80 p-1 text-muted-foreground backdrop-blur-sm hover:text-foreground active:cursor-grabbing [@media(hover:none)]:opacity-100",
+        isList && "relative left-auto top-auto z-auto bg-transparent text-faint backdrop-blur-none"
       )}
     >
       <GripVertical className="size-4" />
     </button>
   ) : null
 
+  const bodyClass = cn(
+    "flex min-w-0 flex-1 outline-none",
+    isList ? "items-center gap-3" : "flex-col"
+  )
+
   const body =
     kind === "folder" ? (
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left outline-none"
-      >
+      <button type="button" onClick={onOpen} className={cn(bodyClass, "text-left")}>
         <CardFace
           glyph={glyph}
           name={name}
@@ -140,10 +116,12 @@ export function CollectionCard({
           view={view}
           kind={kind}
           visibility={visibility}
+          cover={cover}
+          glyphs={glyphs}
         />
       </button>
     ) : (
-      <Link href={href ?? "#"} className="flex min-w-0 flex-1 items-center gap-3 outline-none">
+      <Link href={href ?? "#"} className={bodyClass}>
         <CardFace
           glyph={glyph}
           name={name}
@@ -151,6 +129,8 @@ export function CollectionCard({
           view={view}
           kind={kind}
           visibility={visibility}
+          cover={cover}
+          glyphs={glyphs}
         />
       </Link>
     )
@@ -161,7 +141,7 @@ export function CollectionCard({
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cn(
         "group/card vitrine-card relative",
-        isList ? "flex items-center gap-2 px-3 py-2.5" : "p-4",
+        isList ? "flex items-center gap-2 px-3 py-2.5" : "flex flex-col overflow-hidden",
         isDragging && "z-10 border-line-hi opacity-90",
         isOver && "border-brand ring-2 ring-brand-dim"
       )}
@@ -174,13 +154,11 @@ export function CollectionCard({
           {handle}
           {body}
           {star}
-          {actions}
         </>
       ) : (
         <>
           {handle}
           {star}
-          {actions}
           {body}
         </>
       )}
@@ -195,6 +173,8 @@ function CardFace({
   view,
   kind,
   visibility,
+  cover,
+  glyphs,
 }: {
   glyph: string
   name: string
@@ -202,6 +182,8 @@ function CardFace({
   view: ViewMode
   kind: "folder" | "category"
   visibility: Visibility
+  cover?: string[]
+  glyphs?: string[]
 }) {
   const LevelIcon = VISIBILITY_ICONS[visibility]
   const label = visibilityLabel(kind, visibility)
@@ -215,8 +197,12 @@ function CardFace({
   if (view === "list") {
     return (
       <>
-        <span className="flex size-8 shrink-0 items-center justify-center text-lg">
-          {glyph || <FolderOpen className="size-4 text-faint" />}
+        <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg text-lg">
+          {kind === "category" && cover?.[0] ? (
+            <CoverImage url={cover[0]} />
+          ) : (
+            glyph || <FolderOpen className="size-4 text-faint" />
+          )}
         </span>
         <span className="flex min-w-0 flex-1 items-center gap-1.5">
           <span className="display block truncate text-base">{name}</span>
@@ -227,49 +213,91 @@ function CardFace({
     )
   }
 
+  const photos = kind === "category" ? (cover ?? []).slice(0, 3) : []
   return (
-    <span className="flex min-w-0 flex-col gap-2 pt-4">
-      <span className="text-2xl leading-none">
-        {glyph || <span className="text-faint">{kind === "folder" ? "📁" : "▫"}</span>}
-      </span>
-      <span className="min-w-0">
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="display block truncate text-lg leading-snug">{name}</span>
-          {lock}
+    <>
+      {photos.length > 0 ? (
+        <CoverMosaic photos={photos} />
+      ) : (
+        <span className="flex aspect-[4/3] items-center justify-center gap-2 bg-gradient-to-br from-surface-hi to-bg-soft">
+          {kind === "folder" ? (
+            (glyphs?.length ? glyphs : ["📁"]).map((item, index) => (
+              <span
+                key={index}
+                className="flex size-11 items-center justify-center rounded-xl bg-bg/60 text-xl leading-none"
+              >
+                {item}
+              </span>
+            ))
+          ) : (
+            <span className="text-4xl leading-none">{glyph || "▫"}</span>
+          )}
         </span>
-        <span className="mt-0.5 block truncate text-xs text-muted-foreground">{subtitle}</span>
+      )}
+      <span className="flex min-w-0 items-center gap-2 p-3">
+        {kind === "folder" ? (
+          <Folder aria-hidden className="size-4 shrink-0 text-brand" />
+        ) : glyph && photos.length > 0 ? (
+          <span aria-hidden className="shrink-0 text-lg leading-none">
+            {glyph}
+          </span>
+        ) : null}
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="display block truncate text-[1.05rem] leading-snug">{name}</span>
+            {lock}
+          </span>
+          <span className="mt-0.5 block truncate text-xs text-muted-foreground">{subtitle}</span>
+        </span>
       </span>
+    </>
+  )
+}
+
+/** A capa: 1 foto inteira; 2 lado a lado; 3 com a primeira grande à esquerda. */
+export function CoverMosaic({ photos }: { photos: string[] }) {
+  const shown = photos.slice(0, 3)
+  return (
+    <span
+      className={cn(
+        "grid aspect-[4/3] gap-0.5 overflow-hidden bg-bg-soft",
+        shown.length === 1 ? "grid-cols-1" : "grid-cols-2",
+        shown.length === 3 && "grid-rows-2"
+      )}
+    >
+      {shown.map((url, index) => (
+        <CoverImage
+          key={`${index}-${url}`}
+          url={url}
+          className={shown.length === 3 && index === 0 ? "row-span-2" : undefined}
+        />
+      ))}
     </span>
   )
 }
 
-function IconButton({
-  label,
-  onClick,
-  danger,
-  children,
-}: {
-  label: string
-  onClick: () => void
-  danger?: boolean
-  children: React.ReactNode
-}) {
+/** Uma foto da capa. Link morto vira o fundo da capa, sem o ícone de imagem quebrada. */
+export function CoverImage({ url, className }: { url: string; className?: string }) {
+  const ref = useRef<HTMLImageElement>(null)
+  const [failed, setFailed] = useState(false)
+
+  // O `error` da <img> pode disparar antes da hidratação prender o listener
+  // (como no EntryImage): confere o estado real depois de montar.
+  useEffect(() => {
+    if (ref.current?.complete && ref.current.naturalWidth === 0) setFailed(true)
+  }, [url])
+
+  if (failed) return <span className={cn("bg-surface-hi", className)} />
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={(event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        onClick()
-      }}
-      className={cn(
-        "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground",
-        danger && "hover:text-danger"
-      )}
-    >
-      {children}
-    </button>
+    // eslint-disable-next-line @next/next/no-img-element -- URL externa arbitrária, sem otimizador
+    <img
+      ref={ref}
+      src={url}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+      className={cn("size-full object-cover", className)}
+    />
   )
 }

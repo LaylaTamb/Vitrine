@@ -1,12 +1,21 @@
 "use client"
 
-import { Globe, Lock, Users, type LucideIcon } from "lucide-react"
+import { ChevronDown, Globe, Lock, Users, type LucideIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { useVitrine } from "@/components/providers/vitrine-context"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   VISIBILITY_LABELS,
+  visibilityHint,
   visibilityLabel,
   visibilityOptions,
   type Visibility,
@@ -90,22 +99,20 @@ function changedMessage(kind: "folder" | "category", name: string, visibility: V
 }
 
 /**
- * O seletor que já grava: troca na hora (otimista), volta atrás com um aviso
- * se o servidor recusar. Vale para uma pasta das Coleções ou uma categoria —
- * só o dono vê.
+ * O chip "Quem vê" ao lado do nome, que já grava: troca na hora (otimista),
+ * volta atrás com um aviso se o servidor recusar. Vale para uma pasta das
+ * Coleções ou uma categoria — só o dono vê.
  */
-export function PrivacySwitch({
+export function PrivacyChip({
   kind,
   id,
   name,
   visibility,
-  className,
 }: {
   kind: "folder" | "category"
   id: string
   name: string
   visibility: Visibility
-  className?: string
 }) {
   const { actions } = useVitrine()
   const [optimistic, setOptimistic] = useState<Visibility | null>(null)
@@ -133,14 +140,47 @@ export function PrivacySwitch({
     toast.success(changedMessage(kind, name, next))
   }
 
+  const Icon = VISIBILITY_ICONS[shown]
   return (
-    <VisibilityPicker
-      kind={kind}
-      value={shown}
-      onChange={change}
-      disabled={pending}
-      className={className}
-    />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={pending}
+          title={visibilityLabel(kind, shown)}
+          className="inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-0.5 text-xs text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground disabled:cursor-wait"
+        >
+          <Icon aria-hidden className="size-3.5" />
+          <span className="sr-only">Quem vê: </span>
+          {VISIBILITY_LABELS[shown]}
+          <ChevronDown aria-hidden className="size-3" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-72">
+        <DropdownMenuLabel>Quem vê</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={shown}
+          onValueChange={(value) => {
+            if (value !== shown) change(value as Visibility)
+          }}
+        >
+          {visibilityOptions(shown).map((option) => {
+            const OptionIcon = VISIBILITY_ICONS[option]
+            return (
+              <DropdownMenuRadioItem key={option} value={option} className="items-start py-1.5">
+                <OptionIcon aria-hidden className="mt-0.5" />
+                <span className="flex flex-col">
+                  <span>{VISIBILITY_LABELS[option]}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {visibilityHint(kind, option)}
+                  </span>
+                </span>
+              </DropdownMenuRadioItem>
+            )
+          })}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

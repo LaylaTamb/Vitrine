@@ -1,3 +1,4 @@
+import { coversByCategory } from "@/lib/domain/collections"
 import { parseEstrutura } from "@/lib/domain/fields"
 import type { Category, Folder, Profile } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
@@ -28,6 +29,8 @@ export interface PublicCollections {
   folders: Folder[]
   categories: Category[]
   counts: Record<string, number>
+  /** category_id → até 3 fotos da capa, só do que a pessoa logada pode ver (migração 40). */
+  covers: Record<string, string[]>
 }
 
 /**
@@ -55,15 +58,18 @@ export async function getCollectionsByUsername(username: string): Promise<Public
     | null
 
   if (!row) {
-    return { profile: null, folders: [], categories: [], counts: {} }
+    return { profile: null, folders: [], categories: [], counts: {}, covers: {} }
   }
 
   const { folders, categories, ...profile } = row
 
-  const { data: countRows } = await supabase
-    .from("category_entry_counts")
-    .select("category_id, total")
-    .eq("owner_id", profile.id)
+  const [{ data: countRows }, coversResult] = await Promise.all([
+    supabase.from("category_entry_counts").select("category_id, total").eq("owner_id", profile.id),
+    supabase
+      .from("category_covers")
+      .select("category_id, image_url, position")
+      .eq("owner_id", profile.id),
+  ])
 
   const counts: Record<string, number> = {}
   for (const countRow of (countRows ?? []) as { category_id: string; total: number }[]) {
@@ -77,5 +83,6 @@ export async function getCollectionsByUsername(username: string): Promise<Public
       .map((category) => ({ ...category, estrutura: parseEstrutura(category.estrutura) }))
       .sort((a, b) => a.display_order - b.display_order),
     counts,
+    covers: coversResult.error ? {} : coversByCategory(coversResult.data ?? []),
   }
 }

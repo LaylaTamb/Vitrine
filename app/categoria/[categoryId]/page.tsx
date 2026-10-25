@@ -126,8 +126,8 @@ export default async function CategoryPage({
   if (matchCopy) {
     for (const view of views) view.match = matchCopy.byEntry.get(view.id) ?? null
   }
-  // O Voltar da raiz da categoria leva às Coleções de quem é dono dela.
-  const collectionsHref = canEdit || !owner ? "/" : profilePath(owner.username)
+  // O Voltar da raiz da categoria leva às Coleções de quem é dono dela (no perfil).
+  const collectionsHref = owner ? profilePath(owner.username) : "/perfil"
 
   return (
     <AppShell profile={profile}>

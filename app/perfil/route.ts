@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic"
 
 /**
  * `/perfil` — atalho para o SEU perfil (`/v/<@>`), levando a query junto
- * (`/perfil?editar=1&steam=ok` → `/v/<@>?editar=1&steam=ok`). Serve a quem
- * não sabe o @ na hora: a volta do login da Steam, por exemplo. Sem login, o
+ * (`/perfil?aba=mapa` → `/v/<@>?aba=mapa`). Serve a quem não sabe o @ na
+ * hora (links antigos com `?editar=1` seguem de lá para as Configurações). Sem login, o
  * middleware já mandou para o login antes de chegar aqui.
  */
 export async function GET(request: NextRequest) {

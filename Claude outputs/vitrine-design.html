@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vitrine — protótipo de design</title>
+<!--
+  Protótipo SÓ de design do Vitrine (nada aqui grava dados).
+  Usa as mesmas cores, fontes e classes do app (Tailwind v4 + os tokens do
+  app/globals.css), para que cada ajuste aprovado aqui vire a mesma classe lá.
+  Abrir direto no navegador: precisa de internet (Tailwind, fontes, ícones e fotos).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Inter:wght@400;500;600&display=swap"
+  rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Fraunces", ui-serif, Georgia, serif;
+
+    /* superfícies da vitrine */
+    --color-bg: #131315;
+    --color-bg-soft: #171719;
+    --color-surface: #1d1d20;
+    --color-surface-hi: #232327;
+    --color-line: #2b2b31;
+    --color-line-hi: #3a3a42;
+
+    /* texto */
+    --color-ink: #ececef;
+    --color-foreground: #ececef;
+    --color-muted-foreground: #9a9aa4;
+    --color-faint: #6e6e78;
+
+    /* acento roxo */
+    --color-brand: #b98cc2;
+    --color-brand-dim: #8e6c96;
+    --color-brand-wash: rgb(185 140 194 / 0.14);
+    --color-brand-glow: rgb(185 140 194 / 0.3);
+    --color-danger: #c97b7b;
+    --color-primary-foreground: #1a1220;
+
+    --radius-lg: 10px;
+    --radius-xl: 14px;
+    --radius-2xl: 18px;
+  }
+
+  @layer base {
+    html { color-scheme: dark; }
+    body { @apply bg-bg font-sans text-ink antialiased; }
+    ::selection { background: var(--color-brand-wash); }
+    *:focus-visible { outline: 2px solid var(--color-brand-dim); outline-offset: 2px; }
+  }
+
+  @layer components {
+    /* largura máxima do conteúdo */
+    .shell { @apply mx-auto w-full max-w-[1180px] px-4; }
+
+    /* rótulo de plaqueta de museu */
+    .plaque {
+      font-size: 0.68rem; font-weight: 500; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--color-faint);
+    }
+
+    /* nome próprio: app, página, categoria, item, números grandes */
+    .display { font-family: var(--font-display); font-style: italic; font-weight: 400; }
+
+    /* luz de vitrine: o brilho atrás de toda imagem de item */
+    .showcase-glow {
+      position: absolute; inset: 12% 10% 6%; z-index: 0;
+      background: var(--tint-glow, var(--color-brand-glow));
+      filter: blur(28px); opacity: 0.5; pointer-events: none;
+    }
+
+    /* card padrão da vitrine (`--tint-*` tinge com a cor da categoria) */
+    .vitrine-card {
+      background: var(--tint-wash, var(--color-surface));
+      border: 1px solid var(--tint-border, var(--color-line));
+      border-radius: 10px;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+    .vitrine-card:hover { border-color: var(--tint-border-hi, var(--color-line-hi)); transform: translateY(-2px); }
+
+    /* ações que só aparecem no hover do card */
+    .card-actions { opacity: 0; transition: opacity 140ms ease; }
+    .group\/card:hover .card-actions { opacity: 1; }
+
+    /* botões (as variantes do components/ui/button.tsx) */
+    .btn {
+      @apply inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-transparent text-sm font-medium whitespace-nowrap transition-all;
+    }
+    .btn svg { @apply size-4; }
+    .btn-default { @apply h-8 px-2.5; }
+    .btn-sm { @apply h-7 gap-1 px-2.5 text-[0.8rem]; }
+    .btn-sm svg { @apply size-3.5; }
+    .btn-lg { @apply h-9 px-2.5; }
+    .btn-primary { @apply bg-brand text-primary-foreground hover:bg-brand/80; }
+    .btn-outline { @apply border-line bg-line/30 hover:bg-line/50; }
+    .btn-ghost { @apply hover:bg-surface-hi; }
+    .icon-btn {
+      @apply relative flex size-8 items-center justify-center rounded-md border border-line text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground;
+    }
+    .badge {
+      @apply absolute -top-1.5 -right-1.5 min-w-4 rounded-full bg-brand px-1 text-center text-[0.6rem] leading-4 font-medium text-bg;
+    }
+    .input {
+      @apply h-9 w-full rounded-lg border border-line bg-line/30 px-3 text-sm text-ink outline-none placeholder:text-faint focus:border-brand-dim;
+    }
+    .segmented { @apply inline-flex items-center gap-0.5 rounded-lg border border-line bg-surface p-0.5; }
+    .segmented > * { @apply flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground; }
+    .segmented > [aria-pressed="true"] { @apply bg-brand-wash text-foreground; }
+  }
+</style>
+</head>
+
+<body>
+  <!-- ===================================================================
+       Barra do protótipo — NÃO faz parte do app: só troca de tela e de tamanho.
+       =================================================================== -->
+  <div id="proto-bar" class="sticky top-0 z-50 border-b border-dashed border-brand-dim bg-[#0d0d0f]">
+    <div class="mx-auto flex max-w-[1180px] flex-wrap items-center gap-2 px-4 py-2 text-xs">
+      <span class="plaque mr-1 text-brand">Protótipo de design</span>
+      <div class="segmented" id="screen-tabs">
+        <button data-go="colecoes" aria-pressed="true">Coleções</button>
+        <button data-go="categoria">Categoria</button>
+        <button data-go="item">Item</button>
+        <button data-go="perfil">Perfil</button>
+        <button data-go="explorar">Explorar</button>
+        <button data-go="entrar">Entrar</button>
+      </div>
+      <div class="segmented ml-auto">
+        <button data-device="desktop" aria-pressed="true"><i data-lucide="monitor" class="size-3.5"></i> Computador</button>
+        <button data-device="mobile"><i data-lucide="smartphone" class="size-3.5"></i> Celular</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- No modo Celular, o próprio arquivo abre aqui com 390 px de largura (as
+       regras de tela pequena valem de verdade). -->
+  <div id="phone-wrap" class="hidden justify-center py-6">
+    <iframe id="phone" title="Vitrine no celular" class="h-[844px] w-[390px] rounded-[2rem] border-8 border-[#2b2b31] bg-bg"></iframe>
+  </div>
+
+  <div id="app">
+    <!-- ================================================================
+         Barra de cima do app (components/layout/navbar.tsx)
+         ================================================================ -->
+    <header id="navbar" class="sticky top-0 z-40 border-b border-line" style="background: rgba(19,19,21,0.86); backdrop-filter: blur(10px)">
+      <div class="shell flex h-14 items-center justify-between gap-4">
+        <div class="flex min-w-0 items-center gap-4 lg:gap-6">
+          <a data-go="colecoes" class="inline-flex cursor-pointer items-center gap-2">
+            <span class="size-2 rounded-full bg-brand" style="box-shadow: 0 0 10px 1px var(--color-brand-glow)"></span>
+            <span class="display text-xl leading-none">Vitrine</span>
+          </a>
+          <nav class="hidden items-center gap-0.5 md:flex lg:gap-1">
+            <a data-go="colecoes" data-nav="colecoes" class="nav-link">Coleções</a>
+            <a data-go="explorar" data-nav="explorar" class="nav-link">Explorar</a>
+            <a class="nav-link">Filtro</a>
+            <a class="nav-link">Mapa</a>
+            <a class="nav-link">Tags</a>
+            <a class="nav-link">Pessoas</a>
+          </nav>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button class="relative flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-hi hover:text-foreground" title="Avisos">
+            <i data-lucide="bell" class="size-[18px]"></i>
+            <span class="absolute top-1.5 right-1.5 size-2 rounded-full bg-brand"></span>
+          </button>
+          <button data-go="perfil" class="flex items-center gap-2 rounded-md py-1 pr-1.5 pl-1 hover:bg-surface-hi">
+            <span class="display flex size-7 items-center justify-center rounded-full bg-brand-wash text-sm text-brand">M</span>
+            <span class="hidden text-sm text-muted-foreground sm:inline">@marina</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell pb-24">
+      <!-- ==============================================================
+           COLEÇÕES (app/page.tsx → collections-view.tsx)
+           ============================================================== -->
+      <section data-screen="colecoes">
+        <div class="flex flex-col gap-4 py-7 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+          <div class="min-w-0 space-y-1.5">
+            <p class="plaque">Perfil</p>
+            <h1 class="display text-3xl leading-tight sm:text-4xl">Marina Costa</h1>
+            <p class="text-sm text-muted-foreground">@marina · 14 categorias · 312 itens</p>
+          </div>
+          <div class="flex shrink-0 flex-wrap items-center gap-2">
+            <button class="btn btn-lg btn-outline"><i data-lucide="folder-plus"></i> Nova pasta</button>
+            <button class="btn btn-lg btn-primary"><i data-lucide="plus"></i> Nova categoria</button>
+            <div class="flex items-center gap-1.5">
+              <div class="segmented">
+                <button aria-pressed="true" title="Grade"><i data-lucide="layout-grid" class="size-3.5"></i></button>
+                <button title="Lista"><i data-lucide="list" class="size-3.5"></i></button>
+              </div>
+              <div class="segmented">
+                <button>P</button><button aria-pressed="true">M</button><button>G</button>
+              </div>
+              <button class="icon-btn" title="Favoritos"><i data-lucide="star" class="size-4"></i><span class="badge">3</span></button>
+              <button class="icon-btn" title="Lixeira"><i data-lucide="trash-2" class="size-4"></i><span class="badge">2</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative mb-4 max-w-md">
+          <i data-lucide="search" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint"></i>
+          <input class="input pl-9" placeholder="Buscar pastas, categorias e itens…" />
+        </div>
+
+        <nav class="flex flex-wrap items-center gap-x-3 gap-y-2 pb-5 text-sm">
+          <span class="rounded px-1.5 py-0.5 text-foreground">Coleções</span>
+        </nav>
+
+        <a data-go="categoria" class="mb-4 flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-brand-dim bg-brand-wash px-4 py-3 transition-colors hover:border-brand">
+          <span class="text-2xl leading-none">📥</span>
+          <span class="min-w-0 flex-1">
+            <span class="display block truncate text-lg leading-snug">A organizar</span>
+            <span class="block truncate text-xs text-muted-foreground">3 itens esperando uma categoria</span>
+          </span>
+          <i data-lucide="chevron-right" class="size-4 shrink-0 text-muted-foreground"></i>
+        </a>
+
+        <div id="collections-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"></div>
+      </section>
+
+      <!-- ==============================================================
+           CATEGORIA (app/categoria/[id] → category-view.tsx)
+           ============================================================== -->
+      <section data-screen="categoria" hidden>
+        <div class="flex flex-col gap-4 py-7 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+          <div class="min-w-0 space-y-1.5">
+            <p class="plaque">Sua coleção</p>
+            <h1 class="display flex items-center gap-2 text-3xl leading-tight sm:text-4xl"><span>🍽️</span><span>Restaurantes</span></h1>
+            <p class="text-sm text-muted-foreground">15 itens · 2 pastas</p>
+          </div>
+          <div class="flex shrink-0 flex-wrap items-center gap-2">
+            <button class="btn btn-lg btn-outline border-brand-dim bg-brand-wash"><i data-lucide="star" class="fill-current text-brand"></i> Favorita</button>
+            <div class="segmented">
+              <button aria-pressed="true"><i data-lucide="globe" class="size-3.5"></i> Pública</button>
+              <button><i data-lucide="users" class="size-3.5"></i> Amigos</button>
+              <button><i data-lucide="lock" class="size-3.5"></i> Privada</button>
+            </div>
+            <button class="btn btn-lg btn-outline"><i data-lucide="map"></i> Ver no mapa</button>
+            <button class="btn btn-lg btn-outline"><i data-lucide="sliders-horizontal"></i> Estrutura</button>
+            <button class="btn btn-lg btn-outline"><i data-lucide="folder-plus"></i> Nova pasta</button>
+            <button class="btn btn-lg btn-primary"><i data-lucide="plus"></i> Novo item</button>
+          </div>
+        </div>
+
+        <nav class="flex flex-wrap items-center gap-x-3 gap-y-2 pb-5 text-sm">
+          <a data-go="colecoes" class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-muted-foreground hover:border-line-hi hover:text-foreground">
+            <i data-lucide="arrow-left" class="size-3.5"></i> Voltar
+          </a>
+          <ol class="flex min-w-0 flex-wrap items-center gap-1">
+            <li><a data-go="colecoes" class="cursor-pointer rounded px-1.5 py-0.5 text-muted-foreground hover:text-foreground">Coleções</a></li>
+            <li class="flex items-center gap-1"><i data-lucide="chevron-right" class="size-3.5 text-faint"></i><span class="rounded px-1.5 py-0.5 text-muted-foreground">Comes e bebes</span></li>
+            <li class="flex items-center gap-1"><i data-lucide="chevron-right" class="size-3.5 text-faint"></i><span class="rounded px-1.5 py-0.5 text-foreground">🍽️ Restaurantes</span></li>
+          </ol>
+        </nav>
+
+        <div class="mb-5 flex items-center gap-1 border-b border-line">
+          <button class="-mb-px border-b-2 border-brand px-3 py-2 text-sm text-foreground">Itens</button>
+          <button class="-mb-px border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground hover:text-foreground">Números</button>
+        </div>
+
+        <div class="space-y-5">
+          <!-- barra de filtro (filter-bar.tsx) -->
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="relative min-w-48 flex-1">
+                <i data-lucide="search" class="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-faint"></i>
+                <input class="input pl-8" placeholder="Buscar nesta categoria…" />
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="plaque hidden sm:inline">Nota</span>
+                <input class="input w-20" placeholder="mín." />
+                <span class="text-faint">–</span>
+                <input class="input w-20" placeholder="máx." />
+              </div>
+              <select class="h-9 rounded-md border border-line bg-surface px-2 text-sm outline-none">
+                <option>Nota (maior primeiro)</option>
+                <option>Adicionados recentemente</option>
+                <option>Ordem manual</option>
+              </select>
+              <div class="segmented" id="view-toggle">
+                <button data-view="grid" aria-pressed="true" title="Grade"><i data-lucide="layout-grid" class="size-3.5"></i></button>
+                <button data-view="list" title="Lista"><i data-lucide="list" class="size-3.5"></i></button>
+                <button title="Tier list"><i data-lucide="layers" class="size-3.5"></i></button>
+              </div>
+              <div class="segmented">
+                <button>P</button><button aria-pressed="true">M</button><button>G</button>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="plaque mr-1.5">Tags</span>
+              <span id="tag-row" class="contents"></span>
+            </div>
+          </div>
+
+          <!-- subpastas -->
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div class="group/card vitrine-card relative p-4">
+              <span class="flex min-w-0 flex-col gap-2 pt-4">
+                <span class="text-2xl leading-none">📁</span>
+                <span><span class="display block truncate text-lg leading-snug">Japoneses</span>
+                <span class="mt-0.5 block truncate text-xs text-muted-foreground">4 itens</span></span>
+              </span>
+            </div>
+            <div class="group/card vitrine-card relative p-4">
+              <span class="flex min-w-0 flex-col gap-2 pt-4">
+                <span class="text-2xl leading-none">📁</span>
+                <span><span class="display block truncate text-lg leading-snug">Quero ir</span>
+                <span class="mt-0.5 block truncate text-xs text-muted-foreground">Pasta vazia</span></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-xs text-muted-foreground">9 itens neste nível</p>
+            <p class="hidden text-xs text-faint sm:block">Arraste pela alça <i data-lucide="grip-vertical" class="inline size-3"></i> para mudar a ordem ou levar a uma pasta.</p>
+          </div>
+
+          <div id="items-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"></div>
+          <div id="items-list" class="hidden flex-col gap-2"></div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           ITEM (app/categoria/[id]/[item] → entry-detail.tsx)
+           ============================================================== -->
+      <section data-screen="item" hidden>
+        <div class="grid gap-8 py-8 md:grid-cols-[2fr_3fr]">
+          <div class="relative">
+            <span class="showcase-glow"></span>
+            <div class="relative z-[1] overflow-hidden rounded-md border border-line bg-bg-soft" style="aspect-ratio: 3/4">
+              <img src="https://picsum.photos/seed/vitrine-ceviche/600/800" alt="" class="size-full object-cover" />
+            </div>
+          </div>
+
+          <div class="min-w-0 space-y-4">
+            <div class="space-y-2">
+              <a data-go="categoria" class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-sm text-muted-foreground hover:border-line-hi hover:text-foreground">
+                <i data-lucide="arrow-left" class="size-3.5"></i> 🍽️ Restaurantes
+              </a>
+              <p class="plaque">Acervo de Marina Costa</p>
+            </div>
+            <h1 class="display text-[2.3rem] leading-tight">Ceviche Lima</h1>
+            <div class="flex items-center gap-2">
+              <span class="stars text-base" data-rating="5"></span>
+              <span class="text-sm text-muted-foreground">5 de 5</span>
+            </div>
+
+            <dl class="pt-2" id="item-fields"></dl>
+
+            <div class="flex flex-wrap gap-1.5 pt-2" id="item-tags"></div>
+
+            <div class="flex flex-wrap gap-2 border-t border-line pt-4">
+              <button class="btn btn-default btn-outline"><i data-lucide="pencil"></i> Editar</button>
+              <button class="btn btn-default btn-ghost text-danger"><i data-lucide="trash-2"></i> Excluir</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           PERFIL (app/v/[username] → profile-card.tsx)
+           ============================================================== -->
+      <section data-screen="perfil" hidden class="pt-6">
+        <div class="overflow-hidden rounded-2xl border border-line bg-surface">
+          <div class="h-32 bg-cover bg-center sm:h-44" style="background-image: linear-gradient(to bottom, transparent 40%, rgb(29 29 32 / 0.6)), url('https://picsum.photos/seed/vitrine-banner/1200/360')"></div>
+          <div class="px-4 pb-4 sm:px-6 sm:pb-6">
+            <span class="display relative -mt-11 flex size-[88px] items-center justify-center rounded-full border-4 border-surface bg-brand-wash text-4xl text-brand">M</span>
+            <div class="mt-2 min-w-0">
+              <h1 class="display text-2xl leading-tight sm:text-3xl">Marina Costa</h1>
+              <p class="truncate text-sm text-muted-foreground">@marina</p>
+            </div>
+            <p class="mt-4 text-sm leading-relaxed text-foreground">Catalogo restaurantes, cafés e filmes desde 2019. Sempre atrás de um lugar novo em SP. 🍜🎬</p>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              <li><span class="chip"><i data-lucide="instagram" class="size-3.5"></i><span class="text-foreground">Instagram</span><span>@marina.come</span></span></li>
+              <li><span class="chip"><i data-lucide="music" class="size-3.5"></i><span class="text-foreground">Spotify</span><span>marina</span></span></li>
+            </ul>
+            <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
+              <span><b class="font-medium text-foreground">128</b> <span class="text-muted-foreground">seguidores</span></span>
+              <span><b class="font-medium text-foreground">97</b> <span class="text-muted-foreground">seguindo</span></span>
+              <span><b class="font-medium text-foreground">41</b> <span class="text-muted-foreground">amigos</span></span>
+            </div>
+            <div class="mt-5">
+              <p class="plaque mb-2">Destaques</p>
+              <ul id="highlights" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></ul>
+            </div>
+            <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+              <button class="btn btn-sm btn-primary"><i data-lucide="instagram"></i> Compartilhar no story</button>
+              <button class="btn btn-sm btn-ghost"><i data-lucide="pencil"></i> Editar cartão</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           EXPLORAR (app/explorar → explore-view.tsx)
+           ============================================================== -->
+      <section data-screen="explorar" hidden>
+        <div class="flex flex-col gap-4 py-7 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+          <div class="min-w-0 space-y-1.5">
+            <p class="plaque">Descobrir</p>
+            <h1 class="display text-3xl leading-tight sm:text-4xl">Explorar</h1>
+            <p class="text-sm text-muted-foreground">As categorias públicas de outras pessoas. Pegue com os itens.</p>
+          </div>
+        </div>
+        <div class="space-y-4 pb-16">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div class="relative sm:max-w-sm sm:flex-1">
+              <i data-lucide="search" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint"></i>
+              <input class="input pl-9" placeholder="Buscar categorias…" />
+            </div>
+            <div class="segmented w-fit">
+              <button aria-pressed="true">Mais itens</button><button>Recentes</button><button>De amigos</button>
+            </div>
+          </div>
+          <ul id="explore-grid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ==================================================================
+       ENTRAR (app/login → auth-shell.tsx) — sem a barra do app
+       ================================================================== -->
+  <section data-screen="entrar" hidden>
+    <main class="flex min-h-dvh items-center justify-center px-4 py-12">
+      <div class="w-full max-w-sm">
+        <div class="mb-8 flex flex-col items-center gap-3 text-center">
+          <span class="inline-flex items-center gap-2">
+            <span class="size-2 rounded-full bg-brand" style="box-shadow: 0 0 10px 1px var(--color-brand-glow)"></span>
+            <span class="display text-3xl leading-none">Vitrine</span>
+          </span>
+          <p class="plaque">Seu acervo particular</p>
+        </div>
+        <div class="rounded-xl border border-line bg-surface p-6">
+          <div class="mb-5 space-y-1.5">
+            <h1 class="display text-2xl">Entrar</h1>
+            <p class="text-sm leading-relaxed text-muted-foreground">Com o e-mail e a senha da sua conta.</p>
+          </div>
+          <form class="space-y-4" onsubmit="return false">
+            <label class="block space-y-1.5"><span class="text-sm">E-mail</span><input class="input" type="email" placeholder="voce@exemplo.com" /></label>
+            <label class="block space-y-1.5"><span class="text-sm">Senha</span><input class="input" type="password" placeholder="••••••••" /></label>
+            <button class="btn btn-default btn-primary w-full">Entrar</button>
+          </form>
+          <div class="mt-5 space-y-2 text-center text-sm text-muted-foreground">
+            <p><a class="text-foreground underline underline-offset-2">Esqueci a senha</a></p>
+            <p>Ainda não tem conta? <a class="text-foreground underline underline-offset-2">Criar conta</a></p>
+          </div>
+        </div>
+        <p class="mt-6 text-center text-xs text-faint">Termos de uso · Política de privacidade</p>
+      </div>
+    </main>
+  </section>
+
+  <style type="text/tailwindcss">
+    .nav-link { @apply cursor-pointer rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground lg:px-2.5; }
+    .nav-link[aria-current="true"] { @apply bg-brand-wash text-foreground; }
+    .chip { @apply inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-surface-hi px-3 py-1 text-sm text-muted-foreground; }
+  </style>
+
+  <script>
+    // A página como chegou (antes de montar as telas): é ela que o modo Celular abre no iframe.
+    const SOURCE = "<!doctype html>\n" + document.documentElement.outerHTML
+
+    // ---- dados de exemplo (só para o desenho) ------------------------------
+    const PHOTO = (seed, w = 480, h = 640) => `https://picsum.photos/seed/vitrine-${seed}/${w}/${h}`
+    const TAGS = {
+      "Quero voltar": "#8FC9A6", Barato: "#D6C08A", Encontro: "#B98CC2",
+      Japão: "#C79BD0", Itália: "#D6C08A", "Indicação de amigo": "#8FB3C9",
+    }
+    const COLLECTIONS = [
+      { kind: "folder", name: "Comes e bebes", sub: "5 categorias · 74 itens" },
+      { kind: "folder", name: "Cultura pop", sub: "4 categorias · 118 itens" },
+      { kind: "folder", name: "Rolês em SP", sub: "3 categorias · 27 itens", lock: "users" },
+      { kind: "folder", name: "Viagens", sub: "1 categoria · 9 itens", lock: "lock" },
+      { kind: "category", icon: "🍽️", name: "Restaurantes", sub: "15 itens", fav: true, color: "#9A9AA4" },
+      { kind: "category", icon: "🎬", name: "Filmes", sub: "28 itens", fav: true, color: "#B98CC2" },
+      { kind: "category", icon: "📖", name: "Mangá", sub: "15 itens", fav: true },
+      { kind: "category", icon: "🍔", name: "Hambúrgueres", sub: "7 itens", lock: "users" },
+      { kind: "category", icon: "📍", name: "Quero conhecer em SP", sub: "11 itens", lock: "lock" },
+    ]
+    const ITEMS = [
+      { name: "Ceviche Lima", rating: 5, summary: "Peruana · Itaim Bibi", tags: ["Quero voltar"] },
+      { name: "Yoshi", rating: 5, summary: "Japonesa · Vila Sônia", tags: ["Japão"] },
+      { name: "Cantina Bella Nonna", rating: 4.5, summary: "Italiana · Bela Vista", tags: ["Itália", "Encontro"] },
+      { name: "Sabor do Norte", rating: 4.5, summary: "Brasileira · Pinheiros", tags: ["Indicação de amigo"] },
+      { name: "Verde Que Te Quero", rating: 4.5, summary: "Vegetariana · Vila Madalena", tags: ["Barato"] },
+      { name: "Peppino Cantina", rating: 4, summary: "Italiana · Itaim Bibi", tags: ["Itália"] },
+      { name: "Taquería Los Primos", rating: 4, summary: "Mexicana · Consolação", tags: [] },
+      { name: "Prato Feito do Zé", rating: 3, summary: "Brasileira · Liberdade", tags: ["Barato"] },
+      { name: "Lugar novo da esquina", rating: null, summary: "Vila Mariana", tags: [], noImage: true },
+    ]
+    const FIELDS = [
+      ["Tipo de comida", "Peruana"],
+      ["Localização", "R. Joaquim Floriano, 400 - Itaim Bibi"],
+      ["Custo médio", "R$ 150,00"],
+      ["Tempo de espera", "40 min"],
+      ["Data de visita", "20/09/2026"],
+      ["Ambiente", "stars:5"],
+      ["Atendimento", "stars:4.5"],
+      ["Passa VR?", "Não"],
+    ]
+    const HIGHLIGHTS = [
+      ["🍽️", "Restaurantes", "#9A9AA4", 15, [["Ceviche Lima", 5], ["Yoshi", 5], ["Cantina Bella Nonna", 4.5]]],
+      ["🎬", "Filmes", "#B98CC2", 28, [["Parasita", 5], ["Cidade de Deus", 5], ["A Viagem de Chihiro", 5]]],
+      ["📖", "Mangá", null, 15, [["Berserk", 5], ["Vagabond", 5], ["Chainsaw Man", 5]]],
+      ["☕", "Cafés", "#9A9AA4", 10, [["Torra Fina", 5], ["Grão Paulista", 4.5], ["Café Biblioteca", 4.5]]],
+      ["🏗️", "Unidades do Sesc", "#C97B7B", 9, [["Sesc Pompeia", 5], ["Sesc Avenida Paulista", 5], ["Sesc 24 de Maio", 4.5]]],
+      ["🍸", "Bares", "#D6C08A", 8, [["Esquina do Samba", 5], ["Boteco da Harmonia", 4.5], ["Karaokê Liberdade", 4.5]]],
+    ]
+    const EXPLORE = [
+      ["🍣", "Restaurantes japoneses", "joana", 23, [["Lámen do Bairro", 5], ["Izakaya Hoshi", 4.5], ["Sapporo", 4.5]], ["Estilo", "Localização", "Custo médio", "Ambiente"]],
+      ["📚", "Livros de 2026", "pedro.le", 31, [["Torto Arado", 5], ["Cem Anos de Solidão", 5], ["1984", 4.5]], ["Autor", "Ano", "Formato"]],
+      ["🍹", "Caipirinhas", "lucas", 12, [["Tangerina com Pimenta", 5], ["Caju", 4.5], ["Kiwi", 4.5]], ["Base", "Doce"]],
+      ["🎮", "Jogos", "bia_games", 64, [["Hades", 5], ["Celeste", 5], ["Stardew Valley", 4.5]], ["Horas jogadas"]],
+      ["☕", "Cafés de SP", "cafe.sp", 40, [["Torra Fina", 5], ["Coado & Cia", 4], ["Grão Paulista", 4.5]], ["Localização", "Wi-fi", "Tomada", "Barulho", "Pedido"]],
+      ["✈️", "Cidades visitadas", "rafa", 18, [["Lisboa", 5], ["Ouro Preto", 5], ["Buenos Aires", 4.5]], ["País", "Quando", "Dias"]],
+    ]
+
+    // ---- pedaços de interface (as mesmas classes do app) --------------------
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
+    const fmt = (n) => String(n).replace(".", ",")
+    const stars = (rating, size = "0.75rem") => `
+      <span class="relative inline-block leading-none whitespace-nowrap select-none" style="font-size:${size}">
+        <span class="block text-line-hi" style="letter-spacing:.12em;margin-right:-.12em">★★★★★</span>
+        <span class="absolute inset-y-0 left-0 overflow-hidden text-brand" style="width:${(rating / 5) * 100}%">
+          <span class="block whitespace-nowrap" style="letter-spacing:.12em;margin-right:-.12em">★★★★★</span>
+        </span>
+      </span>`
+    const tagPill = (name, size = "xs") => {
+      const color = TAGS[name] ?? "#B98CC2"
+      const pad = size === "xs" ? "px-1.5 py-0 text-[0.65rem]" : "px-2 py-0.5 text-xs"
+      return `<span class="inline-flex shrink-0 items-center gap-1.5 rounded-full border ${pad}" style="border-color:${color}55;color:${color}dd">
+        <span class="size-1.5 shrink-0 rounded-full" style="background:${color}"></span>${esc(name)}</span>`
+    }
+    const tint = (color) =>
+      color
+        ? `--tint-border:color-mix(in srgb,${color} 45%,var(--color-line));--tint-border-hi:color-mix(in srgb,${color} 65%,var(--color-line-hi));--tint-wash:color-mix(in srgb,${color} 8%,var(--color-surface));--tint-glow:color-mix(in srgb,${color} 30%,transparent)`
+        : ""
+
+    function collectionCard(c) {
+      const glyph = c.kind === "folder" ? "📁" : c.icon
+      const lock = c.lock ? `<i data-lucide="${c.lock}" class="size-3.5 shrink-0 text-faint"></i>` : ""
+      const star = c.kind === "category"
+        ? `<button class="absolute top-2 right-2 z-10 rounded-lg border border-line bg-bg/85 p-1.5 backdrop-blur-sm hover:text-brand ${c.fav ? "text-brand" : "text-muted-foreground"}" title="Favoritar">
+             <i data-lucide="star" class="size-3.5 ${c.fav ? "fill-current" : ""}"></i></button>`
+        : ""
+      return `
+        <div data-go="${c.kind === "category" ? "categoria" : ""}" class="group/card vitrine-card relative cursor-pointer p-4">
+          <span class="card-actions absolute top-2 left-1.5 cursor-grab rounded p-1 text-faint"><i data-lucide="grip-vertical" class="size-4"></i></span>
+          ${star}
+          <span class="card-actions absolute top-2 ${c.kind === "category" ? "right-11" : "right-2"} flex items-center gap-0.5 rounded-lg border border-line bg-surface-hi/90 p-0.5 backdrop-blur-sm">
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="pencil" class="size-3.5"></i></span>
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="trash-2" class="size-3.5"></i></span>
+          </span>
+          <span class="flex min-w-0 flex-col gap-2 pt-4">
+            <span class="text-2xl leading-none">${glyph}</span>
+            <span class="min-w-0">
+              <span class="flex min-w-0 items-center gap-1.5"><span class="display block truncate text-lg leading-snug">${esc(c.name)}</span>${lock}</span>
+              <span class="mt-0.5 block truncate text-xs text-muted-foreground">${esc(c.sub)}</span>
+            </span>
+          </span>
+        </div>`
+    }
+
+    function entryCard(item, i) {
+      const image = item.noImage
+        ? `<span class="display flex size-full items-center justify-center text-faint" style="font-size:3.5rem">${esc(item.name[0])}</span>`
+        : `<img src="${PHOTO(i + 1)}" alt="" loading="lazy" class="size-full object-cover" />`
+      const rating = item.rating
+        ? `<span class="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 rounded-md border border-line bg-bg/85 px-1.5 py-1 backdrop-blur-sm">
+             <span class="display text-sm leading-none">${fmt(item.rating)}</span>${stars(item.rating)}</span>`
+        : ""
+      return `
+        <div data-go="item" class="group/card vitrine-card relative cursor-pointer p-2" style="${tint("#9A9AA4")}">
+          <div class="card-actions absolute top-3 right-3 z-20 flex items-center gap-0.5 rounded-lg border border-line bg-bg/80 p-0.5 backdrop-blur-sm">
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="grip-vertical" class="size-3.5"></i></span>
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="pencil" class="size-3.5"></i></span>
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="trash-2" class="size-3.5"></i></span>
+          </div>
+          <div class="relative">
+            <span class="showcase-glow"></span>
+            <div class="relative z-[1] overflow-hidden rounded-md border border-line bg-bg-soft" style="aspect-ratio:3/4">${image}</div>
+            ${rating}
+          </div>
+          <div class="space-y-1 px-1 pt-2.5 pb-1">
+            <h3 class="display truncate text-base leading-snug">${esc(item.name)}</h3>
+            <p class="truncate text-xs text-muted-foreground">${esc(item.summary)}</p>
+            ${item.tags.length ? `<div class="flex flex-wrap gap-1 pt-1">${item.tags.map((t) => tagPill(t)).join("")}</div>` : ""}
+          </div>
+        </div>`
+    }
+
+    function entryRow(item, i) {
+      const thumb = item.noImage
+        ? `<span class="display flex size-full items-center justify-center text-faint">${esc(item.name[0])}</span>`
+        : `<img src="${PHOTO(i + 1, 120, 120)}" alt="" class="size-full object-cover" />`
+      return `
+        <div data-go="item" class="group/card vitrine-card relative flex cursor-pointer items-center gap-3 px-3 py-2" style="${tint("#9A9AA4")}">
+          <span class="relative w-12 shrink-0"><span class="showcase-glow"></span>
+            <span class="relative z-[1] block overflow-hidden rounded-md border border-line bg-bg-soft" style="aspect-ratio:1/1">${thumb}</span></span>
+          <span class="min-w-0 flex-1">
+            <span class="display block truncate text-base leading-snug">${esc(item.name)}</span>
+            <span class="block truncate text-xs text-muted-foreground">${esc(item.summary)}</span>
+          </span>
+          ${item.rating ? `<span class="flex shrink-0 flex-col items-end gap-0.5"><span class="display text-sm">${fmt(item.rating)}</span>${stars(item.rating)}</span>` : ""}
+          <span class="card-actions hidden shrink-0 items-center gap-0.5 sm:flex">
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="grip-vertical" class="size-3.5"></i></span>
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="pencil" class="size-3.5"></i></span>
+            <span class="rounded-md p-1.5 text-muted-foreground"><i data-lucide="trash-2" class="size-3.5"></i></span>
+          </span>
+        </div>`
+    }
+
+    function topList(top) {
+      return `<ol class="mt-2 space-y-1">${top
+        .map(([name, rating], i) => `
+          <li class="flex items-center gap-2 text-sm">
+            <span class="w-4 shrink-0 text-xs text-faint tabular-nums">${i + 1}</span>
+            <span class="min-w-0 flex-1 truncate text-muted-foreground">${esc(name)}</span>
+            <span class="flex shrink-0 items-center gap-0.5 text-xs text-brand"><i data-lucide="star" class="size-3 fill-current"></i>${fmt(rating)}</span>
+          </li>`)
+        .join("")}</ol>`
+    }
+
+    // ---- monta as telas --------------------------------------------------
+    document.getElementById("collections-grid").innerHTML =
+      COLLECTIONS.map(collectionCard).join("") +
+      `<button class="flex min-h-28 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-line text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground">
+         <i data-lucide="plus" class="size-4"></i><span class="text-xs">Nova categoria</span></button>`
+    document.getElementById("items-grid").innerHTML = ITEMS.map(entryCard).join("")
+    document.getElementById("items-list").innerHTML = ITEMS.map(entryRow).join("")
+    document.getElementById("tag-row").innerHTML = Object.keys(TAGS).map((t) => tagPill(t, "sm")).join("")
+    document.getElementById("item-fields").innerHTML = FIELDS.map(([label, value]) => `
+      <div class="flex flex-col gap-0.5 border-b border-line py-2.5 sm:flex-row sm:gap-4">
+        <dt class="plaque w-40 shrink-0 pt-0.5">${esc(label)}</dt>
+        <dd class="min-w-0 flex-1 text-sm">${
+          value.startsWith("stars:")
+            ? `<span class="flex items-center gap-2">${stars(Number(value.slice(6)), "1rem")}<span class="text-muted-foreground">${fmt(value.slice(6))}</span></span>`
+            : label === "Localização"
+              ? `<span class="flex flex-col items-start gap-2">${esc(value)}<span class="flex flex-wrap gap-1.5">
+                   <span class="btn btn-sm btn-outline"><i data-lucide="map-pin"></i> Google Maps</span>
+                   <span class="btn btn-sm btn-outline"><i data-lucide="navigation"></i> Como chegar</span></span></span>`
+              : esc(value)
+        }</dd>
+      </div>`).join("")
+    document.getElementById("item-tags").innerHTML = ["Quero voltar", "Encontro"].map((t) => tagPill(t, "sm")).join("")
+    document.querySelectorAll(".stars[data-rating]").forEach((el) => (el.innerHTML = stars(Number(el.dataset.rating), "1rem")))
+    document.getElementById("highlights").innerHTML = HIGHLIGHTS.map(([icon, name, color, total, top]) => `
+      <li class="min-w-0"><a data-go="categoria" class="block h-full cursor-pointer rounded-xl border border-line bg-bg/40 p-3 transition-colors hover:border-brand-dim">
+        <div class="flex items-center gap-2">
+          ${color ? `<span class="size-2 shrink-0 rounded-full" style="background:${color}"></span>` : ""}
+          <span>${icon}</span><span class="min-w-0 flex-1 truncate font-medium">${esc(name)}</span>
+          <span class="shrink-0 text-xs text-faint">${total} itens</span>
+        </div>${topList(top)}</a></li>`).join("")
+    document.getElementById("explore-grid").innerHTML = EXPLORE.map(([icon, name, user, total, top, fields]) => `
+      <li class="min-w-0"><div class="flex h-full flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 text-2xl leading-none">${icon}</span>
+          <div class="min-w-0 flex-1">
+            <p class="truncate font-medium">${esc(name)}</p>
+            <p class="truncate text-xs text-muted-foreground">@${esc(user)}</p>
+            <p class="text-xs text-faint">${total} itens</p>
+          </div>
+        </div>
+        <ol class="space-y-1">${topList(top).replace(/^<ol class="mt-2 space-y-1">|<\/ol>$/g, "")}</ol>
+        <ul class="flex flex-wrap gap-1">${fields.slice(0, 3).map((f) => `<li class="truncate rounded-full border border-line px-2 py-0.5 text-xs text-muted-foreground">${esc(f)}</li>`).join("")}${fields.length > 3 ? `<li class="px-1 py-0.5 text-xs text-faint">+${fields.length - 3}</li>` : ""}</ul>
+        <div class="mt-auto flex flex-wrap items-center gap-2 pt-1">
+          <button class="btn btn-sm btn-primary"><i data-lucide="download"></i> Pegar com os itens</button>
+          <button class="btn btn-sm btn-ghost">Só a estrutura</button>
+        </div>
+      </div></li>`).join("")
+
+    // ---- navegação do protótipo ----------------------------------------------
+    const inFrame = window.self !== window.top
+    const app = document.getElementById("app")
+    const phoneWrap = document.getElementById("phone-wrap")
+    const phone = document.getElementById("phone")
+    let device = "desktop"
+    let current = "colecoes"
+
+    function show(id) {
+      if (!document.querySelector(`[data-screen="${id}"]`)) id = "colecoes"
+      current = id
+      document.querySelectorAll("[data-screen]").forEach((s) => (s.hidden = s.dataset.screen !== id))
+      document.querySelectorAll("#screen-tabs [data-go]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.go === id)))
+      document.querySelectorAll("[data-nav]").forEach((a) => a.setAttribute("aria-current", String(a.dataset.nav === id)))
+      // A tela de entrar não tem a barra do app.
+      document.getElementById("navbar").hidden = id === "entrar"
+      app.hidden = device === "mobile" && !inFrame
+      if (device === "mobile" && !inFrame) {
+        // O celular é a mesma página num iframe de 390 px: as regras de tela pequena valem de verdade.
+        if (!phone.srcdoc) {
+          phone.onload = () => phone.contentWindow.postMessage(current, "*")
+          phone.srcdoc = SOURCE
+        } else {
+          phone.contentWindow.postMessage(id, "*")
+        }
+      }
+      if (!inFrame) {
+        try { history.replaceState(null, "", `#${id}`) } catch { /* aberto como data:, sem endereço */ }
+      }
+      window.scrollTo(0, 0)
+    }
+
+    document.addEventListener("click", (event) => {
+      const go = event.target.closest("[data-go]")?.dataset.go
+      if (go) { event.preventDefault(); show(go) }
+      const view = event.target.closest("[data-view]")?.dataset.view
+      if (view) {
+        document.querySelectorAll("#view-toggle [data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === view)))
+        document.getElementById("items-grid").classList.toggle("hidden", view !== "grid")
+        document.getElementById("items-list").classList.toggle("hidden", view !== "list")
+        document.getElementById("items-list").classList.toggle("flex", view === "list")
+      }
+      const dev = event.target.closest("[data-device]")?.dataset.device
+      if (dev) {
+        device = dev
+        document.querySelectorAll("[data-device]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.device === dev)))
+        phoneWrap.classList.toggle("hidden", dev !== "mobile")
+        phoneWrap.classList.toggle("flex", dev === "mobile")
+        show(current)
+      }
+    })
+
+    if (inFrame) {
+      document.getElementById("proto-bar").remove()
+      window.addEventListener("message", (event) => typeof event.data === "string" && show(event.data))
+    }
+    window.addEventListener("hashchange", () => show(location.hash.slice(1)))
+    show(location.hash.slice(1) || "colecoes")
+    lucide.createIcons()
+  </script>
+</body>
+</html>

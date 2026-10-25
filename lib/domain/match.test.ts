@@ -186,7 +186,7 @@ describe("a cópia do ponto de vista de quem abre", () => {
       color: "#8FC9A6",
     })
     expect(byEntry.get("e2")).toMatchObject({ isMine: true, ownerLabel: "você", common: true })
-    expect(info.totals).toEqual({ common: 2, suggestions: 1 })
+    expect(info.totals).toEqual({ common: 2, suggestions: 1, theirs: 0 })
     // os pares com você vêm primeiro, com você na frente do nome
     expect(info.pairs[0].label).toBe("você e @ana")
     expect(info.pairs.filter((pair) => pair.withMe)).toHaveLength(2)
@@ -205,6 +205,20 @@ describe("a cópia do ponto de vista de quem abre", () => {
     expect(ids(applyMatchFilter(views, { mode: "common", person: null }))).toEqual(["e1", "e2"])
     expect(ids(applyMatchFilter(views, { mode: "suggestions", person: null }))).toEqual(["e3"])
     expect(ids(applyMatchFilter(views, { mode: "common", person: "u-ana" }))).toEqual(["e1"])
+  })
+
+  it("a aba dos outros: os seus itens bem avaliados que eles não têm", () => {
+    const mine = [
+      { id: "m1", rating: 5, match_owner_id: ME, match_key: "lugar:7" },
+      { id: "m2", rating: 2, match_owner_id: ME, match_key: "lugar:8" },
+      { id: "a1", rating: 5, match_owner_id: "u-ana", match_key: "lugar:9" },
+    ]
+    const { info, byEntry } = decorateMatchCopy({ rows: mine, match, meId: ME })
+    expect(info.totals.theirs).toBe(1)
+    const views = mine.map((row) => ({ id: row.id, match: byEntry.get(row.id) }))
+    expect(
+      applyMatchFilter(views, { mode: "theirs", person: null }).map((view) => view.id)
+    ).toEqual(["m1"])
   })
 
   it("sem o match (sumiu do banco): as pessoas saem dos itens", () => {

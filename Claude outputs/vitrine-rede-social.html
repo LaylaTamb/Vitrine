@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vitrine — proposta de rede social</title>
+<!--
+  Protótipo navegável da PROPOSTA de reorganização do Vitrine como rede social.
+  Nada aqui grava dados. Mantém a identidade (Fraunces itálico, roxo, modo escuro).
+  Precisa de internet (Tailwind, fontes, ícones e fotos de exemplo).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap"
+  rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Fraunces", ui-serif, Georgia, serif;
+
+    --color-bg: #121214;
+    --color-bg-soft: #16161a;
+    --color-surface: #1b1b1f;
+    --color-surface-hi: #232328;
+    --color-line: #2a2a31;
+    --color-line-hi: #3a3a43;
+
+    --color-ink: #ececef;
+    --color-foreground: #ececef;
+    --color-muted-foreground: #9d9da8;
+    --color-faint: #6e6e78;
+
+    --color-brand: #b98cc2;
+    --color-brand-dim: #8e6c96;
+    --color-brand-wash: rgb(185 140 194 / 0.14);
+    --color-brand-glow: rgb(185 140 194 / 0.3);
+    --color-danger: #d08585;
+    --color-ok: #8fc9a6;
+    --color-on-brand: #1a1220;
+  }
+
+  @layer base {
+    html { color-scheme: dark; }
+    body { @apply bg-bg font-sans text-ink antialiased; }
+    ::selection { background: var(--color-brand-wash); }
+    *:focus-visible { outline: 2px solid var(--color-brand-dim); outline-offset: 2px; }
+    button, a, [data-go] { -webkit-tap-highlight-color: transparent; }
+  }
+
+  @layer components {
+    .plaque { font-size: .68rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--color-faint); }
+    .display { font-family: var(--font-display); font-style: italic; font-weight: 400; }
+
+    .card { @apply rounded-2xl border border-line bg-surface; }
+    .card-hover { @apply transition-colors hover:border-line-hi; }
+
+    .btn { @apply inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-transparent text-sm font-medium whitespace-nowrap transition-all select-none; }
+    .btn svg { @apply size-4; }
+    .btn-md { @apply h-9 px-3.5; }
+    .btn-sm { @apply h-8 px-3 text-[0.8rem]; }
+    .btn-sm svg { @apply size-3.5; }
+    .btn-primary { @apply bg-brand text-on-brand hover:brightness-110; }
+    .btn-soft { @apply bg-surface-hi text-ink hover:bg-line; }
+    .btn-outline { @apply border-line text-ink hover:bg-surface-hi; }
+    .btn-ghost { @apply text-muted-foreground hover:bg-surface-hi hover:text-ink; }
+
+    .icon-btn { @apply relative flex size-10 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-surface-hi hover:text-ink; }
+    .dot { @apply absolute top-2 right-2 size-2 rounded-full bg-brand ring-2 ring-bg; }
+
+    .input { @apply h-10 w-full rounded-xl border border-line bg-bg-soft px-3.5 text-sm text-ink outline-none placeholder:text-faint focus:border-brand-dim; }
+    .chip { @apply inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-line-hi hover:text-ink; }
+    .chip[aria-pressed="true"] { @apply border-brand-dim bg-brand-wash text-ink; }
+
+    .tabs { @apply flex gap-1 border-b border-line; }
+    .tab { @apply -mb-px cursor-pointer border-b-2 border-transparent px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:text-ink; }
+    .tab[aria-selected="true"] { @apply border-brand text-ink; }
+
+    .segmented { @apply inline-flex items-center gap-0.5 rounded-xl border border-line bg-surface p-0.5; }
+    .segmented > * { @apply flex h-8 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs text-muted-foreground; }
+    .segmented > [aria-pressed="true"] { @apply bg-brand-wash text-ink; }
+
+    .avatar { @apply inline-flex shrink-0 items-center justify-center rounded-full leading-none; font-family: var(--font-display); font-style: italic; }
+    .ring-new { box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-brand); }
+
+    .nav-item { @apply flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] text-muted-foreground transition-colors hover:bg-surface-hi hover:text-ink; }
+    .nav-item[aria-current="true"] { @apply bg-brand-wash text-ink; }
+    .nav-item[aria-current="true"] svg { @apply text-brand; }
+
+    .tabbar-item { @apply flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 py-2 text-[0.65rem] text-muted-foreground; }
+    .tabbar-item[aria-current="true"] { @apply text-ink; }
+    .tabbar-item[aria-current="true"] svg { @apply text-brand; }
+
+    .glow { position: absolute; inset: 12% 10% 6%; background: var(--color-brand-glow); filter: blur(26px); opacity: .45; pointer-events: none; }
+    .scroll-x { @apply -mx-4 flex gap-3 overflow-x-auto px-4 py-1.5; scrollbar-width: none; }
+    .scroll-x::-webkit-scrollbar { display: none; }
+    .new-badge { @apply rounded-full bg-brand px-1.5 py-px text-[0.6rem] font-semibold tracking-wide text-on-brand uppercase; }
+  }
+</style>
+</head>
+
+<body>
+  <!-- ===== Barra do protótipo (não é o app) ===== -->
+  <div id="proto-bar" class="sticky top-0 z-[60] border-b border-dashed border-brand-dim bg-[#0b0b0d] text-xs">
+    <div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-2 px-4 py-2">
+      <span class="plaque text-brand">Proposta · protótipo</span>
+      <select id="screen-select" class="h-8 rounded-lg border border-line bg-surface px-2 text-xs text-ink">
+        <option value="inicio">Início (feed)</option>
+        <option value="descobrir">Descobrir</option>
+        <option value="match">Match</option>
+        <option value="match-lucas">Match com Lucas</option>
+        <option value="perfil">Meu perfil</option>
+        <option value="pessoa-ana">Perfil de uma amiga</option>
+        <option value="categoria">Categoria</option>
+        <option value="item">Item</option>
+        <option value="avisos">Avisos</option>
+        <option value="config">Configurações</option>
+        <option value="editar">Editar perfil</option>
+      </select>
+      <button id="notes-toggle" class="flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-ink hover:bg-surface-hi">
+        <i data-lucide="lightbulb" class="size-3.5 text-brand"></i> O que mudou aqui
+      </button>
+      <div class="segmented ml-auto">
+        <button data-device="desktop" aria-pressed="true"><i data-lucide="monitor" class="size-3.5"></i> Computador</button>
+        <button data-device="mobile"><i data-lucide="smartphone" class="size-3.5"></i> Celular</button>
+      </div>
+    </div>
+    <div id="notes" class="hidden border-t border-line">
+      <div class="mx-auto max-w-[1280px] px-4 py-3 text-sm leading-relaxed text-muted-foreground"></div>
+    </div>
+  </div>
+
+  <div id="phone-wrap" class="hidden justify-center py-6">
+    <iframe id="phone" title="Vitrine no celular" class="h-[844px] w-[390px] rounded-[2.2rem] border-8 border-[#2a2a31] bg-bg"></iframe>
+  </div>
+
+  <!-- ===== O app ===== -->
+  <div id="app" class="min-h-dvh md:flex">
+    <!-- Lateral (computador e tablet) -->
+    <aside class="sticky top-0 hidden h-dvh w-20 shrink-0 flex-col border-r border-line px-3 py-5 md:flex lg:w-64">
+      <a data-go="inicio" class="mb-6 flex cursor-pointer items-center gap-2 px-3">
+        <span class="size-2.5 rounded-full bg-brand" style="box-shadow:0 0 12px 2px var(--color-brand-glow)"></span>
+        <span class="display hidden text-2xl leading-none lg:inline">Vitrine</span>
+      </a>
+      <nav class="flex flex-col gap-1" id="side-nav"></nav>
+      <button data-sheet="adicionar" class="btn btn-md btn-primary mt-4 w-full"><i data-lucide="plus"></i><span class="hidden lg:inline">Adicionar</span></button>
+      <a data-go="config" data-nav="config" class="nav-item mt-auto"><i data-lucide="settings" class="size-5"></i><span class="hidden lg:inline">Configurações</span></a>
+    </aside>
+
+    <div class="min-w-0 flex-1">
+      <!-- Topo (celular) -->
+      <header class="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-line px-4 md:hidden" style="background:rgba(18,18,20,.88);backdrop-filter:blur(12px)">
+        <a data-go="inicio" class="flex cursor-pointer items-center gap-2">
+          <span class="size-2 rounded-full bg-brand" style="box-shadow:0 0 10px 1px var(--color-brand-glow)"></span>
+          <span class="display text-xl leading-none">Vitrine</span>
+        </a>
+        <div class="flex items-center">
+          <button data-go="descobrir" class="icon-btn" title="Buscar"><i data-lucide="search" class="size-5"></i></button>
+          <button data-go="avisos" class="icon-btn" title="Avisos"><i data-lucide="bell" class="size-5"></i><span class="dot"></span></button>
+        </div>
+      </header>
+
+      <main id="view" class="mx-auto w-full max-w-[1100px] px-4 pt-4 pb-28 md:px-8 md:pt-8 md:pb-12"></main>
+    </div>
+
+    <!-- Abas de baixo (celular) -->
+    <nav class="fixed inset-x-0 bottom-0 z-40 flex border-t border-line md:hidden" style="background:rgba(18,18,20,.94);backdrop-filter:blur(12px);padding-bottom:env(safe-area-inset-bottom)" id="tab-bar"></nav>
+  </div>
+
+  <!-- Folhas (adicionar, compartilhar, menu da categoria) -->
+  <div id="sheet-backdrop" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/60 md:items-center" data-close></div>
+
+  <script>
+    const SOURCE = "<!doctype html>\n" + document.documentElement.outerHTML
+
+    // ============================== dados de exemplo ==============================
+    const photo = (seed, w = 480, h = 600) => `https://picsum.photos/seed/vb-${seed}/${w}/${h}`
+    const ME = {
+      id: "marina", name: "Marina Costa", user: "marina", color: "#b98cc2",
+      bio: "Catalogo restaurantes, cafés e filmes desde 2019. Sempre atrás de um lugar novo em SP. 🍜🎬",
+      links: [["instagram", "@marina.come"], ["music", "marina"]],
+    }
+    const PEOPLE = {
+      ana: { name: "Ana Ribeiro", user: "ana.ribeiro", color: "#8fc9a6", friend: true, compat: 91, common: 6, bio: "Comida japonesa e livros de terror. Se tem lámen, eu fui.", banner: "ana-banner" },
+      pedro: { name: "Pedro Lemos", user: "pedro.le", color: "#8fb3c9", friend: true, compat: 78, common: 3 },
+      lucas: { name: "Lucas Prado", user: "lucas", color: "#d6c08a", friend: true, compat: 87, common: 4 },
+      bia: { name: "Bia Nunes", user: "bia_games", color: "#d08585", friend: false, common: 2 },
+      rafa: { name: "Rafa Souza", user: "rafa", color: "#c79bd0", friend: false, common: 5 },
+      joana: { name: "Joana Lima", user: "joana", color: "#9a9aa4", friend: false, common: 4 },
+    }
+    const FOLDERS = [
+      { id: "comes", name: "Comes e bebes", parent: null, vis: "friends" },
+      { id: "cultura", name: "Cultura pop", parent: null },
+      { id: "roles", name: "Rolês em SP", parent: null, vis: "friends" },
+      { id: "viagens", name: "Viagens", parent: null, vis: "private" },
+      { id: "bebidas", name: "Bebidas", parent: "comes" },
+    ]
+    const CATS = [
+      { id: "restaurantes", icon: "🍽️", name: "Restaurantes", folder: "comes", count: 15, fav: true, seeds: ["ceviche", "yoshi", "nonna", "norte"] },
+      { id: "japoneses", icon: "🍣", name: "Restaurantes japoneses", folder: "comes", count: 6, seeds: ["sapporo", "lamen", "izakaya", "udon"] },
+      { id: "caipirinhas", icon: "🍹", name: "Caipirinhas", folder: "bebidas", count: 11, seeds: ["caju", "kiwi", "lichia", "limao"] },
+      { id: "filmes", icon: "🎬", name: "Filmes", folder: "cultura", count: 28, fav: true, seeds: ["parasita", "chihiro", "matrix", "duna"] },
+      { id: "manga", icon: "📖", name: "Mangá", folder: "cultura", count: 15, fav: true, seeds: ["berserk", "vagabond", "frieren", "dandadan"] },
+      { id: "series", icon: "🍿", name: "Séries", folder: "cultura", count: 13, seeds: ["dark", "arcane", "succession", "office"] },
+      { id: "cafes", icon: "☕", name: "Cafés", folder: "roles", count: 10, seeds: ["torra", "grao", "biblioteca", "coado"] },
+      { id: "bares", icon: "🍸", name: "Bares", folder: "roles", count: 8, seeds: ["samba", "harmonia", "karaoke", "beco"] },
+      { id: "cidades", icon: "✈️", name: "Cidades visitadas", folder: "viagens", count: 9, seeds: ["lisboa", "ouropreto", "rio", "salvador"] },
+      { id: "hamburgueres", icon: "🍔", name: "Hambúrgueres", folder: null, count: 7, vis: "public", seeds: ["brasa", "smash", "norte-b", "duplo"] },
+      { id: "quero", icon: "📍", name: "Quero conhecer em SP", folder: null, count: 11, vis: "private", seeds: ["masp", "pina", "japan", "mercado"] },
+    ]
+    const ITEMS = [
+      { name: "Ceviche Lima", rating: 5, sub: "Peruana · Itaim Bibi", seed: "ceviche", tags: ["Quero voltar"] },
+      { name: "Yoshi", rating: 5, sub: "Japonesa · Vila Sônia", seed: "yoshi", tags: ["Japão"] },
+      { name: "Cantina Bella Nonna", rating: 4.5, sub: "Italiana · Bela Vista", seed: "nonna", tags: ["Encontro"] },
+      { name: "Sabor do Norte", rating: 4.5, sub: "Brasileira · Pinheiros", seed: "norte", tags: [] },
+      { name: "Verde Que Te Quero", rating: 4.5, sub: "Vegetariana · Vila Madalena", seed: "verde", tags: ["Barato"] },
+      { name: "Peppino Cantina", rating: 4, sub: "Italiana · Itaim Bibi", seed: "peppino", tags: [] },
+      { name: "Taquería Los Primos", rating: 4, sub: "Mexicana · Consolação", seed: "taqueria", tags: [] },
+      { name: "Prato Feito do Zé", rating: 3, sub: "Brasileira · Liberdade", seed: "pf", tags: ["Barato"] },
+    ]
+    const TAG_COLORS = { "Quero voltar": "#8fc9a6", Barato: "#d6c08a", Encontro: "#b98cc2", Japão: "#c79bd0" }
+    const FEED = [
+      { type: "added", who: "ana", when: "há 2 h", cat: ["🍣", "Restaurantes japoneses"], items: [["Lámen do Bairro", 5, "lamen"], ["Izakaya Hoshi", 4.5, "izakaya"], ["Udon Yama", 4, "udon"]] },
+      { type: "rated", who: "pedro", when: "há 5 h", cat: ["📚", "Livros"], item: ["Torto Arado", 5, "torto"], note: "Terminei chorando. Leiam." },
+      { type: "match", who: "lucas", when: "ontem", compat: 87, common: 4, suggestions: ["Tangerina com Pimenta", "Colorado Appia", "Kiwi"] },
+      { type: "newcat", who: "bia", when: "ontem", cat: ["🎮", "Jogos que zerei"], count: 64, top: [["Hades", 5], ["Celeste", 5], ["Hollow Knight", 4.5]], seeds: ["hades", "celeste", "hollow"] },
+      { type: "rated", who: "rafa", when: "há 2 dias", cat: ["✈️", "Cidades visitadas"], item: ["Lisboa", 5, "lisboa"], note: "Pastel de nata todo dia. Sem arrependimentos." },
+    ]
+    const EXPLORE = [
+      ["🍣", "Restaurantes japoneses", "joana", 23, ["sapporo", "lamen", "izakaya"]],
+      ["📚", "Livros de 2026", "pedro", 31, ["torto", "cem", "1984"]],
+      ["🍹", "Caipirinhas da vida", "lucas", 12, ["caju", "kiwi", "lichia"]],
+      ["🎮", "Jogos que zerei", "bia", 64, ["hades", "celeste", "hollow"]],
+      ["☕", "Cafés para trabalhar", "rafa", 40, ["torra", "grao", "coado"]],
+      ["✈️", "Cidades visitadas", "rafa", 18, ["lisboa", "ouropreto", "baires"]],
+    ]
+
+    // O que mudou em cada tela (o painel "O que mudou aqui").
+    const NOTES = {
+      geral: [
+        "<b>5 lugares em vez de 13 caminhos:</b> Início, Descobrir, ＋ Adicionar, Match e Perfil. No celular, viram as abas de baixo.",
+        "Saem da barra: Coleções, Filtro, Mapa, Tags, Favoritos e Pessoas — cada um foi para dentro de um dos 5 lugares.",
+        "Tudo da conta fica num lugar só: <b>Configurações</b> (no ⚙ do perfil). O que aparece no perfil fica em <b>Editar perfil</b>.",
+      ],
+      inicio: [
+        "<span class='new-badge'>novo</span> O <b>Início</b> é o coração da rede: o que os amigos acabaram de catalogar, avaliar e criar.",
+        "<b>Trazer</b> em um toque direto do feed (já existe no Match; aqui vale para tudo de amigos).",
+        "O “Você está em…?” virou o primeiro card do Início.",
+        "As bolinhas no topo são quem tem novidade — um toque abre o perfil.",
+      ],
+      descobrir: [
+        "<b>Explorar + Pessoas</b> viram uma tela só, com <b>uma busca</b> para pessoas, categorias e itens.",
+        "<b>Temas</b> (chips) substituem o Filtro geral e a página de Tags como entrada de navegação.",
+        "Cada categoria mostra fotos dos itens: dá vontade de abrir.",
+      ],
+      match: [
+        "<b>Match</b> sobe para a navegação principal (antes estava escondido no menu da foto).",
+        "Convite pendente aparece em cima, com Aceitar em um toque.",
+      ],
+      "match-lucas": ["A % fica grande e as três listas (para você, em comum, para ele) viram abas."],
+      perfil: [
+        "<b>Perfil = cartão + Coleções + Favoritas + Mapa</b>, em abas (antes eram 4 telas: Meu perfil, Coleções, Favoritos e Mapa).",
+        "No topo, só 3 ações: <b>Editar perfil</b>, <b>Compartilhar</b> (QR, link e story juntos) e <b>⚙ Configurações</b>.",
+        "Categoria ganha capa com as fotos dos itens. Os botões de editar/excluir saem dos cards (vão para dentro da categoria).",
+        "A Lixeira sai da tela principal: Configurações → Seus dados.",
+        "<b>Filtros</b> ao lado da busca é o antigo <b>Filtro geral</b>: nota, tags e campos como Bairro e Preço, em todas as categorias de uma vez. O resultado mostra os itens com a categoria de cada um.",
+        "<b>Tags</b>: viram filtro (no Filtros) e etiqueta no item; gerenciar fica em Configurações → Suas tags.",
+      ],
+      "pessoa-ana": ["No perfil de outra pessoa: <b>Seguir/Amigos</b> e <b>Fazer match</b> lado a lado, e a % de compatibilidade à vista."],
+      categoria: [
+        "O topo cai de <b>7 botões para 2</b>: <b>＋ Item</b> e <b>⋯</b> (Estrutura, Nova subpasta, Ver no mapa, Excluir…).",
+        "Visibilidade vira um chip ao lado do nome (🌐 Pública ▾); a estrela fica junto do título.",
+        "Nota mínima/máxima, ordem e tags vão para um botão <b>Filtros</b>.",
+        "Subpastas viram chips numa linha, em vez de cards grandes que empurram os itens para baixo.",
+      ],
+      item: [
+        "<span class='new-badge'>novo</span> “Quem também tem”: amigos com o mesmo item e a nota deles.",
+        "Editar, mover e excluir ficam no ⋯; no item de outra pessoa, o botão principal é <b>Trazer</b>.",
+      ],
+      avisos: ["Avisos ganham ações no próprio aviso (Seguir de volta, Aceitar match), sem abrir outra tela."],
+      config: [
+        "<b>Uma lista só</b>, em grupos: Conta, Privacidade, Apps e importação, Seus dados, Sobre.",
+        "Importar, Steam, Letterboxd e Backup ficam juntos em <b>Apps e importação</b> (antes: Importar, Editar cartão e Configurações).",
+      ],
+      editar: ["Tudo que aparece no perfil numa tela: banner, foto, nome, bio, redes e destaques (antes misturado com Steam/Letterboxd)."],
+    }
+
+    // ============================== peças ==============================
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
+    const fmt = (n) => String(n).replace(".", ",")
+    const ic = (name, cls = "size-4") => `<i data-lucide="${name}" class="${cls}"></i>`
+    const person = (id) => (id === "marina" ? ME : PEOPLE[id])
+    const avatar = (id, size = 40, extra = "") => {
+      const p = person(id)
+      return `<span class="avatar ${extra}" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.44)}px;background:color-mix(in srgb,${p.color} 22%,var(--color-surface-hi));color:${p.color}">${esc(p.name[0])}</span>`
+    }
+    const stars = (r, size = ".75rem") => `
+      <span class="relative inline-block leading-none whitespace-nowrap" style="font-size:${size}">
+        <span class="block text-line-hi" style="letter-spacing:.1em">★★★★★</span>
+        <span class="absolute inset-y-0 left-0 overflow-hidden text-brand" style="width:${(r / 5) * 100}%"><span class="block" style="letter-spacing:.1em">★★★★★</span></span>
+      </span>`
+    const ratingPill = (r) => `<span class="inline-flex items-center gap-1 rounded-md bg-bg/85 px-1.5 py-0.5 text-xs backdrop-blur-sm"><span class="text-brand">★</span>${fmt(r)}</span>`
+    const visIcon = (vis) => (vis === "private" ? ic("lock", "size-3.5 text-faint") : vis === "friends" ? ic("users", "size-3.5 text-faint") : "")
+    const tagPill = (t) => {
+      const c = TAG_COLORS[t] ?? "#b98cc2"
+      return `<span class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs" style="border-color:${c}55;color:${c}"><span class="size-1.5 rounded-full" style="background:${c}"></span>${esc(t)}</span>`
+    }
+    const header = (title, sub = "", right = "") => `
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div class="min-w-0"><h1 class="display text-3xl leading-tight md:text-4xl">${title}</h1>${sub ? `<p class="mt-1 text-sm text-muted-foreground">${sub}</p>` : ""}</div>
+        ${right}
+      </div>`
+
+    // capa de categoria: mosaico com as fotos dos itens
+    const mosaic = (seeds, cls = "aspect-[4/3]") => `
+      <div class="grid ${cls} grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-t-2xl bg-bg-soft">
+        ${seeds.slice(0, 4).map((s, i) => `<img src="${photo(s, 300, 300)}" alt="" loading="lazy" class="size-full object-cover ${i === 0 ? "row-span-2" : ""}" />`).join("")}
+      </div>`
+
+    function categoryCard(c, { owner = null } = {}) {
+      return `
+        <div data-go="categoria" class="card card-hover group relative cursor-pointer overflow-hidden">
+          ${mosaic(c.seeds.slice(0, 3))}
+          ${owner ? "" : `<button data-star class="absolute top-2 right-2 rounded-xl bg-bg/80 p-2 backdrop-blur-sm ${c.fav ? "text-brand" : "text-ink/70"}" title="Favorita" aria-pressed="${!!c.fav}">${ic("star", `size-4 ${c.fav ? "fill-current" : ""}`)}</button>`}
+          <div class="flex items-center gap-2 p-3">
+            <span class="text-xl leading-none">${c.icon}</span>
+            <div class="min-w-0 flex-1">
+              <p class="flex items-center gap-1.5"><span class="display truncate text-[1.05rem] leading-snug">${esc(c.name)}</span>${visIcon(c.vis)}</p>
+              <p class="text-xs text-muted-foreground">${owner ? `@${esc(PEOPLE[owner]?.user ?? owner)} · ` : ""}${c.count} itens</p>
+            </div>
+          </div>
+        </div>`
+    }
+
+    function folderCard(f) {
+      const kids = CATS.filter((c) => c.folder === f.id)
+      const sub = FOLDERS.filter((x) => x.parent === f.id)
+      const total = kids.reduce((n, c) => n + c.count, 0)
+      return `
+        <div data-folder="${f.id}" class="card card-hover cursor-pointer overflow-hidden">
+          <div class="flex aspect-[4/3] items-center justify-center gap-2 rounded-t-2xl bg-gradient-to-br from-surface-hi to-bg-soft">
+            ${[...sub.map(() => "📁"), ...kids.map((k) => k.icon)].slice(0, 4).map((g) => `<span class="flex size-12 items-center justify-center rounded-2xl bg-bg/60 text-2xl">${g}</span>`).join("")}
+          </div>
+          <div class="flex items-center gap-2 p-3">
+            ${ic("folder", "size-5 text-brand")}
+            <div class="min-w-0 flex-1">
+              <p class="flex items-center gap-1.5"><span class="display truncate text-[1.05rem]">${esc(f.name)}</span>${visIcon(f.vis)}</p>
+              <p class="text-xs text-muted-foreground">${[sub.length ? `${sub.length} ${sub.length === 1 ? "pasta" : "pastas"}` : "", kids.length ? `${kids.length} ${kids.length === 1 ? "categoria" : "categorias"}` : "", `${total} itens`].filter(Boolean).join(" · ")}</p>
+            </div>
+          </div>
+        </div>`
+    }
+
+    const bring = (label = "Trazer") => `<button data-bring class="btn btn-sm btn-soft">${ic("bookmark-plus")} ${label}</button>`
+    const follow = (id) => PEOPLE[id]?.friend
+      ? `<button data-follow aria-pressed="true" class="btn btn-sm btn-soft">${ic("user-check")} Amigos</button>`
+      : `<button data-follow class="btn btn-sm btn-primary">${ic("user-plus")} Seguir</button>`
+
+    // ============================== telas ==============================
+    let profileTab = "colecoes"
+    let filtersOn = false
+    let folderOpen = null
+    let categoryTab = "itens"
+
+    const SCREENS = {
+      inicio() {
+        const stories = ["ana", "pedro", "lucas", "bia", "rafa"]
+        return `
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div class="min-w-0 space-y-5">
+            <div class="scroll-x">
+              ${stories.map((id, i) => `
+                <a data-go="pessoa-ana" class="flex w-16 shrink-0 cursor-pointer flex-col items-center gap-1.5">
+                  ${avatar(id, 56, i < 3 ? "ring-new" : "")}
+                  <span class="w-full truncate text-center text-[0.7rem] text-muted-foreground">${esc(PEOPLE[id].name.split(" ")[0])}</span>
+                </a>`).join("")}
+            </div>
+
+            <div class="card flex items-center gap-3 border-brand-dim/50 bg-brand-wash p-4">
+              <span class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-bg/60 text-2xl">☕</span>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm"><b class="font-medium">Você está no Torra Fina?</b></p>
+                <p class="text-xs text-muted-foreground">Está nos seus Cafés · nota 5</p>
+              </div>
+              <button class="btn btn-sm btn-primary">${ic("check")} Salvar visita</button>
+            </div>
+
+            ${FEED.map(feedCard).join("")}
+          </div>
+
+          <aside class="hidden space-y-5 lg:block">
+            <div class="card p-4">
+              <p class="plaque mb-3">Talvez você conheça</p>
+              ${["joana", "rafa", "bia"].map((id) => `
+                <div class="flex items-center gap-3 py-2">
+                  ${avatar(id, 36)}
+                  <div class="min-w-0 flex-1"><p class="truncate text-sm font-medium">${esc(PEOPLE[id].name)}</p><p class="truncate text-xs text-muted-foreground">${PEOPLE[id].common} categorias parecidas</p></div>
+                  ${follow(id)}
+                </div>`).join("")}
+            </div>
+            <div class="card p-4">
+              <p class="plaque mb-3">Seus matches</p>
+              ${["ana", "lucas"].map((id) => `
+                <a data-go="match-lucas" class="flex cursor-pointer items-center gap-3 rounded-xl py-2">
+                  ${avatar(id, 36)}
+                  <span class="min-w-0 flex-1 truncate text-sm">${esc(PEOPLE[id].name)}</span>
+                  <span class="display text-lg text-brand">${PEOPLE[id].compat}%</span>
+                </a>`).join("")}
+            </div>
+          </aside>
+        </div>`
+      },
+
+      descobrir() {
+        return `
+        ${header("Descobrir", "Pessoas, categorias e itens de quem cataloga como você.")}
+        <div class="relative mb-4">
+          ${ic("search", "pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-faint")}
+          <input class="input h-12 pl-10 text-base" placeholder="Buscar pessoas, categorias e itens…" />
+        </div>
+        <div class="scroll-x mb-8">
+          ${["Tudo", "🍽️ Restaurantes", "🎬 Filmes", "📚 Livros", "🎮 Jogos", "☕ Cafés", "🍸 Bares", "✈️ Viagens", "📖 Mangá"].map((t, i) => `<button class="chip" aria-pressed="${i === 0}">${t}</button>`).join("")}
+        </div>
+
+        <div class="mb-3 flex items-baseline justify-between"><h2 class="display text-2xl">Pessoas para seguir</h2><a class="text-sm text-muted-foreground hover:text-ink">Ver todas</a></div>
+        <div class="scroll-x mb-10">
+          ${["joana", "rafa", "bia", "pedro"].map((id) => `
+            <div class="card flex w-44 shrink-0 flex-col items-center gap-2 p-4 text-center">
+              <a data-go="pessoa-ana" class="cursor-pointer">${avatar(id, 64)}</a>
+              <div class="min-w-0"><p class="truncate text-sm font-medium">${esc(PEOPLE[id].name)}</p><p class="truncate text-xs text-muted-foreground">@${esc(PEOPLE[id].user)}</p></div>
+              <p class="text-xs text-faint">${PEOPLE[id].common} categorias parecidas com as suas</p>
+              ${follow(id)}
+            </div>`).join("")}
+        </div>
+
+        <div class="mb-3 flex items-baseline justify-between"><h2 class="display text-2xl">Categorias em alta</h2></div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          ${EXPLORE.map(([icon, name, owner, count, seeds]) => `
+            <div class="card card-hover overflow-hidden">
+              <div data-go="categoria" class="cursor-pointer">${mosaic(seeds)}</div>
+              <div class="space-y-3 p-4">
+                <div class="flex items-start gap-2.5">
+                  <span class="text-2xl leading-none">${icon}</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="display truncate text-lg leading-snug">${esc(name)}</p>
+                    <a data-go="pessoa-ana" class="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-ink">${avatar(owner, 18)} @${esc(PEOPLE[owner].user)} · ${count} itens</a>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button data-bring class="btn btn-sm btn-primary flex-1">${ic("download")} Pegar com os itens</button>
+                  <button class="btn btn-sm btn-outline">Só a estrutura</button>
+                </div>
+              </div>
+            </div>`).join("")}
+        </div>`
+      },
+
+      match() {
+        return `
+        ${header("Match", "Compare gostos com amigos e descubra o que trazer.", `<button class="btn btn-md btn-primary">${ic("plus")} Novo match</button>`)}
+        <div class="card mb-6 flex flex-wrap items-center gap-3 border-brand-dim/50 bg-brand-wash p-4">
+          ${avatar("bia", 44)}
+          <p class="min-w-0 flex-1 text-sm"><b class="font-medium">Bia Nunes</b> te chamou para um match.</p>
+          <div class="flex gap-2"><button class="btn btn-sm btn-primary">Aceitar</button><button class="btn btn-sm btn-ghost">Agora não</button></div>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          ${[["lucas", 87, 4, 12], ["ana", 91, 6, 18], ["pedro", 78, 3, 7]].map(([id, pct, common, sug]) => `
+            <a data-go="match-lucas" class="card card-hover flex cursor-pointer items-center gap-4 p-4">
+              <div class="flex -space-x-3">${avatar("marina", 48, "ring-2 ring-surface")}${avatar(id, 48, "ring-2 ring-surface")}</div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate font-medium">Você e ${esc(PEOPLE[id].name.split(" ")[0])}</p>
+                <p class="text-xs text-muted-foreground">${common} categorias em comum · ${sug} sugestões</p>
+              </div>
+              <span class="display text-3xl text-brand">${pct}%</span>
+            </a>`).join("")}
+        </div>`
+      },
+
+      "match-lucas"() {
+        const pct = 87
+        return `
+        <a data-go="match" class="mb-6 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-ink">${ic("arrow-left", "size-4")} Match</a>
+        <div class="card mb-6 flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:text-left">
+          <div class="relative flex size-32 shrink-0 items-center justify-center rounded-full" style="background:conic-gradient(var(--color-brand) ${pct}%, var(--color-line) 0)">
+            <div class="flex size-[108px] flex-col items-center justify-center rounded-full bg-surface">
+              <span class="display text-4xl leading-none">${pct}%</span><span class="text-[0.65rem] text-muted-foreground">compatíveis</span>
+            </div>
+          </div>
+          <div class="min-w-0 flex-1 space-y-2">
+            <div class="flex items-center justify-center gap-2 sm:justify-start">${avatar("marina", 32)}${avatar("lucas", 32)}<h1 class="display text-2xl">Você e Lucas</h1></div>
+            <p class="text-sm text-muted-foreground">4 categorias em comum, 23 itens em comum.</p>
+            <div class="flex flex-wrap justify-center gap-1.5 sm:justify-start">${["🍹 Caipirinhas", "🍺 Cervejas", "🧃 Sucos", "📖 Mangá"].map((c) => `<span class="chip cursor-default">${c}</span>`).join("")}</div>
+          </div>
+        </div>
+        <div class="tabs mb-4"><button class="tab" aria-selected="true">Para você (12)</button><button class="tab">Em comum (23)</button><button class="tab">Para o Lucas (9)</button></div>
+        <div class="space-y-2">
+          ${[["Tangerina com Pimenta", "🍹 Caipirinhas", 5, "tangerina"], ["Colorado Appia", "🍺 Cervejas", 5, "appia"], ["Kiwi", "🍹 Caipirinhas", 4.5, "kiwi"], ["Vagabond", "📖 Mangá", 5, "vagabond"], ["Acerola", "🧃 Sucos", 4.5, "acerola"]].map(([name, cat, r, seed]) => `
+            <div class="card flex items-center gap-3 p-2.5 pr-3">
+              <img src="${photo(seed, 120, 120)}" alt="" class="size-14 shrink-0 rounded-xl object-cover" />
+              <div class="min-w-0 flex-1"><p class="display truncate text-base">${esc(name)}</p><p class="truncate text-xs text-muted-foreground">${cat} · Lucas deu ${fmt(r)}</p></div>
+              ${bring()}
+            </div>`).join("")}
+        </div>`
+      },
+
+      perfil() { return profileScreen("marina") },
+      "pessoa-ana"() { return profileScreen("ana") },
+
+      categoria() {
+        const filtered = ITEMS
+        return `
+        <a data-go="perfil" class="mb-5 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-ink">${ic("arrow-left", "size-4")} Comes e bebes</a>
+        <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0 space-y-2">
+            <h1 class="display flex items-center gap-2 text-3xl leading-tight md:text-4xl">
+              <span>🍽️</span><span class="min-w-0">Restaurantes</span>
+              <button data-star aria-pressed="true" class="ml-1 rounded-xl p-1.5 text-brand hover:bg-surface-hi" title="Favorita">${ic("star", "size-5 fill-current")}</button>
+            </h1>
+            <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              ${avatar("marina", 22)} <span>Sua</span><span class="text-faint">·</span><span>15 itens</span><span class="text-faint">·</span>
+              <button class="inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-0.5 text-xs hover:border-line-hi hover:text-ink">${ic("globe", "size-3.5")} Pública ${ic("chevron-down", "size-3")}</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-md btn-primary">${ic("plus")} Item</button>
+            <button data-sheet="menu-categoria" class="btn btn-md btn-outline px-2.5" title="Mais">${ic("ellipsis")}</button>
+          </div>
+        </div>
+
+        <div class="tabs mb-4">
+          <button class="tab" data-ctab="itens" aria-selected="${categoryTab === "itens"}">Itens</button>
+          <button class="tab" data-ctab="numeros" aria-selected="${categoryTab === "numeros"}">Números</button>
+        </div>
+
+        ${categoryTab === "numeros" ? numbersPanel() : `
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          <div class="relative min-w-0 flex-1 basis-full sm:basis-0">
+            ${ic("search", "pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint")}
+            <input class="input pl-9" placeholder="Buscar em Restaurantes…" />
+          </div>
+          <button data-sheet="filtros" class="btn btn-md btn-outline">${ic("sliders-horizontal")} Filtros <span class="rounded-full bg-brand px-1.5 text-[0.65rem] text-on-brand">2</span></button>
+          <div class="segmented" id="cat-view">
+            <button data-cview="grid" aria-pressed="true" title="Grade">${ic("layout-grid", "size-4")}</button>
+            <button data-cview="list" title="Lista">${ic("list", "size-4")}</button>
+          </div>
+        </div>
+        <div class="scroll-x mb-5">
+          <span class="chip cursor-default border-transparent px-0 hover:text-muted-foreground">Pastas:</span>
+          <button class="chip">${ic("folder", "size-3.5")} Japoneses <span class="text-faint">4</span></button>
+          <button class="chip">${ic("folder", "size-3.5")} Quero ir <span class="text-faint">0</span></button>
+          <button class="chip border-dashed">${ic("plus", "size-3.5")} Pasta</button>
+        </div>
+        <div id="cat-grid" class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">${filtered.map(itemCard).join("")}</div>
+        <div id="cat-list" class="hidden flex-col gap-2">${filtered.map(itemRow).join("")}</div>`}`
+      },
+
+      item() {
+        return `
+        <a data-go="categoria" class="mb-5 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-ink">${ic("arrow-left", "size-4")} 🍽️ Restaurantes</a>
+        <div class="grid gap-8 md:grid-cols-[2fr_3fr]">
+          <div class="relative"><span class="glow"></span>
+            <img src="${photo("ceviche", 700, 875)}" alt="" class="relative aspect-[4/5] w-full rounded-2xl border border-line object-cover" />
+          </div>
+          <div class="min-w-0 space-y-5">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 space-y-2">
+                <h1 class="display text-4xl leading-tight">Ceviche Lima</h1>
+                <div class="flex items-center gap-2">${stars(5, "1.1rem")}<span class="text-sm text-muted-foreground">5 de 5</span></div>
+              </div>
+              <button data-sheet="menu-item" class="btn btn-md btn-outline px-2.5" title="Mais">${ic("ellipsis")}</button>
+            </div>
+            <div class="flex flex-wrap gap-1.5">${["Quero voltar", "Encontro"].map(tagPill).join("")}</div>
+            <dl class="card divide-y divide-line px-4">
+              ${[["Tipo de comida", "Peruana"], ["Onde", "R. Joaquim Floriano, 400 · Itaim Bibi"], ["Custo médio", "R$ 150"], ["Espera", "40 min"], ["Visitei em", "20 set. 2026"], ["Ambiente", stars(5)], ["Atendimento", stars(4.5)]].map(([k, v]) => `
+                <div class="flex items-center justify-between gap-4 py-3"><dt class="text-sm text-muted-foreground">${k}</dt><dd class="text-right text-sm">${v}</dd></div>`).join("")}
+            </dl>
+            <div class="flex flex-wrap gap-2">
+              <button class="btn btn-sm btn-outline">${ic("map-pin")} Google Maps</button>
+              <button class="btn btn-sm btn-outline">${ic("navigation")} Como chegar</button>
+            </div>
+            <div class="card p-4">
+              <p class="plaque mb-3 flex items-center gap-2">Quem também tem <span class="new-badge">novo</span></p>
+              ${[["ana", 5, "“O melhor ceviche de SP.”"], ["lucas", 4, ""]].map(([id, r, quote]) => `
+                <div class="flex items-center gap-3 py-1.5">
+                  ${avatar(id, 32)}
+                  <div class="min-w-0 flex-1"><p class="text-sm">${esc(PEOPLE[id].name)} ${stars(r)}</p>${quote ? `<p class="truncate text-xs text-muted-foreground">${quote}</p>` : ""}</div>
+                </div>`).join("")}
+            </div>
+          </div>
+        </div>`
+      },
+
+      avisos() {
+        const rows = [
+          ["ana", "<b class='font-medium'>Ana Ribeiro</b> começou a seguir você. Agora vocês são amigas.", "há 10 min", ""],
+          ["bia", "<b class='font-medium'>Bia Nunes</b> te chamou para um match.", "há 1 h", `<button class="btn btn-sm btn-primary">Aceitar</button>`],
+          ["joana", "<b class='font-medium'>Joana Lima</b> começou a seguir você.", "há 3 h", `<button data-follow class="btn btn-sm btn-primary">${ic("user-plus")} Seguir de volta</button>`],
+          ["lucas", "<b class='font-medium'>Lucas Prado</b> trouxe <b class='font-medium'>Yoshi</b> dos seus Restaurantes.", "ontem", ""],
+          [null, "Sua importação do Letterboxd terminou: <b class='font-medium'>212 filmes</b> em Filmes.", "2 dias", `<a data-go="categoria" class="btn btn-sm btn-outline">Ver</a>`],
+        ]
+        return `
+        ${header("Avisos")}
+        <div class="card divide-y divide-line">
+          ${rows.map(([id, text, when, action], i) => `
+            <div class="flex items-center gap-3 p-4 ${i < 2 ? "bg-brand-wash/40" : ""}">
+              ${id ? avatar(id, 40) : `<span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-hi">${ic("clapperboard", "size-5 text-brand")}</span>`}
+              <div class="min-w-0 flex-1"><p class="text-sm leading-snug">${text}</p><p class="text-xs text-faint">${when}</p></div>
+              ${action}
+            </div>`).join("")}
+        </div>`
+      },
+
+      config() {
+        const group = (title, rows) => `
+          <section class="space-y-2">
+            <p class="plaque px-1">${title}</p>
+            <div class="card divide-y divide-line overflow-hidden">
+              ${rows.map(([icon, label, value, cls = ""]) => `
+                <button class="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-hi ${cls}">
+                  ${ic(icon, "size-5 shrink-0 text-muted-foreground")}
+                  <span class="min-w-0 flex-1 text-sm">${label}</span>
+                  ${value ? `<span class="truncate text-sm text-muted-foreground">${value}</span>` : ""}
+                  ${ic("chevron-right", "size-4 shrink-0 text-faint")}
+                </button>`).join("")}
+            </div>
+          </section>`
+        return `
+        <div class="mx-auto max-w-2xl">
+          ${header("Configurações")}
+          <a data-go="editar" class="card card-hover mb-8 flex cursor-pointer items-center gap-4 p-4">
+            ${avatar("marina", 56)}
+            <div class="min-w-0 flex-1"><p class="display text-xl">Marina Costa</p><p class="text-sm text-muted-foreground">@marina · Editar perfil</p></div>
+            ${ic("chevron-right", "size-5 text-faint")}
+          </a>
+          <div class="space-y-7">
+            ${group("Conta", [["at-sign", "Nome de usuário", "@marina"], ["mail", "E-mail", "marina@exemplo.com"], ["key-round", "Senha", ""]])}
+            ${group("Privacidade", [["eye", "Quem vê o que você cria", "Amigos"], ["user-x", "Pessoas bloqueadas", "0"]])}
+            ${group("Apps e importação", [["gamepad-2", "Steam", "Conectada"], ["clapperboard", "Letterboxd", "@marina"], ["map", "Importar do Google Maps", ""], ["file-up", "Importar ou exportar backup", ""]])}
+            ${group("Seus dados", [["tag", "Suas tags", "6"], ["trash-2", "Lixeira", "2 coisas"], ["smartphone", "Instalar no celular", ""]])}
+            ${group("Sobre", [["file-text", "Termos de uso", ""], ["shield", "Política de privacidade", ""]])}
+            <div class="space-y-2">
+              <button class="btn btn-md btn-outline w-full">${ic("log-out")} Sair</button>
+              <button class="btn btn-md btn-ghost w-full text-danger hover:text-danger">Excluir minha conta</button>
+            </div>
+          </div>
+        </div>`
+      },
+
+      editar() {
+        const field = (label, input) => `<label class="block space-y-1.5"><span class="text-sm text-muted-foreground">${label}</span>${input}</label>`
+        return `
+        <div class="mx-auto max-w-2xl">
+          <a data-go="perfil" class="mb-5 inline-flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-ink">${ic("arrow-left", "size-4")} Perfil</a>
+          ${header("Editar perfil", "O que todo mundo vê, até sem conta.")}
+          <div class="card overflow-hidden">
+            <div class="relative h-36 bg-cover bg-center" style="background-image:url('${photo("banner", 1200, 400)}')">
+              <button class="btn btn-sm btn-soft absolute right-3 bottom-3 bg-bg/80">${ic("image")} Trocar banner</button>
+            </div>
+            <div class="space-y-5 p-5">
+              <div class="-mt-14 flex items-end gap-3">${avatar("marina", 88, "ring-4 ring-surface")}<button class="btn btn-sm btn-soft mb-1">Trocar foto</button></div>
+              ${field("Nome", `<input class="input" value="Marina Costa" />`)}
+              ${field("Bio", `<textarea class="input h-24 py-2.5" maxlength="220">${esc(ME.bio)}</textarea><span class="block text-right text-xs text-faint">96/220</span>`)}
+              ${field("Instagram", `<input class="input" value="@marina.come" />`)}
+              ${field("Spotify", `<input class="input" value="marina" />`)}
+              <div class="space-y-2">
+                <p class="text-sm text-muted-foreground">Destaques <span class="text-faint">(até 6, só públicas)</span></p>
+                <div class="flex flex-wrap gap-2">${CATS.slice(0, 9).map((c, i) => `<button class="chip" aria-pressed="${i < 6}">${c.icon} ${esc(c.name)}</button>`).join("")}</div>
+              </div>
+            </div>
+          </div>
+          <div class="sticky bottom-20 mt-5 flex justify-end md:bottom-6"><button data-go="perfil" class="btn btn-md btn-primary shadow-lg">${ic("check")} Salvar</button></div>
+        </div>`
+      },
+    }
+
+    function feedCard(f) {
+      const p = PEOPLE[f.who]
+      const head = `
+        <div class="flex items-center gap-3">
+          <a data-go="pessoa-ana" class="cursor-pointer">${avatar(f.who, 40)}</a>
+          <p class="min-w-0 flex-1 text-sm leading-snug">
+            <b class="font-medium">${esc(p.name)}</b>
+            <span class="text-muted-foreground">${
+              f.type === "added" ? `adicionou ${f.items.length} itens em ${f.cat[0]} ${esc(f.cat[1])}`
+              : f.type === "rated" ? `avaliou em ${f.cat[0]} ${esc(f.cat[1])}`
+              : f.type === "match" ? "aceitou seu match"
+              : `criou a categoria ${f.cat[0]} ${esc(f.cat[1])}`
+            }</span>
+            <span class="block text-xs text-faint">${f.when}</span>
+          </p>
+          <button class="icon-btn size-8" title="Mais">${ic("ellipsis")}</button>
+        </div>`
+      if (f.type === "added") {
+        return `<article class="card space-y-4 p-4">${head}
+          <div class="grid grid-cols-3 gap-2">
+            ${f.items.map(([name, r, seed]) => `
+              <div class="space-y-1.5">
+                <div data-go="item" class="relative cursor-pointer"><img src="${photo(seed, 300, 375)}" alt="" class="aspect-[4/5] w-full rounded-xl object-cover" /><span class="absolute bottom-1.5 left-1.5">${ratingPill(r)}</span></div>
+                <p class="display truncate text-sm">${esc(name)}</p>
+              </div>`).join("")}
+          </div>
+          <div class="flex gap-2">${bring("Trazer os 3")}<button data-go="categoria" class="btn btn-sm btn-ghost">Ver categoria</button></div>
+        </article>`
+      }
+      if (f.type === "rated") {
+        const [name, r, seed] = f.item
+        return `<article class="card space-y-4 p-4">${head}
+          <div data-go="item" class="flex cursor-pointer gap-4">
+            <img src="${photo(seed, 240, 300)}" alt="" class="aspect-[4/5] w-24 shrink-0 rounded-xl object-cover sm:w-28" />
+            <div class="min-w-0 space-y-1.5 py-1">
+              <p class="display text-2xl leading-tight">${esc(name)}</p>
+              <div class="flex items-center gap-2">${stars(r, "1rem")}<span class="text-sm text-muted-foreground">${fmt(r)}</span></div>
+              ${f.note ? `<p class="text-sm text-muted-foreground">“${esc(f.note)}”</p>` : ""}
+            </div>
+          </div>
+          <div class="flex gap-2">${bring()}<button class="btn btn-sm btn-ghost">${ic("heart")} Curtir</button></div>
+        </article>`
+      }
+      if (f.type === "match") {
+        return `<article class="card space-y-4 p-4">${head}
+          <div class="flex items-center gap-4 rounded-xl bg-brand-wash p-4">
+            <span class="display text-4xl text-brand">${f.compat}%</span>
+            <p class="text-sm text-muted-foreground">${f.common} categorias em comum. Sugestões para você: ${f.suggestions.map(esc).join(", ")}…</p>
+          </div>
+          <a data-go="match-lucas" class="btn btn-sm btn-primary">Ver o match</a>
+        </article>`
+      }
+      return `<article class="card space-y-4 p-4">${head}
+        <div data-go="categoria" class="cursor-pointer overflow-hidden rounded-xl border border-line">
+          <div class="grid grid-cols-3 gap-0.5">${f.seeds.map((s) => `<img src="${photo(s, 300, 300)}" alt="" class="aspect-square w-full object-cover" />`).join("")}</div>
+          <div class="flex items-center gap-2 p-3"><span class="text-xl">${f.cat[0]}</span><span class="display min-w-0 flex-1 truncate text-lg">${esc(f.cat[1])}</span><span class="text-xs text-muted-foreground">${f.count} itens</span></div>
+        </div>
+        <div class="flex gap-2"><button data-bring class="btn btn-sm btn-primary">${ic("download")} Pegar com os itens</button><button class="btn btn-sm btn-ghost">Só a estrutura</button></div>
+      </article>`
+    }
+
+    function itemCard(it) {
+      return `
+        <div data-go="item" class="group cursor-pointer space-y-2">
+          <div class="relative"><span class="glow"></span>
+            <img src="${photo(it.seed, 400, 500)}" alt="" loading="lazy" class="relative aspect-[4/5] w-full rounded-2xl border border-line object-cover transition-transform group-hover:-translate-y-0.5" />
+            <span class="absolute bottom-2 left-2">${ratingPill(it.rating)}</span>
+          </div>
+          <div class="px-0.5"><p class="display truncate text-base leading-snug">${esc(it.name)}</p><p class="truncate text-xs text-muted-foreground">${esc(it.sub)}</p></div>
+        </div>`
+    }
+
+    function itemRow(it) {
+      return `
+        <div data-go="item" class="card card-hover flex cursor-pointer items-center gap-3 p-2.5 pr-4">
+          <img src="${photo(it.seed, 120, 120)}" alt="" class="size-14 shrink-0 rounded-xl object-cover" />
+          <div class="min-w-0 flex-1"><p class="display truncate text-base">${esc(it.name)}</p><p class="truncate text-xs text-muted-foreground">${esc(it.sub)}</p></div>
+          <span class="flex shrink-0 items-center gap-1.5 text-sm">${stars(it.rating)}<span class="hidden sm:inline">${fmt(it.rating)}</span></span>
+        </div>`
+    }
+
+    function numbersPanel() {
+      const dist = [[5, 4], [4.5, 3], [4, 2], [3.5, 0], [3, 1]]
+      return `
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="card p-5"><p class="plaque">Nota média</p><p class="display mt-1 text-5xl">4,4</p>${stars(4.4, "1rem")}</div>
+          <div class="card p-5"><p class="plaque">Itens</p><p class="display mt-1 text-5xl">15</p><p class="text-sm text-muted-foreground">2 sem nota</p></div>
+          <div class="card p-5"><p class="plaque">Mais caro</p><p class="display mt-1 text-2xl">Sapporo</p><p class="text-sm text-muted-foreground">R$ 320</p></div>
+          <div class="card p-5 sm:col-span-3">
+            <p class="plaque mb-3">Notas</p>
+            ${dist.map(([r, n]) => `<div class="flex items-center gap-3 py-1"><span class="w-8 text-sm text-muted-foreground">${fmt(r)}</span><div class="h-2 flex-1 overflow-hidden rounded-full bg-surface-hi"><div class="h-full rounded-full bg-brand" style="width:${(n / 4) * 100}%"></div></div><span class="w-4 text-right text-sm">${n}</span></div>`).join("")}
+          </div>
+        </div>`
+    }
+
+    function profileScreen(id) {
+      const mine = id === "marina"
+      const p = mine ? ME : PEOPLE[id]
+      const banner = mine ? "banner" : "ana-banner"
+      const highlights = CATS.filter((c) => !c.vis || c.vis === "public").slice(0, 6)
+      const tabs = mine ? [["colecoes", "Coleções"], ["favoritas", "Favoritas"], ["mapa", "Mapa"]] : [["colecoes", "Coleções"], ["mapa", "Mapa"]]
+      const tab = tabs.some(([t]) => t === profileTab) ? profileTab : "colecoes"
+      const actions = mine
+        ? `<button data-go="editar" class="btn btn-md btn-soft">${ic("pencil")} Editar perfil</button>
+           <button data-sheet="compartilhar" class="btn btn-md btn-soft">${ic("share-2")} Compartilhar</button>
+           <button data-go="config" class="btn btn-md btn-soft px-2.5" title="Configurações">${ic("settings")}</button>`
+        : `${follow(id)}<a data-go="match-lucas" class="btn btn-sm btn-soft">${ic("heart-handshake")} Fazer match</a>
+           <button class="btn btn-sm btn-soft px-2" title="Mais">${ic("ellipsis")}</button>`
+      return `
+        <div class="-mx-4 -mt-4 md:mx-0 md:mt-0">
+          <div class="h-36 bg-cover bg-center md:h-52 md:rounded-2xl" style="background-image:linear-gradient(to bottom,transparent 50%,rgb(18 18 20 / .7)),url('${photo(banner, 1400, 500)}')"></div>
+        </div>
+        <div class="relative -mt-12 flex flex-wrap items-end justify-between gap-3 px-1 md:px-4">
+          ${avatar(id, 96, "ring-4 ring-bg")}
+          <div class="hidden flex-wrap gap-2 pb-1 md:flex">${actions}</div>
+        </div>
+        <div class="mt-3 space-y-3 px-1 md:px-4">
+          <div><h1 class="display text-3xl leading-tight">${esc(p.name)}</h1><p class="text-sm text-muted-foreground">@${esc(p.user)}</p></div>
+          <p class="max-w-2xl text-[0.95rem] leading-relaxed">${esc(p.bio ?? "")}</p>
+          ${mine ? `<div class="flex flex-wrap gap-2">${ME.links.map(([icon, label]) => `<span class="chip cursor-default">${ic(icon, "size-3.5")} ${esc(label)}</span>`).join("")}</div>` : `<p class="inline-flex items-center gap-2 rounded-full bg-brand-wash px-3 py-1 text-sm">${ic("heart-handshake", "size-4 text-brand")} ${p.compat}% compatíveis com você · ${p.common} categorias parecidas</p>`}
+          <div class="flex flex-wrap gap-5 text-sm">
+            ${[[mine ? "14" : "9", "categorias"], [mine ? "312" : "187", "itens"], [mine ? "41" : "33", "amigos"], [mine ? "128" : "96", "seguidores"]].map(([n, l]) => `<a class="cursor-pointer"><b class="font-semibold">${n}</b> <span class="text-muted-foreground">${l}</span></a>`).join("")}
+          </div>
+          <!-- No celular, as ações ganham uma fileira só delas (como no Instagram). -->
+          <div class="flex gap-2 md:hidden [&>*:not([title])]:flex-1">${actions}</div>
+        </div>
+
+        <div class="mt-7">
+          <p class="plaque mb-3 px-1 md:px-4">Destaques</p>
+          <div class="scroll-x md:mx-0 md:px-4">
+            ${highlights.map((c) => `
+              <a data-go="categoria" class="card card-hover w-56 shrink-0 cursor-pointer p-3">
+                <div class="mb-2 flex items-center gap-2"><span>${c.icon}</span><span class="min-w-0 flex-1 truncate text-sm font-medium">${esc(c.name)}</span><span class="text-xs text-faint">${c.count}</span></div>
+                <div class="flex -space-x-2">${c.seeds.slice(0, 3).map((s) => `<img src="${photo(s, 120, 120)}" alt="" class="size-12 rounded-lg object-cover ring-2 ring-surface" />`).join("")}</div>
+              </a>`).join("")}
+          </div>
+        </div>
+
+        <div class="tabs mt-8 mb-5">${tabs.map(([t, label]) => `<button class="tab" data-ptab="${t}" aria-selected="${t === tab}">${label}</button>`).join("")}</div>
+        ${tab === "mapa" ? mapPanel() : tab === "favoritas" ? `<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">${CATS.filter((c) => c.fav).map((c) => categoryCard(c)).join("")}</div>` : collectionsPanel(mine)}`
+    }
+
+    function collectionsPanel(mine) {
+      const folder = FOLDERS.find((f) => f.id === folderOpen) ?? null
+      const folders = FOLDERS.filter((f) => f.parent === (folder?.id ?? null))
+      const cats = CATS.filter((c) => c.folder === (folder?.id ?? null))
+      const trail = []
+      for (let f = folder; f; f = FOLDERS.find((x) => x.id === f.parent)) trail.unshift(f)
+      return `
+        ${mine && !folder ? `
+          <a data-go="categoria" class="card mb-4 flex cursor-pointer items-center gap-3 border-dashed border-brand-dim bg-brand-wash/60 px-4 py-3">
+            ${ic("inbox", "size-5 text-brand")}<span class="min-w-0 flex-1 text-sm"><b class="font-medium">A organizar</b> <span class="text-muted-foreground">· 3 itens esperando uma categoria</span></span>${ic("chevron-right", "size-4 text-faint")}
+          </a>` : ""}
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          <div class="relative min-w-0 flex-1 basis-full sm:basis-0">
+            ${ic("search", "pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint")}
+            <input class="input pl-9" placeholder="${mine ? "Buscar nas suas coleções…" : "Buscar nas coleções da Ana…"}" />
+          </div>
+          <button data-sheet="filtros" class="btn btn-md btn-outline">${ic("sliders-horizontal")} Filtros${filtersOn ? ` <span class="rounded-full bg-brand px-1.5 text-[0.65rem] text-on-brand">3</span>` : ""}</button>
+          ${mine ? `<button data-sheet="adicionar" class="btn btn-md btn-outline">${ic("plus")} Novo</button>` : ""}
+        </div>
+        ${filtersOn ? filterResults() : `${trail.length ? `
+          <div class="mb-4 flex flex-wrap items-center gap-1 text-sm">
+            <button data-folder="" class="rounded-lg px-2 py-1 text-muted-foreground hover:bg-surface-hi hover:text-ink">Coleções</button>
+            ${trail.map((f, i) => `${ic("chevron-right", "size-3.5 text-faint")}<button data-folder="${f.id}" class="rounded-lg px-2 py-1 ${i === trail.length - 1 ? "text-ink" : "text-muted-foreground hover:bg-surface-hi hover:text-ink"}">${esc(f.name)}</button>`).join("")}
+          </div>` : ""}
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          ${folders.map(folderCard).join("")}${cats.map((c) => categoryCard(c, { owner: mine ? null : "ana" })).join("")}
+        </div>`}`
+    }
+
+    // O antigo Filtro geral: itens de todas as categorias que passam pelos filtros.
+    const RESULTS = [
+      ["Torra Fina", 5, "torra", "☕ Cafés", "Pinheiros · R$ 28"],
+      ["Verde Que Te Quero", 4.5, "verde", "🍽️ Restaurantes", "Vila Madalena · R$ 60"],
+      ["Sabor do Norte", 4.5, "norte", "🍽️ Restaurantes", "Pinheiros · R$ 70"],
+      ["Smash da Vila", 4.5, "smash", "🍔 Hambúrgueres", "Vila Madalena · R$ 39"],
+      ["Boteco da Harmonia", 4.5, "harmonia", "🍸 Bares", "Vila Madalena · R$ 60"],
+      ["Coado & Cia", 4, "coado", "☕ Cafés", "Pinheiros · R$ 15"],
+      ["Chopperia Pinheiros", 4, "chopperia", "🍸 Bares", "Pinheiros · R$ 55"],
+    ]
+    function filterResults() {
+      return `
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          <span class="text-sm text-muted-foreground">7 itens em 4 categorias</span>
+          ${["Nota 4 ou mais", "Pinheiros", "Vila Madalena"].map((f) => `<span class="chip cursor-default border-brand-dim bg-brand-wash text-ink">${esc(f)}</span>`).join("")}
+          <button data-clear-filters class="ml-auto text-sm text-brand hover:underline">Limpar filtros</button>
+        </div>
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          ${RESULTS.map(([name, r, seed, cat, sub]) => `
+            <div data-go="item" class="group cursor-pointer space-y-2">
+              <div class="relative"><span class="glow"></span>
+                <img src="${photo(seed, 400, 500)}" alt="" loading="lazy" class="relative aspect-[4/5] w-full rounded-2xl border border-line object-cover transition-transform group-hover:-translate-y-0.5" />
+                <span class="absolute bottom-2 left-2">${ratingPill(r)}</span>
+              </div>
+              <div class="px-0.5"><p class="plaque truncate text-[0.6rem]">${cat}</p><p class="display truncate text-base leading-snug">${esc(name)}</p><p class="truncate text-xs text-muted-foreground">${esc(sub)}</p></div>
+            </div>`).join("")}
+        </div>`
+    }
+
+    function mapPanel() {
+      const pins = [[22, 30, "☕"], [48, 22, "🍽️"], [64, 58, "🍸"], [35, 66, "🍔"], [78, 35, "🍣"], [55, 44, "📍"]]
+      return `
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div class="relative aspect-[4/3] overflow-hidden rounded-2xl border border-line lg:aspect-auto lg:h-[460px]" style="background:#17171b;background-image:linear-gradient(#22222a 1px,transparent 1px),linear-gradient(90deg,#22222a 1px,transparent 1px);background-size:44px 44px">
+            <div class="absolute top-[40%] -left-10 h-3 w-[140%] -rotate-12 bg-[#26262e]"></div>
+            <div class="absolute top-0 left-[45%] h-full w-3 rotate-6 bg-[#26262e]"></div>
+            ${pins.map(([x, y, e]) => `<span class="absolute flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-brand bg-surface text-base shadow-lg" style="left:${x}%;top:${y}%">${e}</span>`).join("")}
+            <span class="absolute size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6ea8f5] ring-4 ring-[#6ea8f5]/30" style="left:42%;top:48%"></span>
+            <div class="absolute top-3 left-3 flex gap-1.5">${["Tudo", "☕ Cafés", "🍽️ Restaurantes", "🍸 Bares"].map((t, i) => `<button class="chip bg-bg/80 backdrop-blur-sm" aria-pressed="${i === 0}">${t}</button>`).join("")}</div>
+          </div>
+          <div class="space-y-2">
+            <p class="plaque px-1">Perto de você agora</p>
+            ${[["Torra Fina", "☕ Cafés", "350 m · aberto até 19h", 5, "torra"], ["Bar do Beco", "🍸 Bares", "800 m · abre às 18h", 4, "beco"], ["Ceviche Lima", "🍽️ Restaurantes", "1,2 km · 12 min de carro", 5, "ceviche"]].map(([n, c, d, r, s]) => `
+              <div data-go="item" class="card card-hover flex cursor-pointer items-center gap-3 p-2.5">
+                <img src="${photo(s, 120, 120)}" alt="" class="size-14 shrink-0 rounded-xl object-cover" />
+                <div class="min-w-0 flex-1"><p class="display truncate">${n}</p><p class="truncate text-xs text-muted-foreground">${c} · ${d}</p></div>
+                ${ratingPill(r)}
+              </div>`).join("")}
+          </div>
+        </div>`
+    }
+
+    // ============================== folhas ==============================
+    const SHEETS = {
+      filtros: () => {
+        const group = (title, options, on = [], hint = "") => `
+          <section class="mb-5">
+            <p class="plaque mb-2">${title}${hint ? ` <span class="normal-case tracking-normal text-faint">· ${hint}</span>` : ""}</p>
+            <div class="flex flex-wrap gap-2">${options.map((o, i) => `<button data-pick class="chip" aria-pressed="${on.includes(i)}">${o}</button>`).join("")}</div>
+          </section>`
+        const everywhere = current !== "categoria"
+        return `
+          <div class="mb-1 flex items-center justify-between gap-3"><h2 class="display text-2xl">Filtros</h2><button data-clear-filters class="text-sm text-muted-foreground hover:text-ink">Limpar</button></div>
+          <p class="mb-5 text-sm text-muted-foreground">${everywhere ? "Em todas as suas coleções de uma vez — o antigo Filtro geral." : "Só nesta categoria."}</p>
+          ${group("Nota", ["Qualquer", "3 ou mais", "4 ou mais", "4,5 ou mais"], [2])}
+          ${group("Tags", Object.entries(TAG_COLORS).map(([t, c]) => `<span class="size-1.5 rounded-full" style="background:${c}"></span>${esc(t)}`))}
+          ${group("Bairro", ["Pinheiros", "Vila Madalena", "Itaim Bibi", "Liberdade", "Bela Vista"], [0, 1], everywhere ? "campo que se repete entre categorias" : "")}
+          ${group("Preço", ["Até R$ 30", "R$ 30 a 80", "Mais de R$ 80"])}
+          <section class="mb-6">
+            <p class="plaque mb-2">Ordem</p>
+            <select class="input"><option>Nota (maior primeiro)</option><option>Adicionados recentemente</option><option>Nome (A-Z)</option></select>
+          </section>
+          <button data-apply-filters class="btn btn-md btn-primary w-full">Ver 7 itens</button>`
+      },
+      adicionar: () => `
+        <h2 class="display mb-1 text-2xl">Adicionar</h2>
+        <p class="mb-5 text-sm text-muted-foreground">Tudo o que cria ou traz coisas, num lugar só.</p>
+        <div class="grid grid-cols-2 gap-3">
+          ${[["sparkles", "Item", "Algo que você comeu, viu, leu…", true], ["layout-grid", "Categoria", "Restaurantes, Filmes…"], ["folder-plus", "Pasta", "Para agrupar categorias"], ["scan-line", "Ler QR", "Virar amigo na hora"]].map(([icon, t, d, main]) => `
+            <button class="card flex flex-col items-start gap-2 p-4 text-left hover:border-brand-dim ${main ? "border-brand-dim bg-brand-wash" : ""}">${ic(icon, "size-6 text-brand")}<span class="font-medium">${t}</span><span class="text-xs text-muted-foreground">${d}</span></button>`).join("")}
+        </div>
+        <p class="plaque mt-6 mb-2">Trazer de outro lugar</p>
+        <div class="card divide-y divide-line">
+          ${[["map", "Google Maps", "lugares salvos"], ["clapperboard", "Letterboxd", "filmes que você viu"], ["gamepad-2", "Steam", "jogos e horas"], ["file-up", "Arquivo de backup", ".json"]].map(([icon, t, d]) => `
+            <button class="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-hi">${ic(icon, "size-5 text-muted-foreground")}<span class="flex-1 text-sm">${t} <span class="text-muted-foreground">· ${d}</span></span>${ic("chevron-right", "size-4 text-faint")}</button>`).join("")}
+        </div>`,
+      compartilhar: () => `
+        <h2 class="display mb-1 text-2xl">Compartilhar perfil</h2>
+        <p class="mb-5 text-sm text-muted-foreground">QR, link e story juntos (antes: Meu QR, copiar @ e story em lugares diferentes).</p>
+        <div class="mx-auto mb-5 w-fit rounded-2xl bg-white p-3">${qrSvg()}</div>
+        <p class="mb-5 text-center text-sm text-muted-foreground">vitrine.app/v/marina</p>
+        <div class="grid grid-cols-3 gap-2">
+          <button class="btn btn-md btn-soft flex-col py-8">${ic("copy")} <span class="text-xs">Copiar link</span></button>
+          <button class="btn btn-md btn-soft flex-col py-8">${ic("instagram")} <span class="text-xs">Story</span></button>
+          <button class="btn btn-md btn-soft flex-col py-8">${ic("scan-line")} <span class="text-xs">Ler QR</span></button>
+        </div>`,
+      "menu-categoria": () => menuSheet("Restaurantes", [["sliders-horizontal", "Estrutura e campos"], ["folder-plus", "Nova subpasta"], ["globe", "Quem vê: Pública"], ["map", "Ver no mapa"], ["trash-2", "Excluir categoria", "text-danger"]]),
+      "menu-item": () => menuSheet("Ceviche Lima", [["pencil", "Editar"], ["folder-input", "Levar para outra categoria"], ["share-2", "Compartilhar"], ["trash-2", "Excluir", "text-danger"]]),
+    }
+    function menuSheet(title, rows) {
+      return `<h2 class="display mb-4 text-2xl">${esc(title)}</h2>
+        <div class="card divide-y divide-line overflow-hidden">${rows.map(([icon, label, cls = ""]) => `<button class="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm hover:bg-surface-hi ${cls}">${ic(icon, "size-5")}${label}</button>`).join("")}</div>`
+    }
+    function qrSvg() {
+      const n = 25, cell = 6
+      let seed = 7
+      const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280)
+      const finder = (x, y) => (x < 7 && y < 7) || (x >= n - 7 && y < 7) || (x < 7 && y >= n - 7)
+      let rects = ""
+      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+        let on
+        if (finder(x, y)) {
+          const fx = x >= n - 7 ? x - (n - 7) : x, fy = y >= n - 7 ? y - (n - 7) : y
+          on = fx === 0 || fx === 6 || fy === 0 || fy === 6 || (fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4)
+        } else on = rnd() > 0.52
+        if (on) rects += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}"/>`
+      }
+      return `<svg width="${n * cell}" height="${n * cell}" viewBox="0 0 ${n * cell} ${n * cell}" fill="#131315" aria-label="QR do perfil">${rects}</svg>`
+    }
+
+    // ============================== navegação ==============================
+    const NAV = [["inicio", "house", "Início"], ["descobrir", "compass", "Descobrir"], ["match", "heart-handshake", "Match"], ["avisos", "bell", "Avisos"], ["perfil", null, "Perfil"]]
+    document.getElementById("side-nav").innerHTML = NAV.map(([id, icon, label]) => `
+      <a data-go="${id}" data-nav="${id}" class="nav-item">
+        <span class="relative flex size-6 items-center justify-center">${icon ? ic(icon, "size-5") : avatar("marina", 26)}${id === "avisos" ? '<span class="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand"></span>' : ""}</span>
+        <span class="hidden lg:inline">${label}</span>
+      </a>`).join("")
+    document.getElementById("tab-bar").innerHTML = [
+      ["inicio", "house", "Início"], ["descobrir", "compass", "Descobrir"], ["+", "plus", ""], ["match", "heart-handshake", "Match"], ["perfil", null, "Perfil"],
+    ].map(([id, icon, label]) => id === "+"
+      ? `<button data-sheet="adicionar" class="tabbar-item"><span class="flex size-11 items-center justify-center rounded-2xl bg-brand text-on-brand shadow-lg">${ic("plus", "size-6")}</span></button>`
+      : `<a data-go="${id}" data-nav="${id}" class="tabbar-item">${icon ? ic(icon, "size-6") : avatar("marina", 26)}<span>${label}</span></a>`).join("")
+
+    const inFrame = window.self !== window.top
+    const app = document.getElementById("app")
+    const view = document.getElementById("view")
+    const phone = document.getElementById("phone")
+    const phoneWrap = document.getElementById("phone-wrap")
+    const select = document.getElementById("screen-select")
+    let device = "desktop"
+    let current = "inicio"
+
+    // Qual item da navegação fica aceso em cada tela.
+    const NAV_OF = { "match-lucas": "match", "pessoa-ana": "descobrir", categoria: "perfil", item: "perfil", editar: "perfil", config: "config" }
+
+    function render() {
+      view.innerHTML = SCREENS[current]()
+      const nav = NAV_OF[current] ?? current
+      document.querySelectorAll("[data-nav]").forEach((a) => a.setAttribute("aria-current", String(a.dataset.nav === nav)))
+      lucide.createIcons()
+    }
+
+    function show(id) {
+      if (!SCREENS[id]) id = "inicio"
+      if (id !== current && (id === "perfil" || id === "pessoa-ana")) { profileTab = "colecoes"; folderOpen = null; filtersOn = false }
+      current = id
+      if (select) select.value = id
+      render()
+      renderNotes()
+      app.hidden = device === "mobile" && !inFrame
+      if (device === "mobile" && !inFrame) {
+        if (!phone.srcdoc) { phone.onload = () => phone.contentWindow.postMessage(current, "*"); phone.srcdoc = SOURCE }
+        else phone.contentWindow.postMessage(id, "*")
+      }
+      if (!inFrame) { try { history.replaceState(null, "", `#${id}`) } catch {} }
+      window.scrollTo(0, 0)
+    }
+
+    function renderNotes() {
+      const box = document.querySelector("#notes > div")
+      if (!box) return
+      const list = [...(NOTES[current] ?? []), ...(current === "inicio" ? NOTES.geral : [])]
+      box.innerHTML = `<ul class="list-disc space-y-1 pl-5">${list.map((n) => `<li>${n}</li>`).join("")}</ul>`
+    }
+
+    const backdrop = document.getElementById("sheet-backdrop")
+    function openSheet(name) {
+      backdrop.innerHTML = `
+        <div class="max-h-[88dvh] w-full overflow-y-auto rounded-t-3xl border border-line bg-bg p-5 pb-8 md:max-w-lg md:rounded-3xl">
+          <div class="mx-auto mb-4 h-1 w-10 rounded-full bg-line-hi md:hidden"></div>
+          ${SHEETS[name]()}
+        </div>`
+      backdrop.classList.remove("hidden"); backdrop.classList.add("flex")
+      lucide.createIcons()
+    }
+    function closeSheet() { backdrop.classList.add("hidden"); backdrop.classList.remove("flex") }
+
+    document.addEventListener("click", (e) => {
+      const t = e.target
+      if (t === backdrop) return closeSheet()
+      const star = t.closest("[data-star]")
+      if (star) {
+        e.preventDefault(); e.stopPropagation()
+        const on = star.getAttribute("aria-pressed") !== "true"
+        star.setAttribute("aria-pressed", String(on))
+        star.classList.toggle("text-brand", on); star.classList.toggle("text-ink/70", !on)
+        star.querySelector("svg")?.classList.toggle("fill-current", on)
+        return
+      }
+      const bringBtn = t.closest("[data-bring]")
+      if (bringBtn) { e.stopPropagation(); bringBtn.innerHTML = `${ic("check")} Na sua A organizar`; bringBtn.disabled = true; lucide.createIcons(); return }
+      const fol = t.closest("[data-follow]")
+      if (fol) {
+        e.stopPropagation()
+        const on = fol.getAttribute("aria-pressed") !== "true"
+        fol.setAttribute("aria-pressed", String(on))
+        fol.className = `btn btn-sm ${on ? "btn-soft" : "btn-primary"}`
+        fol.innerHTML = on ? `${ic("user-check")} Seguindo` : `${ic("user-plus")} Seguir`
+        lucide.createIcons(); return
+      }
+      const pick = t.closest("[data-pick]")
+      if (pick) return pick.setAttribute("aria-pressed", String(pick.getAttribute("aria-pressed") !== "true"))
+      if (t.closest("[data-apply-filters]")) {
+        if (current === "perfil") { filtersOn = true; profileTab = "colecoes"; folderOpen = null }
+        closeSheet(); return render()
+      }
+      if (t.closest("[data-clear-filters]")) { filtersOn = false; closeSheet(); return render() }
+      const sheet = t.closest("[data-sheet]")?.dataset.sheet
+      if (sheet) { e.preventDefault(); return openSheet(sheet) }
+      const ptab = t.closest("[data-ptab]")?.dataset.ptab
+      if (ptab) { profileTab = ptab; folderOpen = null; return render() }
+      const ctab = t.closest("[data-ctab]")?.dataset.ctab
+      if (ctab) { categoryTab = ctab; return render() }
+      const folder = t.closest("[data-folder]")
+      if (folder) { folderOpen = folder.dataset.folder || null; return render() }
+      const cview = t.closest("[data-cview]")?.dataset.cview
+      if (cview) {
+        document.querySelectorAll("[data-cview]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.cview === cview)))
+        document.getElementById("cat-grid").classList.toggle("hidden", cview !== "grid")
+        const list = document.getElementById("cat-list")
+        list.classList.toggle("hidden", cview !== "list"); list.classList.toggle("flex", cview === "list")
+        return
+      }
+      const go = t.closest("[data-go]")?.dataset.go
+      if (go) { e.preventDefault(); closeSheet(); return show(go) }
+      const dev = t.closest("[data-device]")?.dataset.device
+      if (dev) {
+        device = dev
+        document.querySelectorAll("[data-device]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.device === dev)))
+        phoneWrap.classList.toggle("hidden", dev !== "mobile"); phoneWrap.classList.toggle("flex", dev === "mobile")
+        show(current)
+      }
+    })
+    document.addEventListener("keydown", (e) => e.key === "Escape" && closeSheet())
+    select?.addEventListener("change", () => show(select.value))
+    document.getElementById("notes-toggle")?.addEventListener("click", () => document.getElementById("notes").classList.toggle("hidden"))
+
+    if (inFrame) {
+      document.getElementById("proto-bar").remove()
+      window.addEventListener("message", (e) => typeof e.data === "string" && show(e.data))
+    }
+    show(location.hash.slice(1) || "inicio")
+  </script>
+</body>
+</html>

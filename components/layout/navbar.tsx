@@ -1,22 +1,15 @@
 import Link from "next/link"
-import { Suspense } from "react"
 
 import type { VisitorInfo } from "@/components/layout/app-shell"
-import { NavLinks } from "@/components/layout/nav-links"
-import { UserMenu } from "@/components/layout/user-menu"
 import { Wordmark } from "@/components/layout/wordmark"
-import { NotificationsBell } from "@/components/social/notifications-bell"
-import { NotificationsMenu } from "@/components/social/notifications-menu"
 import { buttonVariants } from "@/components/ui/button"
-import { displayNameOf } from "@/lib/queries/session"
-import type { Profile } from "@/lib/domain/types"
 
 /**
- * `visitor`: página pública sem login — sem os links do app (todos pedem
- * conta) e, no lugar do menu, Entrar (que volta para esta página) e Criar
- * conta.
+ * A barra de cima de quem não está no app logado: a página pública aberta
+ * sem conta (`visitor`: Entrar, que volta para esta página, e Criar conta) ou
+ * a conta sem perfil (só a marca). Com login, a navegação é a `AppNav`.
  */
-export function Navbar({ profile, visitor }: { profile: Profile | null; visitor?: VisitorInfo }) {
+export function Navbar({ visitor }: { visitor?: VisitorInfo }) {
   return (
     <header
       className="sticky top-0 z-40 border-b border-line"
@@ -27,15 +20,12 @@ export function Navbar({ profile, visitor }: { profile: Profile | null; visitor?
       }}
     >
       <div className="shell flex h-14 items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-4 lg:gap-6">
-          <Link
-            href="/"
-            className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-brand-dim"
-          >
-            <Wordmark />
-          </Link>
-          {visitor ? null : <NavLinks />}
-        </div>
+        <Link
+          href="/"
+          className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-brand-dim"
+        >
+          <Wordmark />
+        </Link>
 
         {visitor ? (
           <div className="flex shrink-0 items-center gap-2">
@@ -48,17 +38,6 @@ export function Navbar({ profile, visitor }: { profile: Profile | null; visitor?
             <Link href="/cadastro" className={buttonVariants({ size: "sm" })}>
               Criar conta
             </Link>
-          </div>
-        ) : profile ? (
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Suspense fallback={<NotificationsMenu initialCount={0} />}>
-              <NotificationsBell />
-            </Suspense>
-            <UserMenu
-              name={displayNameOf(profile)}
-              username={profile.username}
-              avatarUrl={profile.avatar_url}
-            />
           </div>
         ) : null}
       </div>

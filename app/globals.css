@@ -70,12 +70,12 @@
 
 :root,
 .dark {
-  --bg: #131315;
-  --bg-soft: #171719;
-  --surface: #1d1d20;
-  --surface-hi: #232327;
-  --border: #2b2b31;
-  --border-hi: #3a3a42;
+  --bg: #121214;
+  --bg-soft: #16161a;
+  --surface: #1b1b1f;
+  --surface-hi: #232328;
+  --border: #2a2a31;
+  --border-hi: #3a3a43;
 
   --ink: #ececef;
   --faint: #6e6e78;
@@ -84,7 +84,7 @@
   --brand-dim: #8e6c96;
   --brand-wash: rgb(185 140 194 / 0.14);
   --brand-glow: rgb(185 140 194 / 0.3);
-  --danger: #c97b7b;
+  --danger: #d08585;
   --here: #6ea8f5;
 
   --background: var(--bg);
@@ -98,7 +98,7 @@
   --secondary: var(--surface-hi);
   --secondary-foreground: var(--ink);
   --muted: var(--surface-hi);
-  --muted-foreground: #9a9aa4;
+  --muted-foreground: #9d9da8;
   --accent: var(--surface-hi);
   --accent-foreground: var(--ink);
   --destructive: var(--danger);
@@ -195,7 +195,7 @@
   .vitrine-card {
     background: var(--tint-wash, var(--surface));
     border: 1px solid var(--tint-border, var(--border));
-    border-radius: var(--radius);
+    border-radius: 16px;
     transition:
       border-color 160ms ease,
       transform 160ms ease,

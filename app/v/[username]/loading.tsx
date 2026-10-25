@@ -4,8 +4,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 /** O cartão no topo e, embaixo, o cabeçalho e a grade das coleções. */
 export default function Loading() {
   return (
-    <div className="min-h-dvh">
-      <div className="h-14 border-b border-line" />
+    <div className="min-h-dvh md:pl-20 lg:pl-64">
+      <div className="h-14 border-b border-line md:hidden" />
+      <div className="fixed inset-y-0 left-0 hidden w-20 border-r border-line md:block lg:w-64" />
       <div className="shell">
         <div className="pt-6">
           <div className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-6">

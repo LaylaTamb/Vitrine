@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   copySummary,
+  exploreThemes,
   linkChanged,
   linkNews,
   parseExploreResults,
@@ -32,6 +33,23 @@ describe("Explorar", () => {
       { name: "Boteco", rating: null },
     ])
     expect(parseExploreResults(null)).toEqual([])
+  })
+
+  it("os temas não repetem o mesmo nome, nem com acento diferente", () => {
+    const themes = exploreThemes(
+      [
+        { name: "Cafés", icon: "☕" },
+        { name: "cafes", icon: null },
+        { name: "Bares", icon: "🍺" },
+        { name: " ", icon: null },
+        { name: "Filmes", icon: "🎬" },
+      ],
+      2
+    )
+    expect(themes).toEqual([
+      { name: "Cafés", icon: "☕" },
+      { name: "Bares", icon: "🍺" },
+    ])
   })
 
   it("avisa quando passa de 500", () => {

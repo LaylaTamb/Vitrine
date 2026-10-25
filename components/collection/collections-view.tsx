@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import Link from "next/link"
-import { FolderPlus, Library, Plus, Star, Trash2 } from "lucide-react"
+import { FolderPlus, Library, Pencil, Plus, SlidersHorizontal, Star, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
@@ -34,26 +34,26 @@ import {
 } from "@/components/collection/collections-search"
 import { FolderDialog } from "@/components/collection/folder-dialog"
 import { InboxCard } from "@/components/collection/inbox-card"
-import { PrivacyNote, PrivacySwitch } from "@/components/collection/privacy-switch"
+import { PrivacyChip, PrivacyNote } from "@/components/collection/privacy-switch"
 import { moveCollision } from "@/components/layout/drag-move"
 import { EmptyState } from "@/components/layout/empty-state"
 import { LevelNav } from "@/components/layout/level-nav"
+import { MoreMenu } from "@/components/layout/more-menu"
 import { PageHeader } from "@/components/layout/page-header"
 import { GridSizeToggle } from "@/components/layout/grid-size-toggle"
 import { useFolderParam } from "@/components/layout/use-folder-param"
 import { useStoredPreference } from "@/components/layout/use-stored-preference"
 import { ViewToggle, type ViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { breadcrumbOf, folderTotals, levelItems } from "@/lib/domain/collections"
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
+import { breadcrumbOf, folderGlyphs, folderTotals, levelItems } from "@/lib/domain/collections"
 import { readDropTarget } from "@/lib/domain/drag"
 import { canFavorite, withFavorite } from "@/lib/domain/favorites"
-import { defaultSortOf } from "@/lib/domain/filter"
 import { itemCount, plural } from "@/lib/domain/format"
 import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
 import { splitInbox } from "@/lib/domain/inbox"
-import { quickFieldOf } from "@/lib/domain/quick-field"
 import {
   restrictingAncestor,
   restrictionNote,
@@ -71,8 +71,8 @@ function parseView(raw: string | null): ViewMode | null {
   return raw === "grid" || raw === "list" ? raw : null
 }
 
+/** A pasta aberta, a caminho da Lixeira (a categoria se exclui no "⋯" dela). */
 interface DeleteTargetState {
-  kind: "folder" | "category"
   id: string
   name: string
   description: string
@@ -91,6 +91,9 @@ export function CollectionsView({
   searchable = false,
   trashCount,
   favoriteIds,
+  covers,
+  embedded = false,
+  filtersHref,
 }: {
   folders: Folder[]
   categories: Category[]
@@ -110,6 +113,12 @@ export function CollectionsView({
   searchable?: boolean
   /** As suas Coleções: o ícone da Lixeira no canto, com quantas coisas há nela. */
   trashCount?: number
+  /** category_id → até 3 fotos para a capa do card (migração 40). */
+  covers?: Record<string, string[]>
+  /** Dentro da aba Coleções do Perfil: sem o título grande. */
+  embedded?: boolean
+  /** O botão Filtros (o antigo Filtro geral): para onde ele leva. */
+  filtersHref?: string
   /**
    * As suas Coleções: as favoritas (ids, na ordem) — a estrela nos cards das
    * categorias e a do canto, que abre só elas. Ausente = sem estrelas.
@@ -287,33 +296,44 @@ export function CollectionsView({
     return parts.join(" · ")
   }
 
+  function askDeleteFolder(folder: Folder) {
+    const total = totals.get(folder.id)
+    setDeleteTarget({
+      id: folder.id,
+      name: folder.name,
+      description:
+        total && (total.categories > 0 || total.entries > 0)
+          ? `Essa pasta contém ${plural(total.categories, "categoria", "categorias")} e ${itemCount(total.entries)} no total. Tudo vai para a Lixeira, onde dá para restaurar por 30 dias.`
+          : "Essa pasta está vazia. Ela vai para a Lixeira por 30 dias.",
+    })
+  }
+
   async function confirmDelete() {
     if (!deleteTarget) return
-    const result =
-      deleteTarget.kind === "folder"
-        ? await actions.deleteFolder({ id: deleteTarget.id })
-        : await actions.deleteCategory({ id: deleteTarget.id })
-
+    const result = await actions.deleteFolder({ id: deleteTarget.id })
     if (!result.ok) {
       toast.error(result.error)
       return
     }
     const trashId = result.data?.trashId ?? null
-    const what = deleteTarget.kind === "folder" ? "Pasta" : "Categoria"
     if (trashId) {
       // Apagou sem querer: um toque traz de volta, sem ir até a Lixeira.
-      toast.success(`${what} na Lixeira por 30 dias.`, {
+      toast.success("Pasta na Lixeira por 30 dias.", {
         action: {
           label: "Desfazer",
           onClick: async () => {
             const restored = await restoreTrashAction({ id: trashId })
-            if (restored.ok) toast.success(`${what} de volta.`)
+            if (restored.ok) toast.success("Pasta de volta.")
             else toast.error(restored.error)
           },
         },
       })
     } else {
-      toast.success(`${what} excluída.`)
+      toast.success("Pasta excluída.")
+    }
+    // Apagou a pasta aberta: sobe para a de cima.
+    if (deleteTarget.id === currentFolderId) {
+      setCurrentFolderId(currentFolder?.parent_folder_id ?? null)
     }
     setDeleteTarget(null)
   }
@@ -329,18 +349,16 @@ export function CollectionsView({
         label={headerLabel}
         title={headerTitle}
         subtitle={headerSubtitle}
+        compact={embedded}
         actions={
           <>
+            {filtersHref ? (
+              <Link href={filtersHref} className={buttonVariants({ variant: "outline", size: "lg" })}>
+                <SlidersHorizontal className="size-4" /> Filtros
+              </Link>
+            ) : null}
             {canEdit ? (
               <>
-                {currentFolder ? (
-                  <PrivacySwitch
-                    kind="folder"
-                    id={currentFolder.id}
-                    name={currentFolder.name}
-                    visibility={visibilityOf(currentFolder)}
-                  />
-                ) : null}
                 <Button
                   variant="outline"
                   size="lg"
@@ -368,7 +386,7 @@ export function CollectionsView({
               ) : null}
               {favoriteIds !== undefined ? (
                 <Link
-                  href="/favoritos"
+                  href="?aba=favoritas"
                   title="Favoritos"
                   aria-label={
                     favorites.length > 0 ? `Favoritos (${favorites.length})` : "Favoritos"
@@ -444,6 +462,42 @@ export function CollectionsView({
             ]}
           />
 
+          {/* A pasta aberta: o nome, quem vê e o "⋯" (renomear, excluir). */}
+          {canEdit && currentFolder ? (
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h2 className="display min-w-0 text-2xl leading-tight [overflow-wrap:anywhere]">
+                  {currentFolder.name}
+                </h2>
+                <PrivacyChip
+                  kind="folder"
+                  id={currentFolder.id}
+                  name={currentFolder.name}
+                  visibility={visibilityOf(currentFolder)}
+                />
+              </div>
+              <MoreMenu label={`Mais opções de “${currentFolder.name}”`}>
+                <DropdownMenuItem
+                  onSelect={() =>
+                    setFolderDialog({
+                      open: true,
+                      folder: { id: currentFolder.id, name: currentFolder.name },
+                    })
+                  }
+                >
+                  <Pencil /> Renomear pasta
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => askDeleteFolder(currentFolder)}
+                >
+                  <Trash2 /> Excluir pasta
+                </DropdownMenuItem>
+              </MoreMenu>
+            </div>
+          ) : null}
+
           {canEdit && restrictedBy ? (
             <PrivacyNote>{restrictionNote("folder", restrictedBy)}</PrivacyNote>
           ) : null}
@@ -493,28 +547,10 @@ export function CollectionsView({
                       icon={null}
                       subtitle={folderSubtitle(item.id)}
                       onOpen={() => setCurrentFolderId(item.id)}
-                      canEdit={canEdit}
                       sortable={canEdit}
                       view={view}
                       dropInto={canEdit}
-                      onEdit={() =>
-                        setFolderDialog({
-                          open: true,
-                          folder: { id: item.id, name: item.folder.name },
-                        })
-                      }
-                      onDelete={() => {
-                        const total = totals.get(item.id)
-                        setDeleteTarget({
-                          kind: "folder",
-                          id: item.id,
-                          name: item.folder.name,
-                          description:
-                            total && (total.categories > 0 || total.entries > 0)
-                              ? `Essa pasta contém ${plural(total.categories, "categoria", "categorias")} e ${itemCount(total.entries)} no total. Tudo vai para a Lixeira, onde dá para restaurar por 30 dias.`
-                              : "Essa pasta está vazia. Ela vai para a Lixeira por 30 dias.",
-                        })
-                      }}
+                      glyphs={folderGlyphs(folders, others, item.id)}
                     />
                   ) : (
                     <CollectionCard
@@ -526,37 +562,14 @@ export function CollectionsView({
                       icon={item.category.icon}
                       subtitle={itemCount(counts[item.id] ?? 0)}
                       href={`/categoria/${item.id}`}
-                      canEdit={canEdit}
                       sortable={canEdit}
                       view={view}
+                      cover={covers?.[item.id]}
                       favorite={favoriteSet.has(item.id)}
                       onToggleFavorite={
                         canEdit && favoriteIds !== undefined && canFavorite(item.category)
                           ? () => toggleFavorite(item.category)
                           : undefined
-                      }
-                      onEdit={() =>
-                        setCategoryEditor({
-                          open: true,
-                          initial: {
-                            id: item.id,
-                            name: item.category.name,
-                            icon: item.category.icon,
-                            color: item.category.color,
-                            estrutura: item.category.estrutura,
-                            ratingEnabled: item.category.rating_enabled,
-                            defaultSort: defaultSortOf(item.category),
-                            quickField: quickFieldOf(item.category),
-                          },
-                        })
-                      }
-                      onDelete={() =>
-                        setDeleteTarget({
-                          kind: "category",
-                          id: item.id,
-                          name: item.category.name,
-                          description: `A categoria e ${itemCount(counts[item.id] ?? 0)} dentro dela vão para a Lixeira, onde dá para restaurar por 30 dias.`,
-                        })
                       }
                     />
                   )
@@ -605,7 +618,7 @@ export function CollectionsView({
             onOpenChange={(open) => {
               if (!open) setDeleteTarget(null)
             }}
-            title={deleteTarget?.kind === "folder" ? "Excluir pasta" : "Excluir categoria"}
+            title="Excluir pasta"
             description={deleteTarget?.description ?? ""}
             onConfirm={confirmDelete}
           />

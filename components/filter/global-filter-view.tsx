@@ -1,6 +1,13 @@
 "use client"
 
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Filter, X } from "lucide-react"
+import Link from "next/link"
+import {
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  Filter,
+  SlidersHorizontal,
+  X,
+} from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import { EntryCard } from "@/components/entry/entry-card"
@@ -8,12 +15,13 @@ import { GlobalFilterSidebar } from "@/components/filter/global-filter-sidebar"
 import { useGlobalFilter } from "@/components/filter/use-global-filter"
 import { EmptyState } from "@/components/layout/empty-state"
 import { PageHeader } from "@/components/layout/page-header"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { groupByCategory, sortDirLabel } from "@/lib/domain/filter"
 import { itemCount, plural } from "@/lib/domain/format"
 import type { Category, EntryView, Tag } from "@/lib/domain/types"
+import { cn } from "@/lib/utils"
 
 const GROUP_STORAGE_KEY = "vitrine:filtro:agrupar"
 
@@ -28,14 +36,22 @@ export function GlobalFilterView({
   categories,
   views,
   tags,
+  embedded = false,
+  closeHref,
 }: {
   categories: Category[]
   views: EntryView[]
   tags: Tag[]
+  /** Dentro da aba Coleções do Perfil (o botão Filtros): sem o título grande. */
+  embedded?: boolean
+  /** O "Fechar": volta para as coleções. */
+  closeHref?: string
 }) {
   const state = useGlobalFilter(categories, views)
   const { filter, sortOptions, sortOption, sortDir, filtered, active, ruleCount, clearAll } = state
   const [grouped, setGrouped] = useState(true)
+  // No celular os filtros ficam atrás de um botão: senão a lista empurra os itens para longe.
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   useEffect(() => {
     try {
@@ -72,17 +88,39 @@ export function GlobalFilterView({
       <PageHeader
         label="Acervo inteiro"
         title="Filtro geral"
+        compact={embedded}
         subtitle={
           active
             ? `${itemCount(filtered.length)} em ${plural(groups.length, "categoria", "categorias")}`
             : `${itemCount(views.length)} em ${plural(categories.length, "categoria", "categorias")}`
         }
         actions={
-          active ? (
-            <Button variant="outline" size="lg" onClick={clearAll}>
-              <X className="size-4" /> Limpar tudo
+          <>
+            <Button
+              variant="outline"
+              size="lg"
+              className="lg:hidden"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((open) => !open)}
+            >
+              <SlidersHorizontal className="size-4" /> Filtros
+              {ruleCount > 0 ? (
+                <span className="rounded-full bg-brand px-1.5 text-[0.65rem] text-primary-foreground">
+                  {ruleCount}
+                </span>
+              ) : null}
             </Button>
-          ) : null
+            {active ? (
+              <Button variant="outline" size="lg" onClick={clearAll}>
+                <X className="size-4" /> Limpar tudo
+              </Button>
+            ) : null}
+            {closeHref ? (
+              <Link href={closeHref} className={buttonVariants({ variant: "ghost", size: "lg" })}>
+                Fechar
+              </Link>
+            ) : null}
+          </>
         }
       />
 
@@ -90,7 +128,12 @@ export function GlobalFilterView({
           rolagem dos itens — sem isso os dois se moviam juntos, e uma barra
           lateral alta empurrava os itens pra fora da tela. */}
       <div className="grid gap-6 lg:grid-cols-[18rem_1fr] lg:items-start">
-        <aside className="space-y-5 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1">
+        <aside
+          className={cn(
+            "space-y-5 lg:sticky lg:top-20 lg:block lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1",
+            filtersOpen ? "block" : "hidden"
+          )}
+        >
           <GlobalFilterSidebar state={state} categories={categories} tags={tags} />
         </aside>
 

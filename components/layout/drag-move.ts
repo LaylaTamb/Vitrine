@@ -2,12 +2,38 @@
 
 import {
   closestCenter,
+  PointerSensor,
   pointerWithin,
   type CollisionDetection,
+  type PointerSensorOptions,
 } from "@dnd-kit/core"
 import type { SortingStrategy } from "@dnd-kit/sortable"
+import type { PointerEvent as ReactPointerEvent } from "react"
 
 import { intoTargetId, isDropTargetId } from "@/lib/domain/drag"
+
+/**
+ * O PointerSensor de sempre, menos o dedo num `[data-hold-drag]` (os chips de
+ * subpasta, numa fileira que rola de lado): ali quem arrasta é o TouchSensor,
+ * depois de segurar — senão rolar a fileira viraria arrastar um chip.
+ */
+export class HandlePointerSensor extends PointerSensor {
+  static activators = [
+    {
+      eventName: "onPointerDown" as const,
+      handler: (
+        { nativeEvent: event }: ReactPointerEvent,
+        { onActivation }: PointerSensorOptions
+      ) => {
+        if (!event.isPrimary || event.button !== 0) return false
+        const target = event.target instanceof Element ? event.target : null
+        if (event.pointerType === "touch" && target?.closest("[data-hold-drag]")) return false
+        onActivation?.({ event })
+        return true
+      },
+    },
+  ]
+}
 
 type SortableData = { sortable?: { containerId?: string } } | undefined
 

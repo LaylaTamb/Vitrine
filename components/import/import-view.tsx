@@ -426,7 +426,7 @@ function LetterboxdImport() {
       <p className="text-xs leading-relaxed text-faint">
         Para os próximos filmes chegarem sozinhos, conecte o seu @ em{" "}
         <Link
-          href="/perfil?editar=1#letterboxd"
+          href="/configuracoes?secao=letterboxd"
           className="text-foreground underline underline-offset-2 hover:text-brand"
         >
           Meu perfil → Editar cartão

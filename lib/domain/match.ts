@@ -338,7 +338,8 @@ export interface MatchCopyInfo {
   group: number | null
   /** Os pares com você primeiro. */
   pairs: MatchCopyPair[]
-  totals: { common: number; suggestions: number }
+  /** `theirs`: os seus itens que são sugestão para alguém do match. */
+  totals: { common: number; suggestions: number; theirs: number }
 }
 
 /** Uma linha da cópia, como vem do banco. */
@@ -406,12 +407,14 @@ export function decorateMatchCopy(input: {
   const byEntry = new Map<string, EntryMatch>()
   let common = 0
   let suggestions = 0
+  let theirs = 0
   for (const item of items) {
     const mark = marks.get(item.id) ?? { common: false, suggestionFor: [] }
     const person = personOf.get(item.ownerId)
     const suggestionForMe = mark.suggestionFor.includes(meId)
     if (mark.common) common += 1
     if (suggestionForMe) suggestions += 1
+    if (item.ownerId === meId && mark.suggestionFor.length > 0) theirs += 1
     byEntry.set(item.id, {
       ownerId: item.ownerId,
       ownerLabel: person?.label ?? "alguém",
@@ -439,15 +442,19 @@ export function decorateMatchCopy(input: {
       people,
       group,
       pairs: copyPairs,
-      totals: { common, suggestions },
+      totals: { common, suggestions, theirs },
     },
     byEntry,
   }
 }
 
-/** Os filtros rápidos da cópia. `person`: só os itens de alguém (a legenda). */
+/**
+ * Os filtros rápidos da cópia (as abas): todos, sugestões para você, em comum
+ * e `theirs` — os seus itens que são sugestão para os outros. `person`: só os
+ * itens de alguém (a legenda).
+ */
 export interface MatchFilter {
-  mode: "all" | "common" | "suggestions"
+  mode: "all" | "common" | "suggestions" | "theirs"
   person: string | null
 }
 
@@ -468,6 +475,7 @@ export function applyMatchFilter<T extends { match?: EntryMatch | null }>(
     if (filter.person !== null && match.ownerId !== filter.person) return false
     if (filter.mode === "common") return match.common
     if (filter.mode === "suggestions") return match.suggestionForMe
+    if (filter.mode === "theirs") return match.isMine && match.suggestionFor.length > 0
     return true
   })
 }

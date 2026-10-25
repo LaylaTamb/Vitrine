@@ -1,56 +1,21 @@
-import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 
-import { AppShell } from "@/components/layout/app-shell"
-import { MapView, type MapTab } from "@/components/map/map-view"
-import { HereBanner } from "@/components/nearby/here-banner"
-import { placeTargets } from "@/lib/domain/nearby"
-import type { EntryView, Tag } from "@/lib/domain/types"
-import { toView } from "@/lib/domain/view"
-import { getAcervo } from "@/lib/queries/acervo"
-import { getMyPlaces } from "@/lib/queries/places"
+import { profilePath } from "@/lib/domain/username"
 import { getMyProfile, requireUser } from "@/lib/queries/session"
-
-export const metadata: Metadata = { title: "Mapa · Vitrine" }
 
 type SearchParams = Promise<{ item?: string; aba?: string; categoria?: string }>
 
 /**
- * `/mapa` — tudo que eu marquei com Localização, com o mesmo filtro do
- * Filtro geral. Só do dono: a tela de outra pessoa (`/v/...`) não tem mapa.
- *
- * O acervo, o perfil e a localização dos itens vêm juntos; o mapa
- * (MapLibre + OpenFreeMap) só carrega no navegador, e só nesta página.
+ * `/mapa` — agora é a aba Mapa do seu perfil. Os links "Ver no mapa"
+ * (`?categoria=`, `?item=`) e a aba Sugestões (`?aba=sugestoes`) seguem junto.
  */
-export default async function MapPage({ searchParams }: { searchParams: SearchParams }) {
-  const user = await requireUser()
-
-  const [{ categories, entriesByCategory, tags }, profile, { places, ready }, query] =
-    await Promise.all([getAcervo(user.id), getMyProfile(), getMyPlaces(user.id), searchParams])
-
-  const tagsById = new Map<string, Tag>(tags.map((tag) => [tag.id, tag]))
-  const views: EntryView[] = []
-  for (const category of categories) {
-    for (const entry of entriesByCategory.get(category.id) ?? []) {
-      views.push(toView(entry, category.estrutura, tagsById, category.name))
-    }
-  }
-
-  const initialTab: MapTab = query.aba === "sugestoes" ? "sugestoes" : "mapa"
-
-  return (
-    <AppShell profile={profile}>
-      {/* "Você está em X?": só aparece com a localização já autorizada. */}
-      <HereBanner targets={placeTargets(categories)} />
-      <MapView
-        categories={categories}
-        views={views}
-        tags={tags}
-        places={places}
-        placesReady={ready}
-        initialTab={initialTab}
-        focusEntryId={query.item ?? null}
-        initialCategoryId={query.categoria ?? null}
-      />
-    </AppShell>
-  )
+export default async function Page({ searchParams }: { searchParams: SearchParams }) {
+  await requireUser()
+  const [profile, query] = await Promise.all([getMyProfile(), searchParams])
+  if (!profile) redirect("/")
+  const params = new URLSearchParams({ aba: "mapa" })
+  if (query.aba === "sugestoes") params.set("mapa", "sugestoes")
+  if (query.categoria) params.set("categoria", query.categoria)
+  if (query.item) params.set("item", query.item)
+  redirect(`${profilePath(profile.username)}?${params.toString()}`)
 }

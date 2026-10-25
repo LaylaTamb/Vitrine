@@ -221,3 +221,34 @@ export function applyOrder<T extends { id: string }>(items: T[], ids: string[] |
       (position.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (position.get(b.id) ?? Number.MAX_SAFE_INTEGER)
   )
 }
+
+// ---------------------------------------------------------------------------
+// Capas dos cards (migração 40)
+// ---------------------------------------------------------------------------
+
+/** As linhas da view `category_covers` → até 3 imagens por categoria, na ordem. */
+export function coversByCategory(
+  rows: { category_id: string; image_url: string | null; position: number }[]
+): Record<string, string[]> {
+  const covers: Record<string, string[]> = {}
+  for (const row of [...rows].sort((a, b) => a.position - b.position)) {
+    if (!row.image_url?.trim()) continue
+    const list = (covers[row.category_id] ??= [])
+    if (list.length < 3) list.push(row.image_url)
+  }
+  return covers
+}
+
+/** O que a capa de uma pasta mostra: os ícones do que está dentro (subpastas primeiro). */
+export function folderGlyphs(
+  folders: Pick<TreeFolder, "parent_folder_id">[],
+  categories: Pick<Category, "folder_id" | "icon">[],
+  folderId: string,
+  max = 4
+): string[] {
+  const inside = [
+    ...folders.filter((folder) => folder.parent_folder_id === folderId).map(() => "📁"),
+    ...categories.filter((category) => category.folder_id === folderId).map((c) => c.icon || "▫"),
+  ]
+  return inside.slice(0, max)
+}

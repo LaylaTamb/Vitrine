@@ -1,10 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   DndContext,
   KeyboardSensor,
-  PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -26,18 +27,22 @@ import {
   ImageOff,
   Inbox,
   MapIcon,
+  Pencil,
   Plus,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
+import { restoreTrashAction } from "@/app/lixeira/actions"
+
 import { CategoryEditor } from "@/components/category/category-editor"
 import { DeleteEntryFolderDialog } from "@/components/category/delete-entry-folder-dialog"
+import { EntryFolderChips } from "@/components/category/entry-folder-chips"
 import { FilterBar } from "@/components/category/filter-bar"
 import { StatsPanel } from "@/components/category/stats-panel"
-import { CollectionCard } from "@/components/collection/collection-card"
-import { PrivacyNote, PrivacySwitch } from "@/components/collection/privacy-switch"
+import { PrivacyChip, PrivacyNote } from "@/components/collection/privacy-switch"
 import { ConnectedRefresh } from "@/components/category/connected-refresh"
 import { CategoryFavoriteButton } from "@/components/favorites/favorite-star"
 import { FolderDialog } from "@/components/collection/folder-dialog"
@@ -50,15 +55,17 @@ import { LinkedBar, type LinkView } from "@/components/explore/linked-bar"
 import { BringButton } from "@/components/match/match-marks"
 import { MatchPanel } from "@/components/match/match-panel"
 import { EmptyState } from "@/components/layout/empty-state"
-import { moveCollision, noShiftStrategy } from "@/components/layout/drag-move"
+import { HandlePointerSensor, moveCollision, noShiftStrategy } from "@/components/layout/drag-move"
 import { LevelNav, type Crumb } from "@/components/layout/level-nav"
+import { MoreMenu } from "@/components/layout/more-menu"
 import { PageHeader } from "@/components/layout/page-header"
 import { useFolderParam } from "@/components/layout/use-folder-param"
 import { useStoredPreference } from "@/components/layout/use-stored-preference"
 import type { EntryViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { applyOrder, breadcrumbOf, foldersOf } from "@/lib/domain/collections"
 import { readDropTarget } from "@/lib/domain/drag"
 import { entryFolderTotals, itemsAt, itemsUnder, resolveFolderId } from "@/lib/domain/entry-folders"
@@ -171,6 +178,7 @@ export function CategoryView({
   match?: MatchCopyInfo | null
 }) {
   const { actions } = useVitrine()
+  const router = useRouter()
   const matchMode = match !== null
   // Na cópia de um match o dono organiza (pastas, tags, excluir), mas não edita os itens.
   const editItems = canEdit && !matchMode
@@ -208,6 +216,7 @@ export function CategoryView({
   }, [initialEditId])
   const [structureOpen, setStructureOpen] = useState(false)
   const [deleting, setDeleting] = useState<EntryView | null>(null)
+  const [deletingCategory, setDeletingCategory] = useState(false)
 
   const [folderDialog, setFolderDialog] = useState<{
     open: boolean
@@ -234,8 +243,14 @@ export function CategoryView({
   const cardView = view === "list" ? "list" : "grid"
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(HandlePointerSensor, { activationConstraint: { distance: 4 } }),
+    // Só os chips de subpasta chegam aqui (o resto o de cima já pegou).
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+      // Enter abre o chip de subpasta; Espaço pega para arrastar.
+      keyboardCodes: { start: ["Space"], cancel: ["Escape"], end: ["Space", "Enter", "Tab"] },
+    })
   )
 
   /**
@@ -486,6 +501,30 @@ export function CategoryView({
     )
   }
 
+  /** Vai para a Lixeira (com Desfazer no aviso) e volta para onde a categoria estava. */
+  async function confirmDeleteCategory() {
+    const result = await actions.deleteCategory({ id: category.id })
+    if (!result.ok) {
+      toast.error(result.error)
+      return
+    }
+    const trashId = result.data?.trashId ?? null
+    toast.success(trashId ? "Categoria na Lixeira por 30 dias." : "Categoria excluída.", {
+      action: trashId
+        ? {
+            label: "Desfazer",
+            onClick: async () => {
+              const restored = await restoreTrashAction({ id: trashId })
+              if (restored.ok) toast.success("Categoria de volta.")
+              else toast.error(restored.error)
+            },
+          }
+        : undefined,
+    })
+    setDeletingCategory(false)
+    router.push(withFolder(collectionsHref, category.folder_id))
+  }
+
   async function confirmDelete() {
     if (!deleting) return
     const result = await actions.deleteEntry({ id: deleting.id, categoryId: category.id })
@@ -522,15 +561,6 @@ export function CategoryView({
     setFormOpen(true)
   }
 
-  function folderSubtitle(folderId: string): string {
-    const total = totals.get(folderId)
-    if (!total || (total.entries === 0 && total.folders === 0)) return "Pasta vazia"
-    const parts: string[] = []
-    if (total.folders > 0) parts.push(plural(total.folders, "subpasta", "subpastas"))
-    parts.push(itemCount(total.entries))
-    return parts.join(" · ")
-  }
-
   function clearFilters() {
     setFilter((current) => ({ ...current, query: "", minRating: "", maxRating: "", tagIds: [] }))
     setMatchFilter(EMPTY_MATCH_FILTER)
@@ -564,72 +594,69 @@ export function CategoryView({
       />
     ) : null
 
+  // O "⋯": o que é raro fica aqui, para o topo ter uma ação só à vista (＋ Item).
+  // A cópia de um match é uma lista solta: nada de pasta nem item novo, só excluir.
+  const moreMenu = canEdit ? (
+    <MoreMenu label={`Mais opções de “${category.name}”`}>
+      {/* A "A organizar" tem estrutura fixa (migração 17). */}
+      {editItems && !inbox ? (
+        <DropdownMenuItem onSelect={() => setStructureOpen(true)}>
+          <SlidersHorizontal /> Editar categoria e campos
+        </DropdownMenuItem>
+      ) : null}
+      {matchMode ? null : (
+        <DropdownMenuItem onSelect={() => setFolderDialog({ open: true, folder: null })}>
+          <FolderPlus /> Nova subpasta
+        </DropdownMenuItem>
+      )}
+      {/* O Mapa só mostra o que é meu. */}
+      {!matchMode && locationFieldsOf(category.estrutura).length > 0 ? (
+        <DropdownMenuItem asChild>
+          <Link href={`/mapa?categoria=${category.id}`}>
+            <MapIcon /> Ver no mapa
+          </Link>
+        </DropdownMenuItem>
+      ) : null}
+      {currentFolder && !matchMode ? (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() =>
+              setFolderDialog({
+                open: true,
+                folder: { id: currentFolder.id, name: currentFolder.name },
+              })
+            }
+          >
+            <Pencil /> Renomear “{currentFolder.name}”
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() =>
+              setDeletingFolder({
+                id: currentFolder.id,
+                name: currentFolder.name,
+                parentId: currentFolder.parent_folder_id,
+              })
+            }
+          >
+            <Trash2 /> Excluir “{currentFolder.name}”
+          </DropdownMenuItem>
+        </>
+      ) : null}
+      {inbox ? null : (
+        <>
+          {matchMode ? null : <DropdownMenuSeparator />}
+          <DropdownMenuItem variant="destructive" onSelect={() => setDeletingCategory(true)}>
+            <Trash2 /> Excluir categoria
+          </DropdownMenuItem>
+        </>
+      )}
+    </MoreMenu>
+  ) : null
+
   return (
     <>
-      <PageHeader
-        label={
-          matchMode
-            ? "match · só você vê"
-            : owner && !canEdit
-              ? `coleção de ${owner.display_name || owner.username}`
-              : "sua coleção"
-        }
-        title={
-          <span className="flex items-center gap-2">
-            {category.icon ? <span aria-hidden>{category.icon}</span> : null}
-            {/* Um @ comprido (o nome da cópia de um match) quebra em qualquer ponto. */}
-            <span className="min-w-0 [overflow-wrap:anywhere]">{category.name}</span>
-          </span>
-        }
-        subtitle={
-          entryFolders.length > 0
-            ? `${itemCount(views.length)} · ${plural(entryFolders.length, "pasta", "pastas")}`
-            : itemCount(views.length)
-        }
-        actions={
-          // A cópia de um match é uma lista solta: nada de pasta nem item novo
-          // (a estrela, sim).
-          canEdit && matchMode ? (
-            favoriteButton
-          ) : canEdit ? (
-            <>
-              {favoriteButton}
-              <PrivacySwitch
-                kind="category"
-                id={category.id}
-                name={category.name}
-                visibility={visibility}
-              />
-              {/* O Mapa só mostra o que é meu. */}
-              {locationFieldsOf(category.estrutura).length > 0 ? (
-                <Link
-                  href={`/mapa?categoria=${category.id}`}
-                  className={buttonVariants({ variant: "outline", size: "lg" })}
-                >
-                  <MapIcon className="size-4" /> Ver no mapa
-                </Link>
-              ) : null}
-              {/* A "A organizar" tem estrutura fixa (migração 17). */}
-              {inbox ? null : (
-                <Button variant="outline" size="lg" onClick={() => setStructureOpen(true)}>
-                  <SlidersHorizontal className="size-4" /> Estrutura
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setFolderDialog({ open: true, folder: null })}
-              >
-                <FolderPlus className="size-4" /> Nova pasta
-              </Button>
-              <Button size="lg" onClick={openNewEntry}>
-                <Plus className="size-4" /> Novo item
-              </Button>
-            </>
-          ) : null
-        }
-      />
-
       {/* Um só `DndContext` da trilha até os itens: arrastar para um degrau sobe de nível. */}
       <DndContext
         id="dnd-categoria"
@@ -637,7 +664,57 @@ export function CategoryView({
         collisionDetection={moveCollision}
         onDragEnd={onDragEnd}
       >
-        <LevelNav trail={trail} />
+        <div className="pt-6">
+          <LevelNav trail={trail} />
+        </div>
+
+        <PageHeader
+          className="pt-0"
+          label={
+            matchMode
+              ? "match · só você vê"
+              : owner && !canEdit
+                ? `coleção de ${owner.display_name || owner.username}`
+                : undefined
+          }
+          title={
+            <span className="flex items-center gap-2">
+              {category.icon ? <span aria-hidden>{category.icon}</span> : null}
+              {/* Um @ comprido (o nome da cópia de um match) quebra em qualquer ponto. */}
+              <span className="min-w-0 [overflow-wrap:anywhere]">{category.name}</span>
+              {favoriteButton}
+            </span>
+          }
+          subtitle={
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>
+                {entryFolders.length > 0
+                  ? `${itemCount(views.length)} · ${plural(entryFolders.length, "pasta", "pastas")}`
+                  : itemCount(views.length)}
+              </span>
+              {canEdit && !matchMode ? (
+                <PrivacyChip
+                  kind="category"
+                  id={category.id}
+                  name={category.name}
+                  visibility={visibility}
+                />
+              ) : null}
+            </span>
+          }
+          actions={
+            canEdit ? (
+              <>
+                {editItems ? (
+                  <Button size="lg" onClick={openNewEntry}>
+                    <Plus className="size-4" /> Item
+                  </Button>
+                ) : null}
+                {moreMenu}
+              </>
+            ) : null
+          }
+        />
 
         {canEdit && autoRefresh ? (
         <ConnectedRefresh categoryId={category.id} provider={autoRefresh} />
@@ -698,47 +775,21 @@ export function CategoryView({
             gridSize={gridSize}
             onGridSizeChange={changeGridSize}
             active={active}
+            resultCount={tab === "numeros" ? statsViews.length : filtered.length}
             ratingEnabled={ratingEnabled}
             showListControls={tab === "itens"}
           />
 
           {tab === "itens" && levelFolders.length > 0 ? (
-            <SortableContext
-              items={levelFolders.map((folder) => folder.id)}
-              strategy={dragStrategy}
-            >
-              <div
-                className={cn(
-                  cardView === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2"
-                )}
-              >
-                {levelFolders.map((folder) => (
-                  <CollectionCard
-                    key={folder.id}
-                    id={folder.id}
-                    kind="folder"
-                    name={folder.name}
-                    icon={null}
-                    subtitle={folderSubtitle(folder.id)}
-                    onOpen={() => setFolderParam(folder.id)}
-                    canEdit={canEdit}
-                    sortable={canEdit}
-                    view={cardView}
-                    dropInto={canDropHere}
-                    onEdit={() =>
-                      setFolderDialog({ open: true, folder: { id: folder.id, name: folder.name } })
-                    }
-                    onDelete={() =>
-                      setDeletingFolder({
-                        id: folder.id,
-                        name: folder.name,
-                        parentId: folder.parent_folder_id,
-                      })
-                    }
-                  />
-                ))}
-              </div>
-            </SortableContext>
+            <EntryFolderChips
+              folders={levelFolders}
+              countOf={(folderId) => totals.get(folderId)?.entries ?? 0}
+              onOpen={setFolderParam}
+              onCreate={
+                canDropHere ? () => setFolderDialog({ open: true, folder: null }) : undefined
+              }
+              canEdit={canDropHere}
+            />
           ) : null}
 
           {tab === "numeros" ? (
@@ -953,6 +1004,14 @@ export function CategoryView({
             onOpenChange={(open) => {
               if (!open) setDeletingFolder(null)
             }}
+          />
+
+          <ConfirmDialog
+            open={deletingCategory}
+            onOpenChange={setDeletingCategory}
+            title="Excluir categoria"
+            description={`“${category.name}” e ${itemCount(views.length)} dentro dela vão para a Lixeira, onde dá para restaurar por 30 dias.`}
+            onConfirm={confirmDeleteCategory}
           />
 
           <ConfirmDialog

@@ -26,7 +26,14 @@ import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { Tag } from "@/lib/domain/types"
 import type { TagWithUsage } from "@/lib/queries/tags"
 
-export function TagsView({ tags }: { tags: TagWithUsage[] }) {
+export function TagsView({
+  tags,
+  embedded = false,
+}: {
+  tags: TagWithUsage[]
+  /** Dentro das Configurações: sem o título grande. */
+  embedded?: boolean
+}) {
   const { actions } = useVitrine()
   const [editing, setEditing] = useState<TagWithUsage | null>(null)
   const [creating, setCreating] = useState(false)
@@ -70,6 +77,7 @@ export function TagsView({ tags }: { tags: TagWithUsage[] }) {
   return (
     <>
       <PageHeader
+        compact={embedded}
         label="Vocabulário"
         title="Tags"
         subtitle="As tags são do grupo inteiro: qualquer pessoa cria, edita e apaga, e a mudança vale para o acervo de todo mundo."

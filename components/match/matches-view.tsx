@@ -59,9 +59,8 @@ export function MatchesView({
   return (
     <>
       <PageHeader
-        label="Comparar coleções"
-        title="Matches"
-        subtitle="Junte até 8 amigos: cada um ganha a sua cópia, com o que vocês têm em comum e sugestões."
+        title="Match"
+        subtitle="Compare gostos com até 7 amigos: cada um ganha a sua cópia, com o que vocês têm em comum e o que trazer."
         actions={
           notReady ? null : (
             <Button onClick={() => setCreating(true)}>
@@ -177,7 +176,8 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
   return (
     <div
       className={cn(
-        "relative space-y-3 rounded-xl border border-line bg-surface p-4",
+        "relative space-y-3 rounded-2xl border p-4",
+        state === "answer" ? "border-brand-dim bg-brand-wash" : "border-line bg-surface",
         state === "canceled" && "opacity-60"
       )}
     >
@@ -235,12 +235,12 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
             <Check className="size-4" /> Aceitar
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setConfirming(true)} disabled={pending}>
-            Recusar
+            Agora não
           </Button>
         </div>
       ) : state === "ready" ? (
-        <Button size="sm" onClick={open} disabled={pending}>
-          {pending ? "Abrindo…" : "Abrir a sua cópia"} <ArrowRight className="size-4" />
+        <Button className="w-full sm:w-auto" onClick={open} disabled={pending}>
+          {pending ? "Abrindo…" : "Ver o match"} <ArrowRight className="size-4" />
         </Button>
       ) : state === "waiting" ? (
         <Button

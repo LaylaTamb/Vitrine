@@ -21,10 +21,10 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.redirect(`${origin}/login?proximo=${encodeURIComponent("/perfil?editar=1")}`)
+    return NextResponse.redirect(`${origin}/login?proximo=${encodeURIComponent("/configuracoes?secao=steam")}`)
   }
   if (!steamConfigured()) {
-    return NextResponse.redirect(`${origin}/perfil?editar=1&steam=sem-chave#steam`)
+    return NextResponse.redirect(`${origin}/configuracoes?secao=steam&steam=sem-chave`)
   }
 
   const state = randomBytes(16).toString("hex")

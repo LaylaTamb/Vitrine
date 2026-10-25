@@ -63,7 +63,7 @@ describe("notificações", () => {
     const href = (username: string) => `/v/${username}`
     expect(notificationHref({ type: "match_invite", actor }, href)).toBe("/matches")
     expect(notificationHref({ type: "new_follower", actor }, href)).toBe("/v/ana")
-    expect(notificationHref({ type: "import_done", actor: null }, href)).toBe("/")
+    expect(notificationHref({ type: "import_done", actor: null }, href)).toBe("/perfil")
   })
 
   it("amigos pelo QR", () => {

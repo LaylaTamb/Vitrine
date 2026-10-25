@@ -119,7 +119,8 @@ export function BulkBar({
 
   return (
     <>
-      <div className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+      {/* No celular, acima das abas de baixo. */}
+      <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 md:bottom-4">
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line-hi bg-surface-hi/95 px-3 py-2 shadow-lg backdrop-blur-sm">
           <span className="px-1 text-sm">
             <span className="display text-base">{selectedIds.length}</span>{" "}

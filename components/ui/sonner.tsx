@@ -16,6 +16,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="dark"
       className="toaster group"
       position="bottom-center"
+      // No celular, acima das abas de baixo (a barra do app logado).
+      mobileOffset={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,

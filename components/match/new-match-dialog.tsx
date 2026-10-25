@@ -111,8 +111,8 @@ export function NewMatchDialog({
         ) : friends.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Você ainda não tem amigos por aqui — amigos são quem você segue e segue você de volta.{" "}
-            <Link href="/usuarios" className="text-foreground underline underline-offset-2">
-              Ver Pessoas
+            <Link href="/explorar" className="text-foreground underline underline-offset-2">
+              Achar pessoas no Descobrir
             </Link>
           </p>
         ) : (

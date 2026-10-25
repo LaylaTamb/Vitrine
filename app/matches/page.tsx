@@ -6,7 +6,7 @@ import { MATCHES_NOT_READY } from "@/lib/domain/match"
 import { getMyFriends, getMyMatches } from "@/lib/queries/matches"
 import { getMyProfile, requireUser } from "@/lib/queries/session"
 
-export const metadata: Metadata = { title: "Matches · Vitrine" }
+export const metadata: Metadata = { title: "Match · Vitrine" }
 
 /**
  * `/matches` — os convites e os matches de quem está logado (migração 30), e

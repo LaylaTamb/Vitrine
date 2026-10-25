@@ -14,7 +14,6 @@ import {
   qrLink,
   type RedeemStatus,
 } from "@/lib/domain/qr"
-import type { NotificationView } from "@/lib/domain/social"
 import { getMyProfile, requireUser } from "@/lib/queries/session"
 import { createClient } from "@/lib/supabase/server"
 
@@ -152,20 +151,6 @@ export async function unblockAction(input: { profileId: string }): Promise<Actio
 // ---------------------------------------------------------------------------
 
 /** As 30 notificações mais recentes. Sem a migração 21: nenhuma. */
-export async function listNotificationsAction(): Promise<ActionResult<NotificationView[]>> {
-  await requireUser()
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("notifications")
-    .select(
-      "id, type, read_at, created_at, payload, actor:profiles!notifications_actor_id_fkey(username, display_name, avatar_url)"
-    )
-    .order("created_at", { ascending: false })
-    .limit(30)
-  if (error) return isMissingSchema(error) ? ok([]) : fail(error)
-  return ok((data ?? []) as unknown as NotificationView[])
-}
-
 /** Marca todas como lidas (o que a pessoa acabou de ver no sininho). */
 export async function markNotificationsReadAction(): Promise<ActionResult> {
   await requireUser()

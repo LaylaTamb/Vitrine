@@ -15,6 +15,7 @@ export function PageHeader({
   actions,
   className,
   as: Heading = "h1",
+  compact = false,
 }: {
   label?: string
   title: ReactNode
@@ -23,7 +24,21 @@ export function PageHeader({
   className?: string
   /** `h2` quando outro bloco da página já tem o `h1` (o cartão do perfil). */
   as?: "h1" | "h2"
+  /**
+   * Dentro de uma aba do Perfil: só o subtítulo e as ações, numa linha — o
+   * nome da aba já diz o que é.
+   */
+  compact?: boolean
 }) {
+  if (compact) {
+    if (!subtitle && !actions) return null
+    return (
+      <div className={cn("mb-4 flex flex-wrap items-center justify-between gap-3", className)}>
+        {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : <span />}
+        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      </div>
+    )
+  }
   return (
     <div
       className={cn(

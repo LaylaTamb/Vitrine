@@ -6,13 +6,15 @@ import {
   MessageCircle,
   Music,
   Pencil,
+  Settings,
   Star,
   type LucideIcon,
 } from "lucide-react"
 
+import { CoverImage } from "@/components/collection/collection-card"
 import { CopyHandleChip } from "@/components/social/copy-handle-chip"
 import { ProfileBanner } from "@/components/social/profile-banner"
-import { ShareStoryButton } from "@/components/social/share-story-button"
+import { ShareProfileButton } from "@/components/social/share-profile-button"
 import { Avatar } from "@/components/ui/avatar-image"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -25,7 +27,6 @@ import {
   type SocialProvider,
 } from "@/lib/domain/card"
 import { formatRating, itemCount } from "@/lib/domain/format"
-import { profilePath } from "@/lib/domain/username"
 
 const SOCIAL_ICONS: Record<SocialProvider, LucideIcon> = {
   instagram: AtSign,
@@ -46,54 +47,78 @@ const CHIP =
  * `ready = false`: a migração 23 ainda não rodou — o cartão mostra só o
  * nome e o @, e o dono não ganha o botão do story.
  *
- * O dono edita aqui mesmo: "Editar cartão" abre `?editar=1`, e o painel de
- * edição aparece logo abaixo (`ProfileEditPanel`).
+ * No seu perfil: Editar perfil (nas Configurações), Compartilhar (link,
+ * story e QR) e as Configurações. Embaixo, as abas
+ * Coleções, Favoritas e Mapa (`ProfileTabs`).
  */
 export function ProfileCardView({
   card,
   isMe,
   ready,
   social,
-  editing = false,
 }: {
   card: ProfileCard
   isMe: boolean
   ready: boolean
-  /** O painel de edição está aberto embaixo: o botão Editar sai. */
-  editing?: boolean
   /** A faixa social (seguir, contagens) ou o convite para entrar. */
   social?: ReactNode
 }) {
   const { banner, profile, bio, links, categories } = card
   const name = profile.display_name || profile.username
 
+  // As ações do seu perfil: no computador ao lado da foto; no celular, numa
+  // fileira só delas, embaixo (como no Instagram).
+  const actions = isMe ? (
+    <>
+      <Link
+        href="/configuracoes?secao=perfil"
+        className={buttonVariants({ variant: "secondary", size: "lg" })}
+      >
+        <Pencil className="size-4" />
+        {cardHasContent(card) ? "Editar perfil" : "Montar perfil"}
+      </Link>
+      <ShareProfileButton username={profile.username} storyReady={ready} />
+      <Link
+        href="/configuracoes"
+        aria-label="Configurações"
+        title="Configurações"
+        className={buttonVariants({ variant: "secondary", size: "icon-lg" })}
+      >
+        <Settings className="size-4" />
+      </Link>
+    </>
+  ) : null
+
   return (
-    <section
-      aria-label={`Cartão de @${profile.username}`}
-      className="overflow-hidden rounded-2xl border border-line bg-surface"
-    >
+    <section aria-label={`Perfil de @${profile.username}`}>
       {/* O banner no topo e a foto por cima da borda dele, como no Twitter. */}
-      <ProfileBanner banner={banner} />
-      <div className="px-4 pb-4 sm:px-6 sm:pb-6">
+      <ProfileBanner banner={banner} className="rounded-2xl" />
+      <div className="relative -mt-12 flex flex-wrap items-end justify-between gap-3 px-1 sm:px-4">
         <Avatar
           name={name}
           src={profile.avatar_url}
-          size={88}
-          className="relative -mt-11 border-4 border-surface"
+          size={96}
+          className="relative border-4 border-bg"
         />
-        <div className="mt-2 min-w-0">
-          <h1 className="display text-2xl leading-tight break-words sm:text-3xl">{name}</h1>
+        {actions ? (
+          <div className="hidden flex-wrap items-center gap-2 pb-1 md:flex">{actions}</div>
+        ) : null}
+      </div>
+
+      <div className="mt-3 space-y-3 px-1 sm:px-4">
+        <div className="min-w-0">
+          <h1 className="display text-3xl leading-tight break-words">{name}</h1>
           <p className="truncate text-sm text-muted-foreground">@{profile.username}</p>
         </div>
 
         {bio ? (
-          <p className="mt-4 text-sm leading-relaxed break-words whitespace-pre-line text-foreground">
+          <p className="max-w-2xl text-[0.95rem] leading-relaxed break-words whitespace-pre-line text-foreground">
             {bio}
           </p>
         ) : null}
 
         {links.length > 0 ? (
-          <ul className="mt-3 flex flex-wrap gap-2" aria-label="Redes">
+          <ul className="flex flex-wrap gap-2" aria-label="Redes">
             {links.map((link) => (
               <li key={link.provider} className="max-w-full">
                 <SocialChip link={link} />
@@ -102,42 +127,33 @@ export function ProfileCardView({
           </ul>
         ) : null}
 
-        {social ? <div className="mt-4">{social}</div> : null}
+        {social}
 
-        {categories.length > 0 ? (
-          <div className="mt-5">
-            <p className="plaque mb-2">Destaques</p>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
-                <li key={category.id} className="min-w-0">
-                  <CardCategoryBox category={category} />
-                </li>
-              ))}
-            </ul>
+        {actions ? (
+          <div className="flex flex-wrap gap-2 md:hidden [&>*:not([aria-label])]:flex-1">
+            {actions}
           </div>
         ) : null}
 
-        {isMe ? (
-          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
-            {ready ? <ShareStoryButton username={profile.username} /> : null}
-            {editing ? null : (
-              <Link
-                href={`${profilePath(profile.username)}?editar=1#editar`}
-                className={buttonVariants({ variant: "ghost", size: "sm" })}
-              >
-                <Pencil className="size-4" />
-                {cardHasContent(card) ? "Editar cartão" : "Montar cartão"}
-              </Link>
-            )}
-            {cardHasContent(card) || editing ? null : (
-              <p className="w-full text-xs text-faint sm:w-auto">
-                Uma bio, seus links e até {CARD_MAX_CATEGORIES} categorias públicas com os 3
-                melhores itens.
-              </p>
-            )}
-          </div>
+        {isMe && !cardHasContent(card) ? (
+          <p className="text-xs text-faint">
+            Uma bio, seus links e até {CARD_MAX_CATEGORIES} categorias públicas em destaque.
+          </p>
         ) : null}
       </div>
+
+      {categories.length > 0 ? (
+        <div className="mt-7">
+          <p className="plaque mb-3 px-1 sm:px-4">Destaques</p>
+          <ul className="flex gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] sm:px-4">
+            {categories.map((category) => (
+              <li key={category.id} className="w-56 shrink-0">
+                <CardCategoryBox category={category} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -167,10 +183,13 @@ function SocialChip({ link }: { link: SocialLink }) {
 }
 
 function CardCategoryBox({ category }: { category: CardCategory }) {
+  const photos = category.top
+    .flatMap((item) => (item.image_url ? [item.image_url] : []))
+    .slice(0, 3)
   return (
     <Link
       href={`/categoria/${category.id}`}
-      className="block h-full rounded-xl border border-line bg-background/40 p-3 transition-colors hover:border-brand-dim"
+      className="flex h-full flex-col gap-2.5 rounded-2xl border border-line bg-surface p-3 transition-colors hover:border-line-hi"
     >
       <div className="flex items-center gap-2">
         {category.color ? (
@@ -181,12 +200,25 @@ function CardCategoryBox({ category }: { category: CardCategory }) {
           />
         ) : null}
         <span aria-hidden>{category.icon || "📁"}</span>
-        <span className="min-w-0 flex-1 truncate font-medium text-foreground">{category.name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+          {category.name}
+        </span>
         <span className="shrink-0 text-xs text-faint">{itemCount(category.total)}</span>
       </div>
 
-      {category.top.length > 0 ? (
-        <ol className="mt-2 space-y-1">
+      {photos.length > 0 ? (
+        <div className="flex -space-x-2">
+          {photos.map((url, index) => (
+            <span
+              key={`${index}-${url}`}
+              className="block size-12 overflow-hidden rounded-lg bg-surface-hi ring-2 ring-surface"
+            >
+              <CoverImage url={url} />
+            </span>
+          ))}
+        </div>
+      ) : category.top.length > 0 ? (
+        <ol className="space-y-1">
           {category.top.map((item, index) => (
             <li key={item.id} className="flex items-center gap-2 text-sm">
               <span className="w-4 shrink-0 text-xs text-faint tabular-nums">{index + 1}</span>
@@ -202,7 +234,7 @@ function CardCategoryBox({ category }: { category: CardCategory }) {
           ))}
         </ol>
       ) : (
-        <p className="mt-2 text-sm text-faint">Ainda sem itens.</p>
+        <p className="text-sm text-faint">Ainda sem itens.</p>
       )}
     </Link>
   )

@@ -28,6 +28,7 @@ import {
   type CategoryTemplate,
   type TemplateSort,
 } from "@/lib/domain/templates"
+import { getCoversOf } from "@/lib/queries/explore"
 import { requireUser } from "@/lib/queries/session"
 import { serverSecret } from "@/lib/steam/client"
 import { createClient } from "@/lib/supabase/server"
@@ -56,11 +57,11 @@ export async function searchTemplatesAction(input: {
   return ok(parseTemplates(data))
 }
 
-/** O Explorar: categorias públicas de outras pessoas, com itens. */
+/** O Explorar: categorias públicas de outras pessoas, com itens (e as capas delas). */
 export async function exploreAction(input: {
   query: string
   sort: TemplateSort
-}): Promise<ActionResult<ExploreCategory[]>> {
+}): Promise<ActionResult<{ results: ExploreCategory[]; covers: Record<string, string[]> }>> {
   const parsed = templateSearchSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
@@ -72,7 +73,8 @@ export async function exploreAction(input: {
     p_limit: 30,
   })
   if (error) return isMissingSchema(error) ? { ok: false, error: EXPLORE_NOT_READY } : fail(error)
-  return ok(parseExploreResults(data))
+  const results = parseExploreResults(data)
+  return ok({ results, covers: await getCoversOf(results.map((category) => category.id)) })
 }
 
 /**

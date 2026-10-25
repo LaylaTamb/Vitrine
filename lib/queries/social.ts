@@ -1,5 +1,6 @@
 import { cache } from "react"
 
+import type { NotificationView } from "@/lib/domain/social"
 import type { Profile } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
 
@@ -126,6 +127,19 @@ export async function getFollowList(
 }
 
 /** Quantas notificações não lidas — o número do sininho. Sem a migração 21: zero. */
+/** Os avisos mais recentes (os Avisos). Sem a migração 21, nenhum. */
+export async function getNotifications(limit = 50): Promise<NotificationView[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("notifications")
+    .select(
+      "id, type, read_at, created_at, payload, actor:profiles!notifications_actor_id_fkey(id, username, display_name, avatar_url)"
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit)
+  return error ? [] : ((data ?? []) as unknown as NotificationView[])
+}
+
 export const getUnreadCount = cache(async (userId: string): Promise<number> => {
   const supabase = await createClient()
   const { count, error } = await supabase

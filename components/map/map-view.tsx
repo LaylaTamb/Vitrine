@@ -70,6 +70,7 @@ export function MapView({
   initialTab,
   focusEntryId,
   initialCategoryId,
+  embedded = false,
 }: {
   categories: Category[]
   views: EntryView[]
@@ -82,6 +83,8 @@ export function MapView({
   focusEntryId: string | null
   /** `?categoria=<id>`: abre com essa categoria marcada no filtro. */
   initialCategoryId: string | null
+  /** Dentro da aba Mapa do Perfil: sem o título grande. */
+  embedded?: boolean
 }) {
   const { actions } = useVitrine()
   // O filtro só oferece o que pode virar pino: categorias com Localização,
@@ -170,6 +173,7 @@ export function MapView({
     <PageHeader
       label="Seu acervo no mapa"
       title="Mapa"
+      compact={embedded}
       subtitle={placesReady && hasLocationFields(categories) ? subtitle : undefined}
       actions={
         active ? (
@@ -203,7 +207,7 @@ export function MapView({
           title="Nenhuma categoria tem Localização"
           description="Abra a Estrutura de uma categoria e adicione um campo do tipo “Localização (mapa)” — ou converta para ele um campo de Texto que já tenha endereços. Os itens com endereço aparecem aqui."
           action={
-            <Link href="/" className={buttonVariants({ variant: "outline" })}>
+            <Link href="/perfil" className={buttonVariants({ variant: "outline" })}>
               Ir para as Coleções
             </Link>
           }

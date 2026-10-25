@@ -75,151 +75,159 @@ export function EntryDetail({
   const ownerName = owner?.display_name || owner?.username || "alguém"
 
   return (
-    <div className="grid gap-8 py-8 md:grid-cols-[2fr_3fr]">
-      <div>
-        <EntryImage
-          imageUrl={view.imageUrl}
-          imageTransform={view.imageTransform}
-          initial={view.initial}
-          initialSize="6rem"
-          eager
-          tint={match?.entry.color ?? category.color}
-        />
-      </div>
+    <div className="py-8">
+      <Link
+        href={backHref}
+        className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        {backLabel}
+      </Link>
 
-      <div className="min-w-0 space-y-4">
-        <div className="space-y-2">
-          <Link
-            href={backHref}
-            className="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            voltar para {backLabel}
-          </Link>
-
-          {match ? (
-            <MatchOwnerLine match={match.entry} className="text-xs" />
-          ) : owner ? (
-            <Link href={profilePath(owner.username)} className="plaque block hover:text-foreground">
-              acervo de {ownerName}
-            </Link>
-          ) : null}
+      <div className="grid gap-8 md:grid-cols-[2fr_3fr]">
+        <div>
+          <EntryImage
+            imageUrl={view.imageUrl}
+            imageTransform={view.imageTransform}
+            initial={view.initial}
+            initialSize="6rem"
+            eager
+            tint={match?.entry.color ?? category.color}
+          />
         </div>
 
-        <h1 className="display text-[2.3rem] leading-tight break-words">{view.name}</h1>
+        <div className="min-w-0 space-y-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-2">
+              {match ? (
+                <MatchOwnerLine match={match.entry} className="text-xs" />
+              ) : owner && !canEdit ? (
+                <Link
+                  href={profilePath(owner.username)}
+                  className="plaque block hover:text-foreground"
+                >
+                  acervo de {ownerName}
+                </Link>
+              ) : null}
 
-        {view.sourceRemoved ? (
-          <p className="text-sm text-muted-foreground">
-            Removido do original: quem fez a categoria apagou este item. O seu continua aqui.
-          </p>
-        ) : null}
+              <h1 className="display text-[2.3rem] leading-tight break-words">{view.name}</h1>
 
-        {match && match.entry.suggestionFor.length > 0 ? (
-          <p className="text-sm text-muted-foreground">{suggestionText(match.entry)}</p>
-        ) : null}
+              {category.rating_enabled ? (
+                <div className="flex items-center gap-2">
+                  <Stars percent={view.ratingPercent} size="md" />
+                  <span className="text-sm text-muted-foreground">
+                    {view.hasRating ? `${formatRating(view.rating)} de 5` : "sem avaliação"}
+                    {match && view.hasRating
+                      ? ` · nota ${match.entry.isMine ? "sua" : matchOwnerText(match.entry)}`
+                      : ""}
+                  </span>
+                </div>
+              ) : null}
+            </div>
 
-        {category.rating_enabled ? (
-          <div className="flex items-center gap-2">
-            <Stars percent={view.ratingPercent} size="md" />
-            <span className="text-sm text-muted-foreground">
-              {view.hasRating ? `${formatRating(view.rating)} de 5` : "sem avaliação"}
-              {match && view.hasRating
-                ? ` · nota ${match.entry.isMine ? "sua" : matchOwnerText(match.entry)}`
-                : ""}
-            </span>
-          </div>
-        ) : null}
-
-        {view.extras.length > 0 ? (
-          <dl className="pt-2">
-            {view.extras.map((extra) => (
-              <div
-                key={extra.id}
-                className="flex flex-col gap-0.5 border-b border-line py-2.5 sm:flex-row sm:gap-4"
-              >
-                <dt className="plaque w-40 shrink-0 pt-0.5">{extra.label}</dt>
-                <dd className="min-w-0 flex-1 text-sm break-words">
-                  {extra.isStar ? (
-                    <span className="flex items-center gap-2">
-                      <Stars percent={extra.percent} size="sm" />
-                      <span>{extra.value}</span>
-                    </span>
-                  ) : extra.tipo === "location" ? (
-                    <span className="flex flex-col items-start gap-2">
-                      <span>{extra.value}</span>
-                      <span className="flex flex-wrap gap-1.5">
-                        <OpenInMapsLink
-                          target={mapsTargetOf(extra.value, placeOf(extra.id))}
-                        />
-                        {showMapLink ? <VitrineMapLink entryId={view.id} /> : null}
-                      </span>
-                    </span>
-                  ) : (
-                    extra.value
-                  )}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-
-        {match && (match.origin.category || match.origin.fields.length > 0) ? (
-          <div className="pt-2">
-            <p className="plaque">
-              {match.origin.category ? `em “${match.origin.category}”` : "do original"} · só
-              leitura
-            </p>
-            {match.origin.fields.length > 0 ? (
-              <dl>
-                {match.origin.fields.map((field) => (
-                  <div
-                    key={field.id}
-                    className="flex flex-col gap-0.5 border-b border-line py-2.5 sm:flex-row sm:gap-4"
-                  >
-                    <dt className="plaque w-40 shrink-0 pt-0.5">{field.label}</dt>
-                    <dd className="min-w-0 flex-1 text-sm break-words">
-                      {field.tipo === "location" ? (
-                        <span className="flex flex-col items-start gap-2">
-                          <span>{field.value}</span>
-                          <OpenInMapsLink target={mapsTargetOf(field.value, placeOf(field.id))} />
-                        </span>
-                      ) : (
-                        field.value
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+            {/* Editar e excluir moram no "⋯" (no item de um match, as ações dele, embaixo). */}
+            {canEdit && !match ? (
+              <EntryDetailActions
+                view={view}
+                categoryId={category.id}
+                estrutura={category.estrutura}
+                tags={tags}
+                folders={entryFolders}
+                ratingEnabled={category.rating_enabled}
+                categories={categories}
+              />
             ) : null}
           </div>
-        ) : null}
 
-        {view.tags.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5 pt-2">
-            {view.tags.map((tag) => (
-              <TagPill key={tag.id} tag={tag} />
-            ))}
-          </div>
-        ) : null}
+          {view.sourceRemoved ? (
+            <p className="text-sm text-muted-foreground">
+              Removido do original: quem fez a categoria apagou este item. O seu continua aqui.
+            </p>
+          ) : null}
 
-        {canEdit && match ? (
-          <MatchEntryActions
-            view={view}
-            categoryId={category.id}
-            tags={tags}
-            isMine={match.entry.isMine}
-          />
-        ) : canEdit ? (
-          <EntryDetailActions
-            view={view}
-            categoryId={category.id}
-            estrutura={category.estrutura}
-            tags={tags}
-            folders={entryFolders}
-            ratingEnabled={category.rating_enabled}
-            categories={categories}
-          />
-        ) : null}
+          {match && match.entry.suggestionFor.length > 0 ? (
+            <p className="text-sm text-muted-foreground">{suggestionText(match.entry)}</p>
+          ) : null}
+
+          {view.tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {view.tags.map((tag) => (
+                <TagPill key={tag.id} tag={tag} />
+              ))}
+            </div>
+          ) : null}
+
+          {view.extras.length > 0 ? (
+            <dl className="divide-y divide-line rounded-2xl border border-line bg-surface px-4">
+              {view.extras.map((extra) => (
+                <div
+                  key={extra.id}
+                  className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                >
+                  <dt className="shrink-0 text-sm text-muted-foreground">{extra.label}</dt>
+                  <dd className="min-w-0 text-sm break-words sm:text-right">
+                    {extra.isStar ? (
+                      <span className="flex items-center gap-2 sm:justify-end">
+                        <Stars percent={extra.percent} size="sm" />
+                        <span>{extra.value}</span>
+                      </span>
+                    ) : extra.tipo === "location" ? (
+                      <span className="flex flex-col items-start gap-2 sm:items-end">
+                        <span>{extra.value}</span>
+                        <span className="flex flex-wrap gap-1.5 sm:justify-end">
+                          <OpenInMapsLink target={mapsTargetOf(extra.value, placeOf(extra.id))} />
+                          {showMapLink ? <VitrineMapLink entryId={view.id} /> : null}
+                        </span>
+                      </span>
+                    ) : (
+                      extra.value
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+
+          {match && (match.origin.category || match.origin.fields.length > 0) ? (
+            <div className="space-y-2">
+              <p className="plaque">
+                {match.origin.category ? `em “${match.origin.category}”` : "do original"} · só
+                leitura
+              </p>
+              {match.origin.fields.length > 0 ? (
+                <dl className="divide-y divide-line rounded-2xl border border-line bg-surface px-4">
+                  {match.origin.fields.map((field) => (
+                    <div
+                      key={field.id}
+                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                    >
+                      <dt className="shrink-0 text-sm text-muted-foreground">{field.label}</dt>
+                      <dd className="min-w-0 text-sm break-words sm:text-right">
+                        {field.tipo === "location" ? (
+                          <span className="flex flex-col items-start gap-2 sm:items-end">
+                            <span>{field.value}</span>
+                            <OpenInMapsLink target={mapsTargetOf(field.value, placeOf(field.id))} />
+                          </span>
+                        ) : (
+                          field.value
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+            </div>
+          ) : null}
+
+          {canEdit && match ? (
+            <MatchEntryActions
+              view={view}
+              categoryId={category.id}
+              tags={tags}
+              isMine={match.entry.isMine}
+            />
+          ) : null}
+        </div>
       </div>
     </div>
   )

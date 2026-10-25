@@ -43,6 +43,8 @@ export function FavoritesView({
   categories,
   folders,
   counts,
+  covers,
+  embedded = false,
 }: {
   /** `false` = a migração 20 ainda não rodou. */
   ready: boolean
@@ -53,6 +55,10 @@ export function FavoritesView({
   /** As pastas — para dizer onde cada favorita mora. */
   folders: Folder[]
   counts: Record<string, number>
+  /** category_id → até 3 fotos para a capa (migração 40). */
+  covers?: Record<string, string[]>
+  /** Dentro da aba Favoritas do Perfil: sem o título e sem o "← Coleções". */
+  embedded?: boolean
 }) {
   const { actions } = useVitrine()
   // A ordem otimista — some quando o dado novo chega.
@@ -103,9 +109,9 @@ export function FavoritesView({
     toast.success(`“${category.name}” saiu dos favoritos. Continua na pasta dela.`)
   }
 
-  const back = (
+  const back = embedded ? null : (
     <Link
-      href="/"
+      href="/perfil"
       className="mb-5 inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1 text-sm text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
     >
       <ArrowLeft className="size-3.5" /> Coleções
@@ -115,7 +121,7 @@ export function FavoritesView({
   if (!ready) {
     return (
       <>
-        <PageHeader label="Coleções" title="Favoritos" />
+        <PageHeader label="Coleções" title="Favoritos" compact={embedded} />
         {back}
         <EmptyState
           icon={Star}
@@ -131,6 +137,7 @@ export function FavoritesView({
       <PageHeader
         label="Coleções"
         title="Favoritos"
+        compact={embedded}
         subtitle={
           favorites.length > 1
             ? "As categorias com a estrela, sem sair das pastas delas. Arraste para ordenar."
@@ -163,10 +170,10 @@ export function FavoritesView({
                   icon={category.icon}
                   subtitle={whereIs(category)}
                   href={`/categoria/${category.id}`}
-                  canEdit
                   sortable={favorites.length > 1}
                   view="grid"
                   visibility={visibilityOf(category)}
+                  cover={covers?.[category.id]}
                   favorite
                   onToggleFavorite={() => unfavorite(category)}
                 />

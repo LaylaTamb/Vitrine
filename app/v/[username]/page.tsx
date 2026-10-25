@@ -3,33 +3,49 @@ import { UserX } from "lucide-react"
 import { redirect } from "next/navigation"
 
 import { CollectionsView } from "@/components/collection/collections-view"
+import { PublicNotice } from "@/components/collection/public-notice"
+import { FavoritesView } from "@/components/favorites/favorites-view"
+import { GlobalFilterView } from "@/components/filter/global-filter-view"
 import { AppShell, type VisitorInfo } from "@/components/layout/app-shell"
 import { EmptyState } from "@/components/layout/empty-state"
+import { MapView } from "@/components/map/map-view"
+import { HereBanner } from "@/components/nearby/here-banner"
 import { ProfileCardView } from "@/components/social/profile-card"
-import { ProfileEditPanel } from "@/components/social/profile-edit-panel"
 import { ProfileSocialBar, VisitorFollowInvite } from "@/components/social/profile-social-bar"
+import { profileTabOf, ProfileTabs } from "@/components/social/profile-tabs"
 import { QrRedeem } from "@/components/social/qr-redeem"
 import type { ProfileCard } from "@/lib/domain/card"
 import { itemCount, plural } from "@/lib/domain/format"
-import { defaultVisibilityOf } from "@/lib/domain/privacy"
+import { placeTargets } from "@/lib/domain/nearby"
+import { defaultVisibilityOf, needsPublicNotice } from "@/lib/domain/privacy"
 import { isQrToken } from "@/lib/domain/qr"
-import { STEAM_RETURN_MESSAGES } from "@/lib/domain/steam"
-import type { Profile } from "@/lib/domain/types"
+import type { EntryView, Profile, Tag } from "@/lib/domain/types"
 import { normalizeUsername, profilePath, USERNAME_PATTERN } from "@/lib/domain/username"
-import { getLetterboxdAccount, getSteamAccount } from "@/lib/queries/connected"
+import { toView } from "@/lib/domain/view"
+import { getAcervo } from "@/lib/queries/acervo"
+import { getMyFavoriteIds } from "@/lib/queries/favorites"
+import { getMyPlaces } from "@/lib/queries/places"
 import { getCollectionsByUsername } from "@/lib/queries/profiles"
 import { getProfileCard, getPublicProfile, resolveUsername } from "@/lib/queries/public"
 import { getProfileSocial } from "@/lib/queries/social"
 import { getMyProfile, getSessionUser } from "@/lib/queries/session"
-import { serverSecret, steamConfigured } from "@/lib/steam/client"
+import { getMyTrashCount } from "@/lib/queries/trash"
 
 type Params = Promise<{ username: string }>
 type SearchParams = Promise<{
   qr?: string | string[]
-  /** `?editar=1`: o painel de edição do cartão (só no seu perfil). */
+  /** `?editar=1` (links antigos): vai para o Editar perfil, nas Configurações. */
   editar?: string | string[]
-  /** O recado da volta do login da Steam. */
+  /** O recado da volta do login da Steam (links antigos): segue junto. */
   steam?: string | string[]
+  /** A aba do seu perfil: `favoritas` ou `mapa` (sem = Coleções). */
+  aba?: string | string[]
+  /** Na aba Mapa (vindos do antigo `/mapa`): a aba Sugestões, a categoria marcada, o item em foco. */
+  mapa?: string | string[]
+  categoria?: string | string[]
+  item?: string | string[]
+  /** `?filtros=1`: na aba Coleções, o antigo Filtro geral. */
+  filtros?: string | string[]
 }>
 
 function decoded(raw: string): string {
@@ -54,6 +70,16 @@ function subtitleOf(categories: number, entries: number, empty: string): string 
   return categories === 0
     ? empty
     : `${plural(categories, "categoria", "categorias")} · ${itemCount(entries)}`
+}
+
+/** O acervo inteiro em cards (como no Filtro geral e no Mapa). */
+function acervoViews(acervo: Awaited<ReturnType<typeof getAcervo>>): EntryView[] {
+  const tagsById = new Map<string, Tag>(acervo.tags.map((tag) => [tag.id, tag]))
+  return acervo.categories.flatMap((category) =>
+    (acervo.entriesByCategory.get(category.id) ?? []).map((entry) =>
+      toView(entry, category.estrutura, tagsById, category.name)
+    )
+  )
 }
 
 /** Antes da migração 23 (sem cartão no banco): só o nome, o @ e a foto. */
@@ -84,9 +110,10 @@ function bareCard(profile: Profile): ProfileCard {
  * `?qr=<código>` é o link do QR pessoal (migração 22): com login, quem abriu
  * vira amigo do dono (`QrRedeem`); sem login, vai entrar e volta para cá.
  *
- * O SEU perfil é só o cartão (as suas coleções ficam em Coleções, `/`), e é
- * ali que ele se edita: `?editar=1` abre o painel com foto e nome, bio e
- * destaques, as redes e a Steam.
+ * O SEU perfil é o cartão e, embaixo, as abas Coleções (com o botão Filtros,
+ * `?filtros=1`, o antigo Filtro geral), Favoritas (`?aba=favoritas`) e Mapa
+ * (`?aba=mapa`). Cada aba carrega só os próprios dados. Editar o perfil é nas
+ * Configurações (`?editar=1`, de links antigos, leva para lá).
  */
 export default async function ProfilePage({
   params,
@@ -137,7 +164,7 @@ export default async function ProfilePage({
     )
   }
 
-  const [{ profile, folders, categories, counts }, myProfile, card] = await Promise.all([
+  const [{ profile, folders, categories, counts, covers }, myProfile, card] = await Promise.all([
     getCollectionsByUsername(username),
     getMyProfile(),
     getProfileCard(username),
@@ -146,8 +173,26 @@ export default async function ProfilePage({
   if (!profile) return notFound(username, myProfile, undefined, qr)
 
   const isMe = profile.id === user.id
-  // Precisa do id do perfil: é a segunda ida (contagens e relação, juntas).
-  const social = await getProfileSocial(profile.id, user.id)
+  // O link antigo de editar (e a volta antiga da Steam) leva às Configurações.
+  if (isMe && query.editar === "1") {
+    redirect(
+      typeof query.steam === "string"
+        ? `/configuracoes?secao=steam&steam=${encodeURIComponent(query.steam)}`
+        : "/configuracoes?secao=perfil"
+    )
+  }
+  const tab = profileTabOf(query.aba)
+  const filtering = isMe && tab === "colecoes" && query.filtros === "1"
+  const needAcervo = isMe && (tab === "mapa" || filtering)
+  // Precisa do id do perfil: é a segunda ida — a relação e o que a aba aberta
+  // pede, tudo junto.
+  const [social, trashCount, favoriteIds, acervo, mapPlaces] = await Promise.all([
+    getProfileSocial(profile.id, user.id),
+    isMe ? getMyTrashCount() : undefined,
+    isMe ? getMyFavoriteIds(user.id) : null,
+    needAcervo ? getAcervo(user.id) : null,
+    isMe && tab === "mapa" ? getMyPlaces(user.id) : null,
+  ])
   const name = profile.display_name || profile.username
   const total = Object.values(counts).reduce((acc, value) => acc + value, 0)
   const socialBar = (
@@ -163,47 +208,72 @@ export default async function ProfilePage({
   )
 
   if (isMe && myProfile) {
-    const editing = query.editar === "1"
-    const [steam, letterboxd] = editing
-      ? await Promise.all([getSteamAccount(user.id), getLetterboxdAccount(user.id)])
-      : [null, null]
-    // "sem-chave" e "sem-banco" o próprio bloco da Steam já explica: sem recado em dobro.
-    const steamStatus = typeof query.steam === "string" ? query.steam : ""
-    const steamNotice = ["sem-chave", "sem-banco"].includes(steamStatus)
-      ? null
-      : (STEAM_RETURN_MESSAGES[steamStatus] ?? null)
-
     return (
       <AppShell profile={myProfile}>
         <div className="pt-6 pb-16">
           <QrRedeem token={qr} path={path} />
+          {needsPublicNotice(myProfile, categories, folders) ? <PublicNotice /> : null}
           <ProfileCardView
             card={card ?? bareCard(profile)}
             isMe
             ready={card !== null}
-            editing={editing}
             social={socialBar}
           />
-          {editing && steam && letterboxd ? (
-            <ProfileEditPanel
-              profile={myProfile}
+
+          <ProfileTabs path={path} current={tab} />
+
+          {tab === "mapa" && acervo && mapPlaces ? (
+            <>
+              {/* "Você está em X?": só aparece com a localização já autorizada. */}
+              <HereBanner targets={placeTargets(acervo.categories)} />
+              <MapView
+                embedded
+                categories={acervo.categories}
+                views={acervoViews(acervo)}
+                tags={acervo.tags}
+                places={mapPlaces.places}
+                placesReady={mapPlaces.ready}
+                initialTab={query.mapa === "sugestoes" ? "sugestoes" : "mapa"}
+                focusEntryId={typeof query.item === "string" ? query.item : null}
+                initialCategoryId={typeof query.categoria === "string" ? query.categoria : null}
+              />
+            </>
+          ) : tab === "favoritas" ? (
+            <FavoritesView
+              embedded
+              ready={favoriteIds !== null}
+              order={favoriteIds ?? []}
               categories={categories}
               folders={folders}
               counts={counts}
-              closeHref={path}
-              steam={{
-                ready: steam.ready,
-                configured: steamConfigured(),
-                account: steam.account,
-                notice: steamNotice,
-              }}
-              letterboxd={{
-                ready: letterboxd.ready,
-                configured: serverSecret() !== null,
-                account: letterboxd.account,
-              }}
+              covers={covers}
             />
-          ) : null}
+          ) : filtering && acervo ? (
+            <GlobalFilterView
+              embedded
+              closeHref={path}
+              categories={acervo.categories}
+              views={acervoViews(acervo)}
+              tags={acervo.tags}
+            />
+          ) : (
+            <CollectionsView
+              embedded
+              filtersHref={`${path}?filtros=1`}
+              folders={folders}
+              categories={categories}
+              counts={counts}
+              covers={covers}
+              canEdit
+              headerLabel="Coleções"
+              headerTitle="Coleções"
+              headerSubtitle={subtitleOf(categories.length, total, "Nada por aqui ainda.")}
+              defaultVisibility={defaultVisibilityOf(myProfile)}
+              searchable
+              trashCount={trashCount}
+              favoriteIds={favoriteIds ?? undefined}
+            />
+          )}
         </div>
       </AppShell>
     )
@@ -212,6 +282,7 @@ export default async function ProfilePage({
   return (
     <AppShell profile={myProfile}>
       <CollectionsView
+        covers={covers}
         folders={folders}
         categories={categories}
         counts={counts}

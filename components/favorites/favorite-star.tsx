@@ -57,7 +57,7 @@ export function FavoriteToggle({
   )
 }
 
-/** A estrela do topo da categoria, com o estado escrito. */
+/** A estrela do topo da categoria, colada no nome. */
 export function CategoryFavoriteButton({
   categoryId,
   categoryName,
@@ -95,16 +95,16 @@ export function CategoryFavoriteButton({
 
   return (
     <Button
-      variant="outline"
-      size="lg"
+      variant="ghost"
+      size="icon-lg"
       onClick={toggle}
       disabled={pending}
       aria-pressed={active}
+      aria-label={favoriteLabel(active, categoryName)}
       title={favoriteLabel(active, categoryName)}
-      className={cn(active && "border-brand-dim bg-brand-wash text-foreground")}
+      className={cn("shrink-0", active ? "text-brand" : "text-muted-foreground")}
     >
-      <Star className={cn("size-4", active && "fill-current text-brand")} />
-      {active ? "Favorita" : "Favoritar"}
+      <Star className={cn("size-5", active && "fill-current")} />
     </Button>
   )
 }

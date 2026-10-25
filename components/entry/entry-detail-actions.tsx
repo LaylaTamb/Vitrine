@@ -6,13 +6,17 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { EntryForm } from "@/components/entry/entry-form"
+import { MoreMenu } from "@/components/layout/more-menu"
 import { useVitrine } from "@/components/providers/vitrine-context"
-import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import type { CategorySummary, EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
 import { withFolder } from "@/lib/navigation"
 
-/** Os botões Editar e Excluir da plaqueta — a ilha de interatividade da página. */
+/**
+ * O "⋯" da plaqueta (Editar, que também troca de categoria e de pasta, e
+ * Excluir) — a ilha de interatividade da página.
+ */
 export function EntryDetailActions({
   view,
   categoryId,
@@ -38,14 +42,15 @@ export function EntryDetailActions({
 
   return (
     <>
-      <div className="flex gap-2 pt-2">
-        <Button variant="outline" size="lg" onClick={() => setFormOpen(true)}>
-          <Pencil className="size-4" /> Editar
-        </Button>
-        <Button variant="destructive" size="lg" onClick={() => setConfirming(true)}>
-          <Trash2 className="size-4" /> Excluir
-        </Button>
-      </div>
+      <MoreMenu label={`Mais opções de “${view.name}”`}>
+        <DropdownMenuItem onSelect={() => setFormOpen(true)}>
+          <Pencil /> Editar
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onSelect={() => setConfirming(true)}>
+          <Trash2 /> Excluir
+        </DropdownMenuItem>
+      </MoreMenu>
 
       <EntryForm
         open={formOpen}

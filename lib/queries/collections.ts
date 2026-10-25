@@ -1,3 +1,4 @@
+import { coversByCategory } from "@/lib/domain/collections"
 import { parseEstrutura } from "@/lib/domain/fields"
 import type { Category, Folder, Profile } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
@@ -8,6 +9,8 @@ export interface CollectionsData {
   categories: Category[]
   /** category_id → total de itens, vindo da view (sem puxar linha nenhuma). */
   counts: Record<string, number>
+  /** category_id → até 3 fotos da capa (migração 40; sem ela, vazio). */
+  covers: Record<string, string[]>
 }
 
 interface CategoryRow extends Omit<Category, "estrutura"> {
@@ -19,31 +22,37 @@ export function toCategory(row: CategoryRow): Category {
 }
 
 /**
- * Tudo que a tela de Coleções precisa, em UMA ida ao banco: as quatro
- * consultas são independentes, então vão juntas em `Promise.all`.
+ * Tudo que a tela de Coleções precisa, em UMA ida ao banco: as consultas
+ * são independentes, então vão juntas em `Promise.all`.
  */
 export async function getCollections(ownerId: string): Promise<CollectionsData> {
   const supabase = await createClient()
 
-  const [profileResult, foldersResult, categoriesResult, countsResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      // `*`: inclui as colunas de privacidade (migrações 12 e 14) sem quebrar antes delas.
-      .select("*")
-      .eq("id", ownerId)
-      .maybeSingle(),
-    supabase
-      .from("folders")
-      .select("*")
-      .eq("owner_id", ownerId)
-      .order("display_order", { ascending: true }),
-    supabase
-      .from("categories")
-      .select("*")
-      .eq("owner_id", ownerId)
-      .order("display_order", { ascending: true }),
-    supabase.from("category_entry_counts").select("category_id, total").eq("owner_id", ownerId),
-  ])
+  const [profileResult, foldersResult, categoriesResult, countsResult, coversResult] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        // `*`: inclui as colunas de privacidade (migrações 12 e 14) sem quebrar antes delas.
+        .select("*")
+        .eq("id", ownerId)
+        .maybeSingle(),
+      supabase
+        .from("folders")
+        .select("*")
+        .eq("owner_id", ownerId)
+        .order("display_order", { ascending: true }),
+      supabase
+        .from("categories")
+        .select("*")
+        .eq("owner_id", ownerId)
+        .order("display_order", { ascending: true }),
+      supabase.from("category_entry_counts").select("category_id, total").eq("owner_id", ownerId),
+      // Sem a migração 40 (view ausente): sem capas, os cards ficam com o ícone.
+      supabase
+        .from("category_covers")
+        .select("category_id, image_url, position")
+        .eq("owner_id", ownerId),
+    ])
 
   const counts: Record<string, number> = {}
   for (const row of (countsResult.data ?? []) as { category_id: string; total: number }[]) {
@@ -55,5 +64,6 @@ export async function getCollections(ownerId: string): Promise<CollectionsData> 
     folders: (foldersResult.data ?? []) as Folder[],
     categories: ((categoriesResult.data ?? []) as CategoryRow[]).map(toCategory),
     counts,
+    covers: coversResult.error ? {} : coversByCategory(coversResult.data ?? []),
   }
 }

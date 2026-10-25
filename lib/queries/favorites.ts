@@ -14,6 +14,8 @@ export interface FavoritesPageData {
   folders: Folder[]
   /** category_id → total de itens. */
   counts: Record<string, number>
+  /** category_id → até 3 fotos para a capa (migração 40). */
+  covers: Record<string, string[]>
 }
 
 /** As favoritas da pessoa, na ordem. `null` = a migração 20 ainda não rodou. */
@@ -38,6 +40,6 @@ export async function getFavoritesPage(ownerId: string): Promise<FavoritesPageDa
     getMyFavoriteIds(ownerId),
   ])
 
-  const { categories, folders, counts } = collections
-  return { ready: order !== null, order: order ?? [], categories, folders, counts }
+  const { categories, folders, counts, covers } = collections
+  return { ready: order !== null, order: order ?? [], categories, folders, counts, covers }
 }

@@ -4,7 +4,9 @@ import {
   applyOrder,
   breadcrumbOf,
   categoriesOf,
+  coversByCategory,
   descendantFolderIds,
+  folderGlyphs,
   folderTotals,
   foldersOf,
   moveTargets,
@@ -982,6 +984,34 @@ describe("coleções", () => {
       id: null,
       label: "Raiz da categoria",
     })
+  })
+})
+
+describe("capas dos cards", () => {
+  it("até 3 imagens por categoria, na ordem da view, sem link vazio", () => {
+    expect(
+      coversByCategory([
+        { category_id: "c1", image_url: "b", position: 2 },
+        { category_id: "c1", image_url: "a", position: 1 },
+        { category_id: "c2", image_url: " ", position: 1 },
+        { category_id: "c1", image_url: "c", position: 3 },
+        { category_id: "c1", image_url: "d", position: 4 },
+      ])
+    ).toEqual({ c1: ["a", "b", "c"] })
+  })
+
+  it("a capa de uma pasta: subpastas primeiro, depois os ícones das categorias", () => {
+    const folders = [
+      { id: "p1", parent_folder_id: null },
+      { id: "p2", parent_folder_id: "p1" },
+    ]
+    const categories = [
+      { folder_id: "p1", icon: "🍽️" },
+      { folder_id: "p1", icon: null },
+      { folder_id: null, icon: "🎬" },
+    ]
+    expect(folderGlyphs(folders, categories, "p1")).toEqual(["📁", "🍽️", "▫"])
+    expect(folderGlyphs(folders, categories, "p2")).toEqual([])
   })
 })
 

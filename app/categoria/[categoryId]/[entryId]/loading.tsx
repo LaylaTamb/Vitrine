@@ -2,8 +2,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Loading() {
   return (
-    <div className="min-h-dvh">
-      <div className="h-14 border-b border-line" />
+    <div className="min-h-dvh md:pl-20 lg:pl-64">
+      <div className="h-14 border-b border-line md:hidden" />
+      <div className="fixed inset-y-0 left-0 hidden w-20 border-r border-line md:block lg:w-64" />
       <div className="shell grid gap-8 py-8 md:grid-cols-[2fr_3fr]">
         <Skeleton className="aspect-[3/4] rounded-lg" />
         <div className="space-y-4">

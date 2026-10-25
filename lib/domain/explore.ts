@@ -8,6 +8,7 @@
 
 import { parseEstrutura } from "./fields"
 import { itemCount, plural } from "./format"
+import { normalizeSearch } from "./search"
 import type { Estrutura } from "./types"
 
 /** Quantos itens uma cópia traz de uma vez (e cada sincronização acrescenta). */
@@ -31,6 +32,26 @@ export interface ExploreCategory {
   uses: number
   /** Os 3 melhores itens (maior nota; empate pelo nome). */
   preview: { name: string; rating: number | null }[]
+}
+
+/**
+ * Os temas do Descobrir: os nomes das categorias em alta, sem repetir (sem
+ * olhar acento nem maiúscula), na ordem em que vieram. Um toque busca o tema.
+ */
+export function exploreThemes(
+  results: Pick<ExploreCategory, "name" | "icon">[],
+  max = 8
+): { name: string; icon: string | null }[] {
+  const seen = new Set<string>()
+  const themes: { name: string; icon: string | null }[] = []
+  for (const { name, icon } of results) {
+    const key = normalizeSearch(name)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    themes.push({ name, icon })
+    if (themes.length === max) break
+  }
+  return themes
 }
 
 function text(value: unknown): string | null {

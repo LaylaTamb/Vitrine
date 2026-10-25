@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
-/** A casca comum dos `loading.tsx`: navbar + cabeçalho de plaqueta. */
+/** A casca comum dos `loading.tsx`: a navegação (lateral ou topo) + cabeçalho de plaqueta. */
 export function PageSkeleton({
   children,
   actions = 2,
@@ -10,8 +10,9 @@ export function PageSkeleton({
   actions?: number
 }) {
   return (
-    <div className="min-h-dvh">
-      <div className="h-14 border-b border-line" />
+    <div className="min-h-dvh md:pl-20 lg:pl-64">
+      <div className="h-14 border-b border-line md:hidden" />
+      <div className="fixed inset-y-0 left-0 hidden w-20 border-r border-line md:block lg:w-64" />
       <div className="shell">
         <div className="flex flex-col gap-4 py-7 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">

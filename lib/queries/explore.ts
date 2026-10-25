@@ -1,3 +1,4 @@
+import { coversByCategory } from "@/lib/domain/collections"
 import { isMissingSchema, translateError } from "@/lib/domain/errors"
 import {
   parseExploreResults,
@@ -29,6 +30,20 @@ export async function getExplore(): Promise<{
       : { ready: true, results: [], error: translateError(error) }
   }
   return { ready: true, results: parseExploreResults(data), error: null }
+}
+
+/**
+ * As capas (até 3 fotos) de categorias de outras pessoas, pelos ids. A RLS
+ * dos itens deixa passar só o que você pode ver; sem a migração 40, {}.
+ */
+export async function getCoversOf(categoryIds: string[]): Promise<Record<string, string[]>> {
+  if (categoryIds.length === 0) return {}
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("category_covers")
+    .select("category_id, image_url, position")
+    .in("category_id", categoryIds)
+  return error ? {} : coversByCategory(data ?? [])
 }
 
 /**
