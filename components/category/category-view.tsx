@@ -29,6 +29,7 @@ import {
   MapIcon,
   Pencil,
   Plus,
+  Share2,
   SlidersHorizontal,
   Trash2,
 } from "lucide-react"
@@ -40,6 +41,7 @@ import { restoreTrashAction } from "@/app/lixeira/actions"
 import { CategoryEditor } from "@/components/category/category-editor"
 import { DeleteEntryFolderDialog } from "@/components/category/delete-entry-folder-dialog"
 import { EntryFolderChips } from "@/components/category/entry-folder-chips"
+import { ShareCategoryDialog } from "@/components/category/share-category-dialog"
 import { FilterBar } from "@/components/category/filter-bar"
 import { StatsPanel } from "@/components/category/stats-panel"
 import { PrivacyChip, PrivacyNote } from "@/components/collection/privacy-switch"
@@ -217,6 +219,7 @@ export function CategoryView({
   const [structureOpen, setStructureOpen] = useState(false)
   const [deleting, setDeleting] = useState<EntryView | null>(null)
   const [deletingCategory, setDeletingCategory] = useState(false)
+  const [sharing, setSharing] = useState(false)
 
   const [folderDialog, setFolderDialog] = useState<{
     open: boolean
@@ -607,6 +610,11 @@ export function CategoryView({
       {matchMode ? null : (
         <DropdownMenuItem onSelect={() => setFolderDialog({ open: true, folder: null })}>
           <FolderPlus /> Nova subpasta
+        </DropdownMenuItem>
+      )}
+      {matchMode || inbox ? null : (
+        <DropdownMenuItem onSelect={() => setSharing(true)}>
+          <Share2 /> Compartilhar (QR e link)
         </DropdownMenuItem>
       )}
       {/* O Mapa só mostra o que é meu. */}
@@ -1004,6 +1012,14 @@ export function CategoryView({
             onOpenChange={(open) => {
               if (!open) setDeletingFolder(null)
             }}
+          />
+
+          <ShareCategoryDialog
+            open={sharing}
+            onOpenChange={setSharing}
+            categoryId={category.id}
+            name={category.name}
+            visibility={restrictedBy?.visibility ?? visibility}
           />
 
           <ConfirmDialog

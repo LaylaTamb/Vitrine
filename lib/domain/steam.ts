@@ -88,6 +88,8 @@ export interface SteamGame {
   name: string
   /** `playtime_forever`: já vem em minutos — o campo Horas jogadas guarda minutos. */
   minutes: number
+  /** Jogou nas últimas 2 semanas (`playtime_2weeks`): as conquistas podem ter mudado. */
+  recent: boolean
 }
 
 export type OwnedGames = { status: "ok"; games: SteamGame[] } | { status: "private" }
@@ -102,7 +104,12 @@ export function parseOwnedGames(json: unknown): OwnedGames {
   const body = response as { game_count?: unknown; games?: unknown }
   if (typeof body.game_count !== "number") return { status: "private" }
   const games = (Array.isArray(body.games) ? body.games : []).flatMap((raw): SteamGame[] => {
-    const game = raw as { appid?: unknown; name?: unknown; playtime_forever?: unknown }
+    const game = raw as {
+      appid?: unknown
+      name?: unknown
+      playtime_forever?: unknown
+      playtime_2weeks?: unknown
+    }
     if (typeof game.appid !== "number" || !Number.isInteger(game.appid) || game.appid <= 0) {
       return []
     }
@@ -112,7 +119,8 @@ export function parseOwnedGames(json: unknown): OwnedGames {
       typeof game.playtime_forever === "number" && game.playtime_forever > 0
         ? Math.trunc(game.playtime_forever)
         : 0
-    return [{ appid: game.appid, name: name.slice(0, 200), minutes }]
+    const recent = typeof game.playtime_2weeks === "number" && game.playtime_2weeks > 0
+    return [{ appid: game.appid, name: name.slice(0, 200), minutes, recent }]
   })
   return { status: "ok", games }
 }
@@ -123,6 +131,93 @@ export function parsePersonaName(json: unknown): string | null {
   const first = Array.isArray(players) ? (players[0] as { personaname?: unknown }) : undefined
   const name = typeof first?.personaname === "string" ? first.personaname.trim() : ""
   return name ? name.slice(0, 100) : null
+}
+
+// ---------------------------------------------------------------------------
+// Detalhes de cada jogo (migração 42)
+// ---------------------------------------------------------------------------
+
+/** Quantos jogos ganham os detalhes por sincronização (a loja limita as consultas). */
+export const STEAM_DETAILS_BATCH = 25
+
+/** Quantos jogos jogados nas últimas 2 semanas têm as conquistas relidas por vez. */
+export const STEAM_RECENT_MAX = 15
+
+/** O que a loja diz de um jogo. Jogo fora da loja vem tudo vazio. */
+export interface SteamStoreDetails {
+  genres: string[]
+  developers: string[]
+  year: number | null
+}
+
+function names(list: unknown, key?: string): string[] {
+  if (!Array.isArray(list)) return []
+  return list.flatMap((item) => {
+    const value = key ? (item as Record<string, unknown> | null)?.[key] : item
+    return typeof value === "string" && value.trim() ? [value.trim()] : []
+  })
+}
+
+/**
+ * A resposta da loja (`store.steampowered.com/api/appdetails`, em português):
+ * `{"620": {"success": true, "data": {...}}}`. O ano sai da data de lançamento,
+ * seja qual for o formato ("18 de abr. de 2011", "Apr 18, 2011").
+ */
+export function parseAppDetails(json: unknown, appid: string): SteamStoreDetails {
+  const entry = (json as Record<string, { success?: unknown; data?: unknown }> | null)?.[appid]
+  const data = (entry?.success === true ? entry.data : null) as Record<string, unknown> | null
+  const date = (data?.release_date as { date?: unknown } | undefined)?.date
+  const year = typeof date === "string" ? /\b(19|20)\d{2}\b/.exec(date)?.[0] : undefined
+  return {
+    genres: names(data?.genres, "description").slice(0, 4),
+    developers: names(data?.developers).slice(0, 3),
+    year: year ? Number(year) : null,
+  }
+}
+
+/**
+ * As conquistas da pessoa num jogo (`GetPlayerAchievements`): quantas
+ * desbloqueou de quantas existem. Jogo sem conquistas (ou sem resposta) = null.
+ */
+export function parsePlayerAchievements(json: unknown): { unlocked: number; total: number } | null {
+  const stats = (json as { playerstats?: { success?: unknown; achievements?: unknown } } | null)
+    ?.playerstats
+  if (stats?.success !== true || !Array.isArray(stats.achievements)) return null
+  const total = stats.achievements.length
+  if (total === 0) return null
+  const unlocked = stats.achievements.filter(
+    (item) => (item as { achieved?: unknown } | null)?.achieved === 1
+  ).length
+  return { unlocked, total }
+}
+
+/** O que vai para o banco de um jogo. Chave ausente = não sabe (o banco não mexe). */
+export interface SteamDetail {
+  appid: string
+  genero?: string
+  desenvolvedora?: string
+  ano?: number
+  conquistas?: string
+}
+
+export function steamDetail(
+  appid: string,
+  store: SteamStoreDetails | null,
+  achievements: { unlocked: number; total: number } | null
+): SteamDetail {
+  const detail: SteamDetail = { appid }
+  if (store?.genres.length) detail.genero = store.genres.join(", ")
+  if (store?.developers.length) detail.desenvolvedora = store.developers.join(", ")
+  if (store?.year) detail.ano = store.year
+  if (achievements) detail.conquistas = `${achievements.unlocked} de ${achievements.total}`
+  return detail
+}
+
+/** A lista de appids pendentes que `steam_details_todo` devolve. */
+export function parseDetailsTodo(raw: unknown): string[] {
+  return Array.isArray(raw)
+    ? raw.filter((item): item is string => typeof item === "string" && /^\d{1,10}$/.test(item))
+    : []
 }
 
 // ---------------------------------------------------------------------------

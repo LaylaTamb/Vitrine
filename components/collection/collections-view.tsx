@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import Link from "next/link"
-import { FolderPlus, Library, Pencil, Plus, SlidersHorizontal, Star, Trash2 } from "lucide-react"
+import { FolderPlus, Library, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { toast } from "sonner"
 
@@ -353,7 +353,10 @@ export function CollectionsView({
         actions={
           <>
             {filtersHref ? (
-              <Link href={filtersHref} className={buttonVariants({ variant: "outline", size: "lg" })}>
+              <Link
+                href={filtersHref}
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
                 <SlidersHorizontal className="size-4" /> Filtros
               </Link>
             ) : null}
@@ -384,23 +387,7 @@ export function CollectionsView({
               {view === "grid" ? (
                 <GridSizeToggle value={gridSize} onChange={changeGridSize} />
               ) : null}
-              {favoriteIds !== undefined ? (
-                <Link
-                  href="?aba=favoritas"
-                  title="Favoritos"
-                  aria-label={
-                    favorites.length > 0 ? `Favoritos (${favorites.length})` : "Favoritos"
-                  }
-                  className="relative flex size-8 items-center justify-center rounded-md border border-line text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
-                >
-                  <Star className="size-4" />
-                  {favorites.length > 0 ? (
-                    <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-brand px-1 text-center text-[0.6rem] leading-4 font-medium text-background">
-                      {favorites.length > 99 ? "99+" : favorites.length}
-                    </span>
-                  ) : null}
-                </Link>
-              ) : null}
+              {/* As favoritas têm a aba delas no perfil: aqui fica só a Lixeira. */}
               {trashCount !== undefined ? (
                 <Link
                   href="/lixeira"

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Search } from "lucide-react"
+import { QrCode, Search } from "lucide-react"
 import { Suspense, type ReactNode } from "react"
 
 import { AppNav } from "@/components/layout/app-nav"
@@ -73,7 +73,7 @@ export function AppShell({
         }
       />
       <div className="min-w-0 flex-1">
-        {/* O topo do celular: a marca, a busca (o Descobrir) e o sininho. */}
+        {/* O topo do celular: a marca, a busca (o Descobrir), o QR de amizade e o sininho. */}
         <header
           className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-line px-4 md:hidden"
           style={{
@@ -96,6 +96,14 @@ export function AppShell({
               className="rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <Search className="size-5" />
+            </Link>
+            <Link
+              href="/qr"
+              aria-label="QR de amizade"
+              title="QR de amizade"
+              className="rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <QrCode className="size-5" />
             </Link>
             <Suspense fallback={<NotificationsLink count={0} />}>
               <NotificationsBell />

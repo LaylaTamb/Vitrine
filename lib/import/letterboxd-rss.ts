@@ -17,6 +17,8 @@ export interface LetterboxdFeedFilm {
   watched: string | null
   poster: string | null
   review: string | null
+  /** O id do filme no TMDB (`<tmdb:movieId>`): os detalhes saem dele, sem busca. */
+  tmdb: number | null
 }
 
 export interface LetterboxdFeed {
@@ -69,6 +71,11 @@ function ratingOf(value: string | null): number | null {
   const rating = Number(value)
   if (!value || !Number.isFinite(rating) || rating <= 0) return null
   return Math.min(5, Math.round(rating * 2) / 2)
+}
+
+function tmdbOf(value: string | null): number | null {
+  const id = Number(value)
+  return value && Number.isInteger(id) && id > 0 ? id : null
 }
 
 function yearOf(value: string | null): number | null {
@@ -133,6 +140,7 @@ export function parseLetterboxdFeed(xml: string): LetterboxdFeed {
       watched,
       poster: posterOf(description),
       review: reviewOf(description),
+      tmdb: tmdbOf(tag(block, "tmdb:movieId")),
     }
 
     const previous = byKey.get(film.key)
@@ -148,6 +156,7 @@ export function parseLetterboxdFeed(xml: string): LetterboxdFeed {
       rating: newer.rating ?? older.rating,
       poster: newer.poster ?? older.poster,
       review: newer.review ?? older.review,
+      tmdb: newer.tmdb ?? older.tmdb,
     })
   }
 

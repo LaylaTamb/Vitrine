@@ -1,8 +1,10 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { toString as qrSvg } from "qrcode"
 
 import type { EntryInput, MovePreview } from "@/lib/actions/contracts"
+import { appOrigin } from "@/lib/actions/origin"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import {
   bulkMoveSchema,
@@ -106,9 +108,7 @@ async function writeTags(
   return error ? { error } : null
 }
 
-export async function createEntryAction(
-  input: EntryInput
-): Promise<ActionResult<{ id: string }>> {
+export async function createEntryAction(input: EntryInput): Promise<ActionResult<{ id: string }>> {
   const parsed = entrySchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
@@ -148,9 +148,7 @@ export async function createEntryAction(
   return ok({ id: entryId })
 }
 
-export async function updateEntryAction(
-  input: EntryInput & { id: string }
-): Promise<ActionResult> {
+export async function updateEntryAction(input: EntryInput & { id: string }): Promise<ActionResult> {
   const parsed = updateEntrySchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
@@ -162,7 +160,8 @@ export async function updateEntryAction(
 
   // Trocou de pasta pelo formulário: entra no fim da ordem manual do destino.
   // `folderId` ausente = o formulário não mexeu na pasta.
-  const currentFolder = (currentResult.data as { folder_id: string | null } | null)?.folder_id ?? null
+  const currentFolder =
+    (currentResult.data as { folder_id: string | null } | null)?.folder_id ?? null
   const folderId = parsed.data.folderId
   const folderPatch =
     folderId !== undefined && folderId !== currentFolder
@@ -243,12 +242,10 @@ export async function bulkTagAction(input: {
 
   const { error } =
     parsed.data.mode === "add"
-      ? await supabase
-          .from("entry_tags")
-          .upsert(
-            parsed.data.ids.map((entryId) => ({ entry_id: entryId, tag_id: parsed.data.tagId })),
-            { onConflict: "entry_id,tag_id", ignoreDuplicates: true }
-          )
+      ? await supabase.from("entry_tags").upsert(
+          parsed.data.ids.map((entryId) => ({ entry_id: entryId, tag_id: parsed.data.tagId })),
+          { onConflict: "entry_id,tag_id", ignoreDuplicates: true }
+        )
       : await supabase
           .from("entry_tags")
           .delete()
@@ -691,7 +688,9 @@ export async function refreshConnectedCategoryAction(input: {
 
   if (account.provider === "steam") {
     if (!steamConfigured()) return ok({ changed: false, summary: null })
-    const result = await syncSteamAccount(supabase, user.id, account.external_id)
+    const result = await syncSteamAccount(supabase, user.id, account.external_id, {
+      detailsBatch: 8,
+    })
     if (!result.ok) return { ok: false, error: result.error }
     const changed = result.created + result.updated > 0
     if (changed) revalidatePath(`/categoria/${parsed.data.id}`)
@@ -700,7 +699,9 @@ export async function refreshConnectedCategoryAction(input: {
 
   if (account.provider === "letterboxd") {
     if (!serverSecret()) return ok({ changed: false, summary: null })
-    const result = await syncLetterboxdAccount(supabase, user.id, account.external_id)
+    const result = await syncLetterboxdAccount(supabase, user.id, account.external_id, {
+      detailsBatch: 8,
+    })
     if (!result.ok) return { ok: false, error: result.error }
     const changed = result.created + result.updated > 0
     if (changed) revalidatePath(`/categoria/${parsed.data.id}`)
@@ -711,4 +712,25 @@ export async function refreshConnectedCategoryAction(input: {
   }
 
   return ok({ changed: false, summary: null })
+}
+
+/**
+ * O QR do link de uma categoria (o "Compartilhar" do ⋯). Gerado aqui: a
+ * biblioteca não vai para o navegador. É só o link — quem abre continua
+ * dependendo de quem vê a categoria (a RLS decide).
+ */
+export async function categoryQrAction(input: {
+  id: string
+}): Promise<ActionResult<{ svg: string; url: string }>> {
+  const parsed = idSchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+  await requireUser()
+  const url = `${await appOrigin()}/categoria/${parsed.data.id}`
+  const svg = await qrSvg(url, {
+    type: "svg",
+    errorCorrectionLevel: "M",
+    margin: 2,
+    color: { dark: "#131315", light: "#ffffff" },
+  })
+  return ok({ svg, url })
 }

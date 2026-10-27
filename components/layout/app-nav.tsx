@@ -2,7 +2,16 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, Compass, HeartHandshake, House, Plus, Settings, type LucideIcon } from "lucide-react"
+import {
+  Bell,
+  Compass,
+  HeartHandshake,
+  House,
+  Plus,
+  QrCode,
+  Settings,
+  type LucideIcon,
+} from "lucide-react"
 import { useState, type ReactNode } from "react"
 
 import { AddSheet } from "@/components/layout/add-sheet"
@@ -76,6 +85,8 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
           <SideItem href={profileHref} label="Perfil" active={current === "perfil"}>
             {avatar(26)}
           </SideItem>
+          {/* Mostrar o seu QR ou ler o de alguém: escaneou, viram amigos. */}
+          <SideItem href="/qr" icon={QrCode} label="QR de amizade" active={current === "qr"} />
         </nav>
 
         <Button size="lg" className="mt-4 w-full" onClick={() => setAdding(true)}>

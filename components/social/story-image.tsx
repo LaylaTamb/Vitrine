@@ -1,6 +1,7 @@
 import type { CardCategory, ProfileCard } from "@/lib/domain/card"
 import { formatRating, itemCount } from "@/lib/domain/format"
 import { coverBox } from "@/lib/domain/remote-image"
+import { plainRichText } from "@/lib/domain/rich-text"
 
 /**
  * A imagem do story (1080×1920) desenhada pelo `next/og`: o banner no topo
@@ -263,7 +264,7 @@ export function StoryImage({
               marginTop: 32,
             }}
           >
-            {bio}
+            {plainRichText(bio)}
           </div>
         ) : null}
 

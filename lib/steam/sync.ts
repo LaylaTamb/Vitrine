@@ -1,8 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { isMissingSchema } from "@/lib/domain/errors"
-import { STEAM_NOT_READY, STEAM_PRIVATE } from "@/lib/domain/steam"
-import { fetchOwnedGames, fetchPersonaName, serverSecret } from "@/lib/steam/client"
+import {
+  parseDetailsTodo,
+  STEAM_DETAILS_BATCH,
+  STEAM_NOT_READY,
+  STEAM_PRIVATE,
+  STEAM_RECENT_MAX,
+  steamDetail,
+  type SteamDetail,
+  type SteamGame,
+} from "@/lib/domain/steam"
+import {
+  fetchAppDetails,
+  fetchOwnedGames,
+  fetchPersonaName,
+  fetchPlayerAchievements,
+  serverSecret,
+} from "@/lib/steam/client"
 
 export type SteamSyncResult =
   | { ok: true; created: number; updated: number; categoryId: string | null }
@@ -20,7 +35,14 @@ export async function syncSteamAccount(
   supabase: SupabaseClient,
   userId: string,
   steamId: string,
-  options: { refreshName?: boolean } = {}
+  options: {
+    refreshName?: boolean
+    /**
+     * Quantos jogos ganham os detalhes nesta rodada (migração 42). A rodada
+     * diária e o conectar têm tempo; abrir a categoria, menos.
+     */
+    detailsBatch?: number
+  } = {}
 ): Promise<SteamSyncResult> {
   const secret = serverSecret()
   if (!secret) {
@@ -80,10 +102,81 @@ export async function syncSteamAccount(
       error: "A Steam não está conectada a esta conta.",
     }
   }
+
+  // Os detalhes não seguram a sincronização: falhou, fica para a próxima.
+  await syncSteamDetails(supabase, secret, userId, steamId, owned.games, {
+    batch: options.detailsBatch ?? STEAM_DETAILS_BATCH,
+  }).catch(() => undefined)
+
   return {
     ok: true,
     created: typeof result.created === "number" ? result.created : 0,
     updated: typeof result.updated === "number" ? result.updated : 0,
     categoryId: typeof result.category_id === "string" ? result.category_id : null,
   }
+}
+
+/** Roda `task` em cada item, no máximo `limit` de cada vez (Steam e Letterboxd). */
+export async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  task: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = []
+  for (let start = 0; start < items.length; start += limit) {
+    results.push(...(await Promise.all(items.slice(start, start + limit).map(task))))
+  }
+  return results
+}
+
+/**
+ * Gênero, desenvolvedora, ano e conquistas (migração 42), aos poucos: a cada
+ * rodada, os próximos jogos sem detalhes (os mais jogados primeiro) e as
+ * conquistas dos jogados nas últimas 2 semanas. A loja limita as consultas —
+ * por isso o lote. Sem a migração 42, não faz nada.
+ */
+async function syncSteamDetails(
+  supabase: SupabaseClient,
+  secret: string,
+  userId: string,
+  steamId: string,
+  games: SteamGame[],
+  { batch }: { batch: number }
+): Promise<void> {
+  if (batch <= 0) return
+  const { data, error } = await supabase.rpc("steam_details_todo", {
+    p_secret: secret,
+    p_user: userId,
+    p_limit: batch,
+  })
+  if (error) return
+  const todo = parseDetailsTodo(data)
+  const recent = games
+    .filter((game) => game.recent && !todo.includes(String(game.appid)))
+    .slice(0, Math.min(STEAM_RECENT_MAX, batch))
+    .map((game) => String(game.appid))
+
+  const details = await mapLimit(
+    [
+      ...todo.map((appid) => ({ appid, store: true })),
+      ...recent.map((appid) => ({ appid, store: false })),
+    ],
+    5,
+    async ({ appid, store }): Promise<SteamDetail | null> => {
+      const [info, achievements] = await Promise.all([
+        store ? fetchAppDetails(appid) : Promise.resolve(null),
+        fetchPlayerAchievements(steamId, appid),
+      ])
+      // A loja não respondeu: não marca como visto, tenta na próxima rodada.
+      if (store && info === null) return null
+      return steamDetail(appid, info, achievements)
+    }
+  )
+  const ready = details.filter((detail): detail is SteamDetail => detail !== null)
+  if (ready.length === 0) return
+  await supabase.rpc("steam_apply_details", {
+    p_secret: secret,
+    p_user: userId,
+    p_details: ready,
+  })
 }

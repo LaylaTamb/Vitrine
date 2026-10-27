@@ -14,6 +14,7 @@ import {
 import { CoverImage } from "@/components/collection/collection-card"
 import { CopyHandleChip } from "@/components/social/copy-handle-chip"
 import { ProfileBanner } from "@/components/social/profile-banner"
+import { RichText } from "@/components/social/rich-text"
 import { ShareProfileButton } from "@/components/social/share-profile-button"
 import { Avatar } from "@/components/ui/avatar-image"
 import { buttonVariants } from "@/components/ui/button"
@@ -113,7 +114,7 @@ export function ProfileCardView({
 
         {bio ? (
           <p className="max-w-2xl text-[0.95rem] leading-relaxed break-words whitespace-pre-line text-foreground">
-            {bio}
+            <RichText text={bio} />
           </p>
         ) : null}
 

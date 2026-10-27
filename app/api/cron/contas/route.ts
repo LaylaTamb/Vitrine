@@ -99,8 +99,12 @@ export async function GET(request: Request) {
       account.provider === "steam"
         ? await syncSteamAccount(supabase, account.userId, account.externalId, {
             refreshName: true,
+            // Os detalhes (até 25 por conta) levam uns segundos: com pouco tempo, ficam para amanhã.
+            detailsBatch: Date.now() - started > BUDGET_MS - 20_000 ? 0 : undefined,
           })
-        : await syncLetterboxdAccount(supabase, account.userId, account.externalId)
+        : await syncLetterboxdAccount(supabase, account.userId, account.externalId, {
+            detailsBatch: Date.now() - started > BUDGET_MS - 20_000 ? 0 : undefined,
+          })
     if (result.ok) summary.synced += 1
     else summary.failed += 1
   }

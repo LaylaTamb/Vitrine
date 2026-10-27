@@ -1,10 +1,10 @@
 /**
  * A navegação do app logado: 5 lugares (Início, Descobrir, Match, Avisos e o
- * Perfil) e as Configurações. Aqui só a regra de qual fica aceso em cada
- * endereço — a barra lateral e a de baixo usam a mesma.
+ * Perfil), o QR de amizade e as Configurações. Aqui só a regra de qual fica
+ * aceso em cada endereço — a barra lateral e a de baixo usam a mesma.
  */
 
-export type NavSection = "inicio" | "descobrir" | "match" | "avisos" | "perfil" | "config"
+export type NavSection = "inicio" | "descobrir" | "match" | "avisos" | "perfil" | "qr" | "config"
 
 const STARTS: [string, NavSection][] = [
   ["/explorar", "descobrir"],
@@ -15,9 +15,9 @@ const STARTS: [string, NavSection][] = [
   ["/lixeira", "config"],
   ["/importar", "config"],
   ["/tags", "config"],
-  // O que é seu: categorias, itens, o QR, salvar algo novo.
+  ["/qr", "qr"],
+  // O que é seu: categorias, itens, salvar algo novo.
   ["/categoria", "perfil"],
-  ["/qr", "perfil"],
   ["/compartilhar", "perfil"],
 ]
 

@@ -12,6 +12,7 @@ function item(fields: {
   rating?: string
   watched?: string
   description?: string
+  tmdb?: string
 }): string {
   return `<item>
     <title>${fields.title}</title>
@@ -20,6 +21,7 @@ function item(fields: {
     <letterboxd:filmTitle>${fields.title}</letterboxd:filmTitle>
     ${fields.year ? `<letterboxd:filmYear>${fields.year}</letterboxd:filmYear>` : ""}
     ${fields.rating ? `<letterboxd:memberRating>${fields.rating}</letterboxd:memberRating>` : ""}
+    ${fields.tmdb ? `<tmdb:movieId>${fields.tmdb}</tmdb:movieId>` : ""}
     <description><![CDATA[ ${fields.description ?? ""} ]]></description>
   </item>`
 }
@@ -55,6 +57,7 @@ describe("Letterboxd pelo @", () => {
           year: "2021",
           rating: "4.5",
           watched: "2026-10-20",
+          tmdb: "438631",
           description: `${POSTER} <p>Watched on Tuesday October 20, 2026.</p>`,
         }),
       ])
@@ -69,6 +72,7 @@ describe("Letterboxd pelo @", () => {
         watched: "2026-10-20",
         poster: "https://a.ltrbxd.com/resized/film-poster/1/2/3/123-duna-0-600-0-900-crop.jpg?v=1",
         review: null,
+        tmdb: 438631,
       },
     ])
   })

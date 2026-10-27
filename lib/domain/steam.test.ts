@@ -4,8 +4,12 @@ import {
   checkOpenIdReturn,
   isOpenIdValid,
   openIdLoginUrl,
+  parseAppDetails,
+  parseDetailsTodo,
   parseOwnedGames,
   parsePersonaName,
+  parsePlayerAchievements,
+  steamDetail,
   syncSummary,
 } from "./steam"
 
@@ -81,7 +85,7 @@ describe("Web API", () => {
         response: {
           game_count: 4,
           games: [
-            { appid: 620, name: " Portal 2 ", playtime_forever: 754 },
+            { appid: 620, name: " Portal 2 ", playtime_forever: 754, playtime_2weeks: 30 },
             { appid: 10, name: "Counter-Strike", playtime_forever: 0 },
             { appid: 0, name: "inválido" },
             { appid: 70, name: "" },
@@ -91,11 +95,68 @@ describe("Web API", () => {
     ).toEqual({
       status: "ok",
       games: [
-        { appid: 620, name: "Portal 2", minutes: 754 },
-        { appid: 10, name: "Counter-Strike", minutes: 0 },
+        { appid: 620, name: "Portal 2", minutes: 754, recent: true },
+        { appid: 10, name: "Counter-Strike", minutes: 0, recent: false },
       ],
     })
     expect(parseOwnedGames({ response: { game_count: 0 } })).toEqual({ status: "ok", games: [] })
+  })
+
+  it("detalhes da loja: gênero, desenvolvedora e o ano de qualquer data", () => {
+    expect(
+      parseAppDetails(
+        {
+          "620": {
+            success: true,
+            data: {
+              genres: [{ description: "Ação" }, { description: "Aventura" }, { id: 3 }],
+              developers: ["Valve"],
+              release_date: { date: "18 de abr. de 2011" },
+            },
+          },
+        },
+        "620"
+      )
+    ).toEqual({ genres: ["Ação", "Aventura"], developers: ["Valve"], year: 2011 })
+    // fora da loja: tudo vazio (e mesmo assim conta como "já olhei")
+    expect(parseAppDetails({ "70": { success: false } }, "70")).toEqual({
+      genres: [],
+      developers: [],
+      year: null,
+    })
+  })
+
+  it("conquistas da pessoa: desbloqueadas de quantas existem", () => {
+    expect(
+      parsePlayerAchievements({
+        playerstats: {
+          success: true,
+          achievements: [{ achieved: 1 }, { achieved: 0 }, { achieved: 1 }],
+        },
+      })
+    ).toEqual({ unlocked: 2, total: 3 })
+    expect(
+      parsePlayerAchievements({ playerstats: { success: false, error: "no stats" } })
+    ).toBeNull()
+    expect(parsePlayerAchievements({ playerstats: { success: true, achievements: [] } })).toBeNull()
+  })
+
+  it("o que vai para o banco só leva o que se sabe", () => {
+    expect(
+      steamDetail(
+        "620",
+        { genres: ["Ação"], developers: ["Valve"], year: 2011 },
+        { unlocked: 23, total: 51 }
+      )
+    ).toEqual({
+      appid: "620",
+      genero: "Ação",
+      desenvolvedora: "Valve",
+      ano: 2011,
+      conquistas: "23 de 51",
+    })
+    expect(steamDetail("70", null, null)).toEqual({ appid: "70" })
+    expect(parseDetailsTodo(["620", 70, "x", "10"])).toEqual(["620", "10"])
   })
 
   it("perfil privado vem sem game_count", () => {

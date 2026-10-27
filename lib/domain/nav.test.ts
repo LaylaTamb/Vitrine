@@ -11,6 +11,7 @@ describe("navegação", () => {
     expect(navSectionOf("/configuracoes", "marina")).toBe("config")
     expect(navSectionOf("/lixeira", "marina")).toBe("config")
     expect(navSectionOf("/categoria/c1/e1", "marina")).toBe("perfil")
+    expect(navSectionOf("/qr", "marina")).toBe("qr")
   })
 
   it("o seu perfil é Perfil; o de outra pessoa, Descobrir", () => {

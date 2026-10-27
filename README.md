@@ -39,6 +39,9 @@ mais cria conta com e-mail e senha.
 - **Favoritos.** Toque na estrela de qualquer categoria, em qualquer pasta. A
   aba **Favoritas** do seu perfil junta só elas — e elas continuam nas pastas
   delas.
+- **Compartilhar uma categoria.** No ⋯ dela, um QR e o link para mandar para
+  quem quiser (quem abre depende de quem vê a categoria).
+- **Como usar.** O passo a passo fica em Configurações → Como usar.
 - **"A organizar".** A caixa de entrada para o que você salva às pressas
   (do celular, por exemplo). Depois é só mover para a categoria certa.
 - **Lixeira.** Pasta, categoria ou subpasta apagada fica **30 dias** na
@@ -52,7 +55,8 @@ mais cria conta com e-mail e senha.
 - **Seu perfil** (`/v/seu-arroba`): um **cartão de apresentação** no estilo do
   Twitter, com **banner**, foto, nome, bio, os links das suas redes
   (Instagram, X, Discord, Spotify, YouTube) e até **6 categorias em
-  destaque** com os 3 melhores itens de cada uma. Embaixo, as abas
+  destaque** com os 3 melhores itens de cada uma. A bio aceita **negrito**,
+  *itálico*, sublinhado, riscado e links. Embaixo, as abas
   **Coleções**, **Favoritas** e **Mapa**. Você edita tudo no próprio perfil,
   em **Editar perfil**.
 - **Story.** Um toque gera uma imagem pronta para o story do Instagram, com o
@@ -69,7 +73,7 @@ mais cria conta com e-mail e senha.
   **amigos** e passam a ver o que o outro deixou "para Amigos". Dá para
   remover seguidor e bloquear.
 - **QR pessoal.** Numa roda, todo mundo escaneia o seu QR e vira seu amigo na
-  hora.
+  hora — o botão de QR fica na barra lateral (no celular, no topo).
 - **Avisos.** O sininho abre os avisos de novos seguidores, amizades,
   convites de match e importações que terminaram — com **Seguir de volta** e
   **Aceitar** no próprio aviso.
@@ -95,8 +99,10 @@ mais cria conta com e-mail e senha.
 
 - **Importar** as listas salvas do **Google Maps** e os filmes do
   **Letterboxd** (pelo arquivo que cada serviço exporta).
-- **Conectar a Steam** e trazer seus jogos com as horas jogadas, e **conectar
-  o Letterboxd pelo seu @** para os filmes novos do diário chegarem sozinhos —
+- **Conectar a Steam** e trazer seus jogos com as horas jogadas, o gênero, a
+  desenvolvedora, o ano e as suas conquistas, e **conectar
+  o Letterboxd pelo seu @** para os filmes novos do diário chegarem sozinhos
+  (com a resenha, o diretor, o gênero, a duração, o país e a sinopse) —
   os dois se atualizam todo dia e quando você abre a categoria deles.
 - **No celular:** instale o Vitrine como app e use o **Compartilhar** de
   qualquer outro app (no Android) para salvar algo em um toque.

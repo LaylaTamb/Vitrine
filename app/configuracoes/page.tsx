@@ -6,13 +6,13 @@ import {
   ChevronRight,
   Clapperboard,
   Eye,
+  BookOpen,
   FileText,
   FileUp,
   Gamepad2,
   KeyRound,
   LogOut,
   Mail,
-  MapIcon,
   Shield,
   Smartphone,
   Tag,
@@ -36,6 +36,7 @@ import { SteamConnection } from "@/components/layout/steam-connection"
 import { InstallSettings } from "@/components/pwa/install"
 import { SettingsGroup, SettingsRow } from "@/components/settings/settings-list"
 import { ProfileEditPanel } from "@/components/social/profile-edit-panel"
+import { HowTo } from "@/components/settings/how-to"
 import { TagsView } from "@/components/tag/tags-view"
 import { Avatar } from "@/components/ui/avatar-image"
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,7 @@ import { defaultVisibilityOf, VISIBILITY_LABELS } from "@/lib/domain/privacy"
 import { timeAgo } from "@/lib/domain/social"
 import { STEAM_RETURN_MESSAGES } from "@/lib/domain/steam"
 import { TERMS_VERSION } from "@/lib/domain/terms"
+import { TMDB_CREDIT } from "@/lib/domain/tmdb"
 import type { Profile } from "@/lib/domain/types"
 import { profilePath, usernameAllowanceText } from "@/lib/domain/username"
 import { getCollections } from "@/lib/queries/collections"
@@ -57,6 +59,7 @@ import {
 import { getTagsWithUsage } from "@/lib/queries/tags"
 import { getMyTrashCount } from "@/lib/queries/trash"
 import { serverSecret, steamConfigured } from "@/lib/steam/client"
+import { tmdbApiKey } from "@/lib/tmdb/client"
 
 export const metadata: Metadata = { title: "Configurações · Vitrine" }
 
@@ -83,7 +86,8 @@ const SECTIONS = {
   },
   letterboxd: {
     title: "Letterboxd",
-    subtitle: "Traz os filmes do seu diário, com nota e pôster, para uma categoria sua.",
+    subtitle:
+      "Traz os filmes do seu diário, com nota, pôster e resenha — e, aos poucos, diretor, gênero, duração, país e sinopse — para uma categoria sua.",
   },
   backup: {
     title: "Backup",
@@ -92,6 +96,10 @@ const SECTIONS = {
   tags: { title: "Tags", subtitle: null },
   app: { title: "Instalar no celular", subtitle: null },
   excluir: { title: "Excluir minha conta", subtitle: null },
+  ajuda: {
+    title: "Como usar",
+    subtitle: "O Vitrine em poucos minutos. Toque num assunto para abrir.",
+  },
 } as const
 
 type Section = keyof typeof SECTIONS
@@ -224,11 +232,6 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
               href="/configuracoes?secao=letterboxd"
             />
             <SettingsRow
-              icon={MapIcon}
-              label="Importar do Google Maps ou Letterboxd"
-              href="/importar"
-            />
-            <SettingsRow
               icon={FileUp}
               label="Exportar ou importar backup"
               href="/configuracoes?secao=backup"
@@ -256,6 +259,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
           </SettingsGroup>
 
           <SettingsGroup title="Sobre">
+            <SettingsRow icon={BookOpen} label="Como usar" href="/configuracoes?secao=ajuda" />
             <SettingsRow
               icon={FileText}
               label="Termos de uso"
@@ -345,12 +349,18 @@ async function SectionBody({
     case "letterboxd": {
       const letterboxd = await getLetterboxdAccount(userId)
       return (
-        <LetterboxdConnection
-          ready={letterboxd.ready}
-          configured={serverSecret() !== null}
-          account={letterboxd.account}
-          syncedLabel={syncedLabel(letterboxd.account?.lastSyncedAt ?? null, true)}
-        />
+        <div className="space-y-6">
+          <LetterboxdConnection
+            ready={letterboxd.ready}
+            configured={serverSecret() !== null}
+            account={letterboxd.account}
+            syncedLabel={syncedLabel(letterboxd.account?.lastSyncedAt ?? null, true)}
+          />
+          {/* O crédito que os termos do TMDB pedem, onde os dados dele entram. */}
+          {tmdbApiKey() ? (
+            <p className="text-xs leading-relaxed text-faint">{TMDB_CREDIT}</p>
+          ) : null}
+        </div>
       )
     }
     case "backup":
@@ -359,6 +369,8 @@ async function SectionBody({
       return <TagsView tags={await getTagsWithUsage()} embedded />
     case "app":
       return <InstallSettings />
+    case "ajuda":
+      return <HowTo />
     case "excluir":
       return <DeleteAccountForm username={profile.username} />
   }
