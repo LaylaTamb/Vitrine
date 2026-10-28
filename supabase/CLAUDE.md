@@ -68,6 +68,8 @@ Este arquivo complementa o `CLAUDE.md` da raiz e vale para quem mexe nos `.sql` 
 - Não rode o `12` de novo depois do `14`.
 - `34_match_common.sql` apaga as cópias de Match montadas com a regra antiga
   (`match_rule is null`) e monta de novo.
+- `46_remove_match_copies.sql` apaga de vez todas as cópias de Match (`kind` 'match') e a
+  pasta "Matches" vazia. Só depois de a versão com a lista nova (45) estar no ar.
 
 ## Armadilhas de PL/pgSQL já vistas aqui
 

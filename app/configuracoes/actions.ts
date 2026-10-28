@@ -35,6 +35,7 @@ import {
   SOCIAL_PROVIDERS,
   type SocialLinks,
 } from "@/lib/domain/card"
+import { withoutMatchCopies } from "@/lib/domain/collections"
 import { isMissingColumn, isMissingSchema } from "@/lib/domain/errors"
 import {
   LETTERBOXD_NOT_FOUND,
@@ -553,8 +554,15 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
     ])
   )
 
+  // As cópias antigas de match não viajam: o match mora na aba Match.
+  const kept = withoutMatchCopies(
+    (foldersResult.data ?? []) as { id: string; name: string; parent_folder_id: string | null }[],
+    (categoriesResult.data ?? []) as { id: string; folder_id: string | null; kind?: string }[]
+  )
+  const keptCategoryIds = new Set(kept.categories.map((row) => row.id))
+
   const folders: BackupFolder[] = (
-    (foldersResult.data ?? []) as {
+    kept.folders as {
       id: string
       name: string
       parent_folder_id: string | null
@@ -572,7 +580,7 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
   })
 
   const categories: BackupCategory[] = (
-    (categoriesResult.data ?? []) as {
+    kept.categories as {
       id: string
       name: string
       icon: string | null
@@ -614,12 +622,14 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
       name: string
       parent_folder_id: string | null
     }[]
-  ).map((row) => ({
-    id: row.id,
-    categoryId: row.category_id,
-    name: row.name,
-    parentId: row.parent_folder_id,
-  }))
+  )
+    .filter((row) => keptCategoryIds.has(row.category_id))
+    .map((row) => ({
+      id: row.id,
+      categoryId: row.category_id,
+      name: row.name,
+      parentId: row.parent_folder_id,
+    }))
 
   const entries: BackupEntry[] = (
     (entriesResult.data ?? []) as {
@@ -632,19 +642,21 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
       custom_fields: unknown
       entry_tags: { tag_id: string }[] | null
     }[]
-  ).map((row) => ({
-    categoryId: row.category_id,
-    folderId: row.folder_id,
-    name: row.name,
-    rating: row.rating,
-    imageUrl: row.image_url,
-    imageDisplay: imageDisplayOf(row.image_display),
-    customFields: parseCustomFields(row.custom_fields),
-    tags: (row.entry_tags ?? [])
-      .map((link) => tagById.get(link.tag_id))
-      .filter((tag): tag is { id: string; name: string; color: string } => Boolean(tag))
-      .map((tag) => ({ name: tag.name, color: tag.color })),
-  }))
+  )
+    .filter((row) => keptCategoryIds.has(row.category_id))
+    .map((row) => ({
+      categoryId: row.category_id,
+      folderId: row.folder_id,
+      name: row.name,
+      rating: row.rating,
+      imageUrl: row.image_url,
+      imageDisplay: imageDisplayOf(row.image_display),
+      customFields: parseCustomFields(row.custom_fields),
+      tags: (row.entry_tags ?? [])
+        .map((link) => tagById.get(link.tag_id))
+        .filter((tag): tag is { id: string; name: string; color: string } => Boolean(tag))
+        .map((tag) => ({ name: tag.name, color: tag.color })),
+    }))
 
   return ok({
     version: 1,

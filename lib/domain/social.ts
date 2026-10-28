@@ -87,9 +87,14 @@ function importDoneText(payload: Record<string, unknown>): string {
 
 /** Para onde o toque numa notificação leva. */
 export function notificationHref(
-  notification: Pick<NotificationView, "type" | "actor">,
+  notification: Pick<NotificationView, "type" | "actor"> & { payload?: Record<string, unknown> },
   profileHref: (username: string) => string
 ): string {
+  // Match pronto: direto para a lista dele.
+  const matchId = notification.payload?.match_id
+  if (notification.type === "match_ready" && typeof matchId === "string") {
+    return `/matches/${matchId}`
+  }
   if (notification.type.startsWith("match_")) return "/matches"
   // A importação caiu nas suas Coleções, que moram no perfil.
   if (notification.type === "import_done") return "/perfil"

@@ -90,11 +90,14 @@ mais cria conta com e-mail e senha.
 - **Sugestões de campos.** Enquanto você dá nome a uma categoria nova, o
   Vitrine mostra os campos que outras pessoas usam em categorias parecidas
   (e, se ninguém tiver, pode pedir sugestões a uma IA).
-- **Match.** Chame até 7 amigos para comparar coleções. Quando todos aceitam,
-  cada um ganha a sua cópia com **só as categorias que vocês têm em comum**:
-  a **% de compatibilidade**, o que está **em comum**, as **sugestões** para
-  você (o que o outro avaliou bem e você ainda não tem) e para ele, e um
-  **Trazer** que leva o item para a sua coleção.
+- **Match.** Chame até 7 amigos e misture os gostos, como uma playlist feita
+  a várias mãos. Quando todos aceitam, vocês ganham **uma lista só, a mesma
+  para todo mundo**, que muda um pouco a cada dia: o que vocês têm **em
+  comum**, as **sugestões** de cada um (o que alguém avaliou bem e os outros
+  ainda não têm) e algumas **descobertas** de categorias que só uma pessoa
+  tem. Em cima, a **% de compatibilidade** com o **por quê**, a categoria e o
+  item que unem vocês. O **＋** leva um item da lista para a sua coleção, e
+  **Compartilhar no story** gera uma imagem do match para postar.
 
 ### Trazer o que você já tem
 

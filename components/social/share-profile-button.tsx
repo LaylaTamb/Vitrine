@@ -55,7 +55,13 @@ export function ShareProfileButton({
             <Button variant="secondary" size="lg" className="justify-start" onClick={copyLink}>
               <Copy className="size-4" /> Copiar link do perfil
             </Button>
-            {storyReady ? <ShareStoryButton username={username} /> : null}
+            {storyReady ? (
+              <ShareStoryButton
+                src={`/v/${username}/story`}
+                fileName={`vitrine-${username}.png`}
+                title={`@${username} no Vitrine`}
+              />
+            ) : null}
             <Link
               href="/qr"
               className={buttonVariants({ variant: "secondary", size: "lg", className: "justify-start" })}

@@ -1,10 +1,6 @@
+import { parseBlendPool, type BlendPool } from "@/lib/domain/blend"
 import { isMissingSchema } from "@/lib/domain/errors"
-import {
-  decorateMatchCopy,
-  parseMatches,
-  type MatchCopyRow,
-  type MatchView,
-} from "@/lib/domain/match"
+import { parseMatches, type MatchView } from "@/lib/domain/match"
 import type { ListProfile } from "@/lib/queries/social"
 import { getMyFollows } from "@/lib/queries/social"
 import { createClient } from "@/lib/supabase/server"
@@ -53,33 +49,6 @@ export async function getMatchById(matchId: string): Promise<MatchView | null> {
   return parseMatches([data])[0] ?? null
 }
 
-/**
- * As linhas da cópia, só o que as contas usam (a página do item precisa da
- * cópia inteira para saber o que é "Em comum" e o que é sugestão).
- */
-export async function getMatchCopyRows(categoryId: string): Promise<MatchCopyRow[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("entries")
-    .select("id, rating, match_owner_id, match_key, match_color")
-    .eq("category_id", categoryId)
-  if (error) return []
-  return (data ?? []) as MatchCopyRow[]
-}
-
-/** A cópia pronta para a tela: o match (as pessoas) e as marcações de cada item. */
-export async function getMatchCopy(
-  category: { id: string; match_id?: string | null },
-  meId: string,
-  rows?: MatchCopyRow[]
-) {
-  const [match, copyRows] = await Promise.all([
-    category.match_id ? getMatchById(category.match_id) : Promise.resolve(null),
-    rows ? Promise.resolve(rows) : getMatchCopyRows(category.id),
-  ])
-  return decorateMatchCopy({ rows: copyRows, match, meId })
-}
-
 /** Os amigos (os dois se seguem) — os que podem ser chamados para um match. */
 export async function getMyFriends(userId: string): Promise<ListProfile[]> {
   const { following, followers } = await getMyFollows(userId)
@@ -93,4 +62,32 @@ export async function getMyFriends(userId: string): Promise<ListProfile[]> {
   return ((data ?? []) as ListProfile[]).sort((a, b) =>
     (a.display_name || a.username).localeCompare(b.display_name || b.username, "pt-BR")
   )
+}
+
+/**
+ * A base da lista do match (migração 45): só o que todos do match podem ver.
+ * `ready = false`: a migração ainda não rodou. `pool = null`: o match não é
+ * seu ou não está pronto.
+ */
+export async function getMatchBlendPool(
+  matchId: string
+): Promise<{ ready: boolean; pool: BlendPool | null }> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("match_blend_pool", { p_match_id: matchId })
+  if (error) return { ready: !isMissingSchema(error), pool: null }
+  return { ready: true, pool: parseBlendPool(data) }
+}
+
+/** Os itens da lista que quem está logado já trouxe para a A organizar ("trazer" + o original). */
+export async function getBroughtIds(userId: string, entryIds: string[]): Promise<string[]> {
+  if (entryIds.length === 0) return []
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("entries")
+    .select("source_id")
+    .eq("owner_id", userId)
+    .eq("source", "trazer")
+    .in("source_id", entryIds)
+  if (error) return []
+  return ((data ?? []) as { source_id: string }[]).map((row) => row.source_id)
 }

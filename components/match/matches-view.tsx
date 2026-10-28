@@ -1,16 +1,17 @@
 "use client"
 
 import { ArrowRight, Check, Clock, HeartHandshake, Plus, Trash2, X } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { hideMatchAction, openMatchAction, respondMatchAction } from "@/app/matches/actions"
+import { hideMatchAction, respondMatchAction } from "@/app/matches/actions"
 import { EmptyState } from "@/components/layout/empty-state"
 import { PageHeader } from "@/components/layout/page-header"
 import { NewMatchDialog } from "@/components/match/new-match-dialog"
 import { Avatar } from "@/components/ui/avatar-image"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { formatDateBR } from "@/lib/domain/format"
 import {
@@ -60,7 +61,7 @@ export function MatchesView({
     <>
       <PageHeader
         title="Match"
-        subtitle="Compare gostos com até 7 amigos: cada um ganha a sua cópia, com o que vocês têm em comum e o que trazer."
+        subtitle="Misture gostos com até 7 amigos: vocês ganham uma lista só, com o que têm em comum e o que um sugere ao outro, que muda um pouco a cada dia."
         actions={
           notReady ? null : (
             <Button onClick={() => setCreating(true)}>
@@ -161,18 +162,6 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
     router.refresh()
   }
 
-  // A cópia é montada na primeira vez que a pessoa abre (pode levar uns segundos).
-  async function open() {
-    setPending(true)
-    const result = await openMatchAction({ matchId: match.id })
-    if (!result.ok || !result.data) {
-      setPending(false)
-      toast.error(result.ok ? "Algo deu errado." : result.error)
-      return
-    }
-    router.push(`/categoria/${result.data.categoryId}`)
-  }
-
   return (
     <div
       className={cn(
@@ -239,9 +228,12 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
           </Button>
         </div>
       ) : state === "ready" ? (
-        <Button className="w-full sm:w-auto" onClick={open} disabled={pending}>
-          {pending ? "Abrindo…" : "Ver o match"} <ArrowRight className="size-4" />
-        </Button>
+        <Link
+          href={`/matches/${match.id}`}
+          className={buttonVariants({ className: "w-full sm:w-auto" })}
+        >
+          Ver a lista <ArrowRight className="size-4" />
+        </Link>
       ) : state === "waiting" ? (
         <Button
           size="sm"
@@ -275,8 +267,7 @@ function MatchCard({ match, meId }: { match: MatchView; meId: string }) {
         title="Excluir da sua lista"
         description={
           <p>
-            O match some só da sua lista: para os outros, nada muda. A sua cópia continua em
-            Coleções › Matches.
+            O match some só da sua lista: para os outros, nada muda.
           </p>
         }
         confirmLabel="Excluir"

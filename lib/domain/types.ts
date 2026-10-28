@@ -205,14 +205,6 @@ export interface Entry {
   edited_after_copy?: boolean
   /** O autor apagou o original; o seu fica, marcado (migração 26). */
   source_removed_at?: string | null
-  /** Na cópia de um match (migração 31): de quem é o original. */
-  match_owner_id?: string | null
-  /** A cor dessa pessoa no match. */
-  match_color?: string | null
-  /** A chave de "mesma coisa" — ver `matchMarks`. */
-  match_key?: string | null
-  /** Os campos do original (estrutura + valores), só leitura — ver `matchOrigin`. */
-  match_fields?: unknown
 }
 
 export interface Tag {
@@ -315,22 +307,4 @@ export interface EntryView {
   href: string
   /** Numa cópia ligada: o autor apagou o original (migração 26). */
   sourceRemoved: boolean
-  /** Na cópia de um match: de quem é e as marcações (a página preenche). */
-  match?: EntryMatch | null
-}
-
-/** Um item da cópia de um match, do ponto de vista de quem abre (migração 31). */
-export interface EntryMatch {
-  /** De quem é o original (vazio: conta que não existe mais). */
-  ownerId: string
-  /** "você" ou "@ana". */
-  ownerLabel: string
-  isMine: boolean
-  color: string
-  /** 2+ pessoas do match têm. */
-  common: boolean
-  /** Nota ≥ 4 de quem tem, e você não tem. */
-  suggestionForMe: boolean
-  /** Para quem mais é sugestão ("você" primeiro, depois "@ana"…). */
-  suggestionFor: string[]
 }

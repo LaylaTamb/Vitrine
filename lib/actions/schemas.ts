@@ -268,9 +268,6 @@ export const createMatchSchema = z.object({
 
 export const respondMatchSchema = z.object({ matchId: uuid, accept: z.boolean() })
 
-/** Abrir (montar, na 1ª vez) a sua cópia de um match pronto (migração 31). */
-export const openMatchSchema = z.object({ matchId: uuid })
-
 /** O banner do cartão (migração 36): o link (vazio = sem banner) e a posição. */
 export const bannerSchema = z.object({
   url: z.string().max(2100),
@@ -283,8 +280,8 @@ export const searchItemsSchema = z.object({ query: z.string().max(80) })
 /** Tirar um match pronto ou cancelado da sua lista (migração 34). */
 export const hideMatchSchema = z.object({ matchId: uuid })
 
-/** "Trazer" um item da cópia de um match para a A organizar. */
-export const bringFromMatchSchema = z.object({ entryId: uuid })
+/** "Trazer" um item da lista do match (migração 45): o match e o item original. */
+export const bringFromBlendSchema = z.object({ matchId: uuid, entryId: uuid })
 
 /** Pegar uma categoria com itens (migração 26). */
 export const copyCategorySchema = z.object({ sourceId: uuid })

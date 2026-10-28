@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { Library } from "lucide-react"
 
 import { CategoryView } from "@/components/category/category-view"
@@ -16,7 +17,6 @@ import { toView } from "@/lib/domain/view"
 import { getCategoryPage, loadCategoryPage } from "@/lib/queries/category"
 import { getCategorySync } from "@/lib/queries/connected"
 import { syncLinkedCategory } from "@/lib/queries/explore"
-import { getMatchCopy } from "@/lib/queries/matches"
 import { getPublicCategory } from "@/lib/queries/public"
 import { getMyProfile, getSessionUser } from "@/lib/queries/session"
 
@@ -119,12 +119,9 @@ export default async function CategoryPage({
 
   const canEdit = category.owner_id === user.id
 
-  // A cópia de um match: as pessoas vêm do match; "Em comum", as sugestões e
-  // a % saem dos próprios itens da cópia, na hora.
-  const matchCopy =
-    canEdit && isMatchCategory(category) ? await getMatchCopy(category, user.id, entries) : null
-  if (matchCopy) {
-    for (const view of views) view.match = matchCopy.byEntry.get(view.id) ?? null
+  // Uma cópia antiga de match (SQL 31): o match agora mora na aba Match.
+  if (isMatchCategory(category)) {
+    redirect(category.match_id ? `/matches/${category.match_id}` : "/matches")
   }
   // O Voltar da raiz da categoria leva às Coleções de quem é dono dela (no perfil).
   const collectionsHref = owner ? profilePath(owner.username) : "/perfil"
@@ -149,7 +146,6 @@ export default async function CategoryPage({
         link={canEdit ? link : null}
         // Passou 1 hora: a tela busca as novidades depois de pintar.
         autoRefresh={canEdit && connected?.due ? connected.provider : null}
-        match={matchCopy?.info ?? null}
       />
     </AppShell>
   )

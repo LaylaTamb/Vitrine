@@ -146,9 +146,11 @@ export function HowTo() {
             você ganha uma cópia que continua recebendo as novidades dela.
           </li>
           <li>
-            No <b>Match</b>, chame até 7 amigos. Quando todos aceitam, cada um ganha uma cópia só
-            com as categorias em comum, a % de compatibilidade, o que vocês têm em comum e as
-            sugestões — com <b>Trazer</b> para levar um item para o seu acervo.
+            No <b>Match</b>, chame até 7 amigos. Quando todos aceitam, vocês ganham uma lista só, a
+            mesma para todo mundo, que muda um pouco a cada dia: o que têm em comum, as sugestões
+            de cada um e algumas descobertas. Em cima, a % de compatibilidade e o <b>Por quê?</b>;
+            o <b>＋</b> leva um item para a sua A organizar, e <b>Compartilhar no story</b> gera
+            a imagem do match.
           </li>
         </ul>
       </Topic>

@@ -7,7 +7,6 @@ import type { ReactNode } from "react"
 import { EntryImage } from "@/components/entry/entry-image"
 import { Stars } from "@/components/entry/stars"
 import { RemovedMark } from "@/components/explore/removed-mark"
-import { MatchOwnerLine } from "@/components/match/match-marks"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EntryView } from "@/lib/domain/types"
@@ -26,7 +25,6 @@ export function EntryRow({
   categoryColor,
   showRating = true,
   dragHandle,
-  extraAction,
 }: {
   view: EntryView
   canEdit: boolean
@@ -41,8 +39,6 @@ export function EntryRow({
   showRating?: boolean
   /** Alça para arrastar (ordem manual). */
   dragHandle?: ReactNode
-  /** Na ponta da linha quando não há as ações de edição (o "Trazer" do match). */
-  extraAction?: ReactNode
 }) {
   return (
     <div
@@ -50,7 +46,7 @@ export function EntryRow({
         "group/card vitrine-card flex items-center gap-3 p-2",
         selected && "border-brand-dim bg-surface-hi"
       )}
-      style={categoryTintVars(view.match?.color ?? categoryColor)}
+      style={categoryTintVars(categoryColor)}
     >
       {selectable ? (
         <label
@@ -89,7 +85,6 @@ export function EntryRow({
             <h3 className="display min-w-0 truncate text-base leading-snug">{view.name}</h3>
             {view.sourceRemoved ? <RemovedMark /> : null}
           </div>
-          {view.match ? <MatchOwnerLine match={view.match} className="mt-0.5" /> : null}
           {view.summary ? (
             <p className="truncate text-xs text-muted-foreground">{view.summary}</p>
           ) : null}
@@ -149,8 +144,6 @@ export function EntryRow({
             <Trash2 className="size-3.5" />
           </button>
         </div>
-      ) : extraAction ? (
-        <div className="shrink-0">{extraAction}</div>
       ) : null}
     </div>
   )

@@ -62,6 +62,12 @@ describe("notificações", () => {
     )
     const href = (username: string) => `/v/${username}`
     expect(notificationHref({ type: "match_invite", actor }, href)).toBe("/matches")
+    expect(
+      notificationHref({ type: "match_ready", actor: null, payload: { match_id: "m1" } }, href)
+    ).toBe("/matches/m1")
+    expect(notificationHref({ type: "match_ready", actor: null, payload: {} }, href)).toBe(
+      "/matches"
+    )
     expect(notificationHref({ type: "new_follower", actor }, href)).toBe("/v/ana")
     expect(notificationHref({ type: "import_done", actor: null }, href)).toBe("/perfil")
   })

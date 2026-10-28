@@ -10,6 +10,7 @@ import {
   folderTotals,
   foldersOf,
   moveTargets,
+  withoutMatchCopies,
 } from "./collections"
 import { translateError } from "./errors"
 import {
@@ -977,6 +978,22 @@ describe("coleções", () => {
     const items = [{ id: "a" }, { id: "b" }, { id: "c" }, { id: "d" }]
     expect(applyOrder(items, ["c", "a"]).map((item) => item.id)).toEqual(["c", "a", "b", "d"])
     expect(applyOrder(items, null)).toBe(items)
+  })
+
+  it("as cópias antigas de match somem, e a pasta Matches que só tinha elas também", () => {
+    const matchFolders: Folder[] = [
+      ...folders,
+      { id: "fm", owner_id: "u1", name: " Matches ", parent_folder_id: null, display_order: 2, created_at: "" },
+      { id: "fx", owner_id: "u1", name: "Matches", parent_folder_id: null, display_order: 3, created_at: "" },
+    ]
+    const copy: Category = { ...categories[2], id: "cm", folder_id: "fm", kind: "match" }
+    const result = withoutMatchCopies(matchFolders, [...categories, copy])
+    expect(result.categories.map((c) => c.id)).toEqual(["c1", "c2", "c3"])
+    // "fx" é uma pasta Matches da pessoa, sem cópia nenhuma: fica.
+    expect(result.folders.map((f) => f.id)).toEqual(["f1", "f2", "f3", "f4", "fx"])
+    // Com uma categoria da pessoa dentro, a pasta fica.
+    const mine: Category = { ...categories[2], id: "c9", folder_id: "fm" }
+    expect(withoutMatchCopies(matchFolders, [copy, mine]).folders.map((f) => f.id)).toContain("fm")
   })
 
   it("aceita um rótulo de raiz próprio (subpastas de categoria)", () => {

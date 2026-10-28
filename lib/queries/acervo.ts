@@ -35,6 +35,8 @@ export async function getAcervo(ownerId: string): Promise<AcervoData> {
   const entriesByCategory = new Map<string, EntryWithTags[]>()
 
   for (const row of rows) {
+    // As cópias antigas de match ficam de fora: o match mora na aba Match.
+    if (row.kind === "match") continue
     const { entries, ...category } = row
     categories.push({ ...category, estrutura: parseEstrutura(row.estrutura) })
     entriesByCategory.set(category.id, entries ?? [])

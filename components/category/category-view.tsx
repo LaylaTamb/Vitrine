@@ -54,8 +54,6 @@ import { EntryForm } from "@/components/entry/entry-form"
 import { EntryRow } from "@/components/entry/entry-row"
 import { TierList } from "@/components/entry/tier-list"
 import { LinkedBar, type LinkView } from "@/components/explore/linked-bar"
-import { BringButton } from "@/components/match/match-marks"
-import { MatchPanel } from "@/components/match/match-panel"
 import { EmptyState } from "@/components/layout/empty-state"
 import { HandlePointerSensor, moveCollision, noShiftStrategy } from "@/components/layout/drag-move"
 import { LevelNav, type Crumb } from "@/components/layout/level-nav"
@@ -76,13 +74,6 @@ import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain
 import type { ConnectedProvider } from "@/lib/domain/connected"
 import { canFavorite } from "@/lib/domain/favorites"
 import { isInbox } from "@/lib/domain/inbox"
-import {
-  applyMatchFilter,
-  EMPTY_MATCH_FILTER,
-  isMatchFilterActive,
-  type MatchCopyInfo,
-  type MatchFilter,
-} from "@/lib/domain/match"
 import { quickFieldOf } from "@/lib/domain/quick-field"
 import { restrictingAncestor, restrictionNote, visibilityOf } from "@/lib/domain/privacy"
 import {
@@ -139,7 +130,6 @@ export function CategoryView({
   isFavorite = false,
   autoRefresh = null,
   link = null,
-  match = null,
 }: {
   category: Category
   owner: Profile | null
@@ -172,20 +162,9 @@ export function CategoryView({
   autoRefresh?: ConnectedProvider | null
   /** Cópia do Explorar: a ligação com a original, já sincronizada (migração 26). */
   link?: LinkView | null
-  /**
-   * A cópia de um match (migração 31): a legenda, as porcentagens e os filtros
-   * rápidos. Os itens já vêm com `view.match`. Nada se edita nos itens (só
-   * tags, pasta e excluir, pela seleção); o "Trazer" leva para a A organizar.
-   */
-  match?: MatchCopyInfo | null
 }) {
   const { actions } = useVitrine()
   const router = useRouter()
-  const matchMode = match !== null
-  // Na cópia de um match o dono organiza (pastas, tags, excluir), mas não edita os itens.
-  const editItems = canEdit && !matchMode
-  const [matchFilter, setMatchFilter] = useState<MatchFilter>(EMPTY_MATCH_FILTER)
-  const matchActive = matchMode && isMatchFilterActive(matchFilter)
   const [folderParam, setFolderParam] = useFolderParam()
   const currentFolderId = resolveFolderId(entryFolders, folderParam)
 
@@ -293,26 +272,18 @@ export function CategoryView({
   }, [views, entryFolders])
 
   // O filtro olha só os itens soltos no nível aberto — subpastas são navegação.
-  // Os filtros rápidos do match olham a cópia inteira (cópia antiga, de antes do
-  // SQL 32, ainda pode ter subpastas: elas somem enquanto filtra).
   const levelViews = useMemo(() => {
-    const base = matchActive
-      ? applyMatchFilter(views, matchFilter)
-      : itemsAt(views, currentFolderId)
+    const base = itemsAt(views, currentFolderId)
     return movedAway.length > 0 ? base.filter((view) => !movedAway.includes(view.id)) : base
-  }, [views, currentFolderId, matchActive, matchFilter, movedAway])
+  }, [views, currentFolderId, movedAway])
   // Subpastas na ordem salva (arrastar); empate, por nome.
   const levelFolders = useMemo(
     () =>
-      matchActive
-        ? []
-        : applyOrder(
-            foldersOf(entryFolders, currentFolderId).filter(
-              (folder) => !movedAway.includes(folder.id)
-            ),
-            folderOrder
-          ),
-    [entryFolders, currentFolderId, folderOrder, matchActive, movedAway]
+      applyOrder(
+        foldersOf(entryFolders, currentFolderId).filter((folder) => !movedAway.includes(folder.id)),
+        folderOrder
+      ),
+    [entryFolders, currentFolderId, folderOrder, movedAway]
   )
   const totals = useMemo(() => entryFolderTotals(entryFolders, views), [entryFolders, views])
   const active = isCategoryFilterActive(filter)
@@ -323,8 +294,8 @@ export function CategoryView({
   }, [levelViews, filter, manual, active, itemOrder])
   // A aba Números conta a pasta aberta com todas as subpastas dela.
   const statsBase = useMemo(
-    () => applyMatchFilter(itemsUnder(views, entryFolders, currentFolderId), matchFilter),
-    [views, entryFolders, currentFolderId, matchFilter]
+    () => itemsUnder(views, entryFolders, currentFolderId),
+    [views, entryFolders, currentFolderId]
   )
   const statsViews = useMemo(() => applyCategoryFilter(statsBase, filter), [statsBase, filter])
   const levelTags = useMemo(
@@ -337,20 +308,17 @@ export function CategoryView({
   // O tier list é só leitura: nada de arrastar nem selecionar ali.
   const isTier = view === "tier"
   const canDragItems =
-    editItems && manual && !active && !matchActive && !selecting && !isTier && filtered.length > 1
+    canEdit && manual && !active && !selecting && !isTier && filtered.length > 1
   const dragStrategy = cardView === "grid" ? rectSortingStrategy : verticalListSortingStrategy
   // Levar um item para uma subpasta (ou subir um nível) arrastando vale em
   // qualquer ordenação, até com filtro; reordenar, só na ordem manual.
   const canMoveItems =
-    editItems &&
-    !matchActive &&
+    canEdit &&
     !selecting &&
     !isTier &&
     (levelFolders.length > 0 || currentFolderId !== null)
   const itemsDraggable = canDragItems || (canMoveItems && filtered.length > 0)
   const itemStrategy = canDragItems ? dragStrategy : noShiftStrategy
-  // Subpastas e trilha recebem o que é arrastado (não na cópia de um match).
-  const canDropHere = canEdit && !matchMode
 
   async function onDragEnd({ active: dragged, over }: DragEndEvent) {
     if (!over || dragged.id === over.id) return
@@ -462,13 +430,13 @@ export function CategoryView({
         key: "categoria",
         label: `${category.icon ? `${category.icon} ` : ""}${category.name}`,
         onClick: () => setFolderParam(null),
-        ...(canDropHere ? { dropLevel: null } : {}),
+        ...(canEdit ? { dropLevel: null } : {}),
       },
       ...folderTrail.map((folder) => ({
         key: `pasta-${folder.id}`,
         label: folder.name,
         onClick: () => setFolderParam(folder.id),
-        ...(canDropHere ? { dropLevel: folder.id } : {}),
+        ...(canEdit ? { dropLevel: folder.id } : {}),
       })),
     ]
   }, [
@@ -478,7 +446,7 @@ export function CategoryView({
     currentFolderId,
     collectionsHref,
     setFolderParam,
-    canDropHere,
+    canEdit,
   ])
 
   const currentFolder = entryFolders.find((folder) => folder.id === currentFolderId) ?? null
@@ -539,26 +507,6 @@ export function CategoryView({
     setDeleting(null)
   }
 
-  // O "Trazer": só no que é de outra pessoa; sempre à vista quando é sugestão para você.
-  function bringAction(item: EntryView, variant: "card" | "row"): ReactNode {
-    if (!canEdit || !item.match || item.match.isMine || selecting) return null
-    return (
-      <BringButton
-        entryId={item.id}
-        name={item.name}
-        variant={variant}
-        // Fora das sugestões, só no hover — e, na lista do celular, só na página do item.
-        className={
-          item.match.suggestionForMe
-            ? undefined
-            : variant === "row"
-              ? "card-actions hidden sm:inline-flex"
-              : "card-actions"
-        }
-      />
-    )
-  }
-
   function openNewEntry() {
     setEditing(null)
     setFormOpen(true)
@@ -566,13 +514,6 @@ export function CategoryView({
 
   function clearFilters() {
     setFilter((current) => ({ ...current, query: "", minRating: "", maxRating: "", tagIds: [] }))
-    setMatchFilter(EMPTY_MATCH_FILTER)
-  }
-
-  // Filtrar a cópia do match junta tudo: a trilha volta para a raiz.
-  function changeMatchFilter(next: MatchFilter) {
-    setMatchFilter(next)
-    if (isMatchFilterActive(next)) setFolderParam(null)
   }
 
   const deletingParentLabel = (() => {
@@ -581,7 +522,7 @@ export function CategoryView({
     return parent ? `“${parent.name}”` : "a raiz da categoria"
   })()
 
-  const levelIsEmpty = levelViews.length === 0 && levelFolders.length === 0 && !matchActive
+  const levelIsEmpty = levelViews.length === 0 && levelFolders.length === 0
   // Categoria dentro de uma pasta que fecha mais (pública dentro de privada…):
   // na prática vale a pasta — vale avisar o dono.
   const visibility = visibilityOf(category)
@@ -598,34 +539,31 @@ export function CategoryView({
     ) : null
 
   // O "⋯": o que é raro fica aqui, para o topo ter uma ação só à vista (＋ Item).
-  // A cópia de um match é uma lista solta: nada de pasta nem item novo, só excluir.
   const moreMenu = canEdit ? (
     <MoreMenu label={`Mais opções de “${category.name}”`}>
       {/* A "A organizar" tem estrutura fixa (migração 17). */}
-      {editItems && !inbox ? (
+      {canEdit && !inbox ? (
         <DropdownMenuItem onSelect={() => setStructureOpen(true)}>
           <SlidersHorizontal /> Editar categoria e campos
         </DropdownMenuItem>
       ) : null}
-      {matchMode ? null : (
-        <DropdownMenuItem onSelect={() => setFolderDialog({ open: true, folder: null })}>
-          <FolderPlus /> Nova subpasta
-        </DropdownMenuItem>
-      )}
-      {matchMode || inbox ? null : (
+      <DropdownMenuItem onSelect={() => setFolderDialog({ open: true, folder: null })}>
+        <FolderPlus /> Nova subpasta
+      </DropdownMenuItem>
+      {inbox ? null : (
         <DropdownMenuItem onSelect={() => setSharing(true)}>
           <Share2 /> Compartilhar (QR e link)
         </DropdownMenuItem>
       )}
       {/* O Mapa só mostra o que é meu. */}
-      {!matchMode && locationFieldsOf(category.estrutura).length > 0 ? (
+      {locationFieldsOf(category.estrutura).length > 0 ? (
         <DropdownMenuItem asChild>
           <Link href={`/mapa?categoria=${category.id}`}>
             <MapIcon /> Ver no mapa
           </Link>
         </DropdownMenuItem>
       ) : null}
-      {currentFolder && !matchMode ? (
+      {currentFolder ? (
         <>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -654,7 +592,7 @@ export function CategoryView({
       ) : null}
       {inbox ? null : (
         <>
-          {matchMode ? null : <DropdownMenuSeparator />}
+          <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={() => setDeletingCategory(true)}>
             <Trash2 /> Excluir categoria
           </DropdownMenuItem>
@@ -679,16 +617,12 @@ export function CategoryView({
         <PageHeader
           className="pt-0"
           label={
-            matchMode
-              ? "match · só você vê"
-              : owner && !canEdit
-                ? `coleção de ${owner.display_name || owner.username}`
-                : undefined
+            owner && !canEdit ? `coleção de ${owner.display_name || owner.username}` : undefined
           }
           title={
             <span className="flex items-center gap-2">
               {category.icon ? <span aria-hidden>{category.icon}</span> : null}
-              {/* Um @ comprido (o nome da cópia de um match) quebra em qualquer ponto. */}
+              {/* Um nome comprido quebra em qualquer ponto. */}
               <span className="min-w-0 [overflow-wrap:anywhere]">{category.name}</span>
               {favoriteButton}
             </span>
@@ -700,7 +634,7 @@ export function CategoryView({
                   ? `${itemCount(views.length)} · ${plural(entryFolders.length, "pasta", "pastas")}`
                   : itemCount(views.length)}
               </span>
-              {canEdit && !matchMode ? (
+              {canEdit ? (
                 <PrivacyChip
                   kind="category"
                   id={category.id}
@@ -713,7 +647,7 @@ export function CategoryView({
           actions={
             canEdit ? (
               <>
-                {editItems ? (
+                {canEdit ? (
                   <Button size="lg" onClick={openNewEntry}>
                     <Plus className="size-4" /> Item
                   </Button>
@@ -730,11 +664,7 @@ export function CategoryView({
 
       {canEdit && link ? <LinkedBar categoryId={category.id} link={link} /> : null}
 
-        {canEdit && match ? (
-          <MatchPanel info={match} filter={matchFilter} onFilterChange={changeMatchFilter} />
-        ) : null}
-
-        {canEdit && restrictedBy && !matchMode ? (
+        {canEdit && restrictedBy ? (
           <PrivacyNote>{restrictionNote("category", restrictedBy)}</PrivacyNote>
         ) : null}
 
@@ -794,9 +724,9 @@ export function CategoryView({
               countOf={(folderId) => totals.get(folderId)?.entries ?? 0}
               onOpen={setFolderParam}
               onCreate={
-                canDropHere ? () => setFolderDialog({ open: true, folder: null }) : undefined
+                canEdit ? () => setFolderDialog({ open: true, folder: null }) : undefined
               }
-              canEdit={canDropHere}
+              canEdit={canEdit}
             />
           ) : null}
 
@@ -814,14 +744,12 @@ export function CategoryView({
               icon={ImageOff}
               title="Vitrine vazia"
               description={
-                matchMode
-                  ? "Vocês não têm categorias em comum à vista um do outro — com nomes equivalentes, como Restaurante e Restaurantes."
-                  : canEdit
-                    ? "Nenhum item por aqui ainda. Adicione o primeiro."
-                    : "Esta coleção ainda não tem itens."
+                canEdit
+                  ? "Nenhum item por aqui ainda. Adicione o primeiro."
+                  : "Esta coleção ainda não tem itens."
               }
               action={
-                editItems ? (
+                canEdit ? (
                   <Button onClick={openNewEntry}>
                     <Plus className="size-4" /> Novo item
                   </Button>
@@ -833,30 +761,26 @@ export function CategoryView({
               icon={FolderOpen}
               title="Pasta vazia"
               description={
-                matchMode
-                  ? `Nada em “${currentFolder?.name ?? category.name}”. Mova itens para cá pela seleção.`
-                  : canEdit
-                    ? `Nada em “${currentFolder?.name ?? category.name}” ainda. Crie um item aqui ou mova itens para cá pela seleção.`
-                    : "Esta pasta ainda não tem itens."
+                canEdit
+                  ? `Nada em “${currentFolder?.name ?? category.name}” ainda. Crie um item aqui ou mova itens para cá pela seleção.`
+                  : "Esta pasta ainda não tem itens."
               }
               action={
-                editItems ? (
+                canEdit ? (
                   <Button onClick={openNewEntry}>
                     <Plus className="size-4" /> Novo item
                   </Button>
                 ) : null
               }
             />
-          ) : levelViews.length === 0 && !matchActive ? null : filtered.length === 0 ? (
+          ) : levelViews.length === 0 ? null : filtered.length === 0 ? (
             <EmptyState
               icon={ImageOff}
               title="Nada bateu com o filtro"
               description={
-                matchActive
-                  ? "Nenhum item do match passa por esse recorte."
-                  : currentFolder
-                    ? `Nenhum item de “${currentFolder.name}” passa por esse recorte. O filtro olha só esta pasta.`
-                    : "Nenhum item deste nível passa por esse recorte. O filtro não olha dentro das subpastas."
+                currentFolder
+                  ? `Nenhum item de “${currentFolder.name}” passa por esse recorte. O filtro olha só esta pasta.`
+                  : "Nenhum item deste nível passa por esse recorte. O filtro não olha dentro das subpastas."
               }
               action={
                 <Button variant="outline" onClick={clearFilters}>
@@ -871,13 +795,9 @@ export function CategoryView({
                   {active
                     ? `${filtered.length} de ${itemCount(levelViews.length)}`
                     : itemCount(levelViews.length)}
-                  {matchActive
-                    ? " no match todo"
-                    : levelFolders.length > 0 || currentFolder
-                      ? " neste nível"
-                      : ""}
+                  {levelFolders.length > 0 || currentFolder ? " neste nível" : ""}
                 </p>
-                {isTier || matchMode ? null : canEdit && manual && active ? (
+                {isTier ? null : canEdit && manual && active ? (
                   <p className="text-xs text-faint">Limpe os filtros para arrastar e reordenar.</p>
                 ) : canEdit && (canDragItems || canMoveItems) ? (
                   <p className="hidden text-xs text-faint sm:block">
@@ -919,7 +839,7 @@ export function CategoryView({
                           cardView === "grid" ? (
                             <EntryCard
                               view={item}
-                              canEdit={editItems}
+                              canEdit={canEdit}
                               categoryColor={category.color}
                               selectable={canEdit}
                               selecting={selecting}
@@ -932,12 +852,11 @@ export function CategoryView({
                               onDelete={() => setDeleting(item)}
                               dragHandle={dragHandle}
                               compact={gridSize === "small"}
-                              extraAction={bringAction(item, "card")}
                             />
                           ) : (
                             <EntryRow
                               view={item}
-                              canEdit={editItems}
+                              canEdit={canEdit}
                               categoryColor={category.color}
                               selectable={canEdit}
                               selecting={selecting}
@@ -950,7 +869,6 @@ export function CategoryView({
                               onDelete={() => setDeleting(item)}
                               showRating={ratingEnabled}
                               dragHandle={dragHandle}
-                              extraAction={bringAction(item, "row")}
                             />
                           )
                         }
@@ -964,7 +882,7 @@ export function CategoryView({
         </div>
       </DndContext>
 
-      {editItems ? (
+      {canEdit ? (
         <>
           <EntryForm
             open={formOpen}
@@ -1049,7 +967,6 @@ export function CategoryView({
               tags={tags}
               folders={entryFolders}
               currentFolderId={currentFolderId}
-              allowCategoryMove={!matchMode}
             />
           ) : null}
         </>

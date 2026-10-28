@@ -1,0 +1,1931 @@
+{
+  "version": 1,
+  "exportedAt": "2026-10-28T18:11:54.079Z",
+  "folders": [
+    {
+      "id": "s_bebidas",
+      "name": "Bebidas",
+      "parentId": null,
+      "visibility": "public"
+    },
+    {
+      "id": "s_alcool",
+      "name": "Alcoólicos",
+      "parentId": "s_bebidas",
+      "visibility": "public"
+    },
+    {
+      "id": "s_semalcool",
+      "name": "Não Alcoólicos",
+      "parentId": "s_bebidas",
+      "visibility": "public"
+    },
+    {
+      "id": "s_animanga",
+      "name": "Animangá",
+      "parentId": null,
+      "visibility": "public"
+    },
+    {
+      "id": "s_games",
+      "name": "Games",
+      "parentId": null,
+      "visibility": "public"
+    },
+    {
+      "id": "s_cinema",
+      "name": "Cinema",
+      "parentId": null,
+      "visibility": "public"
+    },
+    {
+      "id": "s_comidinhas",
+      "name": "Comidinhas",
+      "parentId": null,
+      "visibility": "friends"
+    },
+    {
+      "id": "s_privada",
+      "name": "Só pra mim",
+      "parentId": null,
+      "visibility": "private"
+    }
+  ],
+  "categories": [
+    {
+      "id": "c_filmes",
+      "name": "Filmes",
+      "icon": "🎬",
+      "color": null,
+      "folderId": "s_cinema",
+      "visibility": "public",
+      "estrutura": [
+        {
+          "id": "f_ano",
+          "nome": "Ano",
+          "tipo": "int"
+        },
+        {
+          "id": "f_assistido",
+          "nome": "Data em que assistiu",
+          "tipo": "date"
+        },
+        {
+          "id": "f_resenha",
+          "nome": "Resenha",
+          "tipo": "str"
+        },
+        {
+          "id": "f_diretor",
+          "nome": "Diretor",
+          "tipo": "str"
+        },
+        {
+          "id": "f_genero",
+          "nome": "Gênero",
+          "tipo": "str"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_series",
+      "name": "Séries",
+      "icon": "📺",
+      "color": null,
+      "folderId": "s_cinema",
+      "visibility": "public",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_jogos",
+      "name": "Jogos",
+      "icon": "🎮",
+      "color": null,
+      "folderId": "s_games",
+      "visibility": "public",
+      "estrutura": [
+        {
+          "id": "horas",
+          "nome": "Horas jogadas",
+          "tipo": "time"
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_manga",
+      "name": "Mangá",
+      "icon": "📖",
+      "color": null,
+      "folderId": "s_animanga",
+      "visibility": "public",
+      "estrutura": [
+        {
+          "id": "f_estado",
+          "nome": "Estado",
+          "tipo": "select",
+          "opcoes": [
+            "Lido",
+            "Andamento",
+            "Dropado"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_jojo",
+      "name": "JoJo",
+      "icon": "🧛",
+      "color": "#C97B7B",
+      "folderId": "s_animanga",
+      "visibility": "friends",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_cervejas",
+      "name": "Cervejas",
+      "icon": "🍺",
+      "color": "#B08A6A",
+      "folderId": "s_alcool",
+      "visibility": "public",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_caipirinhas",
+      "name": "Caipirinhas",
+      "icon": "🍹",
+      "color": "#B98CC2",
+      "folderId": "s_alcool",
+      "visibility": "friends",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_sucos",
+      "name": "Sucos naturais",
+      "icon": "🧃",
+      "color": "#B08A6A",
+      "folderId": "s_semalcool",
+      "visibility": "public",
+      "estrutura": [
+        {
+          "id": "f_gostoso",
+          "nome": "Gostoso",
+          "tipo": "select",
+          "opcoes": [
+            "Fav",
+            "Bom",
+            "Médio",
+            "Ruim",
+            "Não Lembro"
+          ]
+        }
+      ],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_gatorade",
+      "name": "Gatorade",
+      "icon": "🥤",
+      "color": "#8FB3C9",
+      "folderId": "s_semalcool",
+      "visibility": "public",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_caldo",
+      "name": "Caldo de Cana",
+      "icon": "🧊",
+      "color": "#8FC9A6",
+      "folderId": "s_semalcool",
+      "visibility": "public",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_restaurantes",
+      "name": "Restaurantes japoneses",
+      "icon": "🍣",
+      "color": "#9A9AA4",
+      "folderId": "s_comidinhas",
+      "visibility": "friends",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_barzinhos",
+      "name": "Barzinhos",
+      "icon": "🍻",
+      "color": null,
+      "folderId": null,
+      "visibility": "private",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    },
+    {
+      "id": "c_cigs",
+      "name": "Cigs",
+      "icon": "🚬",
+      "color": "#9A9AA4",
+      "folderId": "s_privada",
+      "visibility": "public",
+      "estrutura": [],
+      "ratingEnabled": true,
+      "defaultSort": "rating_desc"
+    }
+  ],
+  "entryFolders": [],
+  "entries": [
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "I'm Still Here",
+      "rating": 5,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/w1RDBduPsGbgGn6m4GK9DC7lgvh.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2024,
+        "f_diretor": "Walter Salles",
+        "f_genero": "Drama",
+        "f_resenha": "Chorei do começo ao fim."
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "City of God",
+      "rating": 5,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/gfnXixcGC060QcG6JPxN6AMdVsq.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2002,
+        "f_diretor": "Fernando Meirelles",
+        "f_genero": "Crime, Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Star Wars - Episode III: Revenge of the Sith",
+      "rating": 4,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/nuF5yWtTJEEAd4Qa6cVkYz1XCST.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2005,
+        "f_diretor": "George Lucas",
+        "f_genero": "Ficção científica"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "The Whale",
+      "rating": 4.5,
+      "imageUrl": "https://a.ltrbxd.com/resized/film-poster/7/0/3/4/7/8/703478-the-whale-0-600-0-900-crop.jpg?v=84e98165fb",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2022,
+        "f_diretor": "Darren Aronofsky",
+        "f_genero": "Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Dead Poets Society",
+      "rating": 4.5,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/gMmbJEqEzupp4BYTcRkNsPDPvQE.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 1989,
+        "f_diretor": "Peter Weir",
+        "f_genero": "Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "The Second Mother",
+      "rating": 4.5,
+      "imageUrl": "https://a.ltrbxd.com/resized/sm/upload/xh/j7/g3/yc/lmT09SibdM53xWIzJmKSK4ONcB7-0-600-0-900-crop.jpg?v=8afce6f62c",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2015,
+        "f_diretor": "Anna Muylaert",
+        "f_genero": "Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Don't Look Up",
+      "rating": 4,
+      "imageUrl": "https://a.ltrbxd.com/resized/film-poster/5/7/2/2/5/5/572255-don-t-look-up-0-600-0-900-crop.jpg?v=a58cc4aba2",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2021,
+        "f_diretor": "Adam McKay",
+        "f_genero": "Comédia, Ficção científica"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "American Psycho",
+      "rating": 4.5,
+      "imageUrl": "https://a.ltrbxd.com/resized/sm/upload/5b/u9/av/il/ecoY7zJL6Ub3URP1oPhPfGflEjV-0-600-0-900-crop.jpg?v=8126850315",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2000,
+        "f_diretor": "Mary Harron",
+        "f_genero": "Terror, Suspense",
+        "f_resenha": "Ícone."
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Frankenstein",
+      "rating": 3.5,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/rB0tZwNImTT8febX5qVycZ5YVeF.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2025,
+        "f_diretor": "Guillermo del Toro",
+        "f_genero": "Terror, Fantasia"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Smile 2",
+      "rating": 2,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/ypHiYvSJmHIyRDRiosZuE595uir.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2024,
+        "f_diretor": "Parker Finn",
+        "f_genero": "Terror"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Rogue One: A Star Wars Story",
+      "rating": 4,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/74C2YX0NLWnozVMRS56d5CKDdEv.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2016,
+        "f_diretor": "Gareth Edwards",
+        "f_genero": "Ficção científica"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "The Empire Strikes Back",
+      "rating": 5,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/dLGT8b4Ut10z44uYLaip4QiwKta.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 1980,
+        "f_diretor": "Irvin Kershner",
+        "f_genero": "Ficção científica"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "White Chicks",
+      "rating": 4,
+      "imageUrl": "https://a.ltrbxd.com/resized/film-poster/4/4/7/5/0/44750-white-chicks-0-600-0-900-crop.jpg?v=bfa48588cf",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2004,
+        "f_diretor": "Keenen Ivory Wayans",
+        "f_genero": "Comédia"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Central Station",
+      "rating": 4,
+      "imageUrl": "https://a.ltrbxd.com/resized/film-poster/5/1/4/5/8/51458-central-station-0-600-0-900-crop.jpg?v=953014999a",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 1998,
+        "f_diretor": "Walter Salles",
+        "f_genero": "Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Black Mirror: San Junipero",
+      "rating": 5,
+      "imageUrl": "https://a.ltrbxd.com/resized/film-poster/4/7/8/2/6/1/478261-black-mirror-san-junipero-0-600-0-900-crop.jpg?v=94575731ef",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2016,
+        "f_diretor": "Owen Harris",
+        "f_genero": "Ficção científica, Romance"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Black Mirror: The National Anthem",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2011,
+        "f_diretor": "Otto Bathurst",
+        "f_genero": "Suspense"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Abigail",
+      "rating": 2,
+      "imageUrl": "https://image.tmdb.org/t/p/w500/5gKKSoD3iezjoL7YqZONjmyAiRA.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2024,
+        "f_diretor": "Matt Bettinelli-Olpin, Tyler Gillett",
+        "f_genero": "Terror"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Parasite",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2019,
+        "f_diretor": "Bong Joon Ho",
+        "f_genero": "Suspense, Drama",
+        "f_resenha": "Perfeito."
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Spirited Away",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2001,
+        "f_diretor": "Hayao Miyazaki",
+        "f_genero": "Animação, Fantasia"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Everything Everywhere All at Once",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2022,
+        "f_diretor": "Daniel Kwan, Daniel Scheinert",
+        "f_genero": "Ficção científica, Comédia"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Bacurau",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2019,
+        "f_diretor": "Kleber Mendonça Filho, Juliano Dornelles",
+        "f_genero": "Suspense, Faroeste"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Hereditary",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2018,
+        "f_diretor": "Ari Aster",
+        "f_genero": "Terror"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "The Substance",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2024,
+        "f_diretor": "Coralie Fargeat",
+        "f_genero": "Terror, Ficção científica"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Get Out",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2017,
+        "f_diretor": "Jordan Peele",
+        "f_genero": "Terror, Suspense"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Past Lives",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2023,
+        "f_diretor": "Celine Song",
+        "f_genero": "Romance, Drama"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Midsommar",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2019,
+        "f_diretor": "Ari Aster",
+        "f_genero": "Terror"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Barbie",
+      "rating": 3,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2023,
+        "f_diretor": "Greta Gerwig",
+        "f_genero": "Comédia"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_filmes",
+      "folderId": null,
+      "name": "Saltburn",
+      "rating": 2.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_ano": 2023,
+        "f_diretor": "Emerald Fennell",
+        "f_genero": "Suspense"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_series",
+      "folderId": null,
+      "name": "Breaking Bad",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_series",
+      "folderId": null,
+      "name": "Severance",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_series",
+      "folderId": null,
+      "name": "Dark",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_series",
+      "folderId": null,
+      "name": "Fleabag",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_series",
+      "folderId": null,
+      "name": "The Bear",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Stardew Valley",
+      "rating": 5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/413150/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 21480
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Terraria",
+      "rating": 4,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/105600/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 6120
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Core Keeper",
+      "rating": 3.5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/1621690/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 1260
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Hollow Knight",
+      "rating": 5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 3900
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Don't Starve Together",
+      "rating": 4.5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/322330/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 2700
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Project Zomboid",
+      "rating": 4,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/108600/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 1800
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Little Nightmares",
+      "rating": 4,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/424840/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 420
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Dead by Daylight",
+      "rating": 2.5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/381210/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 960
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Hades",
+      "rating": 5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 4200
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Undertale",
+      "rating": 5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/391540/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 900
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Portal 2",
+      "rating": 5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/620/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 1080
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Celeste",
+      "rating": 4.5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/504230/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 1500
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Cult of the Lamb",
+      "rating": 4.5,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/1313140/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 1680
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Dead Cells",
+      "rating": 4,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/588650/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 2100
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Slay the Spire",
+      "rating": 4,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/646570/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 3000
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Lethal Company",
+      "rating": 4,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/1966720/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 780
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jogos",
+      "folderId": null,
+      "name": "Phasmophobia",
+      "rating": 3,
+      "imageUrl": "https://cdn.cloudflare.steamstatic.com/steam/apps/739630/header.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "horas": 600
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "One Piece",
+      "rating": 5,
+      "imageUrl": "https://m.media-amazon.com/images/I/716EGgqzyOL.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Andamento"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Chainsaw Man",
+      "rating": 5,
+      "imageUrl": "https://m.media-amazon.com/images/I/71wp0XTXsAL._AC_UF1000,1000_QL80_.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Lido"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Junji Ito: Uzumaki",
+      "rating": 4.5,
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/pt/8/88/Uzumaki.jpg?utm_source=pt.wikipedia.org&utm_campaign=index&utm_content=original",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Lido"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Solo Leveling",
+      "rating": 3,
+      "imageUrl": "https://blogbbm.com/wp-content/uploads/2020/10/Solo-Leveling-01-1.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Lido"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Berserk",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Andamento"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Frieren",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Andamento"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Vagabond",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Lido"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Dandadan",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Andamento"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Oyasumi Punpun",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Lido"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_manga",
+      "folderId": null,
+      "name": "Jujutsu Kaisen",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_estado": "Lido"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": null,
+      "name": "Jolyne Cujoh",
+      "rating": 5,
+      "imageUrl": "https://i.pinimg.com/564x/ca/31/83/ca3183103d2db5e8501eb73d33f1c397.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": null,
+      "name": "Joseph Joestar",
+      "rating": 5,
+      "imageUrl": "https://preview.redd.it/joseph-joestar-fanart-made-by-me-second-pic-is-the-v0-xf5fuf7za8791.jpg?width=640&crop=smart&auto=webp&s=1d78e9b3778d91f00018499e425e3399f012c432",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": null,
+      "name": "Giorno Giovanna",
+      "rating": 4.5,
+      "imageUrl": "https://i.pinimg.com/736x/58/23/33/582333186a1150973e4031b82f5e0556.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": null,
+      "name": "Jotaro Kujo",
+      "rating": 4,
+      "imageUrl": "https://i.pinimg.com/736x/34/43/67/344367ffa26a0bf308806ed9f55613bc.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": null,
+      "name": "Bruno Bucciarati",
+      "rating": 5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_jojo",
+      "folderId": null,
+      "name": "Dio Brando",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Stella Artois",
+      "rating": 5,
+      "imageUrl": "https://mercantilatacado.vtexassets.com/arquivos/ids/179965-800-auto?v=638349768454270000&width=800&height=auto&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Corona",
+      "rating": 4.5,
+      "imageUrl": "https://assets.ibecom.com.br/ib.item.image.large/l-64370bd8729f42cd9f55c4a88c1bee19.jpeg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Heineken",
+      "rating": 4,
+      "imageUrl": "https://coopsp.vtexassets.com/arquivos/ids/226279-800-auto?v=638042368592400000&width=800&height=auto&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Amstel",
+      "rating": 3,
+      "imageUrl": "https://bistek.vtexassets.com/arquivos/ids/210942/2224119%20Cerveja%20Lager%20Puro%20Malte%20Amstel%20Garrafa%20355ml.png?v=639045391898830000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Brahma",
+      "rating": 2,
+      "imageUrl": "https://choppbrahmaexpress.vtexassets.com/arquivos/ids/155702/brahma-lata-350ml.jpg?v=637353454674430000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Skol",
+      "rating": 1,
+      "imageUrl": "https://img.megaboxatacado.com.br/produto/1000X1000/202039_14059.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Spaten",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Budweiser",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cervejas",
+      "folderId": null,
+      "name": "Eisenbahn Pilsen",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caipirinhas",
+      "folderId": null,
+      "name": "Caju",
+      "rating": 5,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrLIRP_goducwpcIpOdoW63EBXUZ9mQg4RCxdgI0x-zet-mpiJ-VF3PGW9&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caipirinhas",
+      "folderId": null,
+      "name": "Limão",
+      "rating": 4.5,
+      "imageUrl": "https://www.sabornamesa.com.br/media/k2/items/cache/b003cb6a8c5828399d548e534fa42cc6_XL.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caipirinhas",
+      "folderId": null,
+      "name": "Maracujá",
+      "rating": 4.5,
+      "imageUrl": "https://monologosdoarroz.com.br/wp-content/uploads/2025/05/caipirinha-de-maracuja-blog-monologos-do-arroz.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caipirinhas",
+      "folderId": null,
+      "name": "Morango",
+      "rating": 3,
+      "imageUrl": "https://boraprovar.com/wp-content/uploads/2024/12/caipirinha-de-morango.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caipirinhas",
+      "folderId": null,
+      "name": "Tangerina",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caipirinhas",
+      "folderId": null,
+      "name": "Kiwi",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_sucos",
+      "folderId": null,
+      "name": "Melancia - Caseiro",
+      "rating": 5,
+      "imageUrl": "https://agrobr.org/wp-content/uploads/2024/09/melancia.png.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gostoso": "Fav"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sucos",
+      "folderId": null,
+      "name": "Morango - Caseiro",
+      "rating": 4.5,
+      "imageUrl": "https://png.pngtree.com/png-clipart/20241215/original/pngtree-strawberry-png-image_17861728.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gostoso": "Fav"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sucos",
+      "folderId": null,
+      "name": "Laranja - Caseiro",
+      "rating": 4,
+      "imageUrl": "https://png.pngtree.com/png-vector/20250805/ourmid/pngtree-fresh-orange-with-leaves-and-slices-png-image_16840772.webp",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gostoso": "Bom"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sucos",
+      "folderId": null,
+      "name": "Limão - Caseiro",
+      "rating": 3,
+      "imageUrl": "https://png.pngtree.com/png-vector/20250312/ourmid/pngtree-green-lemon-png-image_15759038.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gostoso": "Médio"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sucos",
+      "folderId": null,
+      "name": "Acerola - Caseiro",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gostoso": "Fav"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sucos",
+      "folderId": null,
+      "name": "Maracujá - Caseiro",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gostoso": "Bom"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_sucos",
+      "folderId": null,
+      "name": "Goiaba - Caseiro",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {
+        "f_gostoso": "Bom"
+      },
+      "tags": []
+    },
+    {
+      "categoryId": "c_gatorade",
+      "folderId": null,
+      "name": "Limão",
+      "rating": 5,
+      "imageUrl": "https://bistek.vtexassets.com/arquivos/ids/203717-800-800?v=638626970902730000&width=800&height=800&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_gatorade",
+      "folderId": null,
+      "name": "Morango e Marucujá",
+      "rating": 4.5,
+      "imageUrl": "https://gbarbosa.vtexassets.com/arquivos/ids/217167-800-auto?v=639105219014700000&width=800&height=auto&aspect=true",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_gatorade",
+      "folderId": null,
+      "name": "Laranja",
+      "rating": 4,
+      "imageUrl": "https://carrefourbrfood.vtexassets.com/arquivos/ids/106450199/gatorade-sabor-laranja-500ml-1.jpg?v=638144910421000000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_gatorade",
+      "folderId": null,
+      "name": "Uva",
+      "rating": 3,
+      "imageUrl": "https://obahortifruti.vtexassets.com/arquivos/ids/9662633/Gatorade--De-Uva-500-Ml.png?v=638638195114870000",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_gatorade",
+      "folderId": null,
+      "name": "Melancia",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Limão",
+      "rating": 4.5,
+      "imageUrl": "https://www.suconosliw.com.br/assets/img/img_dica_saude_nosliw_cana_com_limao.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Caldo de Cana Original Puro",
+      "rating": 4,
+      "imageUrl": "https://static1.minhavida.com.br/recipes/62/8e/70/16/caldo-de-cana-orig-1.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Abacaxi com Hortelã",
+      "rating": 3.5,
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRBRmUOpQSNKXXFM3-x2h0LUQ_CQ9Yo43EwzJP1_PZAhW48vN_FK0LOwOI&s=10",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_caldo",
+      "folderId": null,
+      "name": "Gengibre",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_restaurantes",
+      "folderId": null,
+      "name": "Aska",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_restaurantes",
+      "folderId": null,
+      "name": "Lamen Kazu",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_restaurantes",
+      "folderId": null,
+      "name": "Kidoairaku",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_restaurantes",
+      "folderId": null,
+      "name": "Hinodeya",
+      "rating": 3.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": [
+        {
+          "name": "Japão",
+          "color": "#C79BD0"
+        }
+      ]
+    },
+    {
+      "categoryId": "c_barzinhos",
+      "folderId": null,
+      "name": "Bar do Juarez",
+      "rating": 4.5,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_barzinhos",
+      "folderId": null,
+      "name": "Bar Brahma",
+      "rating": 4,
+      "imageUrl": null,
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cigs",
+      "folderId": null,
+      "name": "Black Menta",
+      "rating": 4,
+      "imageUrl": "https://palheirosdobrasil.com.br/wp-content/uploads/2026/02/fEEuPwb.jpg",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    },
+    {
+      "categoryId": "c_cigs",
+      "folderId": null,
+      "name": "Lucky Strike Double Ice",
+      "rating": 4.5,
+      "imageUrl": "https://phygital-files.mercafacil.com/catalogo/uploads/produto/cigarro_double_ice_lucky_strike_box_1ead5314-403b-49be-8d65-231d2c520721.png",
+      "imageDisplay": {
+        "x": 50,
+        "y": 50,
+        "zoom": 1
+      },
+      "customFields": {},
+      "tags": []
+    }
+  ]
+}

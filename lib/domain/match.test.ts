@@ -1,21 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  applyMatchFilter,
-  compatibility,
-  decorateMatchCopy,
-  groupCompat,
   isMatchCategory,
   matchLocation,
-  matchMarks,
   matchOrigin,
   matchPeopleLabel,
   matchState,
   matchStatusText,
   parseMatches,
-  suggestionText,
   waitingFor,
-  type MatchItem,
   type MatchView,
 } from "./match"
 
@@ -70,53 +63,7 @@ describe("matches", () => {
   })
 })
 
-describe("a cópia: marcações e compatibilidade", () => {
-  const A = "a"
-  const B = "b"
-  const C = "c"
-  const items: MatchItem[] = [
-    { id: "1", ownerId: A, key: "t:filme|duna", rating: 5 },
-    { id: "2", ownerId: B, key: "t:filme|duna", rating: 4 },
-    { id: "3", ownerId: A, key: "lugar:42", rating: 4.5 },
-    { id: "4", ownerId: B, key: "t:filme|aftersun", rating: 3 },
-    { id: "5", ownerId: C, key: "t:livro|torto arado", rating: null },
-  ]
-
-  it("em comum (2+ pessoas) e sugestão (nota ≥ 4, quem não tem)", () => {
-    const marks = matchMarks(items, [A, B, C])
-    expect(marks.get("1")).toEqual({ common: true, suggestionFor: [C] })
-    expect(marks.get("3")).toEqual({ common: false, suggestionFor: [B, C] })
-    expect(marks.get("4")).toEqual({ common: false, suggestionFor: [] })
-    expect(marks.get("5")).toEqual({ common: false, suggestionFor: [] })
-  })
-
-  it("a fórmula do plano: 100 e 40 itens, 8 em comum, meia estrela de diferença → 77%", () => {
-    // sobreposição = 8 ÷ (25% de 40 = 10) = 0,8; concordância = 1 − 0,5 ÷ 5 = 0,9
-    const value = compatibility({ sizeA: 100, sizeB: 40, common: 8, agreement: 0.9 })
-    expect(value).toBeCloseTo(0.768, 5)
-    expect(Math.round(value * 100)).toBe(77)
-  })
-
-  it("teto, ninguém em comum e coleção vazia", () => {
-    expect(compatibility({ sizeA: 10, sizeB: 8, common: 8, agreement: 1 })).toBe(1)
-    expect(compatibility({ sizeA: 10, sizeB: 8, common: 0, agreement: 1 })).toBe(0)
-    expect(compatibility({ sizeA: 0, sizeB: 8, common: 0, agreement: 1 })).toBe(0)
-  })
-
-  it("pares e grupo a partir dos itens", () => {
-    const { group, pairs } = groupCompat(items, [A, B, C])
-    // A × B: 1 em comum de 2 cada (25% de 2 = 0,5 → piso 1) → sobreposição 1;
-    // concordância 1 − |5 − 4| ÷ 5 = 0,8 → 1 × (0,6 + 0,32) = 92%.
-    expect(pairs.find((pair) => pair.a === A && pair.b === B)).toEqual({
-      a: A,
-      b: B,
-      percent: 92,
-      common: 1,
-    })
-    expect(pairs.find((pair) => pair.a === A && pair.b === C)?.percent).toBe(0)
-    expect(group).toBe(31)
-  })
-
+describe("o Trazer e as cópias antigas", () => {
   it("os campos do original, formatados e só os preenchidos", () => {
     const origin = matchOrigin(
       {
@@ -150,99 +97,6 @@ describe("a cópia: marcações e compatibilidade", () => {
     )
     expect(matchLocation(origin)).toEqual({ fieldId: "loc", address: "Rua A, 1" })
     expect(origin.category).toBeNull()
-  })
-})
-
-describe("a cópia do ponto de vista de quem abre", () => {
-  const [base] = parseMatches(raw)
-  const match: MatchView = { ...base, status: "ready" }
-  // você, @ana e @bruno; um item de quem saiu (conta excluída)
-  const rows = [
-    { id: "e1", rating: "4.5", match_owner_id: "u-ana", match_key: "t:filme|duna" },
-    { id: "e2", rating: 3, match_owner_id: ME, match_key: "t:filme|duna" },
-    { id: "e3", rating: 5, match_owner_id: "u-bruno", match_key: "lugar:9" },
-    { id: "e4", rating: null, match_owner_id: null, match_key: null, match_color: "#123456" },
-  ]
-
-  it("legenda (você primeiro), marcações e totais", () => {
-    const { info, byEntry } = decorateMatchCopy({ rows, match, meId: ME })
-    expect(info.people.map((person) => person.label)).toEqual([
-      "você",
-      "@ana",
-      "@bruno",
-      "conta excluída",
-    ])
-    expect(info.people.map((person) => person.items)).toEqual([1, 1, 1, 1])
-    expect(byEntry.get("e1")).toMatchObject({
-      ownerLabel: "@ana",
-      common: true,
-      suggestionForMe: false,
-      suggestionFor: ["@bruno"],
-    })
-    expect(byEntry.get("e3")).toMatchObject({
-      isMine: false,
-      suggestionForMe: true,
-      suggestionFor: ["você", "@ana"],
-      color: "#8FC9A6",
-    })
-    expect(byEntry.get("e2")).toMatchObject({ isMine: true, ownerLabel: "você", common: true })
-    expect(info.totals).toEqual({ common: 2, suggestions: 1, theirs: 0 })
-    // os pares com você vêm primeiro, com você na frente do nome
-    expect(info.pairs[0].label).toBe("você e @ana")
-    expect(info.pairs.filter((pair) => pair.withMe)).toHaveLength(2)
-  })
-
-  it("filtros rápidos e por pessoa", () => {
-    const { byEntry } = decorateMatchCopy({ rows, match, meId: ME })
-    const views = rows.map((row) => ({ id: row.id, match: byEntry.get(row.id) }))
-    const ids = (list: { id: string }[]) => list.map((view) => view.id)
-    expect(ids(applyMatchFilter(views, { mode: "all", person: null }))).toEqual([
-      "e1",
-      "e2",
-      "e3",
-      "e4",
-    ])
-    expect(ids(applyMatchFilter(views, { mode: "common", person: null }))).toEqual(["e1", "e2"])
-    expect(ids(applyMatchFilter(views, { mode: "suggestions", person: null }))).toEqual(["e3"])
-    expect(ids(applyMatchFilter(views, { mode: "common", person: "u-ana" }))).toEqual(["e1"])
-  })
-
-  it("a aba dos outros: os seus itens bem avaliados que eles não têm", () => {
-    const mine = [
-      { id: "m1", rating: 5, match_owner_id: ME, match_key: "lugar:7" },
-      { id: "m2", rating: 2, match_owner_id: ME, match_key: "lugar:8" },
-      { id: "a1", rating: 5, match_owner_id: "u-ana", match_key: "lugar:9" },
-    ]
-    const { info, byEntry } = decorateMatchCopy({ rows: mine, match, meId: ME })
-    expect(info.totals.theirs).toBe(1)
-    const views = mine.map((row) => ({ id: row.id, match: byEntry.get(row.id) }))
-    expect(
-      applyMatchFilter(views, { mode: "theirs", person: null }).map((view) => view.id)
-    ).toEqual(["m1"])
-  })
-
-  it("sem o match (sumiu do banco): as pessoas saem dos itens", () => {
-    const { info } = decorateMatchCopy({ rows, match: null, meId: ME })
-    expect(info.matchId).toBeNull()
-    expect(info.people.map((person) => person.label)).toEqual([
-      "você",
-      "alguém",
-      "alguém",
-      "conta excluída",
-    ])
-  })
-
-  it("a frase da sugestão", () => {
-    expect(suggestionText({ suggestionFor: ["você"], suggestionForMe: true })).toBe(
-      "Sugestão para você: tem nota 4 ou mais, e você ainda não tem."
-    )
-    expect(suggestionText({ suggestionFor: ["você", "@ana"], suggestionForMe: true })).toBe(
-      "Sugestão para você, @ana: tem nota 4 ou mais, e vocês ainda não têm."
-    )
-    expect(suggestionText({ suggestionFor: ["@ana"], suggestionForMe: false })).toBe(
-      "Sugestão para @ana: tem nota 4 ou mais, e @ana ainda não tem."
-    )
-    expect(suggestionText({ suggestionFor: [], suggestionForMe: false })).toBe("")
   })
 
   it("reconhece a categoria da cópia", () => {

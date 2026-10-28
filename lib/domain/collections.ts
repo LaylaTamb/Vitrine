@@ -252,3 +252,33 @@ export function folderGlyphs(
   ]
   return inside.slice(0, max)
 }
+
+/**
+ * As cópias antigas de match (`kind` 'match', migração 31) não aparecem mais
+ * em lugar nenhum das Coleções: o match mora na aba Match. Some também a
+ * pasta "Matches" da raiz que só tinha cópias. (O SQL 46 apaga as duas de vez.)
+ */
+export function withoutMatchCopies<
+  F extends { id: string; name: string; parent_folder_id: string | null },
+  C extends { folder_id: string | null; kind?: string | null },
+>(
+  folders: F[],
+  categories: C[]
+): { folders: F[]; categories: C[] } {
+  const kept = categories.filter((category) => category.kind !== "match")
+  const emptyMatches = new Set(
+    folders
+      .filter(
+        (folder) =>
+          folder.parent_folder_id === null &&
+          folder.name.trim().toLowerCase() === "matches" &&
+          categories.some(
+            (category) => category.kind === "match" && category.folder_id === folder.id
+          ) &&
+          !kept.some((category) => category.folder_id === folder.id) &&
+          !folders.some((child) => child.parent_folder_id === folder.id)
+      )
+      .map((folder) => folder.id)
+  )
+  return { folders: folders.filter((folder) => !emptyMatches.has(folder.id)), categories: kept }
+}

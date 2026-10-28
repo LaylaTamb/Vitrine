@@ -1,5 +1,6 @@
 import { cache } from "react"
 
+import { withoutMatchCopies } from "@/lib/domain/collections"
 import { parseEstrutura } from "@/lib/domain/fields"
 import type {
   Category,
@@ -43,7 +44,7 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
       .select(
         `*,
          owner:profiles(id, username, display_name, avatar_url, created_at,
-                        categories(id, name, icon, display_order, estrutura, rating_enabled),
+                        categories(id, name, icon, display_order, estrutura, rating_enabled, folder_id, kind),
                         folders(*)),
          entry_folders(*),
          entries(*, entry_tags(tag_id))`
@@ -90,7 +91,9 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
   }
 
   const { owner, entries, entry_folders: entryFolders, ...category } = row
-  const siblings = (owner?.categories ?? [])
+  // As cópias antigas de match não são destino de nada: o match mora na aba Match.
+  const collection = withoutMatchCopies(owner?.folders ?? [], owner?.categories ?? [])
+  const siblings = collection.categories
     .map((sibling) => ({ ...sibling, estrutura: parseEstrutura(sibling.estrutura) }))
     .sort((a, b) => a.display_order - b.display_order || a.name.localeCompare(b.name, "pt-BR"))
 
@@ -111,7 +114,7 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
     entries: entries ?? [],
     tags,
     entryFolders: entryFolders ?? [],
-    collectionFolders: owner?.folders ?? [],
+    collectionFolders: collection.folders,
     isFavorite,
   }
 }

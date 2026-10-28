@@ -107,7 +107,8 @@ Rotas (nomes em pt-BR):
     o Filtros em `?filtros=1`;
   - `/u/:username` redireciona para `/v/` (`next.config.ts`);
   - `/perfil` leva ao próprio perfil.
-- **Telas logadas:** `/explorar` (o Descobrir: pessoas e categorias), `/avisos`, `/matches`,
+- **Telas logadas:** `/explorar` (o Descobrir: pessoas e categorias), `/avisos`, `/matches` (e
+  `/matches/[id]`, a lista de um match, com `story/` via `next/og`),
   `/importar`, `/lixeira`, `/qr`, `/compartilhar` (o share target do app instalável, e o "Item" do
   ＋ Adicionar) e `/configuracoes` (lista em grupos; cada
   seção, inclusive o Editar perfil, a Steam e as Tags, abre em `?secao=…`).
@@ -156,10 +157,16 @@ nas seções do `GUIA-LOCAL.md` com o mesmo nome.
   apaga.
 - **"A organizar"** (categoria `kind = 'inbox'`) é travada: ninguém apaga, renomeia nem muda a
   estrutura (migração 17).
-- **Cópia de Match** (`kind = 'match'`):
-  - é privada, e item não entra nem sai dela; só existe o "Trazer" (gatilhos da 31);
-  - quem monta é o `build_my_match_copy`, só com as "famílias" de categoria em comum (34);
-  - esconder um match some só para quem escondeu, e a cópia fica.
+- **Match** (no modelo do Blend, 45):
+  - uma lista só, a mesma para todos: a base (`match_blend_pool`) traz só o que **todos** do
+    match podem ver, das "famílias" de categoria em comum (a regra do 34) e as descobertas
+    (nota 4+) das que só uma pessoa tem;
+  - a lista do dia (30 itens em dupla, +5 por pessoa, até 50), a % e o porquê saem de
+    `lib/domain/blend.ts`, com o match + o dia de São Paulo como semente: nada é gravado;
+  - o ＋ Trazer copia o item original para a "A organizar";
+  - as cópias antigas (`kind = 'match'`, 31) não aparecem nas Coleções e redirecionam para
+    `/matches/[id]`; o SQL 46 as apaga;
+  - esconder um match some só para quem escondeu.
 - **Lixeira** (37):
   - pasta, categoria e subpasta vão como "foto" para `trash_items` por 30 dias, e a restauração
     mantém os ids;

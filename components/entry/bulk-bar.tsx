@@ -42,7 +42,6 @@ export function BulkBar({
   tags,
   folders,
   currentFolderId,
-  allowCategoryMove = true,
 }: {
   categoryId: string
   selectedIds: string[]
@@ -53,8 +52,6 @@ export function BulkBar({
   folders: EntryFolder[]
   /** Pasta aberta: não aparece como destino (os itens já estão nela). */
   currentFolderId: string | null
-  /** A cópia de um match: os itens não saem dela (o "Trazer" é o caminho). */
-  allowCategoryMove?: boolean
 }) {
   const { actions } = useVitrine()
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -136,11 +133,9 @@ export function BulkBar({
               <FolderInput className="size-3.5" /> Pasta
             </Button>
           ) : null}
-          {allowCategoryMove ? (
-            <Button variant="ghost" size="sm" onClick={() => setMoveOpen(true)} disabled={pending}>
-              <ArrowRightLeft className="size-3.5" /> Mover
-            </Button>
-          ) : null}
+          <Button variant="ghost" size="sm" onClick={() => setMoveOpen(true)} disabled={pending}>
+            <ArrowRightLeft className="size-3.5" /> Mover
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setTagMode("add")} disabled={pending}>
             <TagIcon className="size-3.5" /> Add tag
           </Button>

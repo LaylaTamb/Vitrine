@@ -7,7 +7,6 @@ import type { ReactNode } from "react"
 import { EntryImage } from "@/components/entry/entry-image"
 import { Stars } from "@/components/entry/stars"
 import { RemovedMark } from "@/components/explore/removed-mark"
-import { MatchOwnerLine } from "@/components/match/match-marks"
 import { TagPill } from "@/components/tag/tag-pill"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { EntryView } from "@/lib/domain/types"
@@ -26,7 +25,6 @@ export function EntryCard({
   categoryLabel,
   dragHandle,
   compact = false,
-  extraAction,
 }: {
   view: EntryView
   canEdit: boolean
@@ -43,8 +41,6 @@ export function EntryCard({
   dragHandle?: ReactNode
   /** Grade pequena: só imagem, nota e nome — resumo e tags não cabem. */
   compact?: boolean
-  /** No canto do card quando não há as ações de edição (o "Trazer" do match). */
-  extraAction?: ReactNode
 }) {
   return (
     <div
@@ -52,8 +48,7 @@ export function EntryCard({
         "group/card vitrine-card relative p-2",
         selected && "border-brand-dim bg-surface-hi"
       )}
-      // Na cópia de um match, o card tem a cor de quem é o item.
-      style={categoryTintVars(view.match?.color ?? categoryColor)}
+      style={categoryTintVars(categoryColor)}
     >
       {selectable ? (
         <label
@@ -100,8 +95,6 @@ export function EntryCard({
             <Trash2 className="size-3.5" />
           </button>
         </div>
-      ) : extraAction ? (
-        <div className="absolute right-3 top-3 z-20">{extraAction}</div>
       ) : null}
 
       <Link
@@ -140,7 +133,6 @@ export function EntryCard({
             <h3 className="display min-w-0 truncate text-base leading-snug">{view.name}</h3>
             {view.sourceRemoved ? <RemovedMark /> : null}
           </div>
-          {view.match ? <MatchOwnerLine match={view.match} compact={compact} /> : null}
           {view.summary && !compact ? (
             <p className="truncate text-xs text-muted-foreground">{view.summary}</p>
           ) : null}

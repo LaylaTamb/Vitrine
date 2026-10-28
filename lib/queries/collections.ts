@@ -1,4 +1,4 @@
-import { coversByCategory } from "@/lib/domain/collections"
+import { coversByCategory, withoutMatchCopies } from "@/lib/domain/collections"
 import { parseEstrutura } from "@/lib/domain/fields"
 import type { Category, Folder, Profile } from "@/lib/domain/types"
 import { createClient } from "@/lib/supabase/server"
@@ -59,10 +59,15 @@ export async function getCollections(ownerId: string): Promise<CollectionsData> 
     counts[row.category_id] = row.total
   }
 
+  const { folders, categories } = withoutMatchCopies(
+    (foldersResult.data ?? []) as Folder[],
+    ((categoriesResult.data ?? []) as CategoryRow[]).map(toCategory)
+  )
+
   return {
     profile: (profileResult.data as Profile | null) ?? null,
-    folders: (foldersResult.data ?? []) as Folder[],
-    categories: ((categoriesResult.data ?? []) as CategoryRow[]).map(toCategory),
+    folders,
+    categories,
     counts,
     covers: coversResult.error ? {} : coversByCategory(coversResult.data ?? []),
   }

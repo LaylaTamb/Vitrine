@@ -5,17 +5,13 @@ import { EntryDetailActions } from "@/components/entry/entry-detail-actions"
 import { EntryImage } from "@/components/entry/entry-image"
 import { Stars } from "@/components/entry/stars"
 import { OpenInMapsLink, VitrineMapLink } from "@/components/map/maps-links"
-import { MatchEntryActions } from "@/components/match/match-entry-actions"
-import { MatchOwnerLine } from "@/components/match/match-marks"
 import { TagPill } from "@/components/tag/tag-pill"
 import { formatRating } from "@/lib/domain/format"
 import { mapsTargetOf } from "@/lib/domain/maps-links"
-import { matchOwnerText, suggestionText, type MatchOrigin } from "@/lib/domain/match"
 import type {
   Category,
   CategorySummary,
   EntryFolder,
-  EntryMatch,
   EntryPlace,
   EntryView,
   Profile,
@@ -45,7 +41,6 @@ export function EntryDetail({
   places = [],
   showMapLink = false,
   categories = [],
-  match = null,
 }: {
   view: EntryView
   category: Category
@@ -60,11 +55,6 @@ export function EntryDetail({
   showMapLink?: boolean
   /** As categorias do dono — o seletor "Categoria" da edição (trocar o item de categoria). */
   categories?: CategorySummary[]
-  /**
-   * Item da cópia de um match (migração 31): de quem é, as marcações e os
-   * campos do original, só leitura.
-   */
-  match?: { entry: EntryMatch; origin: MatchOrigin } | null
 }) {
   const placeOf = (fieldId: string) => places.find((place) => place.field_id === fieldId)
   const folder = entryFolders.find((item) => item.id === view.folderId) ?? null
@@ -92,16 +82,14 @@ export function EntryDetail({
             initial={view.initial}
             initialSize="6rem"
             eager
-            tint={match?.entry.color ?? category.color}
+            tint={category.color}
           />
         </div>
 
         <div className="min-w-0 space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 space-y-2">
-              {match ? (
-                <MatchOwnerLine match={match.entry} className="text-xs" />
-              ) : owner && !canEdit ? (
+              {owner && !canEdit ? (
                 <Link
                   href={profilePath(owner.username)}
                   className="plaque block hover:text-foreground"
@@ -117,16 +105,13 @@ export function EntryDetail({
                   <Stars percent={view.ratingPercent} size="md" />
                   <span className="text-sm text-muted-foreground">
                     {view.hasRating ? `${formatRating(view.rating)} de 5` : "sem avaliação"}
-                    {match && view.hasRating
-                      ? ` · nota ${match.entry.isMine ? "sua" : matchOwnerText(match.entry)}`
-                      : ""}
                   </span>
                 </div>
               ) : null}
             </div>
 
-            {/* Editar e excluir moram no "⋯" (no item de um match, as ações dele, embaixo). */}
-            {canEdit && !match ? (
+            {/* Editar e excluir moram no "⋯". */}
+            {canEdit ? (
               <EntryDetailActions
                 view={view}
                 categoryId={category.id}
@@ -143,10 +128,6 @@ export function EntryDetail({
             <p className="text-sm text-muted-foreground">
               Removido do original: quem fez a categoria apagou este item. O seu continua aqui.
             </p>
-          ) : null}
-
-          {match && match.entry.suggestionFor.length > 0 ? (
-            <p className="text-sm text-muted-foreground">{suggestionText(match.entry)}</p>
           ) : null}
 
           {view.tags.length > 0 ? (
@@ -188,45 +169,6 @@ export function EntryDetail({
             </dl>
           ) : null}
 
-          {match && (match.origin.category || match.origin.fields.length > 0) ? (
-            <div className="space-y-2">
-              <p className="plaque">
-                {match.origin.category ? `em “${match.origin.category}”` : "do original"} · só
-                leitura
-              </p>
-              {match.origin.fields.length > 0 ? (
-                <dl className="divide-y divide-line rounded-2xl border border-line bg-surface px-4">
-                  {match.origin.fields.map((field) => (
-                    <div
-                      key={field.id}
-                      className="flex flex-col gap-1 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
-                    >
-                      <dt className="shrink-0 text-sm text-muted-foreground">{field.label}</dt>
-                      <dd className="min-w-0 text-sm break-words sm:text-right">
-                        {field.tipo === "location" ? (
-                          <span className="flex flex-col items-start gap-2 sm:items-end">
-                            <span>{field.value}</span>
-                            <OpenInMapsLink target={mapsTargetOf(field.value, placeOf(field.id))} />
-                          </span>
-                        ) : (
-                          field.value
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
-            </div>
-          ) : null}
-
-          {canEdit && match ? (
-            <MatchEntryActions
-              view={view}
-              categoryId={category.id}
-              tags={tags}
-              isMine={match.entry.isMine}
-            />
-          ) : null}
         </div>
       </div>
     </div>

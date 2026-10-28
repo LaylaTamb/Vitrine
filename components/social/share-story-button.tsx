@@ -28,14 +28,15 @@ function isDesktop(): boolean {
   return window.matchMedia("(hover: hover) and (pointer: fine)").matches
 }
 
-async function fetchStory(username: string): Promise<Blob> {
-  const response = await fetch(`/v/${username}/story`, { cache: "no-store" })
+async function fetchStory(src: string): Promise<Blob> {
+  const response = await fetch(src, { cache: "no-store" })
   if (!response.ok) throw new Error(String(response.status))
   return response.blob()
 }
 
 /**
- * "Compartilhar no story": gera a imagem 9:16 do cartão (`/v/<@>/story`).
+ * "Compartilhar no story": gera a imagem 9:16 (`src`: a do cartão,
+ * `/v/<@>/story`, ou a de um match, `/matches/<id>/story`).
  * No celular, abre o compartilhar com o arquivo — dali, Instagram → Story. No
  * computador, copia a imagem para a área de transferência (e baixa, se o
  * navegador não deixar copiar).
@@ -45,12 +46,22 @@ async function fetchStory(username: string): Promise<Blob> {
  * imagem pronta). Pelo mesmo motivo, a cópia entrega a imagem como promessa,
  * criada ainda dentro do clique.
  */
-export function ShareStoryButton({ username }: { username: string }) {
+export function ShareStoryButton({
+  src,
+  fileName,
+  title,
+  size = "sm",
+}: {
+  src: string
+  fileName: string
+  /** O título do compartilhar do celular. */
+  title: string
+  size?: "sm" | "lg"
+}) {
   const [pending, setPending] = useState(false)
   const [ready, setReady] = useState<File | null>(null)
   // Só depois de montar: o servidor não sabe se é computador.
   const [desktop, setDesktop] = useState(false)
-  const fileName = `vitrine-${username}.png`
 
   useEffect(() => {
     setDesktop(isDesktop())
@@ -64,7 +75,7 @@ export function ShareStoryButton({ username }: { username: string }) {
       return
     }
     try {
-      await navigator.share({ files: [file], title: `@${username} no Vitrine` })
+      await navigator.share({ files: [file], title })
       setReady(null)
     } catch (error) {
       if (isAbort(error)) return
@@ -77,7 +88,7 @@ export function ShareStoryButton({ username }: { username: string }) {
   }
 
   async function copy() {
-    const blob = fetchStory(username)
+    const blob = fetchStory(src)
     setPending(true)
     try {
       if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) {
@@ -111,7 +122,7 @@ export function ShareStoryButton({ username }: { username: string }) {
     }
     setPending(true)
     try {
-      const blob = await fetchStory(username)
+      const blob = await fetchStory(src)
       await share(new File([blob], fileName, { type: "image/png" }))
     } catch {
       toast.error("Não deu para gerar a imagem agora. Tente de novo.")
@@ -122,7 +133,7 @@ export function ShareStoryButton({ username }: { username: string }) {
 
   const Icon = desktop ? Copy : Share2
   return (
-    <Button size="sm" onClick={run} disabled={pending}>
+    <Button size={size} onClick={run} disabled={pending}>
       <Icon className="size-4" />
       {pending
         ? "Gerando a imagem…"

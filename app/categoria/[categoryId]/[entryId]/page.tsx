@@ -1,16 +1,16 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { ImageOff } from "lucide-react"
 
 import { EntryDetail } from "@/components/entry/entry-detail"
 import { AppShell } from "@/components/layout/app-shell"
 import { EmptyState } from "@/components/layout/empty-state"
 import { buttonVariants } from "@/components/ui/button"
-import { isMatchCategory, matchOrigin } from "@/lib/domain/match"
+import { isMatchCategory } from "@/lib/domain/match"
 import type { Tag } from "@/lib/domain/types"
-import { formatFieldValue, toView } from "@/lib/domain/view"
+import { toView } from "@/lib/domain/view"
 import { getEntryPage } from "@/lib/queries/entry"
-import { getMatchCopy } from "@/lib/queries/matches"
 import { getPublicCategory } from "@/lib/queries/public"
 import { getMyProfile, getSessionUser } from "@/lib/queries/session"
 
@@ -57,15 +57,9 @@ export default async function EntryPage({ params }: { params: Params }) {
   const view = toView(entry, category.estrutura, tagsById, category.name)
   const isOwner = entry.owner_id === user.id
 
-  // Item da cópia de um match: as marcações dependem da cópia inteira.
-  let match = null
-  if (isOwner && isMatchCategory(category)) {
-    const { byEntry } = await getMatchCopy(category, user.id)
-    const entryMatch = byEntry.get(entry.id)
-    if (entryMatch) {
-      view.match = entryMatch
-      match = { entry: entryMatch, origin: matchOrigin(entry.match_fields, formatFieldValue) }
-    }
+  // Item de uma cópia antiga de match (SQL 31): o match agora mora na aba Match.
+  if (isMatchCategory(category)) {
+    redirect(category.match_id ? `/matches/${category.match_id}` : "/matches")
   }
 
   return (
@@ -81,7 +75,6 @@ export default async function EntryPage({ params }: { params: Params }) {
         // O Mapa só mostra os itens de quem está logado.
         showMapLink={isOwner}
         categories={isOwner ? categories : []}
-        match={match}
       />
     </AppShell>
   )

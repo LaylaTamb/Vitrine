@@ -16,7 +16,7 @@ const BANNER_HEIGHT = 330
 /** A foto: metade dela por cima do banner. */
 const AVATAR = 176
 
-const COLORS = {
+export const COLORS = {
   bg: "#131315",
   surface: "#1d1d20",
   line: "#2b2b31",
@@ -27,18 +27,18 @@ const COLORS = {
   wash: "rgba(185, 140, 194, 0.14)",
 }
 
-const ELLIPSIS = {
+export const ELLIPSIS = {
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 } as const
 
 /** O gerador exige `display: flex` em todo bloco com mais de um filho. */
-const ROW = { display: "flex", alignItems: "center" } as const
-const COLUMN = { display: "flex", flexDirection: "column" } as const
+export const ROW = { display: "flex", alignItems: "center" } as const
+export const COLUMN = { display: "flex", flexDirection: "column" } as const
 
 /** A estrela em SVG (o caractere ★ não está na fonte do gerador). */
-function Star({ size }: { size: number }) {
+export function Star({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={COLORS.brand}>
       <path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z" />
