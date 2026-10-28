@@ -4,7 +4,8 @@ import { navSectionOf } from "./nav"
 
 describe("navegação", () => {
   it("acende o lugar certo", () => {
-    expect(navSectionOf("/", "marina")).toBe("inicio")
+    expect(navSectionOf("/", "marina")).toBe("perfil")
+    expect(navSectionOf("/inicio", "marina")).toBe("inicio")
     expect(navSectionOf("/explorar", "marina")).toBe("descobrir")
     expect(navSectionOf("/matches", "marina")).toBe("match")
     expect(navSectionOf("/avisos", "marina")).toBe("avisos")

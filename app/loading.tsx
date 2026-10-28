@@ -1,25 +1,39 @@
+import { SkeletonGrid } from "@/components/layout/page-skeleton"
 import { Skeleton } from "@/components/ui/skeleton"
 
-/** Esqueleto fiel ao Início (as bolinhas e os cartões do feed) — não um spinner. */
+/** O cartão no topo e, embaixo, o cabeçalho e a grade das coleções. */
 export default function Loading() {
   return (
     <div className="min-h-dvh md:pl-20 lg:pl-64">
       <div className="h-14 border-b border-line md:hidden" />
       <div className="fixed inset-y-0 left-0 hidden w-20 border-r border-line md:block lg:w-64" />
       <div className="shell">
-        <div className="grid gap-8 pt-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="min-w-0 space-y-5">
-            <div className="flex gap-3 overflow-hidden py-1.5">
-              {Array.from({ length: 6 }, (_, index) => (
-                <Skeleton key={index} className="size-14 shrink-0 rounded-full" />
-              ))}
+        <div className="pt-6">
+          <div className="space-y-4 rounded-2xl border border-line bg-surface p-4 sm:p-6">
+            <div className="flex items-center gap-4">
+              <Skeleton className="size-16 shrink-0 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-28" />
+              </div>
             </div>
-            {Array.from({ length: 3 }, (_, index) => (
-              <Skeleton key={index} className="h-72 w-full rounded-2xl" />
-            ))}
+            <Skeleton className="h-4 w-full max-w-md" />
+            <div className="flex gap-2">
+              <Skeleton className="h-7 w-32 rounded-full" />
+              <Skeleton className="h-7 w-28 rounded-full" />
+            </div>
+            <Skeleton className="h-8 w-56" />
           </div>
-          <Skeleton className="hidden h-64 rounded-2xl lg:block" />
         </div>
+        <div className="flex flex-col gap-4 py-7 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-9 w-56" />
+            <Skeleton className="h-4 w-44" />
+          </div>
+          <Skeleton className="h-9 w-28" />
+        </div>
+        <SkeletonGrid />
       </div>
     </div>
   )

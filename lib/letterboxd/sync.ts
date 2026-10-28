@@ -101,7 +101,7 @@ export async function syncLetterboxdAccount(
   }
 
   // Os detalhes não seguram a sincronização: falhou, fica para a próxima.
-  await syncLetterboxdDetails(supabase, secret, userId, result.feed.films, {
+  await syncLetterboxdDetails(supabase, userId, result.feed.films, {
     batch: options.detailsBatch ?? TMDB_DETAILS_BATCH,
   }).catch(() => undefined)
 
@@ -119,43 +119,43 @@ export async function syncLetterboxdAccount(
  * novos primeiro). O do feed já vem com o id do TMDB; o do arquivo é buscado
  * pelo título e o ano. Sem a chave do TMDB ou sem a migração, não faz nada.
  */
-async function syncLetterboxdDetails(
+export async function syncLetterboxdDetails(
   supabase: SupabaseClient,
-  secret: string,
   userId: string,
   films: LetterboxdFeedFilm[],
   { batch }: { batch: number }
-): Promise<void> {
-  if (batch <= 0 || !tmdbApiKey()) return
+): Promise<{ processed: number; more: boolean }> {
+  const secret = serverSecret()
+  if (batch <= 0 || !secret || !tmdbApiKey()) return { processed: 0, more: false }
   const { data, error } = await supabase.rpc("letterboxd_details_todo", {
     p_secret: secret,
     p_user: userId,
     p_limit: batch,
   })
-  if (error) return
+  if (error) return { processed: 0, more: false }
+  const todo = parseLetterboxdTodo(data)
   const tmdbByKey = new Map(
     films.flatMap((film) => (film.tmdb ? [[film.key, film.tmdb] as const] : []))
   )
 
-  const details = await mapLimit(
-    parseLetterboxdTodo(data),
-    5,
-    async (film): Promise<LetterboxdDetail | null> => {
-      const movie = await fetchTmdbMovie({
-        tmdbId: tmdbByKey.get(letterboxdTitleKey(film.name, film.year)) ?? null,
-        name: film.name,
-        year: film.year,
-      })
-      // O TMDB não respondeu: não marca, tenta na próxima rodada.
-      if (movie === undefined) return null
-      return letterboxdDetail(film.id, movie)
-    }
-  )
-  const ready = details.filter((detail): detail is LetterboxdDetail => detail !== null)
-  if (ready.length === 0) return
-  await supabase.rpc("letterboxd_apply_details", {
-    p_secret: secret,
-    p_user: userId,
-    p_details: ready,
+  const details = await mapLimit(todo, 5, async (film): Promise<LetterboxdDetail | null> => {
+    const movie = await fetchTmdbMovie({
+      tmdbId: tmdbByKey.get(letterboxdTitleKey(film.name, film.year)) ?? null,
+      name: film.name,
+      year: film.year,
+    })
+    // O TMDB não respondeu: não marca, tenta na próxima rodada.
+    if (movie === undefined) return null
+    return letterboxdDetail(film.id, movie)
   })
+  const ready = details.filter((detail): detail is LetterboxdDetail => detail !== null)
+  if (ready.length > 0) {
+    await supabase.rpc("letterboxd_apply_details", {
+      p_secret: secret,
+      p_user: userId,
+      p_details: ready,
+    })
+  }
+  // A lista veio cheia: pode haver mais. (TMDB fora do ar = para por aqui.)
+  return { processed: ready.length, more: todo.length === batch && ready.length > 0 }
 }

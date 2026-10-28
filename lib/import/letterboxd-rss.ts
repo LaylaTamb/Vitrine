@@ -162,3 +162,59 @@ export function parseLetterboxdFeed(xml: string): LetterboxdFeed {
 
   return { displayName, films: [...byKey.values()] }
 }
+
+// ---------------------------------------------------------------------------
+// O histórico inteiro: as páginas de filmes do perfil (`/<@>/films/page/N/`)
+// ---------------------------------------------------------------------------
+
+/** Quantos filmes vêm por página no site do Letterboxd. */
+export const LETTERBOXD_FILMS_PER_PAGE = 72
+
+/** O endereço de uma página da lista de filmes vistos de um @ já normalizado. */
+export function letterboxdFilmsPageUrl(username: string, page: number): string {
+  return page <= 1
+    ? `https://letterboxd.com/${username}/films/`
+    : `https://letterboxd.com/${username}/films/page/${page}/`
+}
+
+export interface LetterboxdFilmsPage {
+  films: LetterboxdFeedFilm[]
+  /** A última página que a paginação mostra (1 quando não há paginação). */
+  lastPage: number
+}
+
+/** "Nome (2014)" → nome e ano; sem ano no fim, o nome inteiro. */
+function splitNameYear(full: string): { name: string; year: number | null } {
+  const match = /^(.*\S)\s+\((\d{4})\)$/.exec(full.trim())
+  return match ? { name: match[1], year: yearOf(match[2]) } : { name: full.trim(), year: null }
+}
+
+/**
+ * Uma página da lista de filmes do perfil → os filmes (nome, ano e a nota da
+ * pessoa: `rated-9` = 9 meias-estrelas = 4,5) e a última página. Sem data,
+ * pôster nem resenha (a página não traz): o banco junta com o que já existe,
+ * e o pôster vem depois, pelo TMDB. Funções puras (os testes cobrem).
+ */
+export function parseLetterboxdFilmsPage(html: string): LetterboxdFilmsPage {
+  const films: LetterboxdFeedFilm[] = []
+  const items = html.split(/<li class="griditem/).slice(1)
+  for (const item of items) {
+    const rawName = /data-item-name="([^"]*)"/.exec(item)?.[1]
+    if (!rawName) continue
+    const { name, year } = splitNameYear(decodeEntities(rawName))
+    if (!name) continue
+    const half = Number(/class="rating[^"]*\brated-(\d{1,2})\b/.exec(item)?.[1])
+    films.push({
+      key: letterboxdTitleKey(name.slice(0, 200), year),
+      name: name.slice(0, 200),
+      year,
+      rating: Number.isInteger(half) && half > 0 ? Math.min(5, half / 2) : null,
+      watched: null,
+      poster: null,
+      review: null,
+      tmdb: null,
+    })
+  }
+  const pages = [...html.matchAll(/\/films\/page\/(\d+)\//g)].map((match) => Number(match[1]))
+  return { films, lastPage: Math.max(1, ...pages) }
+}

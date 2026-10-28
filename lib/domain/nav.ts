@@ -7,6 +7,7 @@
 export type NavSection = "inicio" | "descobrir" | "match" | "avisos" | "perfil" | "qr" | "config"
 
 const STARTS: [string, NavSection][] = [
+  ["/inicio", "inicio"],
   ["/explorar", "descobrir"],
   ["/usuarios", "descobrir"],
   ["/matches", "match"],
@@ -26,11 +27,12 @@ function under(pathname: string, prefix: string): boolean {
 }
 
 /**
- * Qual lugar fica aceso. O seu perfil (`/v/<seu @>`) é Perfil; o de outra
- * pessoa, Descobrir (foi lá que você a achou). Fora daqui, nenhum.
+ * Qual lugar fica aceso. O seu perfil (`/v/<seu @>`, e `/`, que abre nele) é
+ * Perfil; o de outra pessoa, Descobrir (foi lá que você a achou). Fora daqui,
+ * nenhum.
  */
 export function navSectionOf(pathname: string, username: string): NavSection | null {
-  if (pathname === "/") return "inicio"
+  if (pathname === "/") return "perfil"
   if (under(pathname.toLowerCase(), `/v/${username.toLowerCase()}`)) return "perfil"
   if (under(pathname, "/v")) return "descobrir"
   for (const [prefix, section] of STARTS) {

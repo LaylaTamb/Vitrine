@@ -68,7 +68,8 @@ mais cria conta com e-mail e senha.
 ### Gente
 
 - **Início.** O que as pessoas que você segue acabaram de catalogar, num
-  feed: quem, o quê e onde, com as fotos.
+  feed: quem, o quê e onde, com as fotos. (O app abre no seu perfil, nas suas
+  Coleções; o Início fica na barra.)
 - **Seguir e Amigos.** Siga quem quiser; quando os dois se seguem, vocês são
   **amigos** e passam a ver o que o outro deixou "para Amigos". Dá para
   remover seguidor e bloquear.
@@ -103,7 +104,9 @@ mais cria conta com e-mail e senha.
   desenvolvedora, o ano e as suas conquistas, e **conectar
   o Letterboxd pelo seu @** para os filmes novos do diário chegarem sozinhos
   (com a resenha, o diretor, o gênero, a duração, o país e a sinopse) —
-  os dois se atualizam todo dia e quando você abre a categoria deles.
+  os dois se atualizam todo dia e quando você abre a categoria deles. Com o @
+  conectado, **Trazer todos os filmes** busca o seu histórico inteiro de uma
+  vez.
 - **No celular:** instale o Vitrine como app e use o **Compartilhar** de
   qualquer outro app (no Android) para salvar algo em um toque.
 - **Backup:** exporte o acervo inteiro num arquivo e importe quando quiser.

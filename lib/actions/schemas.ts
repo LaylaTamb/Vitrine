@@ -134,11 +134,7 @@ export const entrySchema = z.object({
   /** Subpasta da categoria. Ausente = não mexe; `null` = raiz. */
   folderId: uuid.nullable().optional(),
   name: z.string().trim().min(1, "Dê um nome ao item.").max(160, "Nome muito longo."),
-  rating: z
-    .number()
-    .min(0, "A nota vai de 0 a 5.")
-    .max(5, "A nota vai de 0 a 5.")
-    .nullable(),
+  rating: z.number().min(0, "A nota vai de 0 a 5.").max(5, "A nota vai de 0 a 5.").nullable(),
   imageUrl: z.string().trim().max(2048).nullable(),
   imageDisplay: z.object({
     x: z.number().min(0).max(100),
@@ -306,8 +302,15 @@ export const qrTokenSchema = z.object({
 // ---------------------------------------------------------------------------
 
 /** O que a pessoa digitou (o @, o nome ou o link do perfil); quem normaliza é a action. */
+/** O histórico inteiro do Letterboxd: de que página da lista de filmes continuar. */
+export const letterboxdHistorySchema = z.object({ page: z.number().int().min(1).max(500) })
+
 export const letterboxdUsernameSchema = z.object({
-  username: z.string().trim().min(1, "Digite o seu @ do Letterboxd.").max(200, "@ comprido demais."),
+  username: z
+    .string()
+    .trim()
+    .min(1, "Digite o seu @ do Letterboxd.")
+    .max(200, "@ comprido demais."),
 })
 
 // ---------------------------------------------------------------------------

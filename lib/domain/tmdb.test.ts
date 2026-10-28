@@ -19,6 +19,7 @@ describe("TMDB", () => {
     const movie = parseTmdbMovie({
       id: 550,
       runtime: 139,
+      poster_path: "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
       overview: " Um homem deprimido… ",
       genres: [{ name: "Drama" }, { name: "Thriller" }],
       production_countries: [{ iso_3166_1: "US" }, { iso_3166_1: "DE" }],
@@ -38,6 +39,7 @@ describe("TMDB", () => {
         duracao: 139,
         pais: "Estados Unidos, Alemanha",
         sinopse: "Um homem deprimido…",
+        poster: "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
       },
     })
     expect(parseTmdbMovie({ id: 1, runtime: 0, overview: "" })).toEqual({ id: 1, fields: {} })

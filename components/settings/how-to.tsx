@@ -13,7 +13,10 @@ export function HowTo() {
   return (
     <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
       <Topic title="Os lugares do app" open>
-        <p>Embaixo (no celular) ou na lateral (no computador) ficam os cinco lugares:</p>
+        <p>
+          O app abre no seu <b>Perfil</b>, nas suas Coleções. Embaixo (no celular) ou na lateral (no
+          computador) ficam os cinco lugares:
+        </p>
         <ul>
           <li>
             <b>Início</b>: o que as pessoas que você segue acabaram de catalogar.
@@ -179,7 +182,8 @@ export function HowTo() {
             <Link href="/configuracoes?secao=letterboxd" className={LINK}>
               Letterboxd
             </Link>
-            ); o histórico inteiro vem pelo arquivo, no Importar.
+            ). Para trazer o histórico inteiro, toque em <b>Trazer todos os filmes</b> ali mesmo (ou
+            use o arquivo do Letterboxd, no Importar).
           </li>
           <li>
             <b>Steam</b>: conecte e seus jogos chegam com as horas jogadas — e, aos poucos, o

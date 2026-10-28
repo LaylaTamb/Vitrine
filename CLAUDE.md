@@ -97,7 +97,9 @@ As 12 regras de carregamento estão no `GUIA-LOCAL.md`, seção "Arquitetura". O
 
 Rotas (nomes em pt-BR):
 
-- **Início:** `/` (o feed de quem você segue; `/?pasta=` antigo vai para o perfil).
+- **Raiz:** `/` só redireciona para o seu perfil (as Coleções), levando a query junto: é onde o
+  app abre (login, ícone do app instalado).
+- **Início:** `/inicio` (o feed de quem você segue).
 - **Categorias:** `/categoria/[categoryId]/[entryId]`. As Coleções moram na aba do seu perfil.
 - **Perfil:**
   - `/v/[username]` (perfil, seguidores, seguindo e `story/`, a imagem via `next/og`); o
@@ -125,8 +127,8 @@ Rotas (nomes em pt-BR):
 | Supabase | `lib/supabase/{server,middleware,anon,env}.ts` | chave anon/publishable apenas; `createAnonClient` para o que roda sem sessão (Cron) |
 | Geoapify | `lib/geo/client.ts` (tem `import "server-only"`), parse puro em `lib/geo/parse.ts` | endereços, horário, trajeto |
 | Steam | `lib/steam/{client,sync,state}.ts`, `/api/steam/*`, `/api/cron/contas` | OpenID + Web API; sincroniza todo dia e ao abrir a categoria (passada 1 h); gênero, desenvolvedora, ano (loja, sem chave) e conquistas aos poucos (migração 42) |
-| Letterboxd | `lib/letterboxd/{client,sync}.ts`, parse puro em `lib/import/letterboxd-rss.ts`, `/api/cron/contas` | feed RSS público do @ (só os ~50 mais recentes); mesmas regras da Steam (migração 39) |
-| TMDB | `lib/tmdb/client.ts` (tem `import "server-only"`), parse puro em `lib/domain/tmdb.ts` | diretor, gênero, duração, país e sinopse dos filmes do Letterboxd, aos poucos (migração 43); só título e ano vão para lá; o crédito `TMDB_CREDIT` aparece em Configurações → Letterboxd |
+| Letterboxd | `lib/letterboxd/{client,sync}.ts`, parse puro em `lib/import/letterboxd-rss.ts`, `/api/cron/contas` | feed RSS público do @ (só os ~50 mais recentes); mesmas regras da Steam (migração 39); "Trazer todos os filmes" lê as páginas `/<@>/films/` em passos (contra os termos do site, escolha da dona — pode ser recusado) |
+| TMDB | `lib/tmdb/client.ts` (tem `import "server-only"`), parse puro em `lib/domain/tmdb.ts` | diretor, gênero, duração, país, sinopse e o pôster de quem está sem dos filmes do Letterboxd, aos poucos (migrações 43 e 44); só título e ano vão para lá; o crédito `TMDB_CREDIT` aparece em Configurações → Letterboxd |
 | Gemini | `lib/ai/gemini.ts` | só recebe o nome da categoria; limite de 10 por dia no banco (`take_ai_suggestion_quota`, migração 27) |
 | OpenFreeMap | `components/map/` (MapLibre + supercluster) | sem chave |
 | QR / story | `qrcode` no servidor; `app/v/[username]/story/route.tsx` (`next/og`) | o satori ignora `object-position`: corte manual com `imageSizeOf`/`coverBox` (`lib/domain/remote-image.ts`) |

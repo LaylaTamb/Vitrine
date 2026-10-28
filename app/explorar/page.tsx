@@ -1,11 +1,8 @@
 import type { Metadata } from "next"
-import Link from "next/link"
-import { ScanLine } from "lucide-react"
 
 import { ExploreView } from "@/components/explore/explore-view"
 import { AppShell } from "@/components/layout/app-shell"
 import { PageHeader } from "@/components/layout/page-header"
-import { buttonVariants } from "@/components/ui/button"
 import { EXPLORE_NOT_READY } from "@/lib/domain/explore"
 import { getCoversOf, getExplore } from "@/lib/queries/explore"
 import { listProfiles } from "@/lib/queries/profiles"
@@ -35,11 +32,6 @@ export default async function ExplorePage() {
       <PageHeader
         title="Descobrir"
         subtitle="Pessoas e categorias de quem cataloga como você. Pegue uma categoria com os itens: a sua cópia continua recebendo as novidades de quem fez."
-        actions={
-          <Link href="/qr?modo=ler" className={buttonVariants({ variant: "outline", size: "lg" })}>
-            <ScanLine className="size-4" /> Ler QR
-          </Link>
-        }
       />
       <ExploreView
         initial={explore.results}

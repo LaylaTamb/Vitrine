@@ -7,6 +7,7 @@ import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/resul
 import {
   bannerSchema,
   defaultVisibilitySchema,
+  letterboxdHistorySchema,
   letterboxdUsernameSchema,
   profileCardSchema,
   socialLinksSchema,
@@ -50,8 +51,9 @@ import { imageDisplayOf } from "@/lib/domain/view"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
 import { normalizeLetterboxdUsername } from "@/lib/import/letterboxd-rss"
-import { fetchLetterboxdFeed } from "@/lib/letterboxd/client"
-import { syncLetterboxdAccount } from "@/lib/letterboxd/sync"
+import { fetchLetterboxdFeed, fetchLetterboxdFilmsPage } from "@/lib/letterboxd/client"
+import { syncLetterboxdAccount, syncLetterboxdDetails } from "@/lib/letterboxd/sync"
+import type { LetterboxdFeedFilm } from "@/lib/import/letterboxd-rss"
 import { serverSecret, steamConfigured } from "@/lib/steam/client"
 import { syncSteamAccount } from "@/lib/steam/sync"
 
@@ -284,7 +286,10 @@ export async function connectLetterboxdAction(input: {
   try {
     feed = await fetchLetterboxdFeed(username)
   } catch {
-    return { ok: false, error: "O Letterboxd não respondeu agora. Tente de novo em alguns minutos." }
+    return {
+      ok: false,
+      error: "O Letterboxd não respondeu agora. Tente de novo em alguns minutos.",
+    }
   }
   if (feed.status === "not_found") return { ok: false, error: LETTERBOXD_NOT_FOUND }
 
@@ -320,7 +325,8 @@ export async function syncLetterboxdNowAction(): Promise<ActionResult<{ summary:
     .eq("user_id", user.id)
     .eq("provider", "letterboxd")
     .maybeSingle()
-  if (error) return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
+  if (error)
+    return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
   const account = data as { external_id: string; last_attempt_at: string | null } | null
   if (!account) return { ok: false, error: "O Letterboxd não está conectado a esta conta." }
   if (account.last_attempt_at && Date.now() - Date.parse(account.last_attempt_at) < 60_000) {
@@ -333,6 +339,99 @@ export async function syncLetterboxdNowAction(): Promise<ActionResult<{ summary:
   return ok({ summary: letterboxdSummary(result.created, result.updated) })
 }
 
+/** Quantas páginas (72 filmes cada) uma chamada lê: cabe folgado no tempo de uma ação. */
+const HISTORY_PAGES_PER_CALL = 4
+
+const LETTERBOXD_BLOCKED =
+  "O Letterboxd recusou a leitura agora. Tente de novo mais tarde — ou traga o histórico pelo arquivo de exportação, em Importar."
+
+/**
+ * O histórico inteiro do Letterboxd: lê a lista de filmes vistos do perfil,
+ * algumas páginas por vez, e grava pela mesma `letterboxd_apply` do feed (o
+ * que já existe é reconhecido; nada se repete). A tela chama de novo com a
+ * `nextPage` até acabar. Traz nome, ano e nota; o pôster e os detalhes vêm
+ * do TMDB, pela `letterboxdDetailsStepAction`.
+ */
+export async function letterboxdHistoryPagesAction(input: {
+  page: number
+}): Promise<
+  ActionResult<{ created: number; updated: number; lastPage: number; nextPage: number | null }>
+> {
+  const parsed = letterboxdHistorySchema.safeParse(input)
+  if (!parsed.success) return failValidation(parsed.error.issues)
+  const user = await requireUser()
+  if (!serverSecret()) return { ok: false, error: LETTERBOXD_OFF }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("connected_accounts")
+    .select("external_id")
+    .eq("user_id", user.id)
+    .eq("provider", "letterboxd")
+    .maybeSingle()
+  if (error)
+    return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
+  const username = (data as { external_id: string } | null)?.external_id
+  if (!username) return { ok: false, error: "O Letterboxd não está conectado a esta conta." }
+
+  // Uma página de cada vez (sem pressa: é o site de outra pessoa).
+  const films: LetterboxdFeedFilm[] = []
+  const from = parsed.data.page
+  let lastPage = from
+  let done = false
+  for (let page = from; page < from + HISTORY_PAGES_PER_CALL; page++) {
+    let result
+    try {
+      result = await fetchLetterboxdFilmsPage(username, page)
+    } catch {
+      return {
+        ok: false,
+        error: "O Letterboxd não respondeu agora. Tente de novo em alguns minutos.",
+      }
+    }
+    if (result.status === "blocked") return { ok: false, error: LETTERBOXD_BLOCKED }
+    if (result.status === "not_found") return { ok: false, error: LETTERBOXD_NOT_FOUND }
+    films.push(...result.page.films)
+    lastPage = result.page.lastPage
+    if (page >= lastPage) {
+      done = true
+      break
+    }
+  }
+
+  let created = 0
+  let updated = 0
+  if (films.length > 0) {
+    // Sem detalhes aqui: a tela pede o TMDB depois, em passos.
+    const result = await syncLetterboxdAccount(supabase, user.id, username, {
+      feed: { displayName: null, films },
+      detailsBatch: 0,
+    })
+    if (!result.ok) return { ok: false, error: result.error }
+    created = result.created
+    updated = result.updated
+  }
+
+  const nextPage = done ? null : from + HISTORY_PAGES_PER_CALL
+  if (nextPage === null) revalidatePath("/", "layout")
+  return ok({ created, updated, lastPage, nextPage })
+}
+
+/**
+ * Um passo dos detalhes do TMDB (diretor, gênero, duração, país, sinopse e o
+ * pôster de quem está sem): os próximos 40 filmes sem detalhes. A tela repete
+ * enquanto `more` vier verdadeiro. Sem a chave do TMDB, não faz nada.
+ */
+export async function letterboxdDetailsStepAction(): Promise<
+  ActionResult<{ processed: number; more: boolean }>
+> {
+  const user = await requireUser()
+  const supabase = await createClient()
+  const step = await syncLetterboxdDetails(supabase, user.id, [], { batch: 40 })
+  if (!step.more) revalidatePath("/", "layout")
+  return ok(step)
+}
+
 /** Desconecta o Letterboxd. A categoria e os filmes ficam (param de atualizar). */
 export async function disconnectLetterboxdAction(): Promise<ActionResult> {
   const user = await requireUser()
@@ -342,7 +441,8 @@ export async function disconnectLetterboxdAction(): Promise<ActionResult> {
     .delete()
     .eq("user_id", user.id)
     .eq("provider", "letterboxd")
-  if (error) return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
+  if (error)
+    return isMissingSchema(error) ? { ok: false, error: LETTERBOXD_NOT_READY } : fail(error)
   revalidatePath("/v", "layout")
   return ok()
 }

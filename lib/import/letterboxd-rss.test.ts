@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import {
   letterboxdFeedUrl,
+  letterboxdFilmsPageUrl,
   normalizeLetterboxdUsername,
   parseLetterboxdFeed,
+  parseLetterboxdFilmsPage,
 } from "./letterboxd-rss"
 
 function item(fields: {
@@ -126,5 +128,46 @@ describe("Letterboxd pelo @", () => {
     expect(film.year).toBeNull()
     expect(film.key).toBe("titulo:x|")
     expect(film.poster).toBeNull()
+  })
+})
+
+/** Um filme como a página de filmes do perfil mostra (o essencial da marcação). */
+function gridItem(name: string, rating?: number): string {
+  return `<li class="griditem">
+    <div class="react-component" data-component-class="LazyPoster" data-item-name="${name}" data-item-slug="x" data-item-link="/film/x/">
+      <div class="poster film-poster"><img src="https://s.ltrbxd.com/static/img/empty-poster-70.png" alt="x"/></div>
+    </div>
+    <p class="poster-viewingdata">${rating ? `<span class="rating -micro -darker rated-${rating}">★</span>` : ""}</p>
+  </li>`
+}
+
+describe("Letterboxd: o histórico inteiro pelas páginas do perfil", () => {
+  it("lê nome, ano e nota (meias-estrelas) de cada filme e a última página", () => {
+    const html = `<ul class="poster-list">
+      ${gridItem("Wildwood (2026)", 9)}
+      ${gridItem("Birdman or (The Unexpected Virtue of Ignorance) (2014)", 8)}
+      ${gridItem("Amélie &amp; Cia (2001)")}
+      ${gridItem("Sem Ano")}
+    </ul>
+    <div class="paginate-pages"><ul>
+      <li class="paginate-page"><a href="/fulana/films/page/2/">2</a></li>
+      <li class="paginate-page"><a href="/fulana/films/page/37/">37</a></li>
+    </ul></div>`
+    const page = parseLetterboxdFilmsPage(html)
+    expect(page.lastPage).toBe(37)
+    expect(page.films.map((film) => [film.name, film.year, film.rating])).toEqual([
+      ["Wildwood", 2026, 4.5],
+      ["Birdman or (The Unexpected Virtue of Ignorance)", 2014, 4],
+      ["Amélie & Cia", 2001, null],
+      ["Sem Ano", null, null],
+    ])
+    expect(page.films[0].key).toBe("titulo:wildwood|2026")
+  })
+
+  it("página sem paginação é a única; página vazia não traz filmes", () => {
+    expect(parseLetterboxdFilmsPage(gridItem("Duna (2021)", 10)).lastPage).toBe(1)
+    expect(parseLetterboxdFilmsPage("<html></html>")).toEqual({ films: [], lastPage: 1 })
+    expect(letterboxdFilmsPageUrl("fulana", 1)).toBe("https://letterboxd.com/fulana/films/")
+    expect(letterboxdFilmsPageUrl("fulana", 3)).toBe("https://letterboxd.com/fulana/films/page/3/")
   })
 })

@@ -29,6 +29,7 @@ import { BackupForm } from "@/components/layout/backup-form"
 import { DeleteAccountForm } from "@/components/layout/delete-account-form"
 import { EmptyState } from "@/components/layout/empty-state"
 import { LetterboxdConnection } from "@/components/layout/letterboxd-connection"
+import { LetterboxdHistory } from "@/components/layout/letterboxd-history"
 import { PageHeader } from "@/components/layout/page-header"
 import { PrivacyDefaultForm } from "@/components/layout/privacy-default-form"
 import { SettingsForm } from "@/components/layout/settings-form"
@@ -356,6 +357,8 @@ async function SectionBody({
             account={letterboxd.account}
             syncedLabel={syncedLabel(letterboxd.account?.lastSyncedAt ?? null, true)}
           />
+          {/* O histórico inteiro (o @ só traz os ~50 mais recentes). */}
+          {letterboxd.account ? <LetterboxdHistory tmdbReady={tmdbApiKey() !== null} /> : null}
           {/* O crédito que os termos do TMDB pedem, onde os dados dele entram. */}
           {tmdbApiKey() ? (
             <p className="text-xs leading-relaxed text-faint">{TMDB_CREDIT}</p>

@@ -48,7 +48,7 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
       <aside className="sticky top-0 hidden h-dvh w-20 shrink-0 flex-col border-r border-line px-3 py-5 md:flex lg:w-64">
         <Link
           href="/"
-          aria-label="Vitrine — Início"
+          aria-label="Vitrine — o seu perfil"
           className="mb-6 flex items-center px-3 outline-none focus-visible:ring-2 focus-visible:ring-brand-dim"
         >
           <span className="hidden lg:inline">
@@ -62,7 +62,7 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
         </Link>
 
         <nav aria-label="Principal" className="flex flex-col gap-1">
-          <SideItem href="/" icon={House} label="Início" active={current === "inicio"} />
+          <SideItem href="/inicio" icon={House} label="Início" active={current === "inicio"} />
           <SideItem
             href="/explorar"
             icon={Compass}
@@ -115,7 +115,7 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
           paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
-        <TabItem href="/" icon={House} label="Início" active={current === "inicio"} />
+        <TabItem href="/inicio" icon={House} label="Início" active={current === "inicio"} />
         <TabItem
           href="/explorar"
           icon={Compass}

@@ -19,6 +19,8 @@ export interface TmdbFields {
   duracao?: number
   pais?: string
   sinopse?: string
+  /** O cartaz no TMDB — só entra no filme que está sem imagem (migração 44). */
+  poster?: string
 }
 
 const COUNTRIES = new Intl.DisplayNames(["pt-BR"], { type: "region" })
@@ -69,6 +71,7 @@ export function parseTmdbMovie(json: unknown): { id: number; fields: TmdbFields 
   const countries = texts(movie.production_countries, "iso_3166_1", 3).map(countryName)
   const overview = typeof movie.overview === "string" ? movie.overview.trim() : ""
   const runtime = typeof movie.runtime === "number" ? Math.trunc(movie.runtime) : 0
+  const posterPath = typeof movie.poster_path === "string" ? movie.poster_path : ""
 
   const fields: TmdbFields = {}
   if (directors.length) fields.diretor = directors.join(", ")
@@ -76,6 +79,9 @@ export function parseTmdbMovie(json: unknown): { id: number; fields: TmdbFields 
   if (runtime > 0 && runtime < 10000) fields.duracao = runtime
   if (countries.length) fields.pais = countries.join(", ")
   if (overview) fields.sinopse = overview.slice(0, 3000)
+  if (/^\/[A-Za-z0-9_-]+\.(jpg|png)$/.test(posterPath)) {
+    fields.poster = `https://image.tmdb.org/t/p/w500${posterPath}`
+  }
   return { id: movie.id, fields }
 }
 
