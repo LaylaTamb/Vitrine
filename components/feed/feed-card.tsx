@@ -48,7 +48,7 @@ export function FeedCard({ group, now }: { group: FeedGroup; now: Date }) {
           <span className="w-24 shrink-0 overflow-hidden rounded-xl sm:w-28">
             <EntryImage
               imageUrl={entries[0].imageUrl}
-              imageTransform={entries[0].imageTransform}
+              imageStyle={entries[0].imageStyle}
               initial={entries[0].name.charAt(0).toUpperCase()}
               ratio="4 / 5"
               initialSize="2.5rem"
@@ -77,7 +77,7 @@ export function FeedCard({ group, now }: { group: FeedGroup; now: Date }) {
                 <Link href={itemHref(entry)} className="relative block overflow-hidden rounded-xl">
                   <EntryImage
                     imageUrl={entry.imageUrl}
-                    imageTransform={entry.imageTransform}
+                    imageStyle={entry.imageStyle}
                     initial={entry.name.charAt(0).toUpperCase()}
                     ratio="4 / 5"
                     initialSize="2rem"

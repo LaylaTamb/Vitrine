@@ -87,7 +87,7 @@ export function SuggestionCard({
       <div className="flex gap-3">
         <EntryImage
           imageUrl={view.imageUrl}
-          imageTransform={view.imageTransform}
+          imageStyle={view.imageStyle}
           initial={view.initial}
           ratio="1 / 1"
           initialSize="1.6rem"

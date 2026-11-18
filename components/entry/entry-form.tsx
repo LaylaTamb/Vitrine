@@ -1,12 +1,13 @@
 "use client"
 
-import { Eraser, ImageOff, Plus } from "lucide-react"
+import { Check, ChevronDown, Eraser, ImageIcon, Move, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { EntryImage } from "@/components/entry/entry-image"
 import { FieldInput } from "@/components/entry/field-input"
+import { ImageFramer } from "@/components/entry/image-framer"
 import { StarInput } from "@/components/entry/stars"
 import { geocodeAfterSave } from "@/components/map/geocode-runner"
 import { useVitrine } from "@/components/providers/vitrine-context"
@@ -30,15 +31,27 @@ import { formatRating } from "@/lib/domain/format"
 import { moveSummary } from "@/lib/domain/migrate"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { CategorySummary, EntryFolder, EntryView, Estrutura, Tag } from "@/lib/domain/types"
-import { imageTransformOf } from "@/lib/domain/view"
+import { imageStyleOf } from "@/lib/domain/view"
+import { cn } from "@/lib/utils"
 
 const DEFAULT_FRAMING = { x: 50, y: 50, zoom: 1 }
+/** A roda e a pinça calculam com muitas casas; para gravar, duas bastam. */
+const round2 = (value: number) => Math.round(value * 100) / 100
 const ROOT = "__raiz__"
+const SELECT_CLASS =
+  "h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
 
+/**
+ * Criar ou editar um item. No topo, o essencial: a imagem (um quadrado que
+ * abre o link e o enquadramento), o nome, a nota e "onde fica" (categoria e
+ * subpasta, numa etiqueta). Embaixo, os campos da categoria e as tags.
+ */
 export function EntryForm({
   open,
   onOpenChange,
   categoryId,
+  categoryName,
+  categoryIcon,
   estrutura,
   tags,
   entry,
@@ -50,6 +63,9 @@ export function EntryForm({
   open: boolean
   onOpenChange: (open: boolean) => void
   categoryId: string
+  /** Para a etiqueta "onde fica". Sem ele, vem da lista `categories`. */
+  categoryName?: string
+  categoryIcon?: string | null
   estrutura: Estrutura
   tags: Tag[]
   /** Sem `entry` = novo item. */
@@ -81,6 +97,10 @@ export function EntryForm({
   const [folderId, setFolderId] = useState<string | null>(null)
   const [extraTags, setExtraTags] = useState<Tag[]>([])
   const [pending, setPending] = useState(false)
+  /** O painel do link e do enquadramento, aberto pelo quadrado da imagem. */
+  const [imageOpen, setImageOpen] = useState(false)
+  /** Os seletores de categoria e subpasta, abertos pela etiqueta "onde fica". */
+  const [placeOpen, setPlaceOpen] = useState(false)
 
   const [creatingTag, setCreatingTag] = useState(false)
   const [newTagName, setNewTagName] = useState("")
@@ -103,9 +123,7 @@ export function EntryForm({
     setRating(entry?.rating ?? 0)
     setImageUrl(entry?.imageUrl ?? "")
     setFraming(
-      entry
-        ? { x: entry.imageX, y: entry.imageY, zoom: entry.imageZoom }
-        : DEFAULT_FRAMING
+      entry ? { x: entry.imageX, y: entry.imageY, zoom: entry.imageZoom } : DEFAULT_FRAMING
     )
     setValues(
       entry
@@ -116,6 +134,8 @@ export function EntryForm({
     )
     setTagIds(entry?.tags.map((tag) => tag.id) ?? [])
     setFolderId(entry ? entry.folderId : defaultFolderId)
+    setImageOpen(false)
+    setPlaceOpen(false)
     setCreatingTag(false)
     setNewTagName("")
     setNewTagColor(DEFAULT_TAG_COLOR)
@@ -155,7 +175,7 @@ export function EntryForm({
       name: name.trim(),
       rating: ratingEnabled && rating > 0 ? rating : null,
       imageUrl: imageUrl.trim() || null,
-      imageDisplay: framing,
+      imageDisplay: { x: round2(framing.x), y: round2(framing.y), zoom: round2(framing.zoom) },
       customFields: values,
       tagIds,
       ...(folders ? { folderId } : {}),
@@ -221,299 +241,394 @@ export function EntryForm({
     // que mudou é procurado agora, em segundo plano.
     const savedId = entry ? entry.id : (result.data as { id?: string } | undefined)?.id
     const addressChanged = locationFieldsOf(estrutura).some(
-      (field) =>
-        (values[field.id] ?? "").trim() !== String(entry?.values[field.id] ?? "").trim()
+      (field) => (values[field.id] ?? "").trim() !== String(entry?.values[field.id] ?? "").trim()
     )
     if (savedId && addressChanged) void geocodeAfterSave(actions, savedId)
   }
 
+  const image = imageUrl.trim()
+  const initial = (name.trim()[0] ?? "?").toUpperCase()
+  const here = categories.find((item) => item.id === categoryId)
+  const placeName = categoryName ?? here?.name ?? null
+  const placeIcon = categoryIcon ?? here?.icon ?? null
+  const folderLabel = folderId
+    ? (folderOptions.find((option) => option.id === folderId)?.label ?? null)
+    : null
+  const canChangeCategory = editing && categories.length > 1
+  const canChangeFolder = folderOptions.length > 1
+  const filled = estrutura.filter((field) => (values[field.id] ?? "").trim()).length
+  const placeLabel = (
+    <>
+      <span className="truncate">
+        {placeIcon ? `${placeIcon} ` : ""}
+        {placeName ?? "Esta categoria"}
+        {folderLabel ? ` › ${folderLabel}` : ""}
+      </span>
+    </>
+  )
+
   return (
     <Dialog open={open} onOpenChange={pending ? undefined : onOpenChange}>
-      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-3xl">
-        <form onSubmit={submit}>
-          <DialogHeader>
-            <DialogTitle className="display text-xl">
+      <DialogContent
+        onEscapeKeyDown={(event) => {
+          // Esc fecha primeiro o que está aberto por cima: a tag nova, a imagem, o "onde fica".
+          if (creatingTag || imageOpen || placeOpen) {
+            event.preventDefault()
+            setCreatingTag(false)
+            setImageOpen(false)
+            setPlaceOpen(false)
+          }
+        }}
+        className="flex max-h-[90dvh] flex-col gap-0 p-0 sm:max-w-2xl"
+      >
+        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+          <DialogHeader className="px-5 pt-4 pr-12 pb-2">
+            <DialogTitle className="display text-2xl leading-tight">
               {editing ? "Editar item" : "Novo item"}
             </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {ratingEnabled
-                ? "Nome, imagem e avaliação toda categoria tem. O resto vem da estrutura desta aqui."
-                : "Nome e imagem toda categoria tem. O resto vem da estrutura desta aqui — esta lista não usa estrelas."}
+            <DialogDescription className="sr-only">
+              Nome, imagem e nota no topo; embaixo, os campos da categoria e as tags.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-5 py-4 md:grid-cols-[1fr_2fr]">
-            {/* ---------------- coluna esquerda: imagem ---------------- */}
+          <div className="min-h-0 min-w-0 flex-1 space-y-7 overflow-y-auto px-5 pt-2 pb-6">
             <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="entry-image" className="plaque">
-                  Imagem (link)
-                </Label>
-                <Input
-                  id="entry-image"
-                  value={imageUrl}
-                  onChange={(event) => setImageUrl(event.target.value)}
-                  placeholder="https://…"
-                  inputMode="url"
-                />
-                <p className="text-xs leading-relaxed text-faint">
-                  Cole o endereço de uma imagem já hospedada. Nada é enviado nem copiado.
-                </p>
-              </div>
-
-              {imageUrl.trim() ? (
-                <EntryImage
-                  imageUrl={imageUrl.trim()}
-                  imageTransform={imageTransformOf(framing)}
-                  initial={(name.trim()[0] ?? "?").toUpperCase()}
-                  eager
-                />
-              ) : (
-                <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line text-faint">
-                  <ImageOff className="size-5" />
-                  <span className="text-xs">Sem imagem</span>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Slider
-                  label="Horiz."
-                  value={framing.x}
-                  min={0}
-                  max={100}
-                  step={1}
-                  onChange={(x) => setFraming((current) => ({ ...current, x }))}
-                />
-                <Slider
-                  label="Vert."
-                  value={framing.y}
-                  min={0}
-                  max={100}
-                  step={1}
-                  onChange={(y) => setFraming((current) => ({ ...current, y }))}
-                />
-                <Slider
-                  label="Zoom"
-                  value={framing.zoom}
-                  min={1}
-                  max={3}
-                  step={0.05}
-                  onChange={(zoom) => setFraming((current) => ({ ...current, zoom }))}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFraming(DEFAULT_FRAMING)}
-                >
-                  Centralizar
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setImageUrl("")
-                    setFraming(DEFAULT_FRAMING)
-                  }}
-                >
-                  Remover
-                </Button>
-              </div>
-            </div>
-
-            {/* ---------------- coluna direita ---------------- */}
-            <div className="space-y-5">
-              <div className="space-y-1.5">
-                <Label htmlFor="entry-name" className="plaque">
-                  Nome do item
-                </Label>
-                <Input
-                  id="entry-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  autoFocus
-                  maxLength={160}
-                  placeholder="Kinoshita"
-                />
-              </div>
-
-              {editing && categories.length > 1 ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="entry-category" className="plaque">
-                    Categoria
-                  </Label>
-                  <select
-                    id="entry-category"
-                    value={categoryId}
-                    onChange={(event) => {
-                      const target = categories.find((item) => item.id === event.target.value)
-                      if (target && target.id !== categoryId) setMoveTo(target)
-                    }}
-                    disabled={pending}
-                    className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
-                  >
-                    {categories.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.icon ? `${item.icon} ` : ""}
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : null}
-
-              {folderOptions.length > 1 ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="entry-folder" className="plaque">
-                    Pasta
-                  </Label>
-                  <select
-                    id="entry-folder"
-                    value={folderId ?? ROOT}
-                    onChange={(event) =>
-                      setFolderId(event.target.value === ROOT ? null : event.target.value)
-                    }
-                    className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
-                  >
-                    {folderOptions.map((option) => (
-                      <option key={option.id ?? ROOT} value={option.id ?? ROOT}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : null}
-
-              {ratingEnabled ? (
-              <div className="space-y-1.5">
-                <span className="plaque block">Avaliação</span>
-                <div className="flex items-center gap-3">
-                  <StarInput value={rating} onChange={setRating} />
-                  <span className="display w-10 text-lg">
-                    {rating > 0 ? formatRating(rating) : "—"}
-                  </span>
+              <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                {/* A imagem: o quadrado inteiro é o botão que abre o link e o enquadramento. */}
+                <div className="group relative">
+                  {image ? (
+                    <EntryImage
+                      imageUrl={image}
+                      imageStyle={imageStyleOf(framing)}
+                      initial={initial}
+                      initialSize="2rem"
+                      eager
+                    />
+                  ) : (
+                    <div className="flex aspect-[3/4] flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-line-hi text-faint transition-colors group-hover:border-brand-dim group-hover:text-foreground">
+                      <ImageIcon aria-hidden className="size-5" />
+                      <span className="text-xs">Imagem</span>
+                    </div>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setRating(0)}
-                    title="Limpar avaliação"
-                    aria-label="Limpar avaliação"
-                    className="rounded-md p-1.5 text-faint transition-colors hover:bg-surface-hi hover:text-foreground"
-                  >
-                    <Eraser className="size-4" />
-                  </button>
-                </div>
-              </div>
-              ) : null}
-
-              <div className="space-y-2">
-                <span className="plaque block">Tags</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {allTags.map((tag) => (
-                    <TagPill
-                      key={tag.id}
-                      tag={tag}
-                      active={tagIds.includes(tag.id)}
-                      onClick={() =>
-                        setTagIds((current) =>
-                          current.includes(tag.id)
-                            ? current.filter((id) => id !== tag.id)
-                            : [...current, tag.id]
-                        )
-                      }
-                    />
-                  ))}
-
-                  {!creatingTag ? (
-                    <button
-                      type="button"
-                      onClick={() => setCreatingTag(true)}
-                      className="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground"
+                    onClick={() => setImageOpen((current) => !current)}
+                    aria-expanded={imageOpen}
+                    aria-controls="entry-image-panel"
+                    aria-label={image ? "Enquadrar ou trocar a imagem" : "Pôr uma imagem (link)"}
+                    className="absolute inset-0 z-[2] rounded-md"
+                  />
+                  {image ? (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute right-1.5 bottom-1.5 z-[3] inline-flex items-center gap-1 rounded-full bg-bg/85 px-2 py-0.5 text-[0.7rem] text-foreground"
                     >
-                      <Plus className="size-3" /> nova tag
-                    </button>
+                      <Move className="size-3" /> Enquadrar
+                    </span>
                   ) : null}
                 </div>
 
-                {creatingTag ? (
-                  <div className="space-y-2 rounded-lg border border-line bg-bg-soft p-3">
-                    <Input
-                      value={newTagName}
-                      onChange={(event) => setNewTagName(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault()
-                          void addTag()
-                        }
-                      }}
-                      placeholder="Nome da tag"
-                      maxLength={40}
-                      autoFocus
-                    />
-                    <ColorPalette value={newTagColor} onChange={setNewTagColor} />
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setCreatingTag(false)
-                          setNewTagName("")
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={addTag}
-                        disabled={pending || !newTagName.trim()}
-                      >
-                        Criar e aplicar
-                      </Button>
+                <div className="min-w-0 space-y-2.5">
+                  <Label htmlFor="entry-name" className="sr-only">
+                    Nome do item
+                  </Label>
+                  <input
+                    id="entry-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    autoFocus
+                    autoComplete="off"
+                    maxLength={160}
+                    placeholder="Nome do item"
+                    className="display w-full min-w-0 border-0 border-b border-line-hi bg-transparent pt-1 pb-2 text-[1.45rem] leading-tight text-foreground outline-none transition-colors placeholder:text-faint focus:border-brand focus-visible:outline-none"
+                  />
+
+                  {ratingEnabled ? (
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <StarInput value={rating} onChange={setRating} />
+                      <span className="display w-9 text-lg">
+                        {rating > 0 ? formatRating(rating) : "—"}
+                      </span>
+                      {rating > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setRating(0)}
+                          title="Limpar avaliação"
+                          aria-label="Limpar avaliação"
+                          className="rounded-md p-1.5 text-faint transition-colors hover:bg-surface-hi hover:text-foreground"
+                        >
+                          <Eraser className="size-4" />
+                        </button>
+                      ) : null}
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
+
+                  {canChangeCategory || canChangeFolder ? (
+                    <button
+                      type="button"
+                      onClick={() => setPlaceOpen((current) => !current)}
+                      aria-expanded={placeOpen}
+                      aria-controls="entry-place"
+                      title="Onde o item fica"
+                      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-line-hi hover:text-foreground"
+                    >
+                      {placeLabel}
+                      <ChevronDown
+                        aria-hidden
+                        className={cn(
+                          "size-3 shrink-0 transition-transform",
+                          placeOpen && "rotate-180"
+                        )}
+                      />
+                    </button>
+                  ) : placeName ? (
+                    <p className="flex max-w-full text-xs text-faint">{placeLabel}</p>
+                  ) : null}
+                </div>
               </div>
 
-              {estrutura.length > 0 ? (
-                <div className="space-y-2">
-                  <span className="plaque block">Campos desta categoria</span>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {estrutura.map((field) => (
-                      <div key={field.id} className="space-y-1.5">
-                        <Label htmlFor={`field-${field.id}`} className="text-xs text-muted-foreground">
-                          {field.nome}
-                        </Label>
+              {placeOpen ? (
+                <div
+                  id="entry-place"
+                  className="grid gap-3 rounded-xl border border-line bg-surface p-3.5 sm:grid-cols-2"
+                >
+                  {canChangeCategory ? (
+                    <div className="space-y-1.5">
+                      <label htmlFor="entry-category" className="plaque block">
+                        Categoria
+                      </label>
+                      <select
+                        id="entry-category"
+                        value={categoryId}
+                        onChange={(event) => {
+                          const target = categories.find((item) => item.id === event.target.value)
+                          if (target && target.id !== categoryId) setMoveTo(target)
+                        }}
+                        disabled={pending}
+                        className={SELECT_CLASS}
+                      >
+                        {categories.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.icon ? `${item.icon} ` : ""}
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
 
-                        <FieldInput
-                          field={field}
-                          value={values[field.id] ?? ""}
-                          onChange={(next) => setValue(field.id, next)}
-                        />
-                      </div>
-                    ))}
+                  {canChangeFolder ? (
+                    <div className="space-y-1.5">
+                      <label htmlFor="entry-folder" className="plaque block">
+                        Subpasta
+                      </label>
+                      <select
+                        id="entry-folder"
+                        value={folderId ?? ROOT}
+                        onChange={(event) =>
+                          setFolderId(event.target.value === ROOT ? null : event.target.value)
+                        }
+                        className={SELECT_CLASS}
+                      >
+                        {folderOptions.map((option) => (
+                          <option key={option.id ?? ROOT} value={option.id ?? ROOT}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {imageOpen ? (
+                <div
+                  id="entry-image-panel"
+                  className="space-y-3 rounded-xl border border-line bg-surface p-3.5"
+                >
+                  {image ? (
+                    <ImageFramer
+                      imageUrl={image}
+                      initial={initial}
+                      framing={framing}
+                      onChange={setFraming}
+                    />
+                  ) : null}
+                  <div className="space-y-1.5">
+                    <label htmlFor="entry-image" className="plaque block">
+                      Link da imagem
+                    </label>
+                    <Input
+                      id="entry-image"
+                      value={imageUrl}
+                      onChange={(event) => {
+                        setImageUrl(event.target.value)
+                        // Imagem nova começa centrada: o enquadramento era da outra.
+                        setFraming(DEFAULT_FRAMING)
+                      }}
+                      placeholder="https://…"
+                      inputMode="url"
+                      autoComplete="off"
+                      autoFocus={!image}
+                    />
+                    {image ? null : (
+                      <p className="text-xs leading-relaxed text-faint">
+                        Cole o endereço de uma imagem já hospedada. Nada é enviado nem copiado.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {image ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFraming(DEFAULT_FRAMING)}
+                        >
+                          Centralizar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setImageUrl("")
+                            setFraming(DEFAULT_FRAMING)
+                          }}
+                        >
+                          Remover
+                        </Button>
+                      </>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setImageOpen(false)}
+                    >
+                      <Check className="size-4" /> Pronto
+                    </Button>
                   </div>
                 </div>
               ) : null}
             </div>
+
+            {estrutura.length > 0 ? (
+              <section className="space-y-3" aria-labelledby="entry-fields-title">
+                <h3 id="entry-fields-title" className="plaque [overflow-wrap:anywhere]">
+                  {placeName ? `Campos de ${placeName}` : "Campos desta categoria"}
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {estrutura.map((field) => (
+                    <div key={field.id} className="min-w-0 space-y-1.5">
+                      <Label
+                        htmlFor={`field-${field.id}`}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {field.nome}
+                      </Label>
+                      <FieldInput
+                        field={field}
+                        value={values[field.id] ?? ""}
+                        onChange={(next) => setValue(field.id, next)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            <section className="space-y-2.5" aria-labelledby="entry-tags-title">
+              <h3 id="entry-tags-title" className="plaque">
+                Tags
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {allTags.map((tag) => (
+                  <TagPill
+                    key={tag.id}
+                    tag={tag}
+                    active={tagIds.includes(tag.id)}
+                    onClick={() =>
+                      setTagIds((current) =>
+                        current.includes(tag.id)
+                          ? current.filter((id) => id !== tag.id)
+                          : [...current, tag.id]
+                      )
+                    }
+                  />
+                ))}
+
+                {!creatingTag ? (
+                  <button
+                    type="button"
+                    onClick={() => setCreatingTag(true)}
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-brand-dim hover:text-foreground"
+                  >
+                    <Plus className="size-3" /> nova tag
+                  </button>
+                ) : null}
+              </div>
+
+              {creatingTag ? (
+                <div className="space-y-2 rounded-lg border border-line bg-bg-soft p-3">
+                  <Input
+                    value={newTagName}
+                    onChange={(event) => setNewTagName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault()
+                        void addTag()
+                      }
+                    }}
+                    placeholder="Nome da tag"
+                    maxLength={40}
+                    autoFocus
+                  />
+                  <ColorPalette value={newTagColor} onChange={setNewTagColor} />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setCreatingTag(false)
+                        setNewTagName("")
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={addTag}
+                      disabled={pending || !newTagName.trim()}
+                    >
+                      Criar e aplicar
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </section>
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={pending}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Salvando…" : "Salvar item"}
-            </Button>
+          <DialogFooter className="mx-0 mb-0 flex-row items-center gap-2 px-5 py-3 sm:justify-between">
+            <span className="mr-auto min-w-0 text-xs text-faint">
+              {estrutura.length > 0 ? `${filled} de ${estrutura.length} campos` : null}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                disabled={pending}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Salvando…" : "Salvar item"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
 
@@ -562,41 +677,10 @@ export function EntryForm({
           </p>
         ) : null}
         <p>
-          Nome, imagem e tags vão junto, e o que você mudou aqui é salvo antes. O item chega na
-          raiz de “{target.name}” e abre para você completar.
+          Nome, imagem e tags vão junto, e o que você mudou aqui é salvo antes. O item chega na raiz
+          de “{target.name}” e abre para você completar.
         </p>
       </>
     )
   }
-}
-
-function Slider({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string
-  value: number
-  min: number
-  max: number
-  step: number
-  onChange: (value: number) => void
-}) {
-  return (
-    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-      <span className="w-12 shrink-0">{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-line accent-brand"
-      />
-    </label>
-  )
 }

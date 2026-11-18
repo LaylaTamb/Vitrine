@@ -486,7 +486,9 @@ export function CollectionsView({
           ) : null}
 
           {canEdit && restrictedBy ? (
-            <PrivacyNote>{restrictionNote("folder", restrictedBy)}</PrivacyNote>
+            <div className="mb-5">
+              <PrivacyNote>{restrictionNote("folder", restrictedBy)}</PrivacyNote>
+            </div>
           ) : null}
 
           {/* A "A organizar" só aparece quando tem algo a organizar. */}
@@ -597,6 +599,7 @@ export function CollectionsView({
             onOpenChange={(open) => setCategoryEditor((state) => ({ ...state, open }))}
             initial={categoryEditor.initial}
             folderId={currentFolderId}
+            folderName={currentFolder?.name ?? null}
             defaultVisibility={defaultVisibility}
           />
 

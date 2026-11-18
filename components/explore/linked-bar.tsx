@@ -1,13 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { Link2, Unlink } from "lucide-react"
+import { Link2, Sparkles, Unlink } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
 import { unlinkCategoryAction } from "@/app/explorar/actions"
-import { Button } from "@/components/ui/button"
+import { Notice } from "@/components/layout/notice"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { UNLINKED_NOTICE } from "@/lib/domain/explore"
 import { profilePath } from "@/lib/domain/username"
@@ -22,8 +22,9 @@ export interface LinkView {
 }
 
 /**
- * A faixa de uma cópia do Explorar: ligada a @autor (com Desligar) e as
- * novidades que acabaram de chegar — ou o aviso de que a ligação se desfez.
+ * O aviso de uma cópia do Explorar, numa linha: ligada a @autor (com
+ * Desligar) e as novidades que acabaram de chegar — ou o aviso de que a
+ * ligação se desfez.
  */
 export function LinkedBar({ categoryId, link }: { categoryId: string; link: LinkView }) {
   const router = useRouter()
@@ -31,39 +32,45 @@ export function LinkedBar({ categoryId, link }: { categoryId: string; link: Link
 
   if (link.status === "unlinked") {
     return (
-      <p
-        role="status"
-        className="mb-5 flex items-start gap-2 rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-muted-foreground"
-      >
-        <Unlink aria-hidden className="mt-0.5 size-4 shrink-0 text-faint" />
-        <span>{UNLINKED_NOTICE}</span>
-      </p>
+      <Notice icon={Unlink} role="status">
+        {UNLINKED_NOTICE}
+      </Notice>
     )
   }
 
   return (
-    <div className="mb-5 space-y-2">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-brand-dim bg-brand-wash px-3 py-2 text-sm">
-        <Link2 aria-hidden className="size-4 shrink-0 text-brand" />
-        <span className="min-w-[12rem] flex-1 text-foreground">
-          Ligada a{" "}
-          {link.author ? (
-            <Link href={profilePath(link.author)} className="underline underline-offset-2">
-              @{link.author}
-            </Link>
-          ) : (
-            "a original"
-          )}
-          : itens novos e edições chegam sozinhos (menos nos itens que você editar).
-        </span>
-        <Button size="sm" variant="ghost" onClick={() => setConfirming(true)}>
-          Desligar
-        </Button>
-      </div>
+    <>
+      <Notice
+        icon={Link2}
+        tone="brand"
+        details="Itens novos e edições da original chegam sozinhos, menos nos itens que você editar."
+        action={
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            className="shrink-0 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            Desligar
+          </button>
+        }
+      >
+        Ligada a{" "}
+        {link.author ? (
+          <Link
+            href={profilePath(link.author)}
+            className="text-foreground underline underline-offset-2"
+          >
+            @{link.author}
+          </Link>
+        ) : (
+          "a original"
+        )}
+        : as novidades chegam sozinhas.
+      </Notice>
       {link.news ? (
-        <p role="status" className="px-1 text-xs text-muted-foreground">
+        <Notice icon={Sparkles} role="status">
           {link.news}
-        </p>
+        </Notice>
       ) : null}
 
       <ConfirmDialog
@@ -89,6 +96,6 @@ export function LinkedBar({ categoryId, link }: { categoryId: string; link: Link
           router.refresh()
         }}
       />
-    </div>
+    </>
   )
 }

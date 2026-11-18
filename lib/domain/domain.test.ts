@@ -53,7 +53,14 @@ import { formatDateBR, formatDecimal, formatMinutes, formatRating, plural } from
 import { migrateCustomFields } from "./migrate"
 import { computeStats } from "./stats"
 import type { Category, Entry, EntryFolder, Estrutura, Folder, Tag } from "./types"
-import { formatFieldValue, imageTransformOf, toView } from "./view"
+import {
+  coverOverflow,
+  formatFieldValue,
+  imageStyleOf,
+  panFraming,
+  toView,
+  zoomFraming,
+} from "./view"
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -342,7 +349,11 @@ describe("toView", () => {
   it("resolve imagem, nota e inicial", () => {
     expect(view.initial).toBe("K")
     expect(view.hasImage).toBe(true)
-    expect(view.imageTransform).toBe("translate(5.00%, -5.00%) scale(1.250)")
+    expect(view.imageStyle).toEqual({
+      objectPosition: "30.00% 70.00%",
+      transformOrigin: "30.00% 70.00%",
+      transform: "scale(1.250)",
+    })
     expect(view.ratingLabel).toBe("4,5")
     expect(view.ratingPercent).toBe("90%")
     expect(view.hasRating).toBe(true)
@@ -379,31 +390,84 @@ describe("toView", () => {
     expect(vazio.ratingLabel).toBe("—")
     expect(vazio.ratingPercent).toBe("0%")
     expect(vazio.hasImage).toBe(false)
-    expect(vazio.imageTransform).toBe("translate(0.00%, 0.00%) scale(1.000)")
+    expect(vazio.imageStyle.objectPosition).toBe("50.00% 50.00%")
+    expect(vazio.imageStyle.transform).toBe("scale(1.000)")
     expect(vazio.extras).toEqual([])
     expect(vazio.summary).toBe("")
   })
 })
 
 // ---------------------------------------------------------------------------
-// imageTransformOf — o pan tem que cobrir 0–100% de verdade nos dois eixos
+// enquadramento — arrastar e zoom alcançam a imagem inteira
 // ---------------------------------------------------------------------------
 
-describe("imageTransformOf", () => {
-  it("sem zoom, não há para onde deslizar", () => {
-    expect(imageTransformOf({ x: 0, y: 100, zoom: 1 })).toBe(
-      "translate(0.00%, 0.00%) scale(1.000)"
-    )
+describe("enquadramento", () => {
+  /** Onde começa a janela visível, em larguras do quadro (a conta do `imageStyleOf`). */
+  const windowStart = (position: number, zoom: number, over: number) =>
+    (position / 100) * (over - 1 / zoom)
+
+  it("o estilo põe a origem do zoom no mesmo ponto do object-position", () => {
+    expect(imageStyleOf({ x: 0, y: 100, zoom: 3 })).toEqual({
+      objectPosition: "0.00% 100.00%",
+      transformOrigin: "0.00% 100.00%",
+      transform: "scale(3.000)",
+    })
+    expect(imageStyleOf({ zoom: 9 }).transform).toBe("scale(3.000)")
   })
 
-  it("no zoom máximo, os extremos do slider alcançam o fim do respiro", () => {
-    // slack = (3-1)/2 = 1 → 100% de deslocamento possível em cada eixo.
-    expect(imageTransformOf({ x: 100, y: 0, zoom: 3 })).toBe(
-      "translate(-100.00%, 100.00%) scale(3.000)"
-    )
-    expect(imageTransformOf({ x: 0, y: 100, zoom: 3 })).toBe(
-      "translate(100.00%, -100.00%) scale(3.000)"
-    )
+  it("mede a sobra do cover em cada eixo", () => {
+    const wide = coverOverflow(16 / 9, 3 / 4)
+    expect(wide.x).toBeCloseTo(64 / 27)
+    expect(wide.y).toBe(1)
+    expect(coverOverflow(3 / 4, 3 / 4)).toEqual({ x: 1, y: 1 })
+    expect(coverOverflow(0, 3 / 4)).toEqual({ x: 1, y: 1 })
+  })
+
+  it("imagem que cabe exata, sem zoom, não tem para onde ir", () => {
+    expect(panFraming({ x: 50, y: 50, zoom: 1 }, 0.3, -0.3, { x: 1, y: 1 })).toEqual({
+      x: 50,
+      y: 50,
+      zoom: 1,
+    })
+  })
+
+  it("imagem larga anda no 1× pelo que o cover cortou", () => {
+    // Sobra 2: arrastar 1/4 do quadro para a esquerda mostra mais da direita.
+    expect(panFraming({}, -0.25, 0, { x: 2, y: 1 }).x).toBe(75)
+  })
+
+  it("a imagem acompanha o dedo e para nas bordas", () => {
+    // Zoom 2, cabe exata: a janela tem meia largura de folga.
+    const moved = panFraming({ x: 50, y: 50, zoom: 2 }, 0.1, 0.1, { x: 1, y: 1 })
+    expect(moved).toEqual({ x: 40, y: 40, zoom: 2 })
+    // O conteúdo andou exatamente 0,1 quadro na tela (0,05 de janela × zoom 2).
+    expect((windowStart(50, 2, 1) - windowStart(40, 2, 1)) * 2).toBeCloseTo(0.1)
+    expect(panFraming(moved, 5, -5, { x: 1, y: 1 })).toEqual({ x: 0, y: 100, zoom: 2 })
+  })
+
+  it("o zoom mantém parado o ponto sob o cursor", () => {
+    const over = { x: 2.4, y: 1 }
+    const before = { x: 30, y: 60, zoom: 1.5 }
+    const at = { x: 0.3, y: 0.8 }
+    const after = zoomFraming(before, 2.2, at, over)
+    expect(after.zoom).toBe(2.2)
+    const pointX = (display: typeof before, u: number) =>
+      windowStart(display.x, display.zoom, over.x) + u / display.zoom
+    expect(pointX(after, at.x)).toBeCloseTo(pointX(before, at.x), 2)
+    const pointY = (display: typeof before, v: number) =>
+      windowStart(display.y, display.zoom, over.y) + v / display.zoom
+    expect(pointY(after, at.y)).toBeCloseTo(pointY(before, at.y), 2)
+  })
+
+  it("zoom no canto leva ao canto; de volta ao 1×, centra o que não tem sobra", () => {
+    const corner = zoomFraming({}, 2, { x: 0, y: 1 }, { x: 1, y: 1 })
+    expect(corner).toEqual({ x: 0, y: 100, zoom: 2 })
+    expect(zoomFraming(corner, 0.5, { x: 0.5, y: 0.5 }, { x: 1, y: 1 })).toEqual({
+      x: 50,
+      y: 50,
+      zoom: 1,
+    })
+    expect(zoomFraming({}, 10, { x: 0.5, y: 0.5 }, { x: 1, y: 1 }).zoom).toBe(3)
   })
 })
 

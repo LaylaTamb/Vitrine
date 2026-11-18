@@ -17,7 +17,7 @@ import {
   type ItemHit,
 } from "@/lib/domain/search"
 import type { Category, Folder } from "@/lib/domain/types"
-import { imageTransformOf } from "@/lib/domain/view"
+import { imageStyleOf } from "@/lib/domain/view"
 
 const ROW =
   "flex w-full min-w-0 items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2 text-left transition-colors hover:border-line-hi hover:bg-surface-hi"
@@ -181,7 +181,7 @@ export function CollectionsSearchResults({
                 <Link href={`/categoria/${hit.categoryId}/${hit.id}`} className={ROW}>
                   <EntryImage
                     imageUrl={hit.imageUrl}
-                    imageTransform={imageTransformOf(hit.imageDisplay)}
+                    imageStyle={imageStyleOf(hit.imageDisplay)}
                     initial={(hit.name.trim()[0] ?? "?").toUpperCase()}
                     ratio="1 / 1"
                     initialSize="1rem"

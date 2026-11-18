@@ -1,0 +1,1788 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine — proposta de UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Os mesmos tokens do app (app/globals.css): só escuro. */
+:root {
+  --bg: #121214; --bg-soft: #16161a; --surface: #1b1b1f; --surface-hi: #232328;
+  --line: #2a2a31; --line-hi: #3a3a43;
+  --ink: #ececef; --muted: #9d9da8; --faint: #6e6e78;
+  --brand: #b98cc2; --brand-dim: #8e6c96; --brand-wash: rgb(185 140 194 / 0.14);
+  --brand-glow: rgb(185 140 194 / 0.3); --on-brand: #1a1220; --danger: #d08585;
+  --display: "Fraunces", ui-serif, Georgia, serif;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--brand-dim); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.i-sm { width: 14px; height: 14px; }
+.i-xs { width: 12px; height: 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.plaque { margin: 0; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.display { font-family: var(--display); font-style: italic; font-weight: 400; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.micro { margin: 0; font-size: 12px; line-height: 1.45; color: var(--faint); }
+.wrap-any { min-width: 0; overflow-wrap: anywhere; }
+.shell { max-width: 1180px; margin-inline: auto; padding-inline: 16px; }
+
+/* ---------- topo da página ---------- */
+.top { padding: 28px 0 0; }
+.top h1 { margin: 6px 0 4px; font-size: clamp(30px, 5vw, 42px); line-height: 1.1; }
+.lead { margin: 0 0 18px; max-width: 64ch; color: var(--muted); }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs button { flex-shrink: 0; margin-bottom: -1px; padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); white-space: nowrap; }
+.tabs button[aria-selected="true"] { border-color: var(--brand); color: var(--ink); }
+.panel { display: grid; gap: 24px; padding: 20px 0 56px; }
+@media (min-width: 1100px) { .panel { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; } }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin-bottom: 14px; }
+.toolbar .plaque { margin-right: -4px; }
+
+/* ---------- botões, campos, etiquetas ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 14px; border: 1px solid transparent; border-radius: 12px; font-size: 14px; font-weight: 500; white-space: nowrap; transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.1s; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-primary:hover { background: #c79bd0; }
+.btn-secondary { background: var(--surface-hi); color: var(--ink); }
+.btn-secondary:hover { background: #2b2b31; }
+.btn-outline { background: transparent; border-color: var(--line-hi); color: var(--ink); }
+.btn-outline:hover { background: var(--surface-hi); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-ghost:hover { background: var(--surface-hi); color: var(--ink); }
+.btn-sm { height: 30px; padding: 0 10px; border-radius: 9px; font-size: 13px; }
+.icon-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--faint); transition: background-color 0.15s, color 0.15s; }
+.icon-btn:hover { background: var(--surface-hi); color: var(--ink); }
+.icon-btn.danger:hover { color: var(--danger); }
+.link { padding: 0; border: 0; background: none; color: var(--brand); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgb(185 140 194 / 0.4); }
+.link:hover { text-decoration-color: currentColor; }
+.input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); outline: none; }
+.input:focus { border-color: var(--brand-dim); }
+.input::placeholder { color: var(--faint); }
+textarea.input { height: auto; padding: 10px 12px; resize: vertical; }
+select.input { padding-right: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 11px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font-size: 13px; line-height: 1.2; transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+.chip:hover { border-color: var(--line-hi); color: var(--ink); }
+.chip.on, .chip[aria-checked="true"], .chip[aria-pressed="true"] { border-color: var(--brand-dim); background: var(--brand-wash); color: var(--ink); }
+.chip.dashed { border-style: dashed; }
+.chip.static { cursor: default; }
+.chip.static:hover { border-color: var(--line); color: var(--muted); }
+.chip:disabled { opacity: 0.35; cursor: not-allowed; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"], .seg button[aria-checked="true"] { background: var(--brand-wash); color: var(--brand); }
+.seg.full { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; }
+.switch { position: relative; flex-shrink: 0; width: 40px; height: 24px; padding: 0; border: 1px solid var(--line-hi); border-radius: 99px; background: var(--surface-hi); transition: background-color 0.15s; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform 0.15s, background-color 0.15s; }
+.switch[aria-checked="true"] { border-color: var(--brand-dim); background: var(--brand-wash); }
+.switch[aria-checked="true"]::after { transform: translateX(16px); background: var(--brand); }
+
+/* ---------- o palco: a tela do app ---------- */
+.stage { container: stage / inline-size; position: relative; max-width: 100%; height: 780px; margin-inline: auto; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: var(--bg); transition: width 0.25s ease; }
+.stage[data-device="phone"] { width: 375px; }
+.stage[data-device="desktop"] { width: 100%; max-width: 880px; }
+@media (max-width: 560px) { .stage { height: 84dvh; min-height: 580px; border-radius: 18px; } .device-toggle { display: none !important; } }
+.backdrop { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); align-content: start; gap: 12px; padding: 64px 18px; opacity: 0.45; }
+.backdrop span { aspect-ratio: 3 / 4; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(160deg, var(--surface-hi), var(--surface)); }
+.backdrop::before { content: "Coleções"; position: absolute; top: 18px; left: 18px; font-family: var(--display); font-style: italic; font-size: 24px; color: var(--muted); }
+.scrim { position: absolute; inset: 0; background: rgb(6 6 8 / 0.62); }
+.sheet { position: absolute; inset: 26px 0 0; display: flex; flex-direction: column; overflow: hidden; border-top: 1px solid var(--line-hi); border-radius: 20px 20px 0 0; background: var(--bg-soft); }
+.sheet::before { content: ""; display: block; flex-shrink: 0; width: 36px; height: 4px; margin: 8px auto 0; border-radius: 99px; background: var(--line-hi); }
+@container stage (min-width: 600px) {
+  .sheet { inset: 34px auto 34px 50%; width: min(660px, calc(100% - 56px)); transform: translateX(-50%); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 30px 80px rgb(0 0 0 / 0.55); }
+  .sheet::before { display: none; }
+}
+.sheet-head { display: flex; flex-shrink: 0; align-items: center; gap: 6px; padding: 10px 12px 6px 18px; }
+.sheet-head .grow { min-width: 0; flex: 1; }
+.sheet-title { margin: 0; font-size: 22px; line-height: 1.25; }
+.sheet-sub { margin: 0; font-size: 12.5px; color: var(--faint); }
+.sheet-body { position: relative; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 6px 18px 28px; }
+.sheet-foot { display: flex; flex-shrink: 0; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--bg-soft); }
+.sheet-foot .count { min-width: 0; margin-right: auto; font-size: 12.5px; color: var(--faint); }
+.sec { margin-top: 26px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.sec-head .micro { text-align: right; }
+
+/* ---------- nova categoria ---------- */
+.identity { position: relative; display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.icon-tile { position: relative; display: grid; flex-shrink: 0; place-items: center; width: 58px; height: 58px; padding: 0; border: 1px dashed var(--line-hi); border-radius: 16px; background: var(--surface); color: var(--faint); font-size: 28px; line-height: 1; transition: border-color 0.15s, background-color 0.15s; }
+.icon-tile:hover { border-color: var(--brand-dim); color: var(--ink); }
+.icon-tile.has { border-style: solid; }
+.icon-tile.tinted { border-style: solid; border-color: color-mix(in srgb, var(--tint) 60%, transparent); background: color-mix(in srgb, var(--tint) 16%, var(--surface)); box-shadow: 0 0 22px color-mix(in srgb, var(--tint) 28%, transparent); }
+.icon-tile .edit-dot { position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; width: 20px; height: 20px; border: 2px solid var(--bg-soft); border-radius: 50%; background: var(--surface-hi); color: var(--muted); }
+.name-field { min-width: 0; flex: 1; }
+.name-input { width: 100%; padding: 6px 0 8px; border: 0; border-bottom: 1px solid var(--line-hi); border-radius: 0; background: transparent; color: var(--ink); font-family: var(--display); font-size: 27px; font-style: italic; line-height: 1.2; outline: none; transition: border-color 0.15s; }
+.name-input::placeholder { color: var(--faint); }
+.name-input:focus { border-color: var(--brand); }
+.name-input.shake { animation: shake 0.35s; border-color: var(--danger); }
+@keyframes shake { 25% { transform: translateX(-6px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+.popover { position: absolute; z-index: 5; top: 66px; left: 0; width: min(330px, 100%); padding: 12px; border: 1px solid var(--line-hi); border-radius: 14px; background: var(--surface); box-shadow: 0 18px 50px rgb(0 0 0 / 0.5); }
+.emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.emoji-grid button { aspect-ratio: 1; border: 0; border-radius: 8px; background: none; font-size: 21px; line-height: 1; }
+.emoji-grid button:hover, .emoji-grid button[aria-pressed="true"] { background: var(--brand-wash); }
+.popover-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.popover-foot .input { height: 34px; text-align: center; }
+.start-row { display: flex; width: 100%; align-items: center; gap: 12px; margin-top: 14px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); text-align: left; transition: border-color 0.15s; }
+.start-row:hover { border-color: var(--line-hi); }
+.start-row .badge { display: grid; flex-shrink: 0; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--brand-wash); color: var(--brand); }
+.start-row .grow { min-width: 0; flex: 1; }
+.start-row b { display: block; font-weight: 500; }
+.tpl-inline { margin-top: 14px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.tpl-inline .sec-head { margin-bottom: 6px; }
+.tpl-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.tpl-row + .tpl-row { border-top: 1px solid var(--line); }
+.tpl-emoji { flex-shrink: 0; width: 28px; font-size: 22px; line-height: 1; text-align: center; }
+.tpl-row .grow { min-width: 0; flex: 1; }
+.tpl-name { overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.tpl-meta { overflow: hidden; font-size: 12px; color: var(--faint); text-overflow: ellipsis; white-space: nowrap; }
+.banner { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 10px 12px; border: 1px solid var(--brand-dim); border-radius: 12px; background: var(--brand-wash); font-size: 13px; }
+.banner .grow { min-width: 0; flex: 1; }
+.builtins { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.builtins .chip { min-height: 26px; padding: 2px 9px; font-size: 12px; }
+.field-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.field { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); transition: border-color 0.2s, background-color 0.4s, opacity 0.15s; }
+.field.editing { border-color: var(--brand-dim); background: var(--brand-wash); }
+.field.dragging { opacity: 0.85; border-color: var(--line-hi); box-shadow: 0 10px 24px rgb(0 0 0 / 0.4); }
+.field.flash { background: var(--brand-wash); border-color: var(--brand-dim); }
+.grip { cursor: grab; touch-action: none; }
+.grip:active { cursor: grabbing; }
+.ftype { display: grid; flex-shrink: 0; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--surface-hi); color: var(--muted); }
+.fbody { min-width: 0; flex: 1; }
+.fname { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.fsub { overflow: hidden; font-size: 12px; color: var(--faint); text-overflow: ellipsis; white-space: nowrap; }
+.empty-line { margin: 0; padding: 14px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; color: var(--faint); font-size: 13px; }
+.add-field { display: flex; width: 100%; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 10px; border: 1px dashed var(--line-hi); border-radius: 12px; background: transparent; color: var(--muted); font-weight: 500; transition: border-color 0.15s, color 0.15s; }
+.add-field:hover { border-color: var(--brand-dim); color: var(--ink); }
+.sugg { margin-top: 12px; }
+.sugg-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.sugg .chip .i { color: var(--brand); }
+.composer { margin-top: 8px; padding: 12px; border: 1px solid var(--brand-dim); border-radius: 14px; background: var(--surface); }
+.composer > * + * { margin-top: 10px; }
+.types { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+@container stage (min-width: 600px) { .types { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.types .chip { justify-content: flex-start; min-height: 34px; padding: 4px 10px; border-radius: 10px; }
+.type-hint { font-size: 12.5px; color: var(--muted); }
+.type-hint .auto { color: var(--brand); }
+.tokens { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 40px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); }
+.tokens:focus-within { border-color: var(--brand-dim); }
+.token { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 99px; background: var(--surface-hi); font-size: 13px; }
+.token button { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--faint); }
+.token button:hover { background: var(--line); color: var(--ink); }
+.tokens input { min-width: 120px; flex: 1; height: 28px; border: 0; background: none; outline: none; }
+.comp-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.error { margin: 0; font-size: 12.5px; color: var(--danger); }
+.vis-hint { margin-top: 8px; }
+.more { margin-top: 26px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.more > summary { display: flex; align-items: center; gap: 10px; padding: 12px 14px; list-style: none; cursor: pointer; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary .grow { min-width: 0; flex: 1; }
+.more > summary b { display: block; font-weight: 500; }
+.more > summary .sum { overflow: hidden; font-size: 12.5px; color: var(--faint); text-overflow: ellipsis; white-space: nowrap; }
+.more > summary .chev { color: var(--faint); transition: transform 0.2s; }
+.more[open] > summary .chev { transform: rotate(180deg); }
+.more-body { padding: 0 14px 14px; }
+.opt { padding: 14px 0; border-top: 1px solid var(--line); }
+.opt-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.opt-label { margin: 0 0 8px; font-size: 13.5px; font-weight: 500; }
+.opt-row .opt-label { margin: 0; }
+.swatches { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.swatch { position: relative; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid transparent; border-radius: 50%; background: var(--c); color: var(--faint); }
+.swatch.none { border: 1px dashed var(--line-hi); background: transparent; }
+.swatch[aria-pressed="true"], .swatch.custom.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink); }
+.swatch.custom { overflow: hidden; border: 1px solid var(--line-hi); background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+.swatch.custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.modal-layer { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 18px; background: rgb(6 6 8 / 0.6); }
+.modal { width: min(440px, 100%); max-height: 100%; overflow-y: auto; padding: 18px; border: 1px solid var(--line-hi); border-radius: 16px; background: var(--surface); box-shadow: 0 30px 80px rgb(0 0 0 / 0.6); }
+.modal h3 { margin: 0 0 4px; font-family: var(--display); font-size: 21px; font-style: italic; font-weight: 400; }
+.modal ul { margin: 12px 0; padding: 0; list-style: none; }
+.modal li { display: flex; gap: 8px; padding: 4px 0; color: var(--muted); font-size: 13.5px; }
+.modal li::before { content: "·"; color: var(--brand); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.tpl-search { position: relative; }
+.tpl-search .i { position: absolute; top: 12px; left: 12px; color: var(--faint); }
+.tpl-search .input { padding-left: 36px; }
+.tpl-card { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.tpl-card .grow { min-width: 0; flex: 1; }
+.tpl-card .chips { margin-top: 8px; }
+.tpl-card .chip { min-height: 24px; padding: 2px 8px; font-size: 12px; }
+
+/* ---------- novo item ---------- */
+.where { display: inline-flex; max-width: 100%; align-items: center; gap: 6px; margin-top: 4px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); color: var(--muted); font-size: 12.5px; }
+.where:hover { border-color: var(--line-hi); color: var(--ink); }
+.where span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-top { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: start; margin-top: 8px; }
+@container stage (min-width: 600px) { .item-top { grid-template-columns: 150px minmax(0, 1fr); gap: 18px; } }
+.img-tile { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 3 / 4; padding: 0; overflow: hidden; border: 1px dashed var(--line-hi); border-radius: 12px; background: var(--surface); color: var(--faint); }
+.img-tile:hover { border-color: var(--brand-dim); color: var(--ink); }
+.img-tile.has { border-style: solid; border-color: var(--line); }
+.img-tile img { width: 100%; height: 100%; object-fit: cover; }
+.img-tile .tile-label { display: grid; justify-items: center; gap: 6px; font-size: 12px; }
+.img-tile .tile-edit { position: absolute; right: 6px; bottom: 6px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 99px; background: rgb(18 18 20 / 0.82); color: var(--ink); font-size: 11.5px; }
+.stars { display: inline-flex; align-items: center; gap: 2px; }
+.stars button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--line-hi); }
+.stars button:hover { background: var(--surface-hi); }
+.stars .full { color: var(--brand); }
+.stars .full .i { fill: currentColor; }
+.stars .half .i { fill: url(#half); color: var(--brand); }
+.stars.small button { width: 28px; height: 28px; }
+.rating-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 10px; }
+.rating-value { min-width: 2.6em; font-family: var(--display); font-size: 20px; font-style: italic; }
+.framer-panel { margin-top: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.frame-wrap { position: relative; width: min(240px, 100%); margin-inline: auto; }
+.frame-glow { position: absolute; inset: 12% 10% 6%; background: var(--brand-glow); filter: blur(28px); opacity: 0.55; pointer-events: none; }
+.frame { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); cursor: grab; touch-action: none; user-select: none; }
+.frame:active { cursor: grabbing; }
+.frame img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.frame-hint { display: flex; justify-content: space-between; gap: 8px; max-width: 240px; margin: 8px auto 0; font-size: 12px; color: var(--faint); }
+.framer-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
+.url-row { display: flex; gap: 8px; margin-top: 12px; }
+.fields-grid { display: grid; gap: 14px; }
+@container stage (min-width: 600px) { .fields-grid { grid-template-columns: 1fr 1fr; } }
+.fld label, .fld .lbl { display: block; margin-bottom: 6px; font-size: 12.5px; color: var(--muted); }
+.prefixed { position: relative; }
+.prefixed > span, .prefixed > .i { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); color: var(--faint); font-size: 13px; }
+.prefixed .input { padding-left: 38px; }
+.tag-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+
+/* ---------- notas ao lado ---------- */
+.notes { display: grid; gap: 16px; }
+.card { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.card h2 { margin: 0 0 10px; font-family: var(--display); font-size: 21px; font-style: italic; font-weight: 400; }
+.card ul { margin: 0; padding-left: 18px; color: var(--muted); }
+.card li + li { margin-top: 7px; }
+.card li b { color: var(--ink); font-weight: 500; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); }
+.stat .num { font-family: var(--display); font-size: 28px; font-style: italic; line-height: 1.1; }
+.stat .num s { color: var(--faint); font-size: 18px; text-decoration-thickness: 1px; }
+.map-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.map-table td { padding: 7px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.map-table td:first-child { width: 46%; padding-right: 10px; color: var(--faint); }
+.app-grid { display: grid; gap: 16px; }
+@media (min-width: 900px) { .app-grid { grid-template-columns: 1fr 1fr; } }
+.before-after { display: grid; gap: 6px; margin-top: 10px; font-size: 13px; }
+.before-after p { margin: 0; }
+.before-after .tag { display: inline-block; min-width: 72px; margin-right: 6px; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); }
+.mock-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); }
+.mock-bar .input { flex: 1 1 160px; height: 34px; }
+.toast { position: fixed; z-index: 60; bottom: 24px; left: 50%; max-width: calc(100% - 32px); padding: 10px 14px; border: 1px solid var(--line-hi); border-radius: 12px; background: var(--surface-hi); opacity: 0; transform: translate(-50%, 16px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;color:#b98cc2" aria-hidden="true">
+  <defs><linearGradient id="half"><stop offset="50%" stop-color="currentColor"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-grip-vertical" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+<symbol id="i-type" viewBox="0 0 24 24"><path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/></symbol>
+<symbol id="i-hash" viewBox="0 0 24 24"><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></symbol>
+<symbol id="i-calculator" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24"><path d="M13.744 17.736a6 6 0 1 1-7.48-7.48"/><path d="M15 6h1v4"/><path d="m6.134 14.768.866-.5 2 3.464"/><circle cx="16" cy="8" r="6"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+<symbol id="i-tags" viewBox="0 0 24 24"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"/><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"/><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"/></symbol>
+<symbol id="i-image-off" viewBox="0 0 24 24"><line x1="2" x2="22" y1="2" y2="22"/><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"/><line x1="13.5" x2="6" y1="13.5" y2="21"/><line x1="18" x2="21" y1="12" y2="15"/><path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59"/><path d="M21 15V5a2 2 0 0 0-2-2H9"/></symbol>
+<symbol id="i-sliders-horizontal" viewBox="0 0 24 24"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></symbol>
+<symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></symbol>
+<symbol id="i-wand-sparkles" viewBox="0 0 24 24"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+<symbol id="i-undo-2" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
+<symbol id="i-move" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="m15 19-3 3-3-3"/><path d="m19 9 3 3-3 3"/><path d="M2 12h20"/><path d="m5 9-3 3 3 3"/><path d="m9 5 3-3 3 3"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></symbol>
+</svg>
+
+<header class="top shell">
+  <p class="plaque">Proposta de UI · só visual, nada mudou no app</p>
+  <h1 class="display">Um Vitrine mais leve</h1>
+  <p class="lead">Tudo aqui é clicável: digite, arraste, abra e feche. Nada é salvo. A ideia é ver e testar antes de mudar o app de verdade.</p>
+  <nav class="tabs" aria-label="Telas da proposta">
+    <button type="button" data-tab="categoria" aria-selected="true">Nova categoria</button>
+    <button type="button" data-tab="item" aria-selected="false">Novo item</button>
+    <button type="button" data-tab="app" aria-selected="false">Para o resto do app</button>
+  </nav>
+</header>
+
+<main class="shell">
+  <!-- ===================== NOVA CATEGORIA ===================== -->
+  <section class="panel" id="tab-categoria">
+    <div>
+      <div class="toolbar">
+        <span class="plaque">Ver como</span>
+        <div class="seg" role="group" aria-label="Criar ou editar">
+          <button type="button" data-cat-mode="new" aria-pressed="true">Nova</button>
+          <button type="button" data-cat-mode="edit" aria-pressed="false">Editar “Restaurantes”</button>
+        </div>
+        <div class="seg device-toggle" role="group" aria-label="Tamanho da tela">
+          <button type="button" data-device-btn="phone" aria-pressed="true"><svg class="i i-sm" aria-hidden="true"><use href="#i-smartphone"/></svg>Celular</button>
+          <button type="button" data-device-btn="desktop" aria-pressed="false"><svg class="i i-sm" aria-hidden="true"><use href="#i-monitor"/></svg>Computador</button>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="c-restart"><svg class="i i-sm" aria-hidden="true"><use href="#i-undo-2"/></svg>Recomeçar</button>
+      </div>
+
+      <div class="stage" data-device="phone">
+        <div class="backdrop" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="scrim" aria-hidden="true"></div>
+
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="c-title">
+          <div class="sheet-head">
+            <button type="button" class="icon-btn" id="c-back" aria-label="Voltar ao formulário" hidden><svg class="i" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+            <div class="grow">
+              <h2 class="sheet-title display" id="c-title">Nova categoria</h2>
+              <p class="sheet-sub" id="c-sub">Dentro de “Comida”</p>
+            </div>
+            <button type="button" class="icon-btn" id="c-close" aria-label="Fechar"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+          </div>
+
+          <div class="sheet-body" id="c-body">
+            <!-- formulário -->
+            <div id="c-form">
+              <div class="identity">
+                <button type="button" class="icon-tile" id="c-icon" aria-label="Escolher ícone" aria-expanded="false"></button>
+                <div class="name-field">
+                  <label class="sr-only" for="c-name">Nome da categoria</label>
+                  <input id="c-name" class="name-input" placeholder="Nome da categoria" maxlength="60" autocomplete="off">
+                </div>
+                <div class="popover" id="c-emoji" hidden>
+                  <p class="plaque" style="margin-bottom:8px">Ícone</p>
+                  <div class="emoji-grid" id="c-emoji-grid"></div>
+                  <div class="popover-foot">
+                    <label class="sr-only" for="c-emoji-own">Outro emoji</label>
+                    <input class="input" id="c-emoji-own" maxlength="4" placeholder="Outro: cole aqui">
+                    <button type="button" class="btn btn-ghost btn-sm" id="c-emoji-none">Sem ícone</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="c-start"></div>
+
+              <section class="sec" aria-labelledby="c-fields-title">
+                <div class="sec-head"><h3 class="plaque" id="c-fields-title">Campos</h3></div>
+                <div class="builtins" id="c-builtins"></div>
+                <ul class="field-list" id="c-fields"></ul>
+                <div id="c-sugg"></div>
+
+                <div class="composer" id="c-composer" hidden>
+                  <p class="plaque" id="c-comp-title">Novo campo</p>
+                  <label class="sr-only" for="c-comp-name">Nome do campo</label>
+                  <input class="input" id="c-comp-name" maxlength="40" placeholder="Nome do campo — ex.: Safra, Preço" autocomplete="off">
+                  <div class="types" id="c-comp-types" role="radiogroup" aria-label="Tipo do campo"></div>
+                  <p class="type-hint" id="c-comp-hint"></p>
+                  <div id="c-comp-options" hidden>
+                    <p class="micro" style="margin-bottom:6px">Opções da lista (Enter adiciona)</p>
+                    <div class="tokens" id="c-comp-tokens"><input id="c-comp-token-input" placeholder="ex.: Salão" aria-label="Nova opção"></div>
+                  </div>
+                  <div id="c-comp-currency" hidden>
+                    <div class="seg" role="radiogroup" aria-label="Moeda" id="c-comp-currency-seg"></div>
+                  </div>
+                  <p class="error" id="c-comp-error" hidden></p>
+                  <div class="comp-actions">
+                    <button type="button" class="btn btn-ghost btn-sm" id="c-comp-cancel">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="c-comp-save">Adicionar</button>
+                  </div>
+                </div>
+
+                <button type="button" class="add-field" id="c-add"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Adicionar campo</button>
+              </section>
+
+              <section class="sec" aria-labelledby="c-vis-title">
+                <div class="sec-head"><h3 class="plaque" id="c-vis-title">Quem vê</h3></div>
+                <div class="seg full" role="radiogroup" aria-label="Quem vê" id="c-vis"></div>
+                <p class="micro vis-hint" id="c-vis-hint"></p>
+              </section>
+
+              <details class="more" id="c-more">
+                <summary>
+                  <svg class="i" aria-hidden="true" style="color:var(--faint)"><use href="#i-sliders-horizontal"/></svg>
+                  <span class="grow"><b>Personalizar</b><span class="sum" id="c-sum"></span></span>
+                  <svg class="i chev" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+                </summary>
+                <div class="more-body">
+                  <div class="opt">
+                    <p class="opt-label">Cor</p>
+                    <div class="swatches" id="c-colors"></div>
+                    <p class="micro" style="margin-top:8px">Tinge o card dos itens: o brilho e a borda.</p>
+                  </div>
+                  <div class="opt">
+                    <div class="opt-row">
+                      <p class="opt-label" id="c-rating-label">Nota de 0 a 5 em cada item</p>
+                      <button type="button" class="switch" role="switch" id="c-rating" aria-labelledby="c-rating-label"></button>
+                    </div>
+                    <p class="micro" id="c-rating-hint" style="margin-top:6px"></p>
+                  </div>
+                  <div class="opt">
+                    <label class="opt-label" for="c-sort" style="display:block">Abre ordenada por</label>
+                    <select class="input" id="c-sort"></select>
+                  </div>
+                  <div class="opt">
+                    <label class="opt-label" for="c-quick" style="display:block">Acesso rápido</label>
+                    <select class="input" id="c-quick"></select>
+                    <p class="micro" style="margin-top:6px">O campo que o Vitrine pede quando você salva algo às pressas.</p>
+                  </div>
+                  <div class="opt" style="padding-bottom:0">
+                    <button type="button" class="btn btn-ghost btn-sm" id="c-json-open" style="margin-left:-10px"><svg class="i i-sm" aria-hidden="true"><use href="#i-braces"/></svg>Editar campos como JSON</button>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <!-- modelos -->
+            <div id="c-templates" hidden>
+              <div class="tpl-search">
+                <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+                <label class="sr-only" for="c-tpl-q">Buscar modelo</label>
+                <input class="input" id="c-tpl-q" placeholder="Vinhos, séries, trilhas…" autocomplete="off">
+              </div>
+              <div class="seg" role="group" aria-label="Ordem dos modelos" id="c-tpl-sort" style="margin-top:10px">
+                <button type="button" data-sort="popular" aria-pressed="true">Mais usados</button>
+                <button type="button" data-sort="recent" aria-pressed="false">Mais novos</button>
+              </div>
+              <div id="c-tpl-list" style="display:grid;gap:8px;margin-top:12px"></div>
+            </div>
+          </div>
+
+          <div class="sheet-foot">
+            <span class="count" id="c-count"></span>
+            <button type="button" class="btn btn-ghost" id="c-cancel">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="c-save">Criar</button>
+          </div>
+        </div>
+
+        <div class="modal-layer" id="c-modal" hidden></div>
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="card">
+        <h2>O que muda</h2>
+        <div class="stats">
+          <div class="stat"><div class="num"><s>14</s> 8</div><p class="micro">grupos de controles ao abrir</p></div>
+          <div class="stat"><div class="num"><s>6</s> 1</div><p class="micro">parágrafos de ajuda à vista</p></div>
+        </div>
+        <ul>
+          <li><b>Começa pelo que você já sabe:</b> o nome, com o ícone ao lado. O resto já vem com um padrão bom.</li>
+          <li><b>Modelos sem trocar de modo:</b> some o “Do zero / Começar de um modelo”. Enquanto você digita, aparecem os modelos parecidos (“Vin…” → Vinhos).</li>
+          <li><b>Campo novo, nome primeiro:</b> o tipo é adivinhado pelo nome (“Preço” → Moeda) e troca com 1 toque, em botões com ícone em vez de uma lista suspensa.</li>
+          <li><b>Sugestões em 1 toque:</b> viram etiquetas “+ Safra”, “+ País”. Sem ninguém parecido, o botão da IA fica no mesmo lugar.</li>
+          <li><b>Opções da lista viram etiquetas:</b> Enter adiciona, × tira.</li>
+          <li><b>O raro fica em “Personalizar”</b>, com o que está valendo resumido numa linha. O JSON fica lá dentro.</li>
+          <li><b>Nada foi removido:</b> tudo de hoje continua a 1 ou 2 toques.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Onde foi parar cada coisa</h2>
+        <table class="map-table">
+          <tbody>
+            <tr><td>Visual / JSON (no topo)</td><td>Personalizar › Editar campos como JSON</td></tr>
+            <tr><td>Do zero / Começar de um modelo</td><td>Modelos parecidos abaixo do nome, e “Começar de um modelo pronto”</td></tr>
+            <tr><td>Nome e Ícone</td><td>A mesma linha: toque no quadrado para o ícone</td></tr>
+            <tr><td>Cor</td><td>Personalizar (e já tinge o ícone)</td></tr>
+            <tr><td>Visibilidade</td><td>Quem vê, sempre à vista. Na edição também (hoje só no topo da categoria)</td></tr>
+            <tr><td>Avaliação por estrelas</td><td>Personalizar › Nota de 0 a 5</td></tr>
+            <tr><td>Ordem padrão dos itens</td><td>Personalizar › Abre ordenada por</td></tr>
+            <tr><td>Aviso “Toda categoria já vem com…”</td><td>Etiquetas “Já vêm: Nome · Imagem · Nota”</td></tr>
+            <tr><td>Campos: arrastar, editar, remover</td><td>Iguais, com o tipo num ícone</td></tr>
+            <tr><td>Sugestões e IA</td><td>Etiquetas “+ Campo” e “Sugerir com IA”</td></tr>
+            <tr><td>Adicionar campo (tipo → nome)</td><td>Nome → tipo adivinhado</td></tr>
+            <tr><td>Campo do acesso rápido</td><td>Personalizar › Acesso rápido</td></tr>
+            <tr><td>Aviso ao salvar mudanças com itens</td><td>Igual (teste no modo “Editar”, removendo um campo)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ===================== NOVO ITEM ===================== -->
+  <section class="panel" id="tab-item" hidden>
+    <div>
+      <div class="toolbar">
+        <div class="seg device-toggle" role="group" aria-label="Tamanho da tela">
+          <button type="button" data-device-btn="phone" aria-pressed="true"><svg class="i i-sm" aria-hidden="true"><use href="#i-smartphone"/></svg>Celular</button>
+          <button type="button" data-device-btn="desktop" aria-pressed="false"><svg class="i i-sm" aria-hidden="true"><use href="#i-monitor"/></svg>Computador</button>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="i-restart"><svg class="i i-sm" aria-hidden="true"><use href="#i-undo-2"/></svg>Recomeçar</button>
+      </div>
+
+      <div class="stage" data-device="phone">
+        <div class="backdrop" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="scrim" aria-hidden="true"></div>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="i-title">
+          <div class="sheet-head">
+            <div class="grow">
+              <h2 class="sheet-title display" id="i-title">Novo item</h2>
+            </div>
+            <button type="button" class="icon-btn" aria-label="Fechar" id="i-close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button>
+          </div>
+          <div class="sheet-body">
+            <div class="item-top">
+              <button type="button" class="img-tile" id="i-tile" aria-label="Imagem do item"></button>
+              <div style="min-width:0">
+                <label class="sr-only" for="i-name">Nome do item</label>
+                <input id="i-name" class="name-input" placeholder="Nome do item" maxlength="160" autocomplete="off">
+                <div class="rating-line">
+                  <div class="stars" id="i-stars" role="group" aria-label="Avaliação"></div>
+                  <span class="rating-value" id="i-rating-value">—</span>
+                </div>
+                <button type="button" class="where" id="i-where" aria-expanded="false"><svg class="i i-xs" aria-hidden="true"><use href="#i-folder"/></svg><span id="i-where-text"></span><svg class="i i-xs" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+                <div id="i-where-panel" hidden style="margin-top:8px">
+                  <label class="sr-only" for="i-folder">Pasta</label>
+                  <select class="input" id="i-folder">
+                    <option value="Raiz da categoria">Raiz da categoria</option>
+                    <option value="Japoneses">Japoneses</option>
+                    <option value="Italianos">Italianos</option>
+                    <option value="Para ir">Para ir</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="framer-panel" id="i-framer" hidden>
+              <div id="i-url-block">
+                <label class="plaque" for="i-url" style="display:block;margin-bottom:6px">Link da imagem</label>
+                <div class="url-row">
+                  <input class="input" id="i-url" inputmode="url" placeholder="https://…" autocomplete="off">
+                </div>
+                <p class="micro" style="margin-top:6px">Cole o endereço de uma imagem já hospedada. <button type="button" class="link" id="i-sample">Usar uma de exemplo</button></p>
+              </div>
+              <div id="i-frame-block" hidden>
+                <div class="frame-wrap">
+                  <span class="frame-glow" aria-hidden="true"></span>
+                  <div class="frame" id="i-frame" role="group" tabindex="0" aria-label="Enquadramento da imagem. Setas movem; + e − dão o zoom."><img id="i-img" alt="" draggable="false"></div>
+                </div>
+                <p class="frame-hint"><span>Arraste para mover. Role ou faça pinça para o zoom.</span><span id="i-zoom">1×</span></p>
+                <div class="framer-actions">
+                  <button type="button" class="btn btn-ghost btn-sm" id="i-center">Centralizar</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="i-change">Trocar link</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="i-remove">Remover</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="i-done"><svg class="i i-sm" aria-hidden="true"><use href="#i-check"/></svg>Pronto</button>
+                </div>
+              </div>
+            </div>
+
+            <section class="sec" aria-labelledby="i-fields-title">
+              <div class="sec-head"><h3 class="plaque" id="i-fields-title">Campos de Restaurantes</h3></div>
+              <div class="fields-grid" id="i-fields"></div>
+            </section>
+
+            <section class="sec" aria-labelledby="i-tags-title">
+              <div class="sec-head"><h3 class="plaque" id="i-tags-title">Tags</h3></div>
+              <div class="chips" id="i-tags"></div>
+            </section>
+          </div>
+          <div class="sheet-foot">
+            <span class="count" id="i-count"></span>
+            <button type="button" class="btn btn-ghost" id="i-cancel">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="i-save">Salvar item</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="card">
+        <h2>O que muda</h2>
+        <ul>
+          <li><b>Nome e nota no topo</b>, com a imagem ao lado: no celular, o essencial cabe sem rolar.</li>
+          <li><b>Imagem num quadrado:</b> toque para colar o link. O enquadramento abre maior, com arrastar, roda e pinça (o ponto 1, que já está no app).</li>
+          <li><b>“Onde fica” vira uma etiqueta</b> (Restaurantes › pasta) em vez de seletores no meio do formulário.</li>
+          <li><b>Listas curtas viram botões:</b> “Modo: Salão · Delivery” em 1 toque, sem abrir lista.</li>
+          <li><b>Some a frase do topo</b> (“Nome, imagem e avaliação toda categoria tem…”).</li>
+          <li>Tags e campos continuam iguais, só agrupados.</li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ===================== RESTO DO APP ===================== -->
+  <section class="panel" id="tab-app" hidden>
+    <div class="app-grid" style="grid-column:1 / -1">
+      <div class="card">
+        <h2>1. Padrão bom no lugar de pergunta</h2>
+        <p class="muted" style="margin:0">O que tem um bom padrão não aparece até a pessoa querer mudar, mas o resumo mostra o que está valendo (como o “Personalizar” da nova categoria).</p>
+        <div class="before-after">
+          <p><span class="tag">Hoje</span>Ordem, acesso rápido e cor pedem atenção ao criar.</p>
+          <p><span class="tag">Proposta</span>“Personalizar: Sem cor · Com nota · Abre pela nota”.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>2. Um destaque por tela</h2>
+        <p class="muted" style="margin:0">O olho precisa cair primeiro na ação principal. As outras ficam à vista, mas mais leves.</p>
+        <div class="before-after">
+          <p><span class="tag">Hoje</span>Na categoria, ＋ Item, Editar e Subpasta têm o mesmo peso.</p>
+          <p><span class="tag">Proposta</span>＋ Item cheio; Editar e Subpasta com contorno, no mesmo lugar.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>3. Uma barra só para ver e filtrar</h2>
+        <p class="muted" style="margin:0">Na página da categoria, busca, filtros e jeito de exibir moram na mesma linha.</p>
+        <div class="mock-bar" aria-label="Exemplo da barra">
+          <input class="input" placeholder="Buscar nesta categoria" aria-label="Buscar (exemplo)">
+          <button type="button" class="btn btn-outline btn-sm"><svg class="i i-sm" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg>Filtros</button>
+          <button type="button" class="btn btn-outline btn-sm">Exibição<svg class="i i-sm" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+        </div>
+        <div class="before-after">
+          <p><span class="tag">Hoje</span>Abas Itens/Números, busca, Filtros, modos, tamanho da grade e contagem.</p>
+          <p><span class="tag">Proposta</span>“Exibição” junta grade, lista, tier list, tamanho e Números num menu.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>4. Avisos numa linha</h2>
+        <p class="muted" style="margin:0">Sincronização da Steam ou do Letterboxd, cópia ligada, nota de privacidade e a explicação da “A organizar” podem se empilhar no topo.</p>
+        <div class="before-after">
+          <p><span class="tag">Hoje</span>Até quatro caixas antes dos itens.</p>
+          <p><span class="tag">Proposta</span>Uma linha discreta com ícone; o detalhe abre ao tocar.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>5. Ajuda só onde há risco</h2>
+        <p class="muted" style="margin:0">Texto de ajuda vira 1 linha (ou some) quando o controle se explica sozinho. Continua explícito o que pode dar errado: apagar, privacidade e o que se perde ao mudar a estrutura.</p>
+      </div>
+      <div class="card">
+        <h2>6. Formulário começa pelo nome</h2>
+        <p class="muted" style="margin:0">O primeiro campo é sempre o que a pessoa já sabe. Tipo, opções e detalhes vêm depois, já com um palpite.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict"
+// ---------------------------------------------------------------- utilidades
+const $ = (sel, root = document) => root.querySelector(sel)
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)]
+const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }
+const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ESC[c])
+const ico = (name, cls = "") => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${name}"></use></svg>`
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+const norm = (text) => String(text).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+let uid = 0
+const newId = () => "f" + ++uid
+
+function toast(text) {
+  const el = $("#toast")
+  el.textContent = text
+  el.classList.add("show")
+  clearTimeout(toast.timer)
+  toast.timer = setTimeout(() => el.classList.remove("show"), 2800)
+}
+
+// ---------------------------------------------------------------- abas e tamanho de tela
+$$("[data-tab]").forEach((button) =>
+  button.addEventListener("click", () => {
+    $$("[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b === button)))
+    $$(".panel").forEach((panel) => (panel.hidden = panel.id !== "tab-" + button.dataset.tab))
+  })
+)
+$$("[data-device-btn]").forEach((button) =>
+  button.addEventListener("click", () => {
+    const device = button.dataset.deviceBtn
+    $$("[data-device-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.deviceBtn === device)))
+    $$(".stage").forEach((stage) => (stage.dataset.device = device))
+  })
+)
+
+// ---------------------------------------------------------------- dados (os mesmos nomes do app)
+const TYPES = {
+  str: { label: "Texto", long: "Texto", icon: "type", ex: "ex.: Diretor, Uva" },
+  int: { label: "Número", long: "Número inteiro", icon: "hash", ex: "ex.: Ano, Temporadas" },
+  decimal: { label: "Decimal", long: "Número com vírgula", icon: "calculator", ex: "ex.: Teor alcoólico, Km" },
+  date: { label: "Data", long: "Data", icon: "calendar", ex: "ex.: Quando fui, Estreia" },
+  time: { label: "Duração", long: "Duração (h:min)", icon: "timer", ex: "ex.: Tempo de espera" },
+  currency: { label: "Moeda", long: "Moeda", icon: "coins", ex: "ex.: Preço" },
+  select: { label: "Lista", long: "Lista de opções", icon: "list", ex: "ex.: Modo — Salão, Delivery" },
+  star: { label: "Estrelas", long: "Estrela (0–5)", icon: "star", ex: "ex.: Atendimento, Ambiente" },
+  location: { label: "Local", long: "Localização (mapa)", icon: "map-pin", ex: "vira um ponto no Mapa" },
+}
+const TYPE_ORDER = ["str", "int", "decimal", "date", "time", "currency", "select", "star", "location"]
+// O palpite do tipo pelo nome do campo (a ordem importa: o primeiro que bate vale).
+const GUESS = [
+  [/(^|\s)(data|quando|dia|estreia|lancamento)|assisti em|li em|terminei|fui em/, "date"],
+  [/preco|valor|custo|gasto|conta\b/, "currency"],
+  [/endereco|local|onde|cidade|bairro/, "location"],
+  [/tempo|duracao|espera/, "time"],
+  [/nota|atendimento|ambiente|sabor|estrela/, "star"],
+  [/(^|\s)ano\b|safra|temporada|paginas|visitas|episodios|quantidade/, "int"],
+  [/teor|alcool|(^|\s)km\b|distancia|peso|graduacao/, "decimal"],
+  [/genero|tipo|modo|plataforma|estilo|metodo|dificuldade/, "select"],
+]
+const guessType = (name) => {
+  const text = norm(name)
+  if (!text) return "str"
+  for (const [re, type] of GUESS) if (re.test(text)) return type
+  return "str"
+}
+const CURRENCIES = ["R$", "$", "€", "¥"]
+const COLORS = [
+  ["#B98CC2", "Roxo"], ["#8FB3C9", "Azul"], ["#8FC9A6", "Verde"], ["#D6C08A", "Ocre"],
+  ["#C97B7B", "Vermelho"], ["#C79BD0", "Lilás"], ["#9A9AA4", "Cinza"], ["#B08A6A", "Marrom"],
+]
+const SORTS = [
+  ["recent", "Adicionados recentemente", "pelos mais novos"],
+  ["rating_desc", "Nota (maior primeiro)", "pela nota"],
+  ["rating_asc", "Nota (menor primeiro)", "pela nota, menor primeiro"],
+  ["name_asc", "Nome (A-Z)", "de A a Z"],
+  ["manual", "Ordem manual", "na sua ordem"],
+]
+const VIS = {
+  public: { label: "Pública", icon: "globe", hint: "Qualquer pessoa vê, mesmo sem conta no Vitrine." },
+  friends: { label: "Amigos", icon: "users", hint: "Só quem você segue e segue você de volta." },
+  private: { label: "Privada", icon: "lock", hint: "Só você vê." },
+}
+const EMOJIS = ["🍽️", "🍣", "🍕", "🍔", "☕", "🍷", "🍺", "🍰", "🎬", "📺", "📚", "🎮", "🎲", "🎵", "🎧", "✈️", "🏖️", "🥾", "🏛️", "🎨", "🛍️", "👟", "🌱", "🐶", "📍", "🏠", "⭐", "❤️"]
+const f = (nome, tipo, extra = {}) => ({ nome, tipo, ...extra })
+// Modelos de mentira: os @ são inventados.
+const TEMPLATES = [
+  { id: "t1", name: "Vinhos", icon: "🍷", color: "#C97B7B", owner: "ana.lu", uses: 31, age: 4, rating: true, sort: "rating_desc", fields: [f("Uva", "str"), f("Safra", "int"), f("País", "str"), f("Preço", "currency", { moeda: "R$" }), f("Tipo", "select", { opcoes: ["Tinto", "Branco", "Rosé", "Espumante"] })] },
+  { id: "t2", name: "Restaurantes", icon: "🍽️", color: "#D6C08A", owner: "rafa.come", uses: 58, age: 9, rating: true, sort: "rating_desc", fields: [f("Endereço", "location"), f("Atendimento", "star"), f("Tempo de espera", "time"), f("Modo", "select", { opcoes: ["Salão", "Delivery"] }), f("Preço médio", "currency", { moeda: "R$" })] },
+  { id: "t3", name: "Séries", icon: "📺", color: "#8FB3C9", owner: "duda.maratona", uses: 44, age: 2, rating: true, sort: "recent", fields: [f("Temporadas", "int"), f("Plataforma", "select", { opcoes: ["Netflix", "Max", "Prime Video", "Disney+"] }), f("Gênero", "select", { opcoes: ["Drama", "Comédia", "Suspense"] }), f("Terminei em", "date")] },
+  { id: "t4", name: "Livros", icon: "📚", color: "#B08A6A", owner: "teo.le", uses: 39, age: 6, rating: true, sort: "rating_desc", fields: [f("Autor", "str"), f("Páginas", "int"), f("Gênero", "select", { opcoes: ["Romance", "Não ficção", "Fantasia"] }), f("Li em", "date")] },
+  { id: "t5", name: "Cafés", icon: "☕", color: "#B08A6A", owner: "bia.cafe", uses: 17, age: 1, rating: true, sort: "rating_desc", fields: [f("Endereço", "location"), f("Método", "select", { opcoes: ["Espresso", "Coado", "Cold brew"] }), f("Preço", "currency", { moeda: "R$" }), f("Ambiente", "star")] },
+  { id: "t6", name: "Trilhas", icon: "🥾", color: "#8FC9A6", owner: "lucas.trilha", uses: 9, age: 3, rating: false, sort: "recent", fields: [f("Local", "location"), f("Distância", "decimal"), f("Duração", "time"), f("Dificuldade", "select", { opcoes: ["Fácil", "Média", "Difícil"] })] },
+  { id: "t7", name: "Jogos de tabuleiro", icon: "🎲", color: "#C79BD0", owner: "mesa.cheia", uses: 12, age: 8, rating: true, sort: "name_asc", fields: [f("Jogadores", "str"), f("Duração", "time"), f("Peso", "decimal")] },
+  { id: "t8", name: "Cervejas", icon: "🍺", color: "#D6C08A", owner: "ana.lu", uses: 21, age: 5, rating: true, sort: "rating_desc", fields: [f("Estilo", "select", { opcoes: ["IPA", "Lager", "Stout", "Sour"] }), f("Teor alcoólico", "decimal"), f("Cervejaria", "str"), f("Preço", "currency", { moeda: "R$" })] },
+  { id: "t9", name: "Filmes", icon: "🎬", color: null, owner: "cine.gabi", uses: 63, age: 7, rating: true, sort: "recent", fields: [f("Diretor", "str"), f("Ano", "int"), f("Gênero", "select", { opcoes: ["Drama", "Comédia", "Terror"] }), f("Assisti em", "date")] },
+  { id: "t10", name: "Viagens", icon: "✈️", color: "#8FB3C9", owner: "mundo.ju", uses: 14, age: 10, rating: false, sort: "recent", fields: [f("Cidade", "location"), f("Quando", "date"), f("Gasto", "currency", { moeda: "R$" })] },
+]
+const AI_FIELDS = [f("Onde", "location"), f("Quando", "date"), f("Preço", "currency", { moeda: "R$" }), f("Com quem", "str")]
+const RESTAURANTES = {
+  name: "Restaurantes", icon: "🍽️", color: "#D6C08A", visibility: "public", rating: true, sort: "rating_desc", quick: "name",
+  fields: [f("Visitas", "int"), f("Atendimento", "star"), f("Tempo de espera", "time"), f("Pedido", "str"), f("Modo", "select", { opcoes: ["Salão", "Delivery"] }), f("Endereço", "location")],
+}
+// Quantos itens de “Restaurantes” têm cada campo preenchido (para o aviso ao salvar).
+const FILLED = { Visitas: 18, Atendimento: 21, "Tempo de espera": 9, Pedido: 15, Modo: 22, Endereço: 20 }
+const RATED = 23
+const usedBy = (n) => (n === 1 ? "1 pessoa usa" : `${n} pessoas usam`)
+
+function matchTemplates(name) {
+  const q = norm(name)
+  if (q.length < 3) return []
+  return TEMPLATES.filter((t) => {
+    const n = norm(t.name)
+    const stem = n.length > 4 ? n.slice(0, -1) : n
+    return n.startsWith(q) || q.includes(stem) || n.split(" ").some((word) => word.startsWith(q))
+  })
+}
+
+// ================================================================ NOVA CATEGORIA
+let C
+
+function blankCategory() {
+  return { name: "", icon: "", color: null, visibility: "public", rating: true, sort: "rating_desc", quick: "name", fields: [] }
+}
+
+function resetCategory(mode) {
+  const base = mode === "edit" ? structuredClone(RESTAURANTES) : blankCategory()
+  base.fields = base.fields.map((field) => ({ ...field, id: newId() }))
+  C = {
+    mode, ...base,
+    original: mode === "edit" ? base.fields.map((field) => ({ ...field })) : [],
+    originalRating: base.rating,
+    source: null, view: "form", composer: null, ai: null, tplSort: "popular", flash: null,
+  }
+  $("#c-name").value = C.name
+  $("#c-emoji").hidden = true
+  $("#c-more").open = false
+  $("#c-modal").hidden = true
+  $$("[data-cat-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.catMode === mode)))
+  closeComposer()
+  renderCategory()
+  $("#c-body").scrollTop = 0
+}
+
+function renderCategory() {
+  renderHead()
+  renderIdentity()
+  renderStart()
+  renderFields()
+  renderSuggestions()
+  renderVisibility()
+  renderMore()
+  renderFoot()
+}
+
+function renderHead() {
+  const templates = C.view === "templates"
+  $("#c-title").textContent = templates ? "Modelos" : C.mode === "edit" ? "Editar categoria" : "Nova categoria"
+  $("#c-sub").textContent = templates ? "Categorias públicas de outras pessoas" : C.mode === "edit" ? "24 itens" : "Dentro de “Comida”"
+  $("#c-back").hidden = !templates
+  $("#c-form").hidden = templates
+  $("#c-templates").hidden = !templates
+}
+
+function renderIdentity() {
+  const tile = $("#c-icon")
+  tile.innerHTML = C.icon ? `${esc(C.icon)}<span class="edit-dot">${ico("pencil", "i-xs")}</span>` : ico("plus")
+  tile.classList.toggle("has", Boolean(C.icon))
+  tile.classList.toggle("tinted", Boolean(C.color))
+  tile.style.setProperty("--tint", C.color || "transparent")
+  tile.setAttribute("aria-label", C.icon ? `Ícone: ${C.icon}. Trocar` : "Escolher ícone")
+}
+
+function renderStart() {
+  const box = $("#c-start")
+  if (C.mode === "edit") return (box.innerHTML = "")
+  if (C.source) {
+    box.innerHTML = `<div class="banner">${ico("wand-sparkles", "i-sm")}<span class="grow">Começou de “${esc(C.source.name)}”, de @${esc(C.source.owner)}. Mude o que quiser antes de criar.</span><button type="button" class="link" data-undo-template>Desfazer</button></div>`
+    return
+  }
+  const found = matchTemplates(C.name).slice(0, 2)
+  if (found.length > 0) {
+    box.innerHTML = `<div class="tpl-inline">
+      <div class="sec-head"><p class="plaque">Modelos parecidos</p><button type="button" class="link" data-open-templates>Ver todos</button></div>
+      ${found.map((t) => `<div class="tpl-row">
+        <span class="tpl-emoji" aria-hidden="true">${esc(t.icon)}</span>
+        <span class="grow"><span class="tpl-name" style="display:block">${esc(t.name)}</span><span class="tpl-meta" style="display:block">@${esc(t.owner)} · ${usedBy(t.uses)} · ${t.fields.map((x) => esc(x.nome)).slice(0, 3).join(", ")}${t.fields.length > 3 ? "…" : ""}</span></span>
+        <button type="button" class="btn btn-outline btn-sm" data-use="${t.id}">Usar</button>
+      </div>`).join("")}
+    </div>`
+    return
+  }
+  if (!C.name.trim()) {
+    box.innerHTML = `<button type="button" class="start-row" data-open-templates>
+      <span class="badge">${ico("wand-sparkles")}</span>
+      <span class="grow"><b>Começar de um modelo pronto</b><span class="micro">Restaurantes, Vinhos, Séries… com os campos já feitos</span></span>
+      ${ico("chevron-right", "faint")}
+    </button>`
+    return
+  }
+  box.innerHTML = ""
+}
+
+function fieldSub(field) {
+  if (field.tipo === "select" && field.opcoes?.length) return `${TYPES.select.label} · ${field.opcoes.join(", ")}`
+  if (field.tipo === "currency") return `${TYPES.currency.label} · ${field.moeda || "R$"}`
+  return TYPES[field.tipo].long
+}
+
+function renderFields() {
+  $("#c-builtins").innerHTML = `<span class="plaque" style="margin-right:2px">Já vêm</span>
+    <span class="chip static">${ico("type", "i-xs")}Nome</span>
+    <span class="chip static">${ico("image", "i-xs")}Imagem</span>
+    ${C.rating ? `<span class="chip static">${ico("star", "i-xs")}Nota</span>` : ""}`
+  const editingId = C.composer?.editingId
+  $("#c-fields").innerHTML = C.fields.length === 0
+    ? `<li><p class="empty-line">Nenhum campo extra ainda.</p></li>`
+    : C.fields.map((field) => `<li class="field${field.id === editingId ? " editing" : ""}${field.id === C.flash ? " flash" : ""}" data-id="${field.id}">
+        <button type="button" class="icon-btn grip" aria-label="Mover ${esc(field.nome)} (setas sobem e descem)">${ico("grip-vertical")}</button>
+        <span class="ftype" title="${esc(TYPES[field.tipo].long)}">${ico(TYPES[field.tipo].icon, "i-sm")}</span>
+        <span class="fbody"><span class="fname" style="display:block">${esc(field.nome)}</span><span class="fsub" style="display:block">${esc(fieldSub(field))}</span></span>
+        <button type="button" class="icon-btn" data-edit="${field.id}" aria-label="Editar ${esc(field.nome)}" aria-pressed="${field.id === editingId}">${ico("pencil", "i-sm")}</button>
+        <button type="button" class="icon-btn danger" data-remove="${field.id}" aria-label="Remover ${esc(field.nome)}" ${field.id === editingId ? "disabled" : ""}>${ico("x")}</button>
+      </li>`).join("")
+  if (C.flash) {
+    const flashed = C.flash
+    setTimeout(() => {
+      if (C.flash === flashed) C.flash = null
+      $(`#c-fields [data-id="${flashed}"]`)?.classList.remove("flash")
+    }, 700)
+  }
+  renderFoot()
+  renderMore()
+}
+
+function suggestionsFor() {
+  if (C.mode === "edit" || C.source) return { kind: "none" }
+  if (C.ai?.items) return { kind: "ai", items: C.ai.items.filter((s) => !hasField(s.nome)) }
+  const found = matchTemplates(C.name)
+  if (found.length === 0) return norm(C.name).length >= 3 ? { kind: "ask-ai" } : { kind: "none" }
+  const seen = new Map()
+  for (const t of found) for (const field of t.fields) {
+    const key = norm(field.nome)
+    if (!seen.has(key)) seen.set(key, { ...field, owners: 0 })
+    seen.get(key).owners += t.uses
+  }
+  return { kind: "community", items: [...seen.values()].filter((s) => !hasField(s.nome)).slice(0, 6) }
+}
+const hasField = (name) => C.fields.some((field) => norm(field.nome) === norm(name))
+
+function renderSuggestions() {
+  const box = $("#c-sugg")
+  const s = suggestionsFor()
+  if (s.kind === "none" || (s.items && s.items.length === 0)) return (box.innerHTML = "")
+  if (s.kind === "ask-ai") {
+    box.innerHTML = `<div class="sugg">
+      <div class="chips"><button type="button" class="chip dashed" data-ask-ai ${C.ai?.pending ? "disabled" : ""}>${ico("sparkles", "i-sm")}${C.ai?.pending ? "Pensando…" : "Sugerir campos com IA"}</button></div>
+      <p class="micro" style="margin-top:6px">Ninguém tem uma categoria assim ainda. A IA recebe só o nome (até 10 por dia).</p>
+    </div>`
+    return
+  }
+  const title = s.kind === "ai" ? "Sugestões da IA" : `Usados em categorias como “${esc(C.name.trim())}”`
+  box.innerHTML = `<div class="sugg">
+    <div class="sugg-head"><p class="plaque wrap-any">${title}</p>${s.items.length > 1 ? `<button type="button" class="link" data-add-all>Trazer todos</button>` : ""}</div>
+    <div class="chips">${s.items.map((item) => `<button type="button" class="chip dashed" data-suggest="${esc(item.nome)}" title="${esc(TYPES[item.tipo].long)}${item.owners ? " · " + usedBy(item.owners) : ""}">${ico("plus", "i-sm")}${esc(item.nome)}</button>`).join("")}</div>
+    ${s.kind === "ai" ? `<p class="micro" style="margin-top:6px">Confira antes de criar.</p>` : ""}
+  </div>`
+}
+
+function addFields(list) {
+  const added = list.filter((item) => !hasField(item.nome)).map((item) => ({ nome: item.nome, tipo: item.tipo, ...(item.opcoes ? { opcoes: [...item.opcoes] } : {}), ...(item.moeda ? { moeda: item.moeda } : {}), id: newId() }))
+  if (added.length === 0) return
+  C.fields.push(...added)
+  C.flash = added[added.length - 1].id
+  renderFields()
+  renderSuggestions()
+}
+
+function renderVisibility() {
+  $("#c-vis").innerHTML = Object.entries(VIS).map(([key, v]) => `<button type="button" role="radio" aria-checked="${C.visibility === key}" data-vis="${key}">${ico(v.icon, "i-sm")}${v.label}</button>`).join("")
+  $("#c-vis-hint").textContent = VIS[C.visibility].hint
+}
+
+function quickOptions() {
+  return [["name", "Só o Nome"], ...(C.rating ? [["rating", "A nota (estrelas)"]] : []), ...C.fields.map((field) => [field.id, `${field.nome} · ${TYPES[field.tipo].long}`])]
+}
+
+function renderMore() {
+  // Campo removido ou nota desligada: o acesso rápido volta para o Nome (como no app).
+  if (!quickOptions().some(([value]) => value === C.quick)) C.quick = "name"
+  const color = C.color ? (COLORS.find(([hex]) => hex === C.color)?.[1] ?? "Cor própria") : "Sem cor"
+  const sort = SORTS.find(([key]) => key === C.sort)
+  $("#c-sum").textContent = `${color} · ${C.rating ? "Com nota" : "Sem nota"} · Abre ${sort[2]}`
+  const custom = C.color && !COLORS.some(([hex]) => hex === C.color)
+  $("#c-colors").innerHTML = `<button type="button" class="swatch none" aria-label="Sem cor" aria-pressed="${!C.color}" data-color="">${ico("x", "i-xs")}</button>
+    ${COLORS.map(([hex, label]) => `<button type="button" class="swatch" style="--c:${hex}" aria-label="${label}" title="${label}" aria-pressed="${C.color === hex}" data-color="${hex}"></button>`).join("")}
+    <span class="swatch custom${custom ? " on" : ""}" title="Outra cor" style="${custom ? `background:${C.color}` : ""}"><input type="color" aria-label="Outra cor" id="c-color-own" value="${custom ? C.color : "#b98cc2"}"></span>`
+  const switchEl = $("#c-rating")
+  switchEl.setAttribute("aria-checked", String(C.rating))
+  $("#c-rating-hint").textContent = C.rating
+    ? "Dá para filtrar, ordenar e comparar pela nota."
+    : C.mode === "edit" && C.originalRating
+      ? `Lista simples. As notas de ${RATED} itens serão apagadas ao salvar.`
+      : "Lista simples: para organizar sem comparar."
+  $("#c-sort").innerHTML = SORTS.filter(([key]) => C.rating || !key.startsWith("rating")).map(([key, label]) => `<option value="${key}" ${key === C.sort ? "selected" : ""}>${label}</option>`).join("")
+  $("#c-quick").innerHTML = quickOptions().map(([value, label]) => `<option value="${esc(value)}" ${value === C.quick ? "selected" : ""}>${esc(label)}</option>`).join("")
+}
+
+function renderFoot() {
+  const templates = C.view === "templates"
+  $("#c-count").textContent = templates ? "Traz só a estrutura, sem os itens." : C.fields.length === 0 ? "Nenhum campo extra" : plural(C.fields.length, "campo extra", "campos extras")
+  $("#c-save").hidden = templates
+  $("#c-save").textContent = C.mode === "edit" ? "Salvar" : "Criar"
+  $("#c-cancel").textContent = templates ? "Voltar" : "Cancelar"
+}
+
+// ---------- modelos
+function renderTemplateList() {
+  const q = norm($("#c-tpl-q").value)
+  let list = q ? TEMPLATES.filter((t) => norm(t.name).includes(q) || q.includes(norm(t.name).slice(0, -1))) : [...TEMPLATES]
+  if (!q) list.sort((a, b) => (C.tplSort === "popular" ? b.uses - a.uses : a.age - b.age))
+  $$("#c-tpl-sort button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.sort === C.tplSort)))
+  $("#c-tpl-sort").hidden = Boolean(q)
+  $("#c-tpl-list").innerHTML = list.length === 0
+    ? `<p class="empty-line">Nenhum modelo com esse nome. Que tal começar do zero?</p>`
+    : list.map((t) => `<div class="tpl-card">
+        <span class="tpl-emoji" aria-hidden="true">${esc(t.icon)}</span>
+        <span class="grow">
+          <span class="tpl-name" style="display:block">${esc(t.name)}</span>
+          <span class="tpl-meta" style="display:block">@${esc(t.owner)} · ${usedBy(t.uses)}</span>
+          <span class="chips">${t.rating ? `<span class="chip static on">${ico("star", "i-xs")}Nota</span>` : ""}${t.fields.slice(0, 4).map((x) => `<span class="chip static">${esc(x.nome)}</span>`).join("")}${t.fields.length > 4 ? `<span class="chip static">+${t.fields.length - 4}</span>` : ""}</span>
+        </span>
+        <button type="button" class="btn btn-outline btn-sm" data-use="${t.id}">Usar</button>
+      </div>`).join("")
+}
+
+function openTemplates() {
+  C.view = "templates"
+  $("#c-tpl-q").value = C.name.trim().length >= 3 && matchTemplates(C.name).length ? C.name.trim() : ""
+  renderHead()
+  renderFoot()
+  renderTemplateList()
+  $("#c-body").scrollTop = 0
+  $("#c-tpl-q").focus()
+}
+
+function closeTemplates() {
+  C.view = "form"
+  renderCategory()
+}
+
+function applyTemplate(id) {
+  const t = TEMPLATES.find((item) => item.id === id)
+  if (!t) return
+  closeComposer()
+  Object.assign(C, { name: t.name, icon: t.icon, color: t.color, rating: t.rating, sort: t.sort, quick: "name", source: t, view: "form", ai: null })
+  C.fields = t.fields.map((field) => ({ ...structuredClone(field), id: newId() }))
+  $("#c-name").value = C.name
+  renderCategory()
+  toast(`Estrutura de “${t.name}” trazida. Mude o que quiser.`)
+}
+
+function undoTemplate() {
+  closeComposer()
+  Object.assign(C, blankCategory(), { visibility: C.visibility, source: null, ai: null })
+  $("#c-name").value = ""
+  renderCategory()
+  $("#c-name").focus()
+}
+
+// ---------- o compositor de campo
+function lockedTypes(fieldId) {
+  // Na edição, o tipo de um campo que já existe fica travado; Texto ↔ Localização pode.
+  const saved = C.mode === "edit" && C.original.find((field) => field.id === fieldId)
+  if (!saved) return null
+  return saved.tipo === "str" || saved.tipo === "location" ? ["str", "location"] : [saved.tipo]
+}
+
+function openComposer(field) {
+  C.composer = field
+    ? { editingId: field.id, name: field.nome, tipo: field.tipo, auto: false, opcoes: [...(field.opcoes || [])], moeda: field.moeda || "R$" }
+    : { editingId: null, name: "", tipo: "str", auto: true, opcoes: [], moeda: "R$" }
+  $("#c-comp-name").value = C.composer.name
+  $("#c-comp-token-input").value = ""
+  $("#c-comp-error").hidden = true
+  $("#c-composer").hidden = false
+  $("#c-add").hidden = true
+  updateComposer()
+  renderFields()
+  $("#c-composer").scrollIntoView({ block: "nearest", behavior: "smooth" })
+  $("#c-comp-name").focus()
+}
+
+function closeComposer() {
+  if (C) C.composer = null
+  $("#c-composer").hidden = true
+  $("#c-add").hidden = false
+}
+
+function updateComposer() {
+  const comp = C.composer
+  if (!comp) return
+  const allowed = lockedTypes(comp.editingId)
+  $("#c-comp-title").textContent = comp.editingId ? "Editar campo" : "Novo campo"
+  $("#c-comp-save").textContent = comp.editingId ? "Salvar campo" : "Adicionar"
+  $("#c-comp-types").innerHTML = TYPE_ORDER.map((key) => `<button type="button" class="chip" role="radio" aria-checked="${comp.tipo === key}" data-type="${key}" ${allowed && !allowed.includes(key) ? "disabled" : ""}>${ico(TYPES[key].icon, "i-sm")}${TYPES[key].label}</button>`).join("")
+  const lockNote = allowed ? (allowed.length > 1 ? " Já tem valores: só pode virar Texto ou Local." : " Já tem valores: o tipo fica travado.") : ""
+  $("#c-comp-hint").innerHTML = `<b style="font-weight:500;color:var(--ink)">${TYPES[comp.tipo].long}</b> · ${TYPES[comp.tipo].ex}${comp.auto && comp.name.trim() ? ` <span class="auto">· escolhido pelo nome</span>` : ""}${lockNote}`
+  $("#c-comp-options").hidden = comp.tipo !== "select"
+  $("#c-comp-currency").hidden = comp.tipo !== "currency"
+  $("#c-comp-currency-seg").innerHTML = CURRENCIES.map((cur) => `<button type="button" role="radio" aria-checked="${comp.moeda === cur}" data-currency="${cur}">${cur}</button>`).join("")
+  renderTokens()
+}
+
+function renderTokens() {
+  const box = $("#c-comp-tokens")
+  $$(".token", box).forEach((token) => token.remove())
+  const input = $("#c-comp-token-input")
+  for (const [index, option] of C.composer.opcoes.entries()) {
+    const span = document.createElement("span")
+    span.className = "token"
+    span.innerHTML = `${esc(option)}<button type="button" aria-label="Tirar ${esc(option)}" data-token="${index}">${ico("x", "i-xs")}</button>`
+    box.insertBefore(span, input)
+  }
+}
+
+function addToken() {
+  const input = $("#c-comp-token-input")
+  const parts = input.value.split(",").map((part) => part.trim()).filter(Boolean)
+  for (const part of parts) if (!C.composer.opcoes.some((option) => norm(option) === norm(part))) C.composer.opcoes.push(part)
+  input.value = ""
+  renderTokens()
+}
+
+function saveComposer() {
+  const comp = C.composer
+  if ($("#c-comp-token-input").value.trim()) addToken()
+  const name = comp.name.trim()
+  const error = !name
+    ? "Dê um nome ao campo."
+    : C.fields.some((field) => field.id !== comp.editingId && norm(field.nome) === norm(name))
+      ? "Já existe um campo com esse nome."
+      : comp.tipo === "select" && comp.opcoes.length === 0
+        ? "Uma lista precisa de pelo menos uma opção."
+        : null
+  if (error) {
+    $("#c-comp-error").textContent = error
+    $("#c-comp-error").hidden = false
+    return
+  }
+  const field = { id: comp.editingId || newId(), nome: name, tipo: comp.tipo, ...(comp.tipo === "select" ? { opcoes: [...comp.opcoes] } : {}), ...(comp.tipo === "currency" ? { moeda: comp.moeda } : {}) }
+  if (comp.editingId) C.fields = C.fields.map((item) => (item.id === comp.editingId ? field : item))
+  else C.fields.push(field)
+  C.flash = field.id
+  closeComposer()
+  renderFields()
+  renderSuggestions()
+  $("#c-add").focus()
+}
+
+// ---------- eventos da categoria
+$("#c-name").addEventListener("input", (event) => {
+  C.name = event.target.value
+  if (C.ai && !C.ai.pending) C.ai = null
+  renderStart()
+  renderSuggestions()
+})
+$("#c-icon").addEventListener("click", (event) => {
+  event.stopPropagation()
+  const pop = $("#c-emoji")
+  pop.hidden = !pop.hidden
+  $("#c-icon").setAttribute("aria-expanded", String(!pop.hidden))
+  if (!pop.hidden) {
+    $("#c-emoji-grid").innerHTML = EMOJIS.map((e) => `<button type="button" aria-pressed="${C.icon === e}" data-emoji="${e}">${e}</button>`).join("")
+    $("#c-emoji-own").value = EMOJIS.includes(C.icon) ? "" : C.icon
+  }
+})
+$("#c-emoji").addEventListener("click", (event) => {
+  event.stopPropagation()
+  const button = event.target.closest("[data-emoji]")
+  if (button) {
+    C.icon = button.dataset.emoji
+    closeEmoji()
+    renderIdentity()
+  }
+})
+$("#c-emoji-own").addEventListener("input", (event) => {
+  C.icon = event.target.value.trim()
+  renderIdentity()
+})
+$("#c-emoji-none").addEventListener("click", () => {
+  C.icon = ""
+  closeEmoji()
+  renderIdentity()
+})
+function closeEmoji() {
+  $("#c-emoji").hidden = true
+  $("#c-icon").setAttribute("aria-expanded", "false")
+}
+document.addEventListener("click", (event) => {
+  if (!$("#c-emoji").hidden && !event.target.closest("#c-emoji")) closeEmoji()
+})
+
+$("#tab-categoria").addEventListener("click", (event) => {
+  const t = event.target
+  if (t.closest("[data-open-templates]")) return openTemplates()
+  const use = t.closest("[data-use]")
+  if (use) return applyTemplate(use.dataset.use)
+  if (t.closest("[data-undo-template]")) return undoTemplate()
+  const edit = t.closest("[data-edit]")
+  if (edit) {
+    const field = C.fields.find((item) => item.id === edit.dataset.edit)
+    if (C.composer?.editingId === field.id) {
+      closeComposer()
+      return renderFields()
+    }
+    return openComposer(field)
+  }
+  const remove = t.closest("[data-remove]")
+  if (remove) {
+    const field = C.fields.find((item) => item.id === remove.dataset.remove)
+    C.fields = C.fields.filter((item) => item.id !== field.id)
+    renderFields()
+    renderSuggestions()
+    return toast(`“${field.nome}” saiu.`)
+  }
+  const suggest = t.closest("[data-suggest]")
+  if (suggest) {
+    const s = suggestionsFor()
+    const item = s.items.find((x) => x.nome === suggest.dataset.suggest)
+    return addFields([item])
+  }
+  if (t.closest("[data-add-all]")) return addFields(suggestionsFor().items)
+  if (t.closest("[data-ask-ai]")) {
+    C.ai = { pending: true }
+    renderSuggestions()
+    setTimeout(() => {
+      C.ai = { items: AI_FIELDS }
+      renderSuggestions()
+    }, 900)
+    return
+  }
+  const type = t.closest("[data-type]")
+  if (type && !type.disabled) {
+    C.composer.tipo = type.dataset.type
+    C.composer.auto = false
+    $("#c-comp-error").hidden = true
+    updateComposer()
+    return $(`#c-comp-types [data-type="${C.composer.tipo}"]`).focus()
+  }
+  const currency = t.closest("[data-currency]")
+  if (currency) {
+    C.composer.moeda = currency.dataset.currency
+    updateComposer()
+    return $(`#c-comp-currency-seg [data-currency="${C.composer.moeda}"]`).focus()
+  }
+  const token = t.closest("[data-token]")
+  if (token) {
+    C.composer.opcoes.splice(Number(token.dataset.token), 1)
+    renderTokens()
+    return $("#c-comp-token-input").focus()
+  }
+  const vis = t.closest("[data-vis]")
+  if (vis) {
+    C.visibility = vis.dataset.vis
+    return renderVisibility()
+  }
+  const color = t.closest("[data-color]")
+  if (color) {
+    C.color = color.dataset.color || null
+    renderMore()
+    return renderIdentity()
+  }
+})
+
+$("#c-add").addEventListener("click", () => openComposer(null))
+$("#c-comp-name").addEventListener("input", (event) => {
+  C.composer.name = event.target.value
+  if (C.composer.auto) C.composer.tipo = guessType(C.composer.name)
+  $("#c-comp-error").hidden = true
+  updateComposer()
+})
+$("#c-composer").addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    event.preventDefault()
+    closeComposer()
+    renderFields()
+    $("#c-add").focus()
+  }
+})
+$("#c-comp-name").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault()
+    if (C.composer.tipo === "select" && C.composer.opcoes.length === 0) return $("#c-comp-token-input").focus()
+    saveComposer()
+  }
+})
+$("#c-comp-token-input").addEventListener("keydown", (event) => {
+  const input = event.target
+  if (event.key === "Enter" || event.key === ",") {
+    event.preventDefault()
+    if (input.value.trim()) addToken()
+    else if (event.key === "Enter") saveComposer()
+  } else if (event.key === "Backspace" && !input.value && C.composer.opcoes.length) {
+    C.composer.opcoes.pop()
+    renderTokens()
+  }
+})
+$("#c-comp-tokens").addEventListener("click", (event) => {
+  if (event.target === event.currentTarget) $("#c-comp-token-input").focus()
+})
+$("#c-comp-cancel").addEventListener("click", () => {
+  closeComposer()
+  renderFields()
+})
+$("#c-comp-save").addEventListener("click", saveComposer)
+
+// Reordenar: arrastar pela alça (mouse ou dedo) ou as setas com a alça em foco.
+$("#c-fields").addEventListener("pointerdown", (event) => {
+  const grip = event.target.closest(".grip")
+  if (!grip) return
+  const row = grip.closest("li")
+  event.preventDefault()
+  grip.setPointerCapture(event.pointerId)
+  row.classList.add("dragging")
+  const move = (e) => {
+    const over = document.elementFromPoint(e.clientX, e.clientY)?.closest("#c-fields li.field")
+    if (!over || over === row) return
+    const from = C.fields.findIndex((x) => x.id === row.dataset.id)
+    const to = C.fields.findIndex((x) => x.id === over.dataset.id)
+    const [moved] = C.fields.splice(from, 1)
+    C.fields.splice(to, 0, moved)
+    if (from < to) over.after(row)
+    else over.before(row)
+  }
+  const end = () => {
+    grip.removeEventListener("pointermove", move)
+    row.classList.remove("dragging")
+    renderFields()
+  }
+  grip.addEventListener("pointermove", move)
+  grip.addEventListener("pointerup", end, { once: true })
+  grip.addEventListener("pointercancel", end, { once: true })
+})
+$("#c-fields").addEventListener("keydown", (event) => {
+  const grip = event.target.closest(".grip")
+  if (!grip || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return
+  event.preventDefault()
+  const id = grip.closest("li").dataset.id
+  const from = C.fields.findIndex((x) => x.id === id)
+  const to = clamp(from + (event.key === "ArrowUp" ? -1 : 1), 0, C.fields.length - 1)
+  if (from === to) return
+  const [moved] = C.fields.splice(from, 1)
+  C.fields.splice(to, 0, moved)
+  renderFields()
+  $(`#c-fields [data-id="${id}"] .grip`).focus()
+})
+
+$("#c-rating").addEventListener("click", () => {
+  C.rating = !C.rating
+  // Sem nota não dá para abrir ordenado pela nota.
+  if (!C.rating && C.sort.startsWith("rating")) C.sort = "recent"
+  renderFields()
+})
+$("#c-sort").addEventListener("change", (event) => {
+  C.sort = event.target.value
+  renderMore()
+})
+$("#c-quick").addEventListener("change", (event) => {
+  C.quick = event.target.value
+})
+$("#c-colors").addEventListener("input", (event) => {
+  if (event.target.id !== "c-color-own") return
+  C.color = event.target.value.toUpperCase()
+  renderIdentity()
+  $("#c-sum").textContent = $("#c-sum").textContent.replace(/^[^·]+/, "Cor própria ")
+})
+$("#c-colors").addEventListener("change", (event) => {
+  if (event.target.id === "c-color-own") renderMore()
+})
+
+$("#c-tpl-q").addEventListener("input", renderTemplateList)
+$("#c-tpl-sort").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-sort]")
+  if (!button) return
+  C.tplSort = button.dataset.sort
+  renderTemplateList()
+})
+$("#c-back").addEventListener("click", closeTemplates)
+$$("[data-cat-mode]").forEach((button) => button.addEventListener("click", () => resetCategory(button.dataset.catMode)))
+$("#c-restart").addEventListener("click", () => resetCategory(C.mode))
+$("#c-close").addEventListener("click", () => {
+  toast("No app, o diálogo fecharia sem salvar.")
+  resetCategory(C.mode)
+})
+$("#c-cancel").addEventListener("click", () => {
+  if (C.view === "templates") return closeTemplates()
+  toast("Cancelado: nada foi salvo.")
+  resetCategory(C.mode)
+})
+
+// ---------- JSON e o aviso de impacto (camada sobre o diálogo)
+function openModal(html) {
+  const layer = $("#c-modal")
+  layer.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`
+  layer.hidden = false
+  layer.querySelector("textarea, .btn-primary")?.focus()
+}
+const closeModal = () => ($("#c-modal").hidden = true)
+$("#c-modal").addEventListener("click", (event) => {
+  if (event.target === event.currentTarget || event.target.closest("[data-modal-close]")) return closeModal()
+  if (event.target.closest("[data-json-apply]")) {
+    try {
+      const parsed = JSON.parse($("#c-json").value)
+      if (!Array.isArray(parsed)) throw new Error("O JSON precisa ser uma lista de campos.")
+      const list = parsed.map((item) => {
+        if (!item || typeof item.nome !== "string" || !item.nome.trim()) throw new Error("Todo campo precisa de um “nome”.")
+        if (!TYPES[item.tipo]) throw new Error(`Tipo desconhecido: ${item.tipo}. Use: ${TYPE_ORDER.join(", ")}.`)
+        return { id: item.id && C.fields.some((x) => x.id === item.id) ? item.id : newId(), nome: item.nome.trim(), tipo: item.tipo, ...(item.opcoes ? { opcoes: item.opcoes } : {}), ...(item.moeda ? { moeda: item.moeda } : {}) }
+      })
+      C.fields = list
+      closeModal()
+      renderFields()
+      renderSuggestions()
+      toast("Campos atualizados pelo JSON.")
+    } catch (error) {
+      $("#c-json-error").textContent = error instanceof SyntaxError ? "O JSON tem um erro de digitação." : error.message
+      $("#c-json-error").hidden = false
+    }
+    return
+  }
+  if (event.target.closest("[data-impact-ok]")) {
+    closeModal()
+    finishSave()
+  }
+})
+$("#c-modal").addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeModal()
+})
+$("#c-json-open").addEventListener("click", () => {
+  const json = JSON.stringify(C.fields.map(({ id, nome, tipo, opcoes, moeda }) => ({ id, nome, tipo, ...(opcoes ? { opcoes } : {}), ...(moeda ? { moeda } : {}) })), null, 2)
+  openModal(`<h3>Campos em JSON</h3>
+    <p class="micro">Para quem prefere digitar. O <code>id</code> liga o valor aos itens: mantenha os que já existem.</p>
+    <textarea class="input" id="c-json" rows="12" spellcheck="false" style="margin-top:10px;font:12px/1.5 ui-monospace,Consolas,monospace">${esc(json)}</textarea>
+    <p class="error" id="c-json-error" hidden></p>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="button" class="btn btn-primary" data-json-apply>Aplicar</button></div>`)
+})
+
+function impactLines() {
+  const lines = []
+  if (C.originalRating && !C.rating) lines.push(`Nota desligada: ${RATED} itens vão perder a nota de estrelas.`)
+  for (const field of C.original) {
+    const now = C.fields.find((x) => x.id === field.id)
+    if (!now) lines.push(`“${field.nome}”: ${FILLED[field.nome] ?? 0} itens vão perder esse valor.`)
+    else if (now.tipo !== field.tipo && now.tipo === "location") lines.push(`“${now.nome}”: ${FILLED[field.nome] ?? 0} endereços vão ser procurados para aparecer no mapa.`)
+    else if (now.tipo !== field.tipo) lines.push(`“${now.nome}”: passa de ${TYPES[field.tipo].long} para ${TYPES[now.tipo].long}.`)
+    else if (field.tipo === "select") {
+      for (const option of field.opcoes) if (!now.opcoes.includes(option)) lines.push(`“${now.nome}”: a opção “${option}” sai da lista, mas os itens mantêm o valor gravado.`)
+    }
+  }
+  for (const field of C.fields) if (!C.original.some((x) => x.id === field.id)) lines.push(`“${field.nome}”: os 24 itens ficam com esse campo vazio.`)
+  return lines
+}
+
+function finishSave() {
+  const name = C.name.trim()
+  toast(C.mode === "edit" ? `“${name}” salva.` : `“${name}” criada com ${C.fields.length === 0 ? "só Nome e Imagem" : plural(C.fields.length, "campo", "campos")}.`)
+  resetCategory(C.mode)
+}
+
+$("#c-save").addEventListener("click", () => {
+  if (C.composer) {
+    if (C.composer.name.trim()) {
+      saveComposer()
+      if (C.composer) return
+    } else closeComposer()
+  }
+  if (!C.name.trim()) {
+    const input = $("#c-name")
+    input.classList.remove("shake")
+    void input.offsetWidth
+    input.classList.add("shake")
+    input.focus()
+    return toast("Dê um nome à categoria.")
+  }
+  if (C.mode === "edit") {
+    const lines = impactLines()
+    if (lines.length > 0) {
+      return openModal(`<h3>Isso mexe nos itens existentes</h3>
+        <p class="micro">Confira antes de salvar.</p>
+        <ul>${lines.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>
+        <div class="modal-actions"><button type="button" class="btn btn-ghost" data-modal-close>Cancelar</button><button type="button" class="btn btn-primary" data-impact-ok>Salvar mesmo assim</button></div>`)
+    }
+  }
+  finishSave()
+})
+
+resetCategory("new")
+
+// ================================================================ NOVO ITEM
+const ITEM_FIELDS = [
+  f("Visitas", "int"), f("Atendimento", "star"), f("Tempo de espera", "time"), f("Pedido", "str"),
+  f("Modo", "select", { opcoes: ["Salão", "Delivery"] }), f("Preço médio", "currency", { moeda: "R$" }), f("Endereço", "location"),
+]
+const ITEM_TAGS = [["Barato", "#8FC9A6"], ["Japonês", "#C97B7B"], ["Date", "#C79BD0"], ["Para voltar", "#8FB3C9"]]
+const SAMPLE = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b1d33"/><stop offset="1" stop-color="#7a3b2e"/></linearGradient></defs><rect width="1200" height="800" fill="url(#a)"/><circle cx="600" cy="450" r="230" fill="#e8d3b0"/><circle cx="600" cy="450" r="190" fill="#c9824f"/><circle cx="555" cy="415" r="44" fill="#f3e3c3"/><circle cx="665" cy="480" r="34" fill="#7a9a5a"/><circle cx="610" cy="520" r="20" fill="#e9b949"/><rect x="390" y="150" width="460" height="16" rx="8" fill="#d9b37a" transform="rotate(-12 620 158)"/><rect x="390" y="196" width="460" height="16" rx="8" fill="#d9b37a" transform="rotate(-7 620 204)"/><text x="40" y="84" font-family="Georgia, serif" font-style="italic" font-size="60" fill="#f3e3c3">Kinoshita</text><text x="40" y="770" font-family="Georgia, serif" font-size="28" fill="#f3e3c3">canto esquerdo</text><text x="1160" y="770" font-family="Georgia, serif" font-size="28" fill="#f3e3c3" text-anchor="end">canto direito</text></svg>`)
+let I
+
+function resetItem() {
+  I = { name: "", rating: 0, url: "", framing: { x: 50, y: 50, zoom: 1 }, framerOpen: false, editingUrl: false, folder: "Raiz da categoria", values: {}, tags: [], newTag: false }
+  $("#i-name").value = ""
+  $("#i-folder").value = I.folder
+  $("#i-where-panel").hidden = true
+  $("#i-where").setAttribute("aria-expanded", "false")
+  renderItem()
+}
+
+function starsHtml(value, small = false) {
+  return Array.from({ length: 5 }, (_, index) => {
+    const n = index + 1
+    const cls = value >= n ? "full" : value >= n - 0.5 ? "half" : ""
+    return `<button type="button" class="${cls}" data-n="${n}" aria-label="${n} ${n === 1 ? "estrela" : "estrelas"}">${ico("star", small ? "i-sm" : "")}</button>`
+  }).join("")
+}
+const formatRating = (value) => (value > 0 ? String(value).replace(".", ",") : "—")
+const nextRating = (current, n) => (current === n ? n - 0.5 : current === n - 0.5 ? 0 : n)
+
+function renderItem() {
+  $("#i-stars").innerHTML = starsHtml(I.rating)
+  $("#i-rating-value").textContent = formatRating(I.rating)
+  $("#i-where-text").textContent = `🍽️ Restaurantes › ${I.folder}`
+  renderTile()
+  renderFramer()
+  $("#i-fields").innerHTML = ITEM_FIELDS.map((field, index) => {
+    const id = "i-f" + index
+    const value = I.values[field.nome] ?? ""
+    switch (field.tipo) {
+      case "star":
+        return `<div class="fld"><span class="lbl">${esc(field.nome)}</span><div class="stars small" role="group" aria-label="${esc(field.nome)}" data-fstar="${index}">${starsHtml(Number(value) || 0, true)}</div></div>`
+      case "select":
+        return `<div class="fld"><span class="lbl">${esc(field.nome)}</span><div class="chips" role="radiogroup" aria-label="${esc(field.nome)}">${field.opcoes.map((option) => `<button type="button" class="chip" role="radio" aria-checked="${value === option}" data-option="${index}" data-value="${esc(option)}">${esc(option)}</button>`).join("")}</div></div>`
+      case "currency":
+        return `<div class="fld"><label for="${id}">${esc(field.nome)}</label><div class="prefixed"><span>${field.moeda}</span><input class="input" id="${id}" inputmode="decimal" placeholder="0,00" data-field="${esc(field.nome)}" value="${esc(value)}"></div></div>`
+      case "location":
+        return `<div class="fld"><label for="${id}">${esc(field.nome)}</label><div class="prefixed">${ico("map-pin", "i-sm")}<input class="input" id="${id}" placeholder="Rua, número ou nome do lugar" data-field="${esc(field.nome)}" value="${esc(value)}"></div><p class="micro" style="margin-top:4px">Vira um ponto no Mapa.</p></div>`
+      case "time":
+        return `<div class="fld"><label for="${id}">${esc(field.nome)}</label><input class="input" id="${id}" placeholder="0:45" inputmode="numeric" data-field="${esc(field.nome)}" value="${esc(value)}"></div>`
+      case "int":
+        return `<div class="fld"><label for="${id}">${esc(field.nome)}</label><input class="input" id="${id}" type="number" min="0" placeholder="0" data-field="${esc(field.nome)}" value="${esc(value)}"></div>`
+      default:
+        return `<div class="fld"><label for="${id}">${esc(field.nome)}</label><input class="input" id="${id}" data-field="${esc(field.nome)}" value="${esc(value)}"></div>`
+    }
+  }).join("")
+  renderTags()
+  const filled = Object.values(I.values).filter((v) => String(v).trim()).length
+  $("#i-count").textContent = `${filled} de ${ITEM_FIELDS.length} campos`
+}
+
+function renderTags() {
+  const extra = I.newTag
+    ? `<span class="chip on" style="padding:2px 4px 2px 10px"><input id="i-tag-input" placeholder="Nova tag" aria-label="Nome da nova tag" style="width:96px;border:0;background:none;outline:none"><button type="button" class="icon-btn" style="width:24px;height:24px" data-tag-cancel aria-label="Cancelar">${ico("x", "i-xs")}</button></span>`
+    : `<button type="button" class="chip dashed" data-tag-new>${ico("plus", "i-sm")}nova tag</button>`
+  $("#i-tags").innerHTML = ITEM_TAGS.map(([name, color]) => `<button type="button" class="chip" aria-pressed="${I.tags.includes(name)}" data-tag="${esc(name)}"><span class="tag-dot" style="--c:${color}"></span>${esc(name)}</button>`).join("") + extra
+  if (I.newTag) $("#i-tag-input").focus()
+}
+
+function renderTile() {
+  const tile = $("#i-tile")
+  tile.classList.toggle("has", Boolean(I.url))
+  tile.innerHTML = I.url
+    ? `<img src="${esc(I.url)}" alt="" style="${styleOf(I.framing)}"><span class="tile-edit">${ico("move", "i-xs")}Enquadrar</span>`
+    : `<span class="tile-label">${ico("image")}Imagem</span>`
+}
+
+function renderFramer() {
+  $("#i-framer").hidden = !I.framerOpen
+  const showFrame = Boolean(I.url) && !I.editingUrl
+  $("#i-url-block").hidden = showFrame
+  $("#i-frame-block").hidden = !showFrame
+  if (showFrame) {
+    const img = $("#i-img")
+    if (img.getAttribute("src") !== I.url) img.src = I.url
+    paintFrame()
+  }
+}
+
+// O mesmo enquadramento do app (lib/domain/view.ts): object-position + transform-origin + scale.
+const styleOf = ({ x, y, zoom }) => `object-position:${x}% ${y}%;transform-origin:${x}% ${y}%;transform:scale(${zoom})`
+function paintFrame() {
+  const img = $("#i-img")
+  const { x, y, zoom } = I.framing
+  img.style.objectPosition = `${x}% ${y}%`
+  img.style.transformOrigin = `${x}% ${y}%`
+  img.style.transform = `scale(${zoom})`
+  $("#i-zoom").textContent = `${zoom.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}×`
+  const tileImg = $("#i-tile img")
+  if (tileImg) tileImg.setAttribute("style", styleOf(I.framing))
+}
+function overflowOf() {
+  const frame = $("#i-frame")
+  const img = $("#i-img")
+  const rect = frame.getBoundingClientRect()
+  const q = img.naturalWidth > 0 ? img.naturalWidth / img.naturalHeight : 0
+  const r = rect.width / rect.height
+  return { rect, over: q > 0 && r > 0 ? { x: Math.max(1, q / r), y: Math.max(1, r / q) } : { x: 1, y: 1 } }
+}
+function pan(fr, dx, dy, over) {
+  const move = (p, d, o) => {
+    const room = fr.zoom * o - 1
+    return room > 0 ? clamp(p - (d / room) * 100, 0, 100) : p
+  }
+  return { x: move(fr.x, dx, over.x), y: move(fr.y, dy, over.y), zoom: fr.zoom }
+}
+function zoomAt(fr, next, at, over) {
+  const z = clamp(next, 1, 3)
+  const axis = (p, u, o) => {
+    const point = (p / 100) * (o - 1 / fr.zoom) + u / fr.zoom
+    const room = o - 1 / z
+    return room > 0 ? clamp(((point - u / z) / room) * 100, 0, 100) : 50
+  }
+  return { x: axis(fr.x, at.x, over.x), y: axis(fr.y, at.y, over.y), zoom: z }
+}
+const setFraming = (next) => {
+  I.framing = next
+  paintFrame()
+}
+const pointers = new Map()
+const frameEl = $("#i-frame")
+frameEl.addEventListener("pointerdown", (event) => {
+  if (event.pointerType === "mouse" && event.button !== 0) return
+  frameEl.setPointerCapture(event.pointerId)
+  pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+})
+frameEl.addEventListener("pointermove", (event) => {
+  if (!pointers.has(event.pointerId)) return
+  const { rect, over } = overflowOf()
+  const [a, b] = [...pointers.values()]
+  pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+  const [a2, b2] = [...pointers.values()]
+  if (!b || !b2) return setFraming(pan(I.framing, (a2.x - a.x) / rect.width, (a2.y - a.y) / rect.height, over))
+  const mid = (p, q) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 })
+  const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y)
+  const m1 = mid(a, b)
+  const m2 = mid(a2, b2)
+  const zoomed = zoomAt(I.framing, I.framing.zoom * (dist(a2, b2) / Math.max(1, dist(a, b))), { x: (m2.x - rect.left) / rect.width, y: (m2.y - rect.top) / rect.height }, over)
+  setFraming(pan(zoomed, (m2.x - m1.x) / rect.width, (m2.y - m1.y) / rect.height, over))
+})
+const dropPointer = (event) => pointers.delete(event.pointerId)
+frameEl.addEventListener("pointerup", dropPointer)
+frameEl.addEventListener("pointercancel", dropPointer)
+frameEl.addEventListener("wheel", (event) => {
+  event.preventDefault()
+  const { rect, over } = overflowOf()
+  const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY
+  const factor = Math.exp(-delta * (event.ctrlKey ? 0.01 : 0.0015))
+  setFraming(zoomAt(I.framing, I.framing.zoom * factor, { x: (event.clientX - rect.left) / rect.width, y: (event.clientY - rect.top) / rect.height }, over))
+}, { passive: false })
+frameEl.addEventListener("keydown", (event) => {
+  const { over } = overflowOf()
+  const moves = { ArrowLeft: [0.05, 0], ArrowRight: [-0.05, 0], ArrowUp: [0, 0.05], ArrowDown: [0, -0.05] }
+  let next = null
+  if (moves[event.key]) next = pan(I.framing, ...moves[event.key], over)
+  else if (event.key === "+" || event.key === "=") next = zoomAt(I.framing, I.framing.zoom * 1.2, { x: 0.5, y: 0.5 }, over)
+  else if (event.key === "-" || event.key === "_") next = zoomAt(I.framing, I.framing.zoom / 1.2, { x: 0.5, y: 0.5 }, over)
+  if (!next) return
+  event.preventDefault()
+  setFraming(next)
+})
+
+// ---------- eventos do item
+$("#i-tile").addEventListener("click", () => {
+  I.framerOpen = !I.framerOpen || I.editingUrl
+  I.editingUrl = false
+  renderFramer()
+  if (I.framerOpen) (I.url ? $("#i-frame") : $("#i-url")).focus()
+})
+$("#i-url").addEventListener("change", (event) => {
+  const url = event.target.value.trim()
+  if (!url) return
+  I.url = url
+  I.framing = { x: 50, y: 50, zoom: 1 }
+  I.editingUrl = false
+  renderTile()
+  renderFramer()
+})
+$("#i-url").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") event.target.dispatchEvent(new Event("change"))
+})
+$("#i-sample").addEventListener("click", () => {
+  $("#i-url").value = "https://exemplo.com/kinoshita.jpg"
+  I.url = SAMPLE
+  I.framing = { x: 50, y: 50, zoom: 1 }
+  I.editingUrl = false
+  renderTile()
+  renderFramer()
+})
+$("#i-center").addEventListener("click", () => setFraming({ x: 50, y: 50, zoom: 1 }))
+$("#i-change").addEventListener("click", () => {
+  I.editingUrl = true
+  renderFramer()
+  $("#i-url").focus()
+})
+$("#i-remove").addEventListener("click", () => {
+  I.url = ""
+  I.framing = { x: 50, y: 50, zoom: 1 }
+  $("#i-url").value = ""
+  renderTile()
+  renderFramer()
+})
+$("#i-done").addEventListener("click", () => {
+  I.framerOpen = false
+  renderFramer()
+  $("#i-tile").focus()
+})
+$("#i-name").addEventListener("input", (event) => (I.name = event.target.value))
+$("#i-stars").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-n]")
+  if (!button) return
+  I.rating = nextRating(I.rating, Number(button.dataset.n))
+  $("#i-stars").innerHTML = starsHtml(I.rating)
+  $("#i-rating-value").textContent = formatRating(I.rating)
+})
+$("#i-where").addEventListener("click", () => {
+  const panel = $("#i-where-panel")
+  panel.hidden = !panel.hidden
+  $("#i-where").setAttribute("aria-expanded", String(!panel.hidden))
+})
+$("#i-folder").addEventListener("change", (event) => {
+  I.folder = event.target.value
+  $("#i-where-text").textContent = `🍽️ Restaurantes › ${I.folder}`
+})
+$("#i-fields").addEventListener("input", (event) => {
+  const name = event.target.dataset.field
+  if (!name) return
+  I.values[name] = event.target.value
+  const filled = Object.values(I.values).filter((v) => String(v).trim()).length
+  $("#i-count").textContent = `${filled} de ${ITEM_FIELDS.length} campos`
+})
+$("#i-fields").addEventListener("click", (event) => {
+  const option = event.target.closest("[data-option]")
+  const star = event.target.closest("[data-fstar] [data-n]")
+  if (option) {
+    const field = ITEM_FIELDS[Number(option.dataset.option)]
+    I.values[field.nome] = I.values[field.nome] === option.dataset.value ? "" : option.dataset.value
+    return renderItem()
+  }
+  if (star) {
+    const field = ITEM_FIELDS[Number(star.closest("[data-fstar]").dataset.fstar)]
+    I.values[field.nome] = nextRating(Number(I.values[field.nome]) || 0, Number(star.dataset.n))
+    renderItem()
+  }
+})
+$("#i-tags").addEventListener("click", (event) => {
+  const tag = event.target.closest("[data-tag]")
+  if (tag) {
+    const name = tag.dataset.tag
+    I.tags = I.tags.includes(name) ? I.tags.filter((t) => t !== name) : [...I.tags, name]
+    return renderTags()
+  }
+  if (event.target.closest("[data-tag-new]")) {
+    I.newTag = true
+    return renderTags()
+  }
+  if (event.target.closest("[data-tag-cancel]")) {
+    I.newTag = false
+    renderTags()
+  }
+})
+$("#i-tags").addEventListener("keydown", (event) => {
+  if (event.target.id !== "i-tag-input") return
+  if (event.key === "Escape") {
+    I.newTag = false
+    return renderTags()
+  }
+  if (event.key !== "Enter") return
+  event.preventDefault()
+  const name = event.target.value.trim()
+  if (!name) return
+  if (!ITEM_TAGS.some(([n]) => norm(n) === norm(name))) ITEM_TAGS.push([name, "#B98CC2"])
+  I.tags.push(name)
+  I.newTag = false
+  renderTags()
+  toast(`Tag “${name}” criada em Restaurantes.`)
+})
+$("#i-save").addEventListener("click", () => {
+  if (!I.name.trim()) {
+    const input = $("#i-name")
+    input.classList.remove("shake")
+    void input.offsetWidth
+    input.classList.add("shake")
+    input.focus()
+    return toast("Dê um nome ao item.")
+  }
+  toast(`“${I.name.trim()}” adicionado.`)
+  resetItem()
+})
+$("#i-cancel").addEventListener("click", () => {
+  toast("Cancelado: nada foi salvo.")
+  resetItem()
+})
+$("#i-close").addEventListener("click", () => resetItem())
+$("#i-restart").addEventListener("click", () => resetItem())
+
+resetItem()
+</script>
+</body>
+</html>

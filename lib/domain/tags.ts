@@ -28,6 +28,13 @@ export function isPaletteColor(value: string | null | undefined): boolean {
   return TAG_COLORS.some((color) => color.value.toUpperCase() === text)
 }
 
+/** O nome da cor no resumo do editor: "Ocre", "Cor própria" ou "Sem cor". */
+export function colorLabel(value: string | null | undefined): string {
+  if (!value) return "Sem cor"
+  const text = value.toUpperCase()
+  return TAG_COLORS.find((color) => color.value.toUpperCase() === text)?.label ?? "Cor própria"
+}
+
 /**
  * Cor de categoria: uma das 8 da paleta ou qualquer outra em HEX (a "+" do
  * editor), e nula é uma opção válida (sem cor — visual padrão). Um valor que

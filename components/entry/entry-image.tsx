@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 
+import type { ImageStyle } from "@/lib/domain/types"
 import { categoryTintVars, cn } from "@/lib/utils"
 
 /**
@@ -18,7 +19,7 @@ import { categoryTintVars, cn } from "@/lib/utils"
  */
 export function EntryImage({
   imageUrl,
-  imageTransform,
+  imageStyle,
   initial,
   ratio = "3 / 4",
   className,
@@ -27,7 +28,7 @@ export function EntryImage({
   tint,
 }: {
   imageUrl: string | null
-  imageTransform: string
+  imageStyle: ImageStyle
   initial: string
   ratio?: string
   className?: string
@@ -66,7 +67,7 @@ export function EntryImage({
             loading={eager ? "eager" : "lazy"}
             decoding="async"
             className="size-full object-cover"
-            style={{ transform: imageTransform }}
+            style={imageStyle}
             onError={() => setFailed(true)}
           />
         ) : (

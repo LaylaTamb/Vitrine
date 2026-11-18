@@ -25,6 +25,64 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   location: "Localização (mapa)",
 }
 
+/** O nome curto de cada tipo, para os botões do editor de campo. */
+export const FIELD_TYPE_SHORT_LABELS: Record<FieldType, string> = {
+  str: "Texto",
+  int: "Número",
+  decimal: "Decimal",
+  date: "Data",
+  time: "Duração",
+  currency: "Moeda",
+  select: "Lista",
+  star: "Estrelas",
+  location: "Local",
+}
+
+/** A ordem dos botões de tipo: do mais comum ao mais especial. */
+export const FIELD_TYPE_ORDER: FieldType[] = [
+  "str",
+  "int",
+  "decimal",
+  "date",
+  "time",
+  "currency",
+  "select",
+  "star",
+  "location",
+]
+
+/** Um exemplo de cada tipo, embaixo dos botões. */
+export const FIELD_TYPE_EXAMPLES: Record<FieldType, string> = {
+  str: "ex.: Diretor, Uva",
+  int: "ex.: Ano, Temporadas",
+  decimal: "ex.: Teor alcoólico, Km",
+  date: "ex.: Quando fui, Estreia",
+  time: "ex.: Tempo de espera",
+  currency: "ex.: Preço",
+  select: "ex.: Modo, com Salão e Delivery",
+  star: "ex.: Atendimento, Ambiente",
+  location: "vira um ponto no Mapa",
+}
+
+// O palpite do tipo pelo nome do campo: o primeiro que bate vale (a ordem importa).
+const TYPE_GUESSES: [RegExp, FieldType][] = [
+  [/(^|\s)(data|quando|dia|estreia|lancamento)\b|assisti em|li em|terminei|fui em/, "date"],
+  [/preco|valor|custo|gasto|(^|\s)conta\b/, "currency"],
+  [/endereco|(^|\s)local\b|(^|\s)onde\b|cidade|bairro/, "location"],
+  [/(^|\s)tempo\b|duracao|espera/, "time"],
+  [/(^|\s)nota\b|atendimento|ambiente|sabor|estrelas?\b/, "star"],
+  [/(^|\s)ano\b|safra|temporadas?\b|paginas|visitas|episodios|quantidade/, "int"],
+  [/teor|alcool|(^|\s)km\b|distancia|(^|\s)peso\b|graduacao/, "decimal"],
+  [/genero|(^|\s)tipo\b|(^|\s)modo\b|plataforma|estilo|metodo|dificuldade/, "select"],
+]
+
+/** "Preço médio" → Moeda, "Endereço" → Localização… Sem pista, Texto. */
+export function guessFieldType(nome: string): FieldType {
+  const text = normalizeName(nome)
+  if (!text) return "str"
+  return TYPE_GUESSES.find(([pattern]) => pattern.test(text))?.[1] ?? "str"
+}
+
 /** Um endereço (ou nome de lugar) cabe em 300 caracteres. */
 export const LOCATION_MAX_LENGTH = 300
 

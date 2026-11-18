@@ -21,8 +21,15 @@ type Listing = "popular" | "recent"
  * do autor, os campos e quantas pessoas já usaram. Sem busca, as mais usadas
  * (ou as mais novas); com busca, as de nome mais parecido primeiro.
  */
-export function TemplatePicker({ onUse }: { onUse: (template: CategoryTemplate) => void }) {
-  const [query, setQuery] = useState("")
+export function TemplatePicker({
+  onUse,
+  initialQuery = "",
+}: {
+  onUse: (template: CategoryTemplate) => void
+  /** O nome já digitado no editor: a busca começa por ele. */
+  initialQuery?: string
+}) {
+  const [query, setQuery] = useState(initialQuery)
   const [listing, setListing] = useState<Listing>("popular")
   const [results, setResults] = useState<CategoryTemplate[] | null>(null)
   const [error, setError] = useState<string | null>(null)

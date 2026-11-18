@@ -23,7 +23,7 @@ import {
 } from "@/lib/domain/blend"
 import { formatRating, plural } from "@/lib/domain/format"
 import { matchPeopleLabel, matchStatusText, type MatchView } from "@/lib/domain/match"
-import { imageTransformOf } from "@/lib/domain/view"
+import { imageStyleOf } from "@/lib/domain/view"
 import { cn } from "@/lib/utils"
 
 const CHIP = "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors whitespace-nowrap"
@@ -197,7 +197,7 @@ export function BlendView({
               <span className="w-14 shrink-0">
                 <EntryImage
                   imageUrl={highlights.item.item.imageUrl}
-                  imageTransform={imageTransformOf(highlights.item.item.imageDisplay)}
+                  imageStyle={imageStyleOf(highlights.item.item.imageDisplay)}
                   initial={highlights.item.item.name.charAt(0).toUpperCase()}
                   ratio="4 / 5"
                   initialSize="1.5rem"
@@ -270,7 +270,7 @@ export function BlendView({
                     <span className="w-12 shrink-0 sm:w-14">
                       <EntryImage
                         imageUrl={pick.item.imageUrl}
-                        imageTransform={imageTransformOf(pick.item.imageDisplay)}
+                        imageStyle={imageStyleOf(pick.item.imageDisplay)}
                         initial={pick.item.name.charAt(0).toUpperCase()}
                         ratio="4 / 5"
                         initialSize="1.25rem"

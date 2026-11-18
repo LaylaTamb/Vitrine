@@ -78,7 +78,7 @@ export function EntryDetail({
         <div>
           <EntryImage
             imageUrl={view.imageUrl}
-            imageTransform={view.imageTransform}
+            imageStyle={view.imageStyle}
             initial={view.initial}
             initialSize="6rem"
             eager

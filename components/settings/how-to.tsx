@@ -53,9 +53,9 @@ export function HowTo() {
             celular, segure um instante as subpastas).
           </li>
           <li>
-            Na categoria, <b>Editar categoria</b> (nome, ícone e campos) e <b>Nova subpasta</b> ficam
-            ao lado do <b>＋ Item</b>. O resto (renomear, excluir…) fica no <b>⋯</b> do topo de cada
-            pasta, categoria e item.
+            Na categoria, <b>Editar categoria</b> (nome, ícone, campos e quem vê; cor, nota e ordem
+            em <b>Personalizar</b>) e <b>Nova subpasta</b> ficam ao lado do <b>＋ Item</b>. O resto
+            (renomear, excluir…) fica no <b>⋯</b> do topo de cada pasta, categoria e item.
           </li>
           <li>
             Apagou sem querer? O aviso tem <b>Desfazer</b>, e a <b>Lixeira</b> guarda pastas e
@@ -71,8 +71,9 @@ export function HowTo() {
       <Topic title="Adicionar itens">
         <ul>
           <li>
-            Dentro de uma categoria, toque em <b>＋ Item</b>: nome, imagem (cole o link), nota,
-            campos e tags.
+            Dentro de uma categoria, toque em <b>＋ Item</b>: nome, nota, campos e tags. Para a
+            imagem, toque no quadrado ao lado do nome, cole o link e enquadre: arraste para mover; a
+            roda do mouse ou a pinça dão o zoom.
           </li>
           <li>
             Cada categoria tem as suas <b>tags</b>: crie, renomeie e troque a cor no <b>⋯ → Tags</b>{" "}
@@ -116,8 +117,8 @@ export function HowTo() {
             campos). Dentro de uma categoria, o <b>Filtros</b> olha só ela.
           </li>
           <li>
-            Veja os itens em grade, lista ou <b>tier list</b> (pelas notas). A aba <b>Números</b>{" "}
-            resume a categoria.
+            No botão <b>Exibição</b> da categoria, veja os itens em grade, lista ou <b>tier list</b>{" "}
+            (pelas notas), troque o tamanho ou abra os <b>Números</b>, que resumem a categoria.
           </li>
           <li>
             A <b>estrela</b> de uma categoria a leva para a aba <b>Favoritas</b> do perfil, sem

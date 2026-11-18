@@ -35,6 +35,15 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 export const SORT_KEYS: SortKey[] = SORT_OPTIONS.map((option) => option.value)
 
+/** "Abre pela nota": a ordem padrão no resumo do editor de categoria. */
+export const SORT_SHORT_LABELS: Record<SortKey, string> = {
+  recent: "pelos mais novos",
+  rating_desc: "pela nota",
+  rating_asc: "pela nota, menor primeiro",
+  name_asc: "de A a Z",
+  manual: "na sua ordem",
+}
+
 export function isRatingSort(sort: SortKey): boolean {
   return sort === "rating_desc" || sort === "rating_asc"
 }

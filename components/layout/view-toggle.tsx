@@ -9,7 +9,8 @@ export type ViewMode = "grid" | "list"
 /** Só a tela de uma categoria tem o tier list — Coleções seguem com `ViewMode`. */
 export type EntryViewMode = ViewMode | "tier"
 
-const MODES: Record<EntryViewMode, { Icon: LucideIcon; label: string }> = {
+/** O ícone e o nome de cada modo (também no menu Exibição da categoria). */
+export const VIEW_MODES: Record<EntryViewMode, { Icon: LucideIcon; label: string }> = {
   grid: { Icon: LayoutGrid, label: "Grade" },
   list: { Icon: List, label: "Lista" },
   tier: { Icon: Rows3, label: "Tier list" },
@@ -40,7 +41,7 @@ export function ViewToggle<T extends EntryViewMode = ViewMode>({
       aria-label="Modo de exibição"
     >
       {modes.map((mode) => {
-        const { Icon, label } = MODES[mode]
+        const { Icon, label } = VIEW_MODES[mode]
         return (
           <button
             key={mode}

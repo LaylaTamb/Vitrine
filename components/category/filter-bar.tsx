@@ -14,17 +14,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { GridSizeToggle } from "@/components/layout/grid-size-toggle"
-import { ViewToggle, type EntryViewMode } from "@/components/layout/view-toggle"
+import { DisplayMenu } from "@/components/category/display-menu"
+import type { EntryViewMode } from "@/components/layout/view-toggle"
 import { sortOptionsFor, type CategoryFilter, type SortKey } from "@/lib/domain/filter"
 import { itemCount } from "@/lib/domain/format"
 import type { GridSize } from "@/lib/domain/grid-size"
 import type { Tag } from "@/lib/domain/types"
 
 /**
- * A barra de filtros: a busca e o modo de exibição à vista; nota, ordem e tags
- * num painel atrás do botão Filtros (de baixo para cima, no celular). Tudo
- * aqui é memória do cliente: digitar não dispara requisição nenhuma.
+ * A barra da categoria, numa linha só: a busca; nota, ordem e tags num painel
+ * atrás do botão Filtros (de baixo para cima, no celular); e o menu Exibição
+ * (grade, lista, tier list, Números e o tamanho). Tudo aqui é memória do
+ * cliente: digitar não dispara requisição nenhuma.
  */
 export function FilterBar({
   filter,
@@ -39,7 +40,8 @@ export function FilterBar({
   active,
   resultCount,
   ratingEnabled = true,
-  showListControls = true,
+  numbers,
+  onNumbersChange,
 }: {
   filter: CategoryFilter
   onChange: (filter: CategoryFilter) => void
@@ -57,13 +59,14 @@ export function FilterBar({
   resultCount: number
   /** Categoria sem estrelas: some a faixa de nota e as ordenações por nota. */
   ratingEnabled?: boolean
-  /** `false` na aba Números: ordem, modo de exibição e tamanho não mudam nada lá. */
-  showListControls?: boolean
+  /** A aba Números está aberta: a ordem não muda nada lá. */
+  numbers: boolean
+  onNumbersChange: (numbers: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
   // O número no botão: a faixa de nota conta como uma regra; cada tag, outra.
   const rules = (filter.minRating.trim() || filter.maxRating.trim() ? 1 : 0) + filter.tagIds.length
-  const hasPanel = ratingEnabled || showListControls || tags.length > 0
+  const hasPanel = ratingEnabled || !numbers || tags.length > 0
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -89,12 +92,15 @@ export function FilterBar({
         </Button>
       ) : null}
 
-      {showListControls ? (
-        <div className="flex items-center gap-1.5">
-          <ViewToggle value={view} onChange={onViewChange} modes={viewModes} />
-          {view !== "list" ? <GridSizeToggle value={gridSize} onChange={onGridSizeChange} /> : null}
-        </div>
-      ) : null}
+      <DisplayMenu
+        view={view}
+        onViewChange={onViewChange}
+        modes={viewModes}
+        numbers={numbers}
+        onNumbersChange={onNumbersChange}
+        gridSize={gridSize}
+        onGridSizeChange={onGridSizeChange}
+      />
 
       {active ? (
         <Button variant="ghost" size="sm" onClick={onClear}>
@@ -138,7 +144,7 @@ export function FilterBar({
             </section>
           ) : null}
 
-          {showListControls ? (
+          {!numbers ? (
             <section className="space-y-2">
               <p className="plaque">Ordem</p>
               <select

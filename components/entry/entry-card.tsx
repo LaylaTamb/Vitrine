@@ -111,7 +111,7 @@ export function EntryCard({
         <div className="relative">
           <EntryImage
             imageUrl={view.imageUrl}
-            imageTransform={view.imageTransform}
+            imageStyle={view.imageStyle}
             initial={view.initial}
           />
 

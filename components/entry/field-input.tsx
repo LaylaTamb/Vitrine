@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input"
 import { DEFAULT_CURRENCY, LOCATION_MAX_LENGTH } from "@/lib/domain/fields"
 import { formatRating } from "@/lib/domain/format"
 import type { FieldDef } from "@/lib/domain/types"
+import { cn } from "@/lib/utils"
+
+/** Até quantas opções uma lista vira botões (mais que isso, o seletor). */
+const CHOICE_BUTTONS_MAX = 6
 
 /**
  * O controle de UM campo da estrutura, pelo tipo dele. O valor é sempre o
@@ -37,6 +41,35 @@ export function FieldInput({
         <span className="text-xs text-muted-foreground">
           {value ? formatRating(Number(value)) : "—"}
         </span>
+      </div>
+    )
+  }
+
+  // Lista curta: botões, um toque escolhe e outro toque desmarca.
+  const options = field.opcoes ?? []
+  if (field.tipo === "select" && options.length > 0 && options.length <= CHOICE_BUTTONS_MAX) {
+    // Um valor que saiu da lista continua gravado: aparece marcado, para não sumir calado.
+    const shown = value && !options.includes(value) ? [...options, value] : options
+    return (
+      <div id={id} role="radiogroup" aria-label={field.nome} className="flex flex-wrap gap-1.5">
+        {shown.map((option, index) => (
+          <button
+            key={option}
+            type="button"
+            role="radio"
+            aria-checked={value === option}
+            autoFocus={autoFocus && index === 0}
+            onClick={() => onChange(value === option ? "" : option)}
+            className={cn(
+              "inline-flex max-w-full items-center rounded-lg border px-3 py-1.5 text-sm transition-colors [overflow-wrap:anywhere]",
+              value === option
+                ? "border-brand-dim bg-brand-wash text-foreground"
+                : "border-line text-muted-foreground hover:border-line-hi hover:text-foreground"
+            )}
+          >
+            {option}
+          </button>
+        ))}
       </div>
     )
   }

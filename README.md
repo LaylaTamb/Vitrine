@@ -25,10 +25,10 @@ mais cria conta com e-mail e senha.
   ou em Configurações → Tags, agrupadas por categoria. Dá para organizar os itens em **subpastas**
   dentro da categoria e arrastar para pôr na ordem que quiser — ou para dentro
   de outra pasta.
-- **Várias formas de ver.** Grade (em três tamanhos), lista ou **tier list**
-  (S, A, B…, montada pelas notas). A aba **Números** resume a categoria: nota
-  média, as notas por faixa, os destaques, o resumo de cada campo e as tags
-  mais usadas.
+- **Várias formas de ver.** No botão **Exibição** da categoria: grade (em três
+  tamanhos), lista ou **tier list** (S, A, B…, montada pelas notas), e
+  **Números**, que resume a categoria: nota média, as notas por faixa, os
+  destaques, o resumo de cada campo e as tags mais usadas.
 - **Busca e filtros.** A barra de busca das Coleções acha pastas, categorias e
   itens — pelo nome, pelas tags ou pelo que está nos campos ("Pinheiros",
   "barato"). O botão **Filtros** das Coleções cruza todas as categorias de
@@ -86,8 +86,9 @@ mais cria conta com e-mail e senha.
   pessoas (com as fotos dos itens), numa busca só. **Pegue com os itens**:
   você ganha uma cópia que continua recebendo as novidades de quem fez (até
   você desligar).
-- **Começar de um modelo.** Ao criar uma categoria, use a estrutura de uma que
-  já existe — os campos vêm prontos.
+- **Começar de um modelo.** Ao criar uma categoria, os modelos com nome
+  parecido aparecem enquanto você digita (ou toque em **Começar de um modelo
+  pronto**): os campos vêm prontos.
 - **Sugestões de campos.** Enquanto você dá nome a uma categoria nova, o
   Vitrine mostra os campos que outras pessoas usam em categorias parecidas
   (e, se ninguém tiver, pode pedir sugestões a uma IA).
@@ -123,11 +124,14 @@ mais cria conta com e-mail e senha.
    e-mail.
 2. **Monte sua primeira categoria.** No **＋ Adicionar** (na barra lateral
    ou no meio das abas de baixo, no celular) → **Categoria**, dê um nome e
-   escolha os campos — ou toque em **Começar de um modelo** para usar a
-   estrutura de outra pessoa. Quer agrupar? Crie uma **Pasta** e arraste as
+   adicione os campos (o tipo já vem escolhido pelo nome: “Preço” vira Moeda)
+   — ou use um modelo pronto, com a estrutura de outra pessoa. Cor, nota,
+   ordem e o JSON ficam em **Personalizar**. Quer agrupar? Crie uma **Pasta** e arraste as
    categorias para dentro (as suas Coleções ficam no seu **Perfil**).
-3. **Adicione itens** com **＋ Item**, no topo da categoria: nome, imagem
-   (cole o link), nota, campos e tags. Pelo celular, compartilhe um link ou
+3. **Adicione itens** com **＋ Item**, no topo da categoria: nome e nota no
+   topo, com a imagem ao lado (toque no quadrado para colar o link e
+   enquadrar: arraste para mover, a roda do mouse ou a pinça dão o zoom);
+   embaixo, os campos e as tags. Pelo celular, compartilhe um link ou
    texto com o Vitrine e escolha onde salvar. Editar os campos, renomear e
    excluir ficam no **⋯** de cada pasta, categoria e item.
 4. **Escolha quem vê.** No selo ao lado do nome de cada pasta e categoria:

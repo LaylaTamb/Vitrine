@@ -392,6 +392,8 @@ export function MapView({
             if (!open) setEditing(null)
           }}
           categoryId={editing.category.id}
+          categoryName={editing.category.name}
+          categoryIcon={editing.category.icon}
           estrutura={editing.category.estrutura}
           tags={tags}
           entry={editing.view}

@@ -16,6 +16,7 @@ import {
   type FieldDef,
   type FieldValue,
   type ImageDisplay,
+  type ImageStyle,
   type Tag,
 } from "./types"
 
@@ -49,7 +50,7 @@ function normalizeImageDisplay(raw: unknown): Required<ImageDisplay> {
   return {
     x: clamp(source.x, DEFAULT_IMAGE_DISPLAY.x, 0, 100),
     y: clamp(source.y, DEFAULT_IMAGE_DISPLAY.y, 0, 100),
-    zoom: clamp(source.zoom, DEFAULT_IMAGE_DISPLAY.zoom, 1, 3),
+    zoom: clamp(source.zoom, DEFAULT_IMAGE_DISPLAY.zoom, 1, MAX_IMAGE_ZOOM),
   }
 }
 
@@ -59,23 +60,62 @@ export function imageDisplayOf(display: unknown): Required<ImageDisplay> {
 }
 
 /**
- * `transform` a partir do enquadramento salvo.
- *
- * `object-position` sozinho não dava: o curso de pan que ele permite depende
- * de quanto a imagem original "sobra" do card com `object-fit: cover`, então
- * uma imagem já próxima da proporção do card mal se move. Aqui a imagem fica
- * sempre centrada (`object-position` no padrão do navegador, 50% 50%) e todo
- * o enquadramento vem de escalar e depois transladar: a translação é a
- * transformação MAIS externa (a última da lista), então o deslocamento final
- * na tela é exatamente `translate()`, sem depender do zoom. Isso garante que
- * x/y = 0–100 sempre cobre 100% do respiro aberto pelo zoom, nos dois eixos.
+ * O enquadramento salvo vira `object-position` + `transform-origin` no mesmo
+ * ponto + `scale`. Assim x/y = 0–100 percorre a imagem INTEIRA em qualquer
+ * zoom: no 1×, o que o `cover` corta (a sobra de uma imagem larga num card em
+ * pé); com zoom, também o que a ampliação esconde. Nunca aparece borda vazia.
  */
-export function imageTransformOf(display: unknown): string {
+export function imageStyleOf(display: unknown): ImageStyle {
   const { x, y, zoom } = normalizeImageDisplay(display)
-  const slack = (zoom - 1) / 2
-  const tx = -((x - 50) / 50) * slack * 100
-  const ty = -((y - 50) / 50) * slack * 100
-  return `translate(${tx.toFixed(2)}%, ${ty.toFixed(2)}%) scale(${zoom.toFixed(3)})`
+  const point = `${x.toFixed(2)}% ${y.toFixed(2)}%`
+  return { objectPosition: point, transformOrigin: point, transform: `scale(${zoom.toFixed(3)})` }
+}
+
+export const MAX_IMAGE_ZOOM = 3
+
+/** Quanto a imagem "sobra" do quadro com `cover`, por eixo (1 = cabe exata). */
+export function coverOverflow(imageRatio: number, frameRatio: number): { x: number; y: number } {
+  if (!(imageRatio > 0) || !(frameRatio > 0)) return { x: 1, y: 1 }
+  return { x: Math.max(1, imageRatio / frameRatio), y: Math.max(1, frameRatio / imageRatio) }
+}
+
+// Sem arredondar: a roda e a pinça mandam passos minúsculos, que o arredondamento
+// engoliria. Quem arredonda é quem salva.
+const clampPercent = (value: number) => Math.min(100, Math.max(0, value))
+
+/**
+ * Arrastar: a imagem acompanha o dedo. `dx`/`dy` em fração do quadro.
+ * Na tela, a janela visível começa em `x · (sobra − 1/zoom)` larguras do quadro.
+ */
+export function panFraming(
+  display: unknown,
+  dx: number,
+  dy: number,
+  overflow: { x: number; y: number }
+): Required<ImageDisplay> {
+  const { x, y, zoom } = normalizeImageDisplay(display)
+  const move = (position: number, delta: number, over: number) => {
+    const room = zoom * over - 1
+    return room > 0 ? clampPercent(position - (delta / room) * 100) : position
+  }
+  return { x: move(x, dx, overflow.x), y: move(y, dy, overflow.y), zoom }
+}
+
+/** Zoom (roda ou pinça) mantendo parado o ponto `at` (fração do quadro). */
+export function zoomFraming(
+  display: unknown,
+  nextZoom: number,
+  at: { x: number; y: number },
+  overflow: { x: number; y: number }
+): Required<ImageDisplay> {
+  const { x, y, zoom } = normalizeImageDisplay(display)
+  const next = Math.min(MAX_IMAGE_ZOOM, Math.max(1, nextZoom))
+  const axis = (position: number, u: number, over: number) => {
+    const point = (position / 100) * (over - 1 / zoom) + u / zoom
+    const room = over - 1 / next
+    return room > 0 ? clampPercent(((point - u / next) / room) * 100) : 50
+  }
+  return { x: axis(x, at.x, overflow.x), y: axis(y, at.y, overflow.y), zoom: next }
 }
 
 /** Largura do recorte da fileira de estrelas: 3,5 estrelas → "70%". */
@@ -162,7 +202,7 @@ export function toView(
     initial: (name.trim()[0] ?? "?").toUpperCase(),
     imageUrl: entry.image_url || null,
     hasImage: Boolean(entry.image_url),
-    imageTransform: imageTransformOf(entry.image_display),
+    imageStyle: imageStyleOf(entry.image_display),
     imageX: framing.x,
     imageY: framing.y,
     imageZoom: framing.zoom,

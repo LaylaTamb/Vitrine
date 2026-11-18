@@ -53,6 +53,13 @@ export interface ImageDisplay {
 
 export const DEFAULT_IMAGE_DISPLAY: Required<ImageDisplay> = { x: 50, y: 50, zoom: 1 }
 
+/** O estilo da `<img>` (com `object-fit: cover`) que aplica o enquadramento. */
+export interface ImageStyle {
+  objectPosition: string
+  transformOrigin: string
+  transform: string
+}
+
 // ---------------------------------------------------------------------------
 // Linhas do banco
 // ---------------------------------------------------------------------------
@@ -282,7 +289,7 @@ export interface EntryView {
   imageUrl: string | null
   hasImage: boolean
   /** `transform`, ex.: "translate(0.00%, 0.00%) scale(1.000)" */
-  imageTransform: string
+  imageStyle: ImageStyle
   /** O enquadramento cru, para os sliders do formulário. */
   imageX: number
   imageY: number

@@ -52,7 +52,7 @@ export function PlacesList({
               >
                 <EntryImage
                   imageUrl={pin.view.imageUrl}
-                  imageTransform={pin.view.imageTransform}
+                  imageStyle={pin.view.imageStyle}
                   initial={pin.view.initial}
                   ratio="1 / 1"
                   initialSize="0.95rem"

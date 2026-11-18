@@ -73,7 +73,7 @@ export function EntryRow({
       >
         <EntryImage
           imageUrl={view.imageUrl}
-          imageTransform={view.imageTransform}
+          imageStyle={view.imageStyle}
           initial={view.initial}
           ratio="1 / 1"
           initialSize="1.25rem"

@@ -5,7 +5,8 @@
  * categoria, no mesmo dia, viram um cartão só ("adicionou 5 itens em Cafés").
  */
 
-import { imageTransformOf } from "./view"
+import type { ImageStyle } from "./types"
+import { imageStyleOf } from "./view"
 
 export interface FeedPerson {
   id: string
@@ -19,7 +20,7 @@ export interface FeedEntry {
   name: string
   rating: number | null
   imageUrl: string | null
-  imageTransform: string
+  imageStyle: ImageStyle
   createdAt: string
   category: { id: string; name: string; icon: string | null; ratingEnabled: boolean }
   owner: FeedPerson
@@ -67,7 +68,7 @@ export function parseFeedRows(raw: unknown): FeedEntry[] {
         name: text(row.name) ?? "Sem nome",
         rating: rating !== null && Number.isFinite(rating) && rating > 0 ? rating : null,
         imageUrl: text(row.image_url),
-        imageTransform: imageTransformOf(row.image_display),
+        imageStyle: imageStyleOf(row.image_display),
         createdAt,
         category: {
           id: categoryId,

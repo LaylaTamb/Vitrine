@@ -47,7 +47,7 @@ export function ConnectedRefresh({
 
   if (!running) return null
   return (
-    <p role="status" className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
+    <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
       <RefreshCw aria-hidden className="size-3.5 animate-spin" />
       Buscando novidades {WHERE[provider]}…
     </p>

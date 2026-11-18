@@ -140,7 +140,7 @@ function TierRowView({
                   <span className="relative block">
                     <EntryImage
                       imageUrl={view.imageUrl}
-                      imageTransform={view.imageTransform}
+                      imageStyle={view.imageStyle}
                       initial={view.initial}
                       initialSize={INITIAL_SIZE[gridSize]}
                       ratio="1 / 1"

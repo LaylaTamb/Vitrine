@@ -4,6 +4,7 @@ import { ChevronDown, Globe, Lock, Users, type LucideIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
+import { Notice } from "@/components/layout/notice"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import {
   DropdownMenu,
@@ -186,10 +187,5 @@ export function PrivacyChip({
 
 /** O aviso de quando o seletor diz uma coisa, mas uma pasta acima fecha mais. */
 export function PrivacyNote({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-5 flex items-start gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-      <Lock aria-hidden className="mt-0.5 size-3.5 shrink-0 text-faint" />
-      <span>{children}</span>
-    </p>
-  )
+  return <Notice icon={Lock}>{children}</Notice>
 }

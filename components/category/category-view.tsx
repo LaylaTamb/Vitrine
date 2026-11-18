@@ -59,6 +59,7 @@ import { EmptyState } from "@/components/layout/empty-state"
 import { HandlePointerSensor, moveCollision, noShiftStrategy } from "@/components/layout/drag-move"
 import { LevelNav, type Crumb } from "@/components/layout/level-nav"
 import { MoreMenu } from "@/components/layout/more-menu"
+import { Notice } from "@/components/layout/notice"
 import { PageHeader } from "@/components/layout/page-header"
 import { useFolderParam } from "@/components/layout/use-folder-param"
 import { useStoredPreference } from "@/components/layout/use-stored-preference"
@@ -666,14 +667,14 @@ export function CategoryView({
                 {/* À vista, ao lado do ＋ Item (no celular, com o nome curto). A
                     "A organizar" tem estrutura fixa (migração 17). */}
                 {inbox ? null : (
-                  <Button variant="secondary" size="lg" onClick={() => setStructureOpen(true)}>
+                  <Button variant="outline" size="lg" onClick={() => setStructureOpen(true)}>
                     <SlidersHorizontal className="size-4" />
                     <span className="sm:hidden">Editar</span>
                     <span className="hidden sm:inline">Editar categoria</span>
                   </Button>
                 )}
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   size="lg"
                   onClick={() => setFolderDialog({ open: true, folder: null })}
                 >
@@ -687,47 +688,32 @@ export function CategoryView({
           }
         />
 
-        {canEdit && autoRefresh ? (
-        <ConnectedRefresh categoryId={category.id} provider={autoRefresh} />
-      ) : null}
+        {/* Os avisos do topo: uma linha cada, sem caixas (o detalhe abre no "Mais"). */}
+        <div className="mb-5 space-y-1.5 empty:hidden">
+          {canEdit && autoRefresh ? (
+            <ConnectedRefresh categoryId={category.id} provider={autoRefresh} />
+          ) : null}
 
-      {canEdit && link ? <LinkedBar categoryId={category.id} link={link} /> : null}
+          {canEdit && link ? <LinkedBar categoryId={category.id} link={link} /> : null}
 
-        {canEdit && restrictedBy ? (
-          <PrivacyNote>{restrictionNote("category", restrictedBy)}</PrivacyNote>
-        ) : null}
+          {canEdit && restrictedBy ? (
+            <PrivacyNote>{restrictionNote("category", restrictedBy)}</PrivacyNote>
+          ) : null}
 
-        {canEdit && inbox ? (
-          <p className="mb-5 flex items-start gap-2 rounded-lg border border-dashed border-brand-dim bg-brand-wash px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-            <Inbox aria-hidden className="mt-0.5 size-3.5 shrink-0 text-brand" />
-            <span>
-              Sua caixa de entrada: o que você salva às pressas cai aqui. Para organizar, marque os
-              itens (a caixinha no canto de cada um) e use{" "}
-              <span className="text-foreground">Mover</span> para levá-los à categoria certa.
-            </span>
-          </p>
-        ) : null}
-
-        <div className="mb-5 flex items-center gap-1 border-b border-line">
-          {[
-            { id: "itens" as const, label: "Itens" },
-            { id: "numeros" as const, label: "Números" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setTab(item.id)}
-              aria-current={tab === item.id}
-              className={cn(
-                "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
-                tab === item.id
-                  ? "border-brand text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              )}
+          {canEdit && inbox ? (
+            <Notice
+              icon={Inbox}
+              tone="brand"
+              details={
+                <>
+                  Para organizar, marque os itens (a caixinha no canto de cada um) e use{" "}
+                  <span className="text-foreground">Mover</span> para levá-los à categoria certa.
+                </>
+              }
             >
-              {item.label}
-            </button>
-          ))}
+              Sua caixa de entrada: o que você salva às pressas cai aqui.
+            </Notice>
+          ) : null}
         </div>
 
         <div className="space-y-5">
@@ -744,7 +730,8 @@ export function CategoryView({
             active={active}
             resultCount={tab === "numeros" ? statsViews.length : filtered.length}
             ratingEnabled={ratingEnabled}
-            showListControls={tab === "itens"}
+            numbers={tab === "numeros"}
+            onNumbersChange={(on) => setTab(on ? "numeros" : "itens")}
           />
 
           {tab === "itens" && levelFolders.length > 0 ? (
@@ -917,6 +904,8 @@ export function CategoryView({
             open={formOpen}
             onOpenChange={setFormOpen}
             categoryId={category.id}
+            categoryName={category.name}
+            categoryIcon={category.icon}
             estrutura={category.estrutura}
             tags={tags}
             entry={editing}
@@ -939,6 +928,7 @@ export function CategoryView({
               defaultSort,
               quickField: quickFieldOf(category),
             }}
+            defaultVisibility={visibility}
           />
         </>
       ) : null}
