@@ -17,8 +17,9 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   star: "Estrela (0–5)",
   date: "Data",
   str: "Texto",
-  int: "Número inteiro",
-  decimal: "Número com vírgula",
+  // Para quem usa, inteiro e com vírgula são um tipo só: "Número" (veja `fieldTypeButton`).
+  int: "Número",
+  decimal: "Número",
   time: "Duração (h:min)",
   currency: "Moeda",
   select: "Lista de opções",
@@ -29,7 +30,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
 export const FIELD_TYPE_SHORT_LABELS: Record<FieldType, string> = {
   str: "Texto",
   int: "Número",
-  decimal: "Decimal",
+  decimal: "Número",
   date: "Data",
   time: "Duração",
   currency: "Moeda",
@@ -38,10 +39,13 @@ export const FIELD_TYPE_SHORT_LABELS: Record<FieldType, string> = {
   location: "Local",
 }
 
-/** A ordem dos botões de tipo: do mais comum ao mais especial. */
+/**
+ * A ordem dos botões de tipo: do mais comum ao mais especial. O Número é um
+ * botão só e cria `decimal`, que aceita inteiro e com vírgula (e mostra "2024"
+ * ou "13,5", sem ",00"). O `int` continua valendo nos campos que já existem.
+ */
 export const FIELD_TYPE_ORDER: FieldType[] = [
   "str",
-  "int",
   "decimal",
   "date",
   "time",
@@ -54,8 +58,8 @@ export const FIELD_TYPE_ORDER: FieldType[] = [
 /** Um exemplo de cada tipo, embaixo dos botões. */
 export const FIELD_TYPE_EXAMPLES: Record<FieldType, string> = {
   str: "ex.: Diretor, Uva",
-  int: "ex.: Ano, Temporadas",
-  decimal: "ex.: Teor alcoólico, Km",
+  int: "ex.: Ano, Páginas, Km — inteiro ou com vírgula",
+  decimal: "ex.: Ano, Páginas, Km — inteiro ou com vírgula",
   date: "ex.: Quando fui, Estreia",
   time: "ex.: Tempo de espera",
   currency: "ex.: Preço",
@@ -71,8 +75,10 @@ const TYPE_GUESSES: [RegExp, FieldType][] = [
   [/endereco|(^|\s)local\b|(^|\s)onde\b|cidade|bairro/, "location"],
   [/(^|\s)tempo\b|duracao|espera/, "time"],
   [/(^|\s)nota\b|atendimento|ambiente|sabor|estrelas?\b/, "star"],
-  [/(^|\s)ano\b|safra|temporadas?\b|paginas|visitas|episodios|quantidade/, "int"],
-  [/teor|alcool|(^|\s)km\b|distancia|(^|\s)peso\b|graduacao/, "decimal"],
+  [
+    /(^|\s)ano\b|safra|temporadas?\b|paginas|visitas|episodios|quantidade|teor|alcool|(^|\s)km\b|distancia|(^|\s)peso\b|graduacao/,
+    "decimal",
+  ],
   [/genero|(^|\s)tipo\b|(^|\s)modo\b|plataforma|estilo|metodo|dificuldade/, "select"],
 ]
 
@@ -81,6 +87,11 @@ export function guessFieldType(nome: string): FieldType {
   const text = normalizeName(nome)
   if (!text) return "str"
   return TYPE_GUESSES.find(([pattern]) => pattern.test(text))?.[1] ?? "str"
+}
+
+/** O botão de tipo que representa um campo: o inteiro antigo cai no Número. */
+export function fieldTypeButton(tipo: FieldType): FieldType {
+  return tipo === "int" ? "decimal" : tipo
 }
 
 /** Um endereço (ou nome de lugar) cabe em 300 caracteres. */

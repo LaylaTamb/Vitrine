@@ -1,5 +1,4 @@
 import {
-  Calculator,
   Calendar,
   Coins,
   Hash,
@@ -17,7 +16,7 @@ import type { FieldType } from "@/lib/domain/types"
 export const FIELD_TYPE_ICONS: Record<FieldType, LucideIcon> = {
   str: Type,
   int: Hash,
-  decimal: Calculator,
+  decimal: Hash,
   date: Calendar,
   time: Timer,
   currency: Coins,

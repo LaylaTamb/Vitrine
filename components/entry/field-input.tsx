@@ -133,7 +133,7 @@ export function FieldInput({
       <Input
         id={id}
         inputMode="decimal"
-        placeholder="0,00"
+        placeholder="0"
         autoFocus={autoFocus}
         value={value}
         onChange={(event) => onChange(event.target.value)}

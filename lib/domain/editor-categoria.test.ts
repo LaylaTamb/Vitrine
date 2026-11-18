@@ -4,6 +4,7 @@ import {
   FIELD_TYPE_EXAMPLES,
   FIELD_TYPE_ORDER,
   FIELD_TYPE_SHORT_LABELS,
+  fieldTypeButton,
   guessFieldType,
 } from "./fields"
 import { SORT_KEYS, SORT_SHORT_LABELS } from "./filter"
@@ -21,9 +22,9 @@ describe("editor de categoria", () => {
       ["Duração", "time"],
       ["Atendimento", "star"],
       ["Nota do ambiente", "star"],
-      ["Ano", "int"],
-      ["Safra", "int"],
-      ["Temporadas", "int"],
+      ["Ano", "decimal"],
+      ["Safra", "decimal"],
+      ["Temporadas", "decimal"],
       ["Teor alcoólico", "decimal"],
       ["Distância (km)", "decimal"],
       ["Gênero", "select"],
@@ -38,8 +39,12 @@ describe("editor de categoria", () => {
     for (const [nome, tipo] of cases) expect([nome, guessFieldType(nome)]).toEqual([nome, tipo])
   })
 
-  it("tem botão, nome curto e exemplo para todo tipo", () => {
-    expect([...FIELD_TYPE_ORDER].sort()).toEqual([...FIELD_TYPES].sort())
+  it("tem botão, nome curto e exemplo para todo tipo (o inteiro cai no Número)", () => {
+    const withButton = new Set(FIELD_TYPES.map(fieldTypeButton))
+    expect([...FIELD_TYPE_ORDER].sort()).toEqual([...withButton].sort())
+    expect(FIELD_TYPE_ORDER).not.toContain("int")
+    expect(fieldTypeButton("int")).toBe("decimal")
+    expect(fieldTypeButton("str")).toBe("str")
     for (const tipo of FIELD_TYPES) {
       expect(FIELD_TYPE_SHORT_LABELS[tipo]).toBeTruthy()
       expect(FIELD_TYPE_EXAMPLES[tipo]).toBeTruthy()

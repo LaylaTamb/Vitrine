@@ -61,6 +61,7 @@ import {
   FIELD_TYPE_ORDER,
   FIELD_TYPE_SHORT_LABELS,
   convertibleTypesOf,
+  fieldTypeButton,
   diffEstrutura,
   diffFieldOptions,
   guessFieldType,
@@ -634,7 +635,8 @@ export function CategoryEditor({
       <div role="radiogroup" aria-label="Tipo do campo" className="flex flex-wrap gap-1.5">
         {FIELD_TYPE_ORDER.map((type) => {
           const Icon = FIELD_TYPE_ICONS[type]
-          const selected = newType === type
+          // O Número representa os dois: o inteiro antigo e o com vírgula.
+          const selected = fieldTypeButton(newType) === type
           return (
             <button
               key={type}
@@ -642,9 +644,10 @@ export function CategoryEditor({
               role="radio"
               aria-checked={selected}
               title={FIELD_TYPE_LABELS[type]}
-              disabled={editTypes !== null && !editTypes.includes(type)}
+              disabled={editTypes !== null && !editTypes.map(fieldTypeButton).includes(type)}
               onClick={() => {
-                setNewType(type)
+                // Um campo inteiro que já existe continua inteiro.
+                if (!selected) setNewType(type)
                 setTypeGuessed(false)
                 setFieldError(null)
               }}
