@@ -6,37 +6,50 @@ import type { EntryPickerRow } from "@/lib/actions/contracts"
 import { fail, failValidation, ok, type ActionResult } from "@/lib/actions/result"
 import {
   applyTagSchema,
+  createTagSchema,
   idSchema,
   searchEntriesForTagSchema,
-  tagSchema,
   updateTagSchema,
 } from "@/lib/actions/schemas"
+import { isMissingColumn } from "@/lib/domain/errors"
 import { normalizeTagColor } from "@/lib/domain/tags"
 import type { Tag } from "@/lib/domain/types"
 import { requireUser } from "@/lib/queries/session"
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * As tags são do grupo inteiro: qualquer autenticado cria, edita e apaga, e a
- * mudança reflete no acervo de todo mundo.
+ * Cada tag é de uma categoria de uma pessoa (migração 49): só o dono cria,
+ * edita e apaga (a RLS confere). Antes do 49, a tag ainda é do grupo todo.
  */
 export async function createTagAction(input: {
   name: string
   color: string
+  categoryId?: string
 }): Promise<ActionResult<Tag>> {
-  const parsed = tagSchema.safeParse(input)
+  const parsed = createTagSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
+  const user = await requireUser()
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("tags")
-    .insert({ name: parsed.data.name, color: normalizeTagColor(parsed.data.color) })
-    .select("id, name, color")
-    .single()
+  const tag = { name: parsed.data.name, color: normalizeTagColor(parsed.data.color) }
+  const insert = (row: Record<string, unknown>) =>
+    supabase.from("tags").insert(row).select("id, name, color").single()
 
-  if (error) return fail(error)
+  let { data, error } = await insert(
+    parsed.data.categoryId
+      ? { ...tag, owner_id: user.id, category_id: parsed.data.categoryId }
+      : tag
+  )
+  if (error && isMissingColumn(error, "category_id")) ({ data, error } = await insert(tag))
+  if (error) {
+    // Depois do 49, a tag precisa de categoria.
+    return !parsed.data.categoryId && String((error as { code?: unknown }).code) === "23502"
+      ? { ok: false, error: "Crie a tag dentro de uma categoria: ela vale só para os itens de lá." }
+      : fail(error)
+  }
 
-  revalidatePath("/tags")
+  // A categoria da tag (e o filtro geral) mostram a nova.
+  revalidatePath("/", "layout")
   return ok(data as Tag)
 }
 
@@ -88,9 +101,9 @@ interface EntryPickerJoinRow {
 }
 
 /**
- * Itens do dono logado, de qualquer categoria, para o diálogo "Aplicar a
- * itens". Só os seus próprios: `entry_tags` só aceita insert/delete de quem é
- * dono do item (RLS), então não faz sentido listar item de outra pessoa aqui.
+ * Itens do dono logado para o diálogo "Aplicar a itens": só os da categoria
+ * da tag (migração 49; antes dele, de qualquer categoria). Só os seus
+ * próprios: `entry_tags` só aceita insert/delete de quem é dono do item (RLS).
  */
 export async function searchEntriesForTagAction(input: {
   tagId: string
@@ -102,6 +115,16 @@ export async function searchEntriesForTagAction(input: {
   const user = await requireUser()
   const supabase = await createClient()
 
+  // Antes do 49 a coluna não existe: a busca cruza todas as categorias.
+  const tagRow = await supabase
+    .from("tags")
+    .select("category_id")
+    .eq("id", parsed.data.tagId)
+    .maybeSingle()
+  const tagCategory = tagRow.error
+    ? null
+    : ((tagRow.data as { category_id?: string } | null)?.category_id ?? null)
+
   let query = supabase
     .from("entries")
     .select("id, name, entry_tags(tag_id), category:categories(id, name, icon)")
@@ -111,6 +134,7 @@ export async function searchEntriesForTagAction(input: {
 
   const search = parsed.data.query.trim()
   if (search) query = query.ilike("name", `%${search}%`)
+  if (tagCategory) query = query.eq("category_id", tagCategory)
 
   const { data, error } = await query
   if (error) return fail(error)

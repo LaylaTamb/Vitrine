@@ -171,7 +171,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
     getSteamAccount(user.id),
     getLetterboxdAccount(user.id),
     getMyTrashCount(),
-    getTagsWithUsage(),
+    getTagsWithUsage(user.id),
   ])
   const name = displayNameOf(profile)
   const termsAccepted =
@@ -368,8 +368,19 @@ async function SectionBody({
     }
     case "backup":
       return <BackupForm />
-    case "tags":
-      return <TagsView tags={await getTagsWithUsage()} embedded />
+    case "tags": {
+      const [tags, { categories }] = await Promise.all([
+        getTagsWithUsage(userId),
+        getCollections(userId),
+      ])
+      return (
+        <TagsView
+          tags={tags}
+          categories={categories.map(({ id, name, icon }) => ({ id, name, icon }))}
+          embedded
+        />
+      )
+    }
     case "app":
       return <InstallSettings />
     case "ajuda":

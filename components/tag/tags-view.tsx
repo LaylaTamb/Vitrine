@@ -26,13 +26,27 @@ import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
 import type { Tag } from "@/lib/domain/types"
 import type { TagWithUsage } from "@/lib/queries/tags"
 
+type TagCategory = { id: string; name: string; icon: string | null }
+
+/**
+ * As tags, que são de cada categoria (migração 49): criar, renomear, trocar a
+ * cor, apagar e aplicar a itens. Dentro de uma categoria (\`categoryId\`), só as
+ * dela; nas Configurações (\`categories\`), todas, agrupadas por categoria, e a
+ * tag nova pergunta em qual categoria nasce.
+ */
 export function TagsView({
   tags,
   embedded = false,
+  categoryId,
+  categories,
 }: {
   tags: TagWithUsage[]
-  /** Dentro das Configurações: sem o título grande. */
+  /** Dentro das Configurações ou de um diálogo: sem o título grande. */
   embedded?: boolean
+  /** Dentro de uma categoria: a tag nova nasce nela, sem perguntar. */
+  categoryId?: string
+  /** Nas Configurações: as categorias da pessoa, na ordem das Coleções. */
+  categories?: TagCategory[]
 }) {
   const { actions } = useVitrine()
   const [editing, setEditing] = useState<TagWithUsage | null>(null)
@@ -42,9 +56,11 @@ export function TagsView({
 
   const [name, setName] = useState("")
   const [color, setColor] = useState<string>(DEFAULT_TAG_COLOR)
+  const [target, setTarget] = useState<string>(categoryId ?? categories?.[0]?.id ?? "")
   const [pending, setPending] = useState(false)
 
   const dialogOpen = creating || editing !== null
+  const choosesCategory = !categoryId && !editing && (categories?.length ?? 0) > 0
 
   useEffect(() => {
     if (!dialogOpen) return
@@ -59,7 +75,7 @@ export function TagsView({
     setPending(true)
     const result = editing
       ? await actions.updateTag({ id: editing.id, name, color })
-      : await actions.createTag({ name, color })
+      : await actions.createTag({ name, color, categoryId: categoryId ?? (target || undefined) })
     setPending(false)
 
     if (!result.ok) {
@@ -74,13 +90,35 @@ export function TagsView({
     if (wasCreating && result.data) setApplying(result.data)
   }
 
+  // Nas Configurações, uma seção por categoria (as tags de antes do 49, sem
+  // categoria, ficam juntas no fim).
+  const known = new Set((categories ?? []).map((category) => category.id))
+  const sections: { key: string; title: string | null; tags: TagWithUsage[] }[] = categories
+    ? [
+        ...categories.map((category) => ({
+          key: category.id,
+          title: `${category.icon ? `${category.icon} ` : ""}${category.name}`,
+          tags: tags.filter((tag) => tag.categoryId === category.id),
+        })),
+        {
+          key: "sem-categoria",
+          title: "Sem categoria",
+          tags: tags.filter((tag) => !tag.categoryId || !known.has(tag.categoryId)),
+        },
+      ].filter((section) => section.tags.length > 0)
+    : [{ key: "todas", title: null, tags }]
+
   return (
     <>
       <PageHeader
         compact={embedded}
         label="Vocabulário"
         title="Tags"
-        subtitle="As tags são do grupo inteiro: qualquer pessoa cria, edita e apaga, e a mudança vale para o acervo de todo mundo."
+        subtitle={
+          categoryId
+            ? "As tags desta categoria: só os itens daqui usam."
+            : "Cada categoria tem as suas tags. Crie aqui ou dentro da própria categoria, no ⋯."
+        }
         actions={
           <Button size="lg" onClick={() => setCreating(true)}>
             <Plus className="size-4" /> Nova tag
@@ -92,7 +130,11 @@ export function TagsView({
         <EmptyState
           icon={Tags}
           title="Nenhuma tag ainda"
-          description="Tags atravessam todas as categorias: crie a primeira e comece a cruzar o acervo."
+          description={
+            categoryId
+              ? "Crie a primeira e marque os itens desta categoria."
+              : "Cada categoria tem as suas tags: crie a primeira."
+          }
           action={
             <Button onClick={() => setCreating(true)}>
               <Plus className="size-4" /> Nova tag
@@ -100,56 +142,66 @@ export function TagsView({
           }
         />
       ) : (
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {tags.map((tag) => (
-            <li
-              key={tag.id}
-              className="group/card vitrine-card flex items-center gap-3 px-3 py-2.5"
-            >
-              <span
-                aria-hidden
-                className="size-3 shrink-0 rounded-full"
-                style={{ backgroundColor: tag.color }}
-              />
-              <span className="min-w-0 flex-1">
-                <span className="display block truncate text-base">{tag.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {tag.usage === 0 ? "nenhum item" : itemCount(tag.usage)}
-                </span>
-              </span>
+        <div className="space-y-5">
+          {sections.map((section) => (
+            <section key={section.key} className="space-y-2">
+              {section.title ? (
+                <p className="plaque [overflow-wrap:anywhere]">{section.title}</p>
+              ) : null}
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {section.tags.map((tag) => (
+                  <li
+                    key={tag.id}
+                    className="group/card vitrine-card flex items-center gap-3 px-3 py-2.5"
+                  >
+                    <span
+                      aria-hidden
+                      className="size-3 shrink-0 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="display block truncate text-base">{tag.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {tag.usage === 0 ? "nenhum item" : itemCount(tag.usage)}
+                      </span>
+                    </span>
 
-              <span className="card-actions flex shrink-0 items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => setApplying(tag)}
-                  title={`Aplicar ${tag.name} a itens`}
-                  aria-label={`Aplicar ${tag.name} a itens`}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
-                >
-                  <ListPlus className="size-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditing(tag)}
-                  title={`Editar ${tag.name}`}
-                  aria-label={`Editar ${tag.name}`}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
-                >
-                  <Pencil className="size-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleting(tag)}
-                  title={`Excluir ${tag.name}`}
-                  aria-label={`Excluir ${tag.name}`}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-danger"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
-              </span>
-            </li>
+                    {/* Sempre à vista: mexer nas tags é o que esta tela faz (no celular não há hover). */}
+                    <span className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setApplying(tag)}
+                        title={`Aplicar ${tag.name} a itens`}
+                        aria-label={`Aplicar ${tag.name} a itens`}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
+                      >
+                        <ListPlus className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditing(tag)}
+                        title={`Editar ${tag.name}`}
+                        aria-label={`Editar ${tag.name}`}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-foreground"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(tag)}
+                        title={`Excluir ${tag.name}`}
+                        aria-label={`Excluir ${tag.name}`}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-surface-hi hover:text-danger"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       )}
 
       <Dialog
@@ -169,7 +221,7 @@ export function TagsView({
                 {editing ? "Editar tag" : "Nova tag"}
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground">
-                Vale para o acervo de todo mundo.
+                Vale só para os itens da categoria dela.
               </DialogDescription>
             </DialogHeader>
 
@@ -187,6 +239,28 @@ export function TagsView({
                   placeholder="Japonês"
                 />
               </div>
+
+              {choosesCategory ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="tag-category" className="plaque">
+                    Categoria
+                  </Label>
+                  <select
+                    id="tag-category"
+                    value={target}
+                    onChange={(event) => setTarget(event.target.value)}
+                    disabled={pending}
+                    className="h-9 w-full rounded-md border border-line bg-surface px-2 text-sm outline-none focus-visible:border-brand-dim"
+                  >
+                    {categories!.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.icon ? `${category.icon} ` : ""}
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
 
               <div className="space-y-1.5">
                 <span className="plaque block">Cor</span>

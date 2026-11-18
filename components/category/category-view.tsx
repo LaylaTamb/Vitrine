@@ -31,6 +31,7 @@ import {
   Plus,
   Share2,
   SlidersHorizontal,
+  Tags as TagsIcon,
   Trash2,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
@@ -64,7 +65,15 @@ import { useStoredPreference } from "@/components/layout/use-stored-preference"
 import type { EntryViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
+import { TagsView } from "@/components/tag/tags-view"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { applyOrder, breadcrumbOf, foldersOf } from "@/lib/domain/collections"
 import { readDropTarget } from "@/lib/domain/drag"
@@ -199,6 +208,7 @@ export function CategoryView({
   const [deleting, setDeleting] = useState<EntryView | null>(null)
   const [deletingCategory, setDeletingCategory] = useState(false)
   const [sharing, setSharing] = useState(false)
+  const [tagsOpen, setTagsOpen] = useState(false)
 
   const [folderDialog, setFolderDialog] = useState<{
     open: boolean
@@ -516,6 +526,14 @@ export function CategoryView({
     setFilter((current) => ({ ...current, query: "", minRating: "", maxRating: "", tagIds: [] }))
   }
 
+  const tagsWithUsage = useMemo(() => {
+    const usage = new Map<string, number>()
+    for (const item of views) {
+      for (const tag of item.tags) usage.set(tag.id, (usage.get(tag.id) ?? 0) + 1)
+    }
+    return tags.map((tag) => ({ ...tag, usage: usage.get(tag.id) ?? 0, categoryId: category.id }))
+  }, [tags, views, category.id])
+
   const deletingParentLabel = (() => {
     if (!deletingFolder) return ""
     const parent = entryFolders.find((folder) => folder.id === deletingFolder.parentId)
@@ -538,17 +556,12 @@ export function CategoryView({
       />
     ) : null
 
-  // O "⋯": o que é raro fica aqui, para o topo ter uma ação só à vista (＋ Item).
+  // O "⋯": o que é raro fica aqui, para o topo ter poucas ações à vista.
   const moreMenu = canEdit ? (
     <MoreMenu label={`Mais opções de “${category.name}”`}>
-      {/* A "A organizar" tem estrutura fixa (migração 17). */}
-      {canEdit && !inbox ? (
-        <DropdownMenuItem onSelect={() => setStructureOpen(true)}>
-          <SlidersHorizontal /> Editar categoria e campos
-        </DropdownMenuItem>
-      ) : null}
-      <DropdownMenuItem onSelect={() => setFolderDialog({ open: true, folder: null })}>
-        <FolderPlus /> Nova subpasta
+      {/* As tags são desta categoria (migração 49). */}
+      <DropdownMenuItem onSelect={() => setTagsOpen(true)}>
+        <TagsIcon /> Tags
       </DropdownMenuItem>
       {inbox ? null : (
         <DropdownMenuItem onSelect={() => setSharing(true)}>
@@ -647,11 +660,27 @@ export function CategoryView({
           actions={
             canEdit ? (
               <>
-                {canEdit ? (
-                  <Button size="lg" onClick={openNewEntry}>
-                    <Plus className="size-4" /> Item
+                <Button size="lg" onClick={openNewEntry}>
+                  <Plus className="size-4" /> Item
+                </Button>
+                {/* À vista, ao lado do ＋ Item (no celular, com o nome curto). A
+                    "A organizar" tem estrutura fixa (migração 17). */}
+                {inbox ? null : (
+                  <Button variant="secondary" size="lg" onClick={() => setStructureOpen(true)}>
+                    <SlidersHorizontal className="size-4" />
+                    <span className="sm:hidden">Editar</span>
+                    <span className="hidden sm:inline">Editar categoria</span>
                   </Button>
-                ) : null}
+                )}
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setFolderDialog({ open: true, folder: null })}
+                >
+                  <FolderPlus className="size-4" />
+                  <span className="sm:hidden">Subpasta</span>
+                  <span className="hidden sm:inline">Nova subpasta</span>
+                </Button>
                 {moreMenu}
               </>
             ) : null
@@ -931,6 +960,20 @@ export function CategoryView({
               if (!open) setDeletingFolder(null)
             }}
           />
+
+          <Dialog open={tagsOpen} onOpenChange={setTagsOpen}>
+            <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="display text-2xl [overflow-wrap:anywhere]">
+                  Tags de “{category.name}”
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Criar, renomear, trocar a cor e excluir as tags desta categoria.
+                </DialogDescription>
+              </DialogHeader>
+              <TagsView tags={tagsWithUsage} categoryId={category.id} embedded />
+            </DialogContent>
+          </Dialog>
 
           <ShareCategoryDialog
             open={sharing}

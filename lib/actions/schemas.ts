@@ -399,6 +399,9 @@ export const tagSchema = z.object({
   color: z.string(),
 })
 
+/** Tag nova: a categoria dela (migração 49 — antes, a tag era do grupo todo). */
+export const createTagSchema = tagSchema.extend({ categoryId: uuid.optional() })
+
 export const updateTagSchema = tagSchema.extend({ id: uuid })
 
 export const searchEntriesForTagSchema = z.object({ tagId: uuid, query: z.string().max(160) })

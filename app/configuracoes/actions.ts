@@ -51,6 +51,7 @@ import { normalizeUsername, usernameProblem } from "@/lib/domain/username"
 import { imageDisplayOf } from "@/lib/domain/view"
 import { createClient } from "@/lib/supabase/server"
 import { requireUser } from "@/lib/queries/session"
+import { getOwnerTags } from "@/lib/queries/tags"
 import { normalizeLetterboxdUsername } from "@/lib/import/letterboxd-rss"
 import { fetchLetterboxdFeed, fetchLetterboxdFilmsPage } from "@/lib/letterboxd/client"
 import { syncLetterboxdAccount, syncLetterboxdDetails } from "@/lib/letterboxd/sync"
@@ -518,7 +519,7 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
   const user = await requireUser()
   const supabase = await createClient()
 
-  const [foldersResult, categoriesResult, entryFoldersResult, entriesResult, tagsResult] =
+  const [foldersResult, categoriesResult, entryFoldersResult, entriesResult, tags] =
     await Promise.all([
       // `*`: traz a visibilidade (migrações 12 e 14) e o `kind` (migração 17)
       // quando existem, sem quebrar antes delas.
@@ -538,21 +539,14 @@ export async function exportCollectionAction(): Promise<ActionResult<BackupPaylo
         .eq("owner_id", user.id)
         .order("display_order", { ascending: true })
         .order("created_at", { ascending: true }),
-      supabase.from("tags").select("id, name, color"),
+      getOwnerTags(supabase, user.id),
     ])
 
   if (foldersResult.error) return fail(foldersResult.error)
   if (entryFoldersResult.error) return fail(entryFoldersResult.error)
   if (categoriesResult.error) return fail(categoriesResult.error)
   if (entriesResult.error) return fail(entriesResult.error)
-  if (tagsResult.error) return fail(tagsResult.error)
-
-  const tagById = new Map(
-    ((tagsResult.data ?? []) as { id: string; name: string; color: string }[]).map((tag) => [
-      tag.id,
-      tag,
-    ])
-  )
+  const tagById = new Map(tags.map((tag) => [tag.id, tag]))
 
   // As cópias antigas de match não viajam: o match mora na aba Match.
   const kept = withoutMatchCopies(

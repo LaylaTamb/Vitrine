@@ -20,8 +20,9 @@ mais cria conta com e-mail e senha.
   Diretor, Ano, Localização, uma lista de opções — e, se fizer sentido, uma
   **nota de 0 a 5 estrelas**.
 - **Itens completos.** Cada item tem nome, imagem (por link), nota, os campos
-  da categoria e **tags** (um vocabulário comum, para achar coisas parecidas
-  em categorias diferentes). Dá para organizar os itens em **subpastas**
+  da categoria e **tags**. Cada categoria tem as suas tags (as de Restaurantes
+  não se misturam com as de Filmes): crie e edite no **⋯ → Tags** da categoria,
+  ou em Configurações → Tags, agrupadas por categoria. Dá para organizar os itens em **subpastas**
   dentro da categoria e arrastar para pôr na ordem que quiser — ou para dentro
   de outra pasta.
 - **Várias formas de ver.** Grade (em três tamanhos), lista ou **tier list**

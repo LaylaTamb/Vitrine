@@ -232,8 +232,8 @@ export interface ImportSummary {
 
 /**
  * Apaga tudo que `ownerId` tem — pastas (cascateia categorias e itens) e
- * qualquer categoria órfã de pasta. Não toca em tags: são vocabulário
- * compartilhado do grupo, e `on delete cascade` de `entry_tags` já solta os
+ * qualquer categoria órfã de pasta. As tags vão junto com as categorias
+ * (migração 49), e `on delete cascade` de `entry_tags` já solta os
  * vínculos quando os itens somem.
  */
 export async function wipeOwnerData(
@@ -255,8 +255,8 @@ export async function wipeOwnerData(
  * (`inbox: true`): toda conta já tem a sua, então os itens dela entram na de
  * quem importa. Categoria com nome repetido
  * ganha um sufixo (a tabela tem `unique(owner_id, name)`); pasta não tem essa
- * trava. Tag casa por nome com o vocabulário já compartilhado do grupo; a que
- * não existir ainda é criada.
+ * trava. Tag nasce na categoria do item e casa pelo nome com as que ela já
+ * tem (migração 49); a que não existir ainda é criada.
  *
  * `supabase` é o cliente da sessão (respeitando a RLS, para quem está
  * autenticado como `ownerId`).
@@ -441,22 +441,37 @@ export async function performImport(
     pendingEntryFolders = pendingEntryFolders.filter((folder) => !ready.includes(folder))
   }
 
-  // 3) tags — casa pelo nome com o vocabulário já compartilhado do grupo;
-  // o resto é criado (com a cor que veio no arquivo, ou o roxo padrão).
-  const { data: existingTags, error: tagsError } = await supabase.from("tags").select("id, name")
-  if (tagsError) return fail(tagsError)
+  // 3) tags — cada uma nasce na categoria do item (migração 49) e casa pelo
+  // nome com as que a categoria já tem (a "A organizar" já existia); o resto é
+  // criado, com a cor que veio no arquivo (ou o roxo padrão). Antes do 49 a tag
+  // ainda é do grupo todo: casa pelo nome com o vocabulário compartilhado.
+  const owned = await supabase.from("tags").select("id, name, category_id").eq("owner_id", ownerId)
+  const legacy = Boolean(owned.error && isMissingColumn(owned.error, "owner_id"))
+  const existingTags = legacy ? await supabase.from("tags").select("id, name") : owned
+  if (existingTags.error) return fail(existingTags.error)
+  const tagKey = (categoryId: string, name: string) =>
+    legacy ? normalizeName(name) : `${categoryId}|${normalizeName(name)}`
 
-  const tagIdByName = new Map<string, string>()
-  for (const tag of (existingTags ?? []) as { id: string; name: string }[]) {
-    tagIdByName.set(normalizeName(tag.name), tag.id)
+  const tagIdByKey = new Map<string, string>()
+  for (const tag of (existingTags.data ?? []) as {
+    id: string
+    name: string
+    category_id?: string
+  }[]) {
+    tagIdByKey.set(tagKey(tag.category_id ?? "", tag.name), tag.id)
   }
 
-  const newTags = new Map<string, { name: string; color: string }>()
+  const newTags = new Map<string, Record<string, string>>()
   for (const entry of entries) {
+    const categoryId = categoryIdMap.get(entry.categoryId)!
     for (const tag of entry.tags) {
-      const key = normalizeName(tag.name)
-      if (tagIdByName.has(key) || newTags.has(key)) continue
-      newTags.set(key, { name: tag.name.trim(), color: normalizeTagColor(tag.color) })
+      const key = tagKey(categoryId, tag.name)
+      if (tagIdByKey.has(key) || newTags.has(key)) continue
+      newTags.set(key, {
+        name: tag.name.trim(),
+        color: normalizeTagColor(tag.color),
+        ...(legacy ? {} : { owner_id: ownerId, category_id: categoryId }),
+      })
     }
   }
 
@@ -464,10 +479,14 @@ export async function performImport(
     const { data, error } = await supabase
       .from("tags")
       .insert([...newTags.values()])
-      .select("id, name")
+      .select(legacy ? "id, name" : "id, name, category_id")
     if (error) return fail(error)
-    for (const row of (data ?? []) as { id: string; name: string }[]) {
-      tagIdByName.set(normalizeName(row.name), row.id)
+    for (const row of (data ?? []) as unknown as {
+      id: string
+      name: string
+      category_id?: string
+    }[]) {
+      tagIdByKey.set(tagKey(row.category_id ?? "", row.name), row.id)
     }
   }
 
@@ -509,7 +528,7 @@ export async function performImport(
     if (!entryId) return
     const seen = new Set<string>()
     for (const tag of entry.tags) {
-      const tagId = tagIdByName.get(normalizeName(tag.name))
+      const tagId = tagIdByKey.get(tagKey(categoryIdMap.get(entry.categoryId)!, tag.name))
       if (tagId && !seen.has(tagId)) {
         seen.add(tagId)
         tagLinks.push({ entry_id: entryId, tag_id: tagId })

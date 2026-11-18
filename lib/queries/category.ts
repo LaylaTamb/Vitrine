@@ -11,6 +11,7 @@ import type {
   Profile,
   Tag,
 } from "@/lib/domain/types"
+import { getCategoryTags } from "@/lib/queries/tags"
 import { createClient } from "@/lib/supabase/server"
 
 export interface CategoryPageData {
@@ -32,13 +33,13 @@ export interface CategoryPageData {
  * Tudo da página de categoria em UMA consulta, usando o embedding do PostgREST:
  * a categoria traz o dono, e o dono traz as categorias irmãs e as pastas das
  * Coleções; a categoria traz as subpastas e os itens, e cada item traz os
- * vínculos de tag. As tags do grupo vão em paralelo, porque não dependem de
+ * vínculos de tag. As tags da categoria vão em paralelo, porque não dependem de
  * nada disso.
  */
 export async function loadCategoryPage(categoryId: string): Promise<CategoryPageData> {
   const supabase = await createClient()
 
-  const [categoryResult, tagsResult, favoriteResult] = await Promise.all([
+  const [categoryResult, tags, favoriteResult] = await Promise.all([
     supabase
       .from("categories")
       .select(
@@ -52,7 +53,7 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
       .eq("id", categoryId)
       .order("created_at", { referencedTable: "entries", ascending: false })
       .maybeSingle(),
-    supabase.from("tags").select("id, name, color").order("name", { ascending: true }),
+    getCategoryTags(supabase, categoryId),
     // Sem a migração 20 (tabela ausente): não é favorita.
     supabase
       .from("category_favorites")
@@ -63,10 +64,6 @@ export async function loadCategoryPage(categoryId: string): Promise<CategoryPage
   const isFavorite =
     !favoriteResult.error &&
     ((favoriteResult.data as { tab_position: number | null } | null)?.tab_position ?? null) !== null
-
-  const tags = ((tagsResult.data ?? []) as Tag[]).sort((a, b) =>
-    a.name.localeCompare(b.name, "pt-BR")
-  )
 
   const row = categoryResult.data as
     | (Omit<Category, "estrutura"> & {

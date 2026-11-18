@@ -6,7 +6,7 @@ import { itemsUnder } from "./entry-folders"
 import { isMissingColumn } from "./errors"
 import { FIELD_TYPE_LABELS } from "./fields"
 import { initialSortFor, normalizeSort } from "./filter"
-import { isPaletteColor, normalizeCategoryColor } from "./tags"
+import { isPaletteColor, mergeTagsByName, normalizeCategoryColor } from "./tags"
 import { FIELD_TYPES, type EntryFolder } from "./types"
 
 // ---------------------------------------------------------------------------
@@ -148,5 +148,18 @@ describe("coluna ausente", () => {
       })
     ).toBe(true)
     expect(isMissingColumn({ code: "23505", message: "duplicate key value" })).toBe(false)
+  })
+})
+
+describe("tags de várias categorias no filtro geral", () => {
+  it("as de mesmo nome viram uma só (a primeira), sem diferenciar maiúscula", () => {
+    const { tags, canonical } = mergeTagsByName([
+      { id: "a", name: "Barato" },
+      { id: "b", name: "Japonês" },
+      { id: "c", name: " barato " },
+    ])
+    expect(tags.map((tag) => tag.id)).toEqual(["a", "b"])
+    expect(canonical.get("c")).toBe("a")
+    expect(canonical.get("b")).toBe("b")
   })
 })

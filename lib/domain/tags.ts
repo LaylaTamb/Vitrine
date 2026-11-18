@@ -37,3 +37,23 @@ export function normalizeCategoryColor(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null
   return parseHexColor(value)
 }
+
+/**
+ * Cada categoria tem as suas tags (migração 49), mas o filtro geral cruza as
+ * categorias: "Barato" de Restaurantes e "Barato" de Cafés viram uma só, pelo
+ * nome (sem diferenciar maiúscula e espaços). Fica a primeira de cada nome;
+ * `canonical` leva o id de cada uma ao id da que ficou.
+ */
+export function mergeTagsByName<T extends { id: string; name: string }>(
+  tags: T[]
+): { tags: T[]; canonical: Map<string, string> } {
+  const kept = new Map<string, T>()
+  const canonical = new Map<string, string>()
+  for (const tag of tags) {
+    const key = tag.name.trim().toLowerCase()
+    const first = kept.get(key) ?? tag
+    kept.set(key, first)
+    canonical.set(tag.id, first.id)
+  }
+  return { tags: [...kept.values()], canonical }
+}

@@ -153,8 +153,11 @@ nas seções do `GUIA-LOCAL.md` com o mesmo nome.
     `entry_is_visible`.
   - Amigos = os dois se seguem. Bloquear esconde tudo nos dois sentidos.
   - Nunca resolva privacidade só na UI.
-- **Tags** são um vocabulário compartilhado, sem dono: qualquer pessoa autenticada cria, edita e
-  apaga.
+- **Tags** são de cada categoria de cada pessoa (49): `tags.owner_id` e `tags.category_id`;
+  lê quem vê a categoria e só o dono mexe. Um gatilho garante que o item só use tag da própria
+  categoria (troca pela de mesmo nome, criada se preciso) e leva as tags pelo nome quando o item
+  muda de categoria. Leia com `getCategoryTags` / `getOwnerTags` (`lib/queries/tags.ts`), que
+  aguentam o banco de antes do 49.
 - **"A organizar"** (categoria `kind = 'inbox'`) é travada: ninguém apaga, renomeia nem muda a
   estrutura (migração 17).
 - **Match** (no modelo do Blend, 45):

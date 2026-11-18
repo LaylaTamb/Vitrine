@@ -195,7 +195,7 @@ export interface VitrineActions {
   }): Result<{ routes: Record<string, RouteInfo | null> }>
 
   // ---- tags ---------------------------------------------------------------
-  createTag(input: { name: string; color: string }): Result<Tag>
+  createTag(input: { name: string; color: string; categoryId?: string }): Result<Tag>
   updateTag(input: { id: string; name: string; color: string }): Result
   deleteTag(input: { id: string }): Result
   searchEntriesForTag(input: { tagId: string; query: string }): Result<EntryPickerRow[]>

@@ -128,7 +128,7 @@ export function EntryForm({
   async function addTag() {
     if (!newTagName.trim()) return
     setPending(true)
-    const result = await actions.createTag({ name: newTagName, color: newTagColor })
+    const result = await actions.createTag({ name: newTagName, color: newTagColor, categoryId })
     setPending(false)
 
     if (!result.ok) {

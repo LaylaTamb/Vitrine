@@ -53,7 +53,9 @@ export function HowTo() {
             celular, segure um instante as subpastas).
           </li>
           <li>
-            Editar, renomear e excluir ficam no <b>⋯</b> do topo de cada pasta, categoria e item.
+            Na categoria, <b>Editar categoria</b> (nome, ícone e campos) e <b>Nova subpasta</b> ficam
+            ao lado do <b>＋ Item</b>. O resto (renomear, excluir…) fica no <b>⋯</b> do topo de cada
+            pasta, categoria e item.
           </li>
           <li>
             Apagou sem querer? O aviso tem <b>Desfazer</b>, e a <b>Lixeira</b> guarda pastas e
@@ -71,6 +73,11 @@ export function HowTo() {
           <li>
             Dentro de uma categoria, toque em <b>＋ Item</b>: nome, imagem (cole o link), nota,
             campos e tags.
+          </li>
+          <li>
+            Cada categoria tem as suas <b>tags</b>: crie, renomeie e troque a cor no <b>⋯ → Tags</b>{" "}
+            dela (ou em Configurações → Tags). No <b>Filtros</b> das Coleções, tags de mesmo nome em
+            categorias diferentes contam como uma só.
           </li>
           <li>
             De qualquer lugar: <b>＋ Adicionar → Item</b>, digite o nome e escolha a categoria num

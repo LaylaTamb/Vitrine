@@ -22,7 +22,7 @@ import type { Tag } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
 
 /**
- * Diálogo "Aplicar a itens": cruza todas as categorias do dono logado. Itens
+ * Diálogo "Aplicar a itens": os itens da categoria da tag (migração 49). Itens
  * que já têm a tag aparecem marcados e travados — só dá para ADICIONAR por
  * aqui (tirar tag já existe na barra de seleção em massa da categoria).
  */
@@ -94,7 +94,7 @@ export function ApplyTagDialog({
         <DialogHeader>
           <DialogTitle className="display text-xl">Aplicar “{tag?.name}” a itens</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Cruza todas as suas categorias. Quem já tem a tag aparece marcado.
+            Os itens da categoria da tag. Quem já tem a tag aparece marcado.
           </DialogDescription>
         </DialogHeader>
 
