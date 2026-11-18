@@ -29,7 +29,8 @@ import {
 } from "@/lib/domain/card"
 import { formatRating, itemCount } from "@/lib/domain/format"
 
-const SOCIAL_ICONS: Record<SocialProvider, LucideIcon> = {
+/** O ícone de cada rede: no cartão e no Editar perfil. */
+export const SOCIAL_ICONS: Record<SocialProvider, LucideIcon> = {
   instagram: AtSign,
   x: AtSign,
   discord: MessageCircle,
@@ -146,9 +147,10 @@ export function ProfileCardView({
       {categories.length > 0 ? (
         <div className="mt-7">
           <p className="plaque mb-3 px-1 sm:px-4">Destaques</p>
-          <ul className="flex gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] sm:px-4">
+          {/* Uma grade que cabe na tela: nada de rolar para o lado. */}
+          <ul className="grid grid-cols-2 gap-2.5 px-1 sm:grid-cols-3 sm:px-4 xl:grid-cols-6">
             {categories.map((category) => (
-              <li key={category.id} className="w-56 shrink-0">
+              <li key={category.id} className="min-w-0">
                 <CardCategoryBox category={category} />
               </li>
             ))}
@@ -190,21 +192,25 @@ function CardCategoryBox({ category }: { category: CardCategory }) {
   return (
     <Link
       href={`/categoria/${category.id}`}
-      className="flex h-full flex-col gap-2.5 rounded-2xl border border-line bg-surface p-3 transition-colors hover:border-line-hi"
+      className="flex h-full min-w-0 flex-col gap-2 rounded-2xl border border-line bg-surface p-2.5 transition-colors hover:border-line-hi"
     >
-      <div className="flex items-center gap-2">
-        {category.color ? (
-          <span
-            aria-hidden
-            className="size-2 shrink-0 rounded-full"
-            style={{ backgroundColor: category.color }}
-          />
-        ) : null}
-        <span aria-hidden>{category.icon || "📁"}</span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-          {category.name}
+      <div className="flex min-w-0 items-start gap-2">
+        <span aria-hidden className="text-lg leading-tight">
+          {category.icon || "📁"}
         </span>
-        <span className="shrink-0 text-xs text-faint">{itemCount(category.total)}</span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            {category.color ? (
+              <span
+                aria-hidden
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: category.color }}
+              />
+            ) : null}
+            <span className="truncate text-sm font-medium text-foreground">{category.name}</span>
+          </span>
+          <span className="block text-xs text-faint">{itemCount(category.total)}</span>
+        </span>
       </div>
 
       {photos.length > 0 ? (
@@ -212,7 +218,7 @@ function CardCategoryBox({ category }: { category: CardCategory }) {
           {photos.map((url, index) => (
             <span
               key={`${index}-${url}`}
-              className="block size-12 overflow-hidden rounded-lg bg-surface-hi ring-2 ring-surface"
+              className="block size-10 overflow-hidden rounded-lg bg-surface-hi ring-2 ring-surface"
             >
               <CoverImage url={url} />
             </span>
@@ -221,8 +227,8 @@ function CardCategoryBox({ category }: { category: CardCategory }) {
       ) : category.top.length > 0 ? (
         <ol className="space-y-1">
           {category.top.map((item, index) => (
-            <li key={item.id} className="flex items-center gap-2 text-sm">
-              <span className="w-4 shrink-0 text-xs text-faint tabular-nums">{index + 1}</span>
+            <li key={item.id} className="flex items-center gap-1.5 text-xs">
+              <span className="w-3 shrink-0 text-faint tabular-nums">{index + 1}</span>
               <span className="min-w-0 flex-1 truncate text-muted-foreground">{item.name}</span>
               {category.rating_enabled && item.rating !== null ? (
                 <span className="flex shrink-0 items-center gap-0.5 text-xs text-brand">
@@ -235,7 +241,7 @@ function CardCategoryBox({ category }: { category: CardCategory }) {
           ))}
         </ol>
       ) : (
-        <p className="text-sm text-faint">Ainda sem itens.</p>
+        <p className="text-xs text-faint">Ainda sem itens.</p>
       )}
     </Link>
   )

@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine — Editar perfil (proposta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Os mesmos tokens do app (app/globals.css): só escuro. */
+:root {
+  --bg: #121214; --bg-soft: #16161a; --surface: #1b1b1f; --surface-hi: #232328;
+  --line: #2a2a31; --line-hi: #3a3a43;
+  --ink: #ececef; --muted: #9d9da8; --faint: #6e6e78;
+  --brand: #b98cc2; --brand-dim: #8e6c96; --brand-wash: rgb(185 140 194 / 0.14);
+  --brand-glow: rgb(185 140 194 / 0.3); --on-brand: #1a1220; --danger: #d08585;
+  --display: "Fraunces", ui-serif, Georgia, serif;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--brand-dim); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.i-sm { width: 14px; height: 14px; }
+.i-xs { width: 12px; height: 12px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.plaque { margin: 0; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.display { font-family: var(--display); font-style: italic; font-weight: 400; }
+.muted { color: var(--muted); }
+.micro { margin: 0; font-size: 12px; line-height: 1.45; color: var(--faint); }
+.shell { max-width: 1180px; margin-inline: auto; padding-inline: 16px; }
+
+/* ---------- página da proposta ---------- */
+.top { padding: 28px 0 8px; }
+.top h1 { margin: 6px 0 4px; font-size: clamp(30px, 5vw, 42px); line-height: 1.1; }
+.lead { margin: 0; max-width: 64ch; color: var(--muted); }
+.panel { display: grid; gap: 24px; padding: 20px 0 56px; }
+@media (min-width: 1100px) { .panel { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; } }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin-bottom: 14px; }
+
+/* ---------- peças ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 14px; border: 1px solid transparent; border-radius: 12px; font-size: 14px; font-weight: 500; white-space: nowrap; transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-primary:not(:disabled):hover { background: #c79bd0; }
+.btn-secondary { background: var(--surface-hi); color: var(--ink); }
+.btn-outline { background: transparent; border-color: var(--line-hi); color: var(--ink); }
+.btn-outline:hover { background: var(--surface-hi); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-ghost:not(:disabled):hover { background: var(--surface-hi); color: var(--ink); }
+.btn-sm { height: 30px; padding: 0 10px; border-radius: 9px; font-size: 13px; }
+.icon-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--faint); transition: background-color 0.15s, color 0.15s; }
+.icon-btn:hover:not(:disabled) { background: var(--surface-hi); color: var(--ink); }
+.icon-btn:disabled { opacity: 0.3; cursor: default; }
+.link { padding: 0; border: 0; background: none; color: var(--brand); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgb(185 140 194 / 0.4); }
+.input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); color: var(--ink); outline: none; }
+.input:focus { border-color: var(--brand-dim); }
+.input::placeholder { color: var(--faint); }
+.input.invalid { border-color: var(--danger); }
+textarea.input { height: auto; padding: 10px 12px; resize: vertical; line-height: 1.5; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.seg button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--brand-wash); color: var(--brand); }
+.chip { display: inline-flex; max-width: 100%; align-items: center; gap: 6px; min-height: 30px; padding: 4px 11px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font-size: 13px; transition: border-color 0.15s, color 0.15s; }
+.chip:hover:not(:disabled) { border-color: var(--brand-dim); color: var(--ink); }
+.chip:disabled { opacity: 0.4; cursor: default; }
+.chip.dashed { border-style: dashed; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ---------- o palco ---------- */
+.stage { container: stage / inline-size; position: relative; max-width: 100%; height: 800px; margin-inline: auto; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: var(--bg); }
+.stage[data-device="phone"] { width: 375px; }
+.stage[data-device="desktop"] { width: 100%; max-width: 900px; }
+@media (max-width: 560px) { .stage { height: 86dvh; min-height: 600px; border-radius: 18px; } .device-toggle { display: none !important; } }
+.page { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; padding: 18px 16px 110px; }
+.page-inner { max-width: 640px; margin-inline: auto; }
+.back { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 13.5px; }
+.back:hover { color: var(--ink); }
+.page-title { margin: 14px 0 2px; font-size: 32px; line-height: 1.15; }
+.page-sub { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+/* o cartão (prévia ao vivo e onde se troca banner e foto) */
+.card { position: relative; margin-top: 18px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.banner { position: relative; aspect-ratio: 3 / 1; overflow: hidden; background: linear-gradient(135deg, var(--brand-wash), var(--surface-hi) 55%, var(--surface)); touch-action: pan-x; }
+.banner.has { cursor: grab; touch-action: none; }
+.banner.has:active { cursor: grabbing; }
+.banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
+.banner-tools { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 0; border-radius: 99px; background: rgb(18 18 20 / 0.82); color: var(--ink); font-size: 12px; backdrop-filter: blur(6px); }
+.pill:hover { background: rgb(35 35 40 / 0.92); }
+.drag-hint { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+.card-body { position: relative; padding: 0 16px 16px; }
+.avatar-wrap { position: relative; width: 84px; margin-top: -42px; }
+.avatar { display: grid; place-items: center; width: 84px; height: 84px; overflow: hidden; border: 4px solid var(--surface); border-radius: 50%; background: linear-gradient(135deg, #3b2f45, #6d4d78); font-family: var(--display); font-size: 34px; font-style: italic; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-edit { position: absolute; right: -2px; bottom: 2px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 3px solid var(--surface); border-radius: 50%; background: var(--surface-hi); color: var(--ink); }
+.avatar-edit:hover { background: var(--line-hi); }
+.card-name { margin: 8px 0 0; font-size: 26px; line-height: 1.15; overflow-wrap: anywhere; }
+.card-handle { margin: 0; font-size: 13px; color: var(--muted); }
+.card-bio { margin: 10px 0 0; font-size: 14.5px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+.card-bio:empty { display: none; }
+.card-bio a { color: var(--brand); }
+.card-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.card-links:empty { display: none; }
+.card-links span { display: inline-flex; max-width: 100%; align-items: center; gap: 5px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface-hi); color: var(--muted); font-size: 12.5px; }
+.card-links span b { color: var(--ink); font-weight: 500; }
+.card-hl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+@container stage (min-width: 600px) { .card-hl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.card-hl:empty { display: none; }
+.hl { min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg-soft); }
+.hl-top { display: flex; min-width: 0; align-items: flex-start; gap: 7px; }
+.hl-top .em { font-size: 17px; line-height: 1.2; }
+.hl-name { overflow: hidden; font-size: 13px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.hl-count { font-size: 11.5px; color: var(--faint); }
+.hl-photos { display: flex; margin-top: 8px; }
+.hl-photos span { width: 34px; height: 34px; margin-right: -7px; border: 2px solid var(--bg-soft); border-radius: 8px; }
+.edit-panel { margin: 12px 16px 0; padding: 12px; border: 1px solid var(--brand-dim); border-radius: 14px; background: var(--bg-soft); }
+.edit-panel > * + * { margin-top: 10px; }
+.edit-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* seções do formulário */
+.sec { margin-top: 18px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.sec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.sec-ico { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--brand-wash); color: var(--brand); }
+.sec-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.sec-head .grow { min-width: 0; flex: 1; }
+.dot { display: none; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
+.sec.dirty .dot { display: inline-block; }
+.field + .field { margin-top: 12px; }
+.field label, .lbl { display: block; margin-bottom: 6px; font-size: 12.5px; color: var(--muted); }
+.handle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; font-size: 12.5px; color: var(--faint); }
+.toolbar-fmt { display: flex; gap: 2px; margin-bottom: 6px; }
+.bio-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.picked { display: grid; gap: 6px; margin: 0 0 10px; padding: 0; list-style: none; }
+.picked li { display: flex; align-items: center; gap: 6px; padding: 5px 5px 5px 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); }
+.picked .n { width: 18px; text-align: center; font-size: 12px; color: var(--faint); }
+.picked .em { font-size: 17px; }
+.picked .nm { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picked .ct { font-size: 12px; color: var(--faint); }
+.picked .grip { cursor: grab; touch-action: none; }
+.picked li.dragging { border-color: var(--line-hi); box-shadow: 0 10px 24px rgb(0 0 0 / 0.4); }
+.count-badge { font-size: 12px; color: var(--faint); }
+.social { display: grid; gap: 8px; }
+.social-row { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 10px; }
+.social-ico { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--surface-hi); color: var(--muted); }
+.social-row .err { grid-column: 2; margin: -2px 0 0; font-size: 12px; color: var(--danger); }
+
+/* a barra do Salvar */
+.savebar { position: absolute; right: 12px; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 8px; max-width: 640px; margin-inline: auto; padding: 10px 10px 10px 14px; border: 1px solid var(--line-hi); border-radius: 16px; background: rgb(27 27 31 / 0.94); box-shadow: 0 16px 40px rgb(0 0 0 / 0.5); backdrop-filter: blur(10px); }
+.savebar .state { min-width: 0; flex: 1; font-size: 13px; color: var(--muted); }
+.savebar .state b { color: var(--ink); font-weight: 500; }
+.savebar.dirty { border-color: var(--brand-dim); }
+.modal-layer { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; padding: 18px; background: rgb(6 6 8 / 0.6); }
+.modal { width: min(400px, 100%); padding: 18px; border: 1px solid var(--line-hi); border-radius: 16px; background: var(--surface); }
+.modal h3 { margin: 0 0 6px; font-family: var(--display); font-size: 21px; font-style: italic; font-weight: 400; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* notas */
+.notes { display: grid; gap: 16px; }
+.note { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.note h2 { margin: 0 0 10px; font-family: var(--display); font-size: 21px; font-style: italic; font-weight: 400; }
+.note ul { margin: 0; padding-left: 18px; color: var(--muted); }
+.note li + li { margin-top: 7px; }
+.note li b { color: var(--ink); font-weight: 500; }
+.map-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.map-table td { padding: 7px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.map-table td:first-child { width: 46%; padding-right: 10px; color: var(--faint); }
+.toast { position: fixed; z-index: 60; bottom: 24px; left: 50%; max-width: calc(100% - 32px); padding: 10px 14px; border: 1px solid var(--line-hi); border-radius: 12px; background: var(--surface-hi); opacity: 0; transform: translate(-50%, 16px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+<symbol id="i-at-sign" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></symbol>
+<symbol id="i-message-circle" viewBox="0 0 24 24"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/></symbol>
+<symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+<symbol id="i-circle-play" viewBox="0 0 24 24"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></symbol>
+<symbol id="i-bold" viewBox="0 0 24 24"><path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"/></symbol>
+<symbol id="i-italic" viewBox="0 0 24 24"><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></symbol>
+<symbol id="i-underline" viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/></symbol>
+<symbol id="i-strikethrough" viewBox="0 0 24 24"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/></symbol>
+<symbol id="i-link-2" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></symbol>
+<symbol id="i-grip-vertical" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></symbol>
+<symbol id="i-move" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="m15 19-3 3-3-3"/><path d="m19 9 3 3-3 3"/><path d="M2 12h20"/><path d="m5 9-3 3 3 3"/><path d="m9 5 3-3 3 3"/></symbol>
+<symbol id="i-undo-2" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
+<symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></symbol>
+<symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="i-text-quote" viewBox="0 0 24 24"><path d="M17 5H3"/><path d="M21 12H8"/><path d="M21 19H8"/><path d="M3 12v7"/></symbol>
+<symbol id="i-layout-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+<symbol id="i-share-2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></symbol>
+<symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
+<symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></symbol>
+<symbol id="i-circle-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></symbol>
+</svg>
+
+<header class="top shell">
+  <p class="plaque">Proposta de UI · só visual, nada mudou no app</p>
+  <h1 class="display">Editar perfil</h1>
+  <p class="lead">O cartão do topo é a prévia ao vivo: troque o banner e a foto nele mesmo. Mexa em tudo e salve uma vez só, no rodapé. Nada é gravado de verdade.</p>
+</header>
+
+<main class="shell">
+  <section class="panel">
+    <div>
+      <div class="toolbar">
+        <div class="seg device-toggle" role="group" aria-label="Tamanho da tela">
+          <button type="button" data-device="phone" aria-pressed="true"><svg class="i i-sm" aria-hidden="true"><use href="#i-smartphone"/></svg>Celular</button>
+          <button type="button" data-device="desktop" aria-pressed="false"><svg class="i i-sm" aria-hidden="true"><use href="#i-monitor"/></svg>Computador</button>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="restart"><svg class="i i-sm" aria-hidden="true"><use href="#i-undo-2"/></svg>Recomeçar</button>
+      </div>
+
+      <div class="stage" data-device="phone">
+        <div class="page" id="page">
+          <div class="page-inner">
+            <button type="button" class="back" id="back"><svg class="i" aria-hidden="true"><use href="#i-arrow-left"/></svg>Perfil</button>
+            <h2 class="page-title display">Editar perfil</h2>
+            <p class="page-sub">O que todo mundo vê no seu perfil, até sem conta.</p>
+
+            <!-- o cartão -->
+            <div class="card">
+              <div class="banner" id="banner" aria-label="Banner">
+                <img id="banner-img" alt="" draggable="false" hidden>
+                <span class="pill drag-hint" id="drag-hint" hidden><svg class="i i-xs" aria-hidden="true"><use href="#i-move"/></svg>Arraste para ajustar</span>
+                <div class="banner-tools">
+                  <button type="button" class="pill" id="banner-btn"><svg class="i i-xs" aria-hidden="true"><use href="#i-image"/></svg><span id="banner-btn-text">Pôr banner</span></button>
+                </div>
+              </div>
+              <div class="edit-panel" id="banner-panel" hidden>
+                <label class="plaque" for="banner-url" style="display:block">Link do banner</label>
+                <input class="input" id="banner-url" inputmode="url" placeholder="https://…" autocomplete="off">
+                <p class="micro">Larga fica melhor (1500×500). Nada é enviado nem copiado. <button type="button" class="link" id="banner-sample">Usar um de exemplo</button></p>
+                <div class="edit-row">
+                  <button type="button" class="btn btn-ghost btn-sm" id="banner-remove">Tirar o banner</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="banner-done"><svg class="i i-sm" aria-hidden="true"><use href="#i-check"/></svg>Pronto</button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="avatar-wrap">
+                  <div class="avatar" id="avatar"></div>
+                  <button type="button" class="avatar-edit" id="avatar-btn" aria-label="Trocar a foto"><svg class="i i-sm" aria-hidden="true"><use href="#i-camera"/></svg></button>
+                </div>
+                <p class="card-name display" id="card-name"></p>
+                <p class="card-handle">@lay.vitrine</p>
+                <p class="card-bio" id="card-bio"></p>
+                <div class="card-links" id="card-links"></div>
+                <div class="card-hl" id="card-hl"></div>
+              </div>
+              <div class="edit-panel" id="avatar-panel" hidden style="margin-bottom:16px">
+                <label class="plaque" for="avatar-url" style="display:block">Link da foto</label>
+                <input class="input" id="avatar-url" inputmode="url" placeholder="https://…" autocomplete="off">
+                <p class="micro">Quadrada fica melhor. <button type="button" class="link" id="avatar-sample">Usar uma de exemplo</button></p>
+                <div class="edit-row">
+                  <button type="button" class="btn btn-ghost btn-sm" id="avatar-remove">Tirar a foto</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="avatar-done"><svg class="i i-sm" aria-hidden="true"><use href="#i-check"/></svg>Pronto</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- nome -->
+            <section class="sec" data-part="identity" aria-labelledby="s-name">
+              <div class="sec-head">
+                <span class="sec-ico"><svg class="i" aria-hidden="true"><use href="#i-user"/></svg></span>
+                <span class="grow"><h2 id="s-name">Nome</h2></span>
+                <span class="dot" title="Mudou"></span>
+              </div>
+              <div class="field">
+                <label for="name">Nome de exibição</label>
+                <input class="input" id="name" maxlength="80" placeholder="Como você quer aparecer" autocomplete="off">
+                <div class="handle-row"><span>@lay.vitrine</span><button type="button" class="link" id="handle-link">Trocar o @</button></div>
+              </div>
+            </section>
+
+            <!-- bio -->
+            <section class="sec" data-part="bio" aria-labelledby="s-bio">
+              <div class="sec-head">
+                <span class="sec-ico"><svg class="i" aria-hidden="true"><use href="#i-text-quote"/></svg></span>
+                <span class="grow"><h2 id="s-bio">Bio</h2></span>
+                <span class="dot" title="Mudou"></span>
+              </div>
+              <div class="toolbar-fmt" role="toolbar" aria-label="Formatar a bio" id="fmt"></div>
+              <label class="sr-only" for="bio">Bio</label>
+              <textarea class="input" id="bio" rows="3" maxlength="220" placeholder="Do que você gosta, o que anda vendo, lendo, jogando…"></textarea>
+              <div class="bio-foot">
+                <p class="micro">Selecione um trecho e toque num botão. A prévia é o cartão lá em cima.</p>
+                <p class="micro" id="bio-count" style="flex-shrink:0"></p>
+              </div>
+            </section>
+
+            <!-- destaques -->
+            <section class="sec" data-part="card" aria-labelledby="s-hl">
+              <div class="sec-head">
+                <span class="sec-ico"><svg class="i" aria-hidden="true"><use href="#i-layout-grid"/></svg></span>
+                <span class="grow"><h2 id="s-hl">Destaques</h2></span>
+                <span class="count-badge" id="hl-count"></span>
+                <span class="dot" title="Mudou"></span>
+              </div>
+              <ol class="picked" id="picked"></ol>
+              <p class="lbl" id="hl-add-label">Pôr no cartão (só as públicas)</p>
+              <div class="chips" id="available"></div>
+              <p class="micro" id="hl-full" hidden style="margin-top:8px">O cartão está cheio: tire uma para pôr outra.</p>
+            </section>
+
+            <!-- redes -->
+            <section class="sec" data-part="social" aria-labelledby="s-social">
+              <div class="sec-head">
+                <span class="sec-ico"><svg class="i" aria-hidden="true"><use href="#i-share-2"/></svg></span>
+                <span class="grow"><h2 id="s-social">Redes</h2></span>
+                <span class="dot" title="Mudou"></span>
+              </div>
+              <div class="social" id="social"></div>
+            </section>
+          </div>
+        </div>
+
+        <div class="savebar" id="savebar">
+          <span class="state" id="save-state">Tudo salvo.</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="discard" disabled>Descartar</button>
+          <button type="button" class="btn btn-primary" id="save" disabled>Salvar</button>
+        </div>
+        <div class="modal-layer" id="modal" hidden></div>
+      </div>
+    </div>
+
+    <aside class="notes">
+      <div class="note">
+        <h2>O que muda</h2>
+        <ul>
+          <li><b>Um Salvar só</b>, sempre à vista no rodapé. Ele diz o que mudou (“2 partes”), e o <b>Descartar</b> volta tudo.</li>
+          <li><b>Sair sem salvar pergunta antes</b> (teste no “Perfil” do topo com algo mudado).</li>
+          <li><b>O cartão é a prévia ao vivo.</b> Banner e foto se trocam nele mesmo, nos botões por cima da imagem.</li>
+          <li><b>A posição do banner é no dedo:</b> arraste a imagem para cima ou para baixo, no lugar da barrinha.</li>
+          <li><b>Seções em cartões</b> com ícone, e um pontinho roxo na que mudou.</li>
+          <li><b>Bio sem caixa de prévia separada</b>: o cartão já mostra o negrito, o link etc.</li>
+          <li><b>Destaques</b>: a lista na ordem (arraste pela alça ou use as setas), o contador “3 de 6” e as categorias públicas em etiquetas para pôr.</li>
+          <li><b>Redes com o ícone</b> de cada uma, numa coluna só.</li>
+        </ul>
+      </div>
+      <div class="note">
+        <h2>Onde foi parar cada coisa</h2>
+        <table class="map-table">
+          <tbody>
+            <tr><td>Banner: link, posição, Salvar banner</td><td>Botão no banner do cartão; a posição se arrasta</td></tr>
+            <tr><td>Foto (link) e Salvar foto e nome</td><td>Botão da câmera na foto do cartão</td></tr>
+            <tr><td>Nome de exibição</td><td>Seção Nome (com o @ e o atalho para trocá-lo)</td></tr>
+            <tr><td>Bio, formatação, Prévia e Salvar cartão</td><td>Seção Bio; a prévia é o cartão</td></tr>
+            <tr><td>Categorias no cartão</td><td>Seção Destaques</td></tr>
+            <tr><td>Redes e Salvar redes</td><td>Seção Redes</td></tr>
+            <tr><td>4 botões de salvar e o Concluir</td><td>Um Salvar no rodapé (e “Perfil” no topo para voltar)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </aside>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict"
+const $ = (sel, root = document) => root.querySelector(sel)
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)]
+const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }
+const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ESC[c])
+const ico = (name, cls = "") => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${name}"></use></svg>`
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+const BIO_MAX = 220
+const CARD_MAX = 6
+
+function toast(text) {
+  const el = $("#toast")
+  el.textContent = text
+  el.classList.add("show")
+  clearTimeout(toast.timer)
+  toast.timer = setTimeout(() => el.classList.remove("show"), 2600)
+}
+
+$$("[data-device]").forEach((button) =>
+  button.addEventListener("click", () => {
+    $$("[data-device]").forEach((b) => b.setAttribute("aria-pressed", String(b === button)))
+    $(".stage").dataset.device = button.dataset.device
+  })
+)
+
+// ---------------------------------------------------------------- dados de mentira
+const svgUri = (svg) => "data:image/svg+xml;utf8," + encodeURIComponent(svg)
+const SAMPLE_BANNER = svgUri(`<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="900" viewBox="0 0 1500 900"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1d3a"/><stop offset="0.5" stop-color="#5b3b6e"/><stop offset="1" stop-color="#d98a6a"/></linearGradient></defs><rect width="1500" height="900" fill="url(#g)"/><circle cx="1150" cy="620" r="160" fill="#f3d9a4"/><g fill="#fff" opacity=".8"><circle cx="200" cy="120" r="4"/><circle cx="420" cy="80" r="3"/><circle cx="700" cy="160" r="5"/><circle cx="980" cy="90" r="3"/><circle cx="1300" cy="140" r="4"/></g><path d="M0 760 Q 300 640 600 740 T 1500 700 V900 H0Z" fill="#1b1424"/><text x="40" y="70" font-family="Georgia" font-size="40" fill="#fff" opacity=".7">topo da imagem</text><text x="40" y="870" font-family="Georgia" font-size="40" fill="#fff" opacity=".7">pé da imagem</text></svg>`)
+const SAMPLE_AVATAR = svgUri(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><rect width="300" height="300" fill="#8fb3c9"/><circle cx="150" cy="120" r="60" fill="#f1e0d0"/><path d="M40 300 Q150 170 260 300Z" fill="#b98cc2"/></svg>`)
+const CATEGORIES = [
+  { id: "c1", name: "Jogos", icon: "🎮", total: 46, colors: ["#5b7a9a", "#3d6b4f", "#8a6a3a"] },
+  { id: "c2", name: "Restaurantes", icon: "🍽️", total: 5, colors: ["#8a5a3a", "#6b3d3d", "#a07a4a"] },
+  { id: "c3", name: "Filmes", icon: "🎬", total: 120, colors: ["#3a3a5a", "#5a3a4a", "#2a4a5a"] },
+  { id: "c4", name: "Livros", icon: "📚", total: 18, colors: ["#6a5a3a", "#3a5a4a", "#5a4a6a"] },
+  { id: "c5", name: "Cafés", icon: "☕", total: 9, colors: ["#6b4a35", "#8a6a4a", "#4a3a2a"] },
+  { id: "c6", name: "Séries", icon: "📺", total: 31, colors: ["#4a4a7a", "#7a4a6a", "#3a6a7a"] },
+  { id: "c7", name: "Sesc", icon: "🎭", total: 4, colors: ["#7a3a3a", "#3a3a3a", "#6a6a3a"] },
+  { id: "c8", name: "Viagens", icon: "✈️", total: 7, colors: ["#3a6a8a", "#8a8a5a", "#5a8a6a"] },
+]
+const byId = new Map(CATEGORIES.map((c) => [c.id, c]))
+const SOCIALS = [
+  { id: "instagram", label: "Instagram", icon: "at-sign", placeholder: "@seunome ou link do perfil" },
+  { id: "x", label: "X", icon: "at-sign", placeholder: "@seunome ou link do perfil" },
+  { id: "discord", label: "Discord", icon: "message-circle", placeholder: "seunome ou link de convite" },
+  { id: "spotify", label: "Spotify", icon: "music", placeholder: "link do perfil, artista ou playlist" },
+  { id: "youtube", label: "YouTube", icon: "circle-play", placeholder: "@seucanal ou link do canal" },
+]
+const SAVED = {
+  bannerUrl: SAMPLE_BANNER,
+  bannerPos: 35,
+  avatarUrl: "",
+  name: "Lay",
+  bio: "*agora* tem **markdown** e [link](https://exemplo.com)",
+  ids: ["c1", "c2", "c3"],
+  links: { instagram: "@lay", x: "", discord: "lay", spotify: "", youtube: "" },
+}
+const PARTS = { identity: "Foto e nome", bio: "Bio", card: "Destaques", social: "Redes", banner: "Banner" }
+let S
+let saved
+
+function reset() {
+  saved = structuredClone(SAVED)
+  S = structuredClone(SAVED)
+  $("#name").value = S.name
+  $("#bio").value = S.bio
+  $("#banner-panel").hidden = true
+  $("#avatar-panel").hidden = true
+  renderSocialInputs()
+  renderAll()
+  $("#page").scrollTop = 0
+}
+
+// ---------------------------------------------------------------- o que mudou
+function changedParts() {
+  const parts = []
+  if (S.bannerUrl !== saved.bannerUrl || S.bannerPos !== saved.bannerPos) parts.push("banner")
+  if (S.name !== saved.name || S.avatarUrl !== saved.avatarUrl) parts.push("identity")
+  if (S.bio !== saved.bio) parts.push("bio")
+  if (S.ids.join() !== saved.ids.join()) parts.push("card")
+  if (SOCIALS.some(({ id }) => S.links[id] !== saved.links[id])) parts.push("social")
+  return parts
+}
+
+function renderSaveBar() {
+  const parts = changedParts()
+  const dirty = parts.length > 0
+  $("#savebar").classList.toggle("dirty", dirty)
+  $("#save").disabled = !dirty
+  $("#discard").disabled = !dirty
+  $("#save-state").innerHTML = dirty
+    ? `<b>${parts.length === 1 ? "1 parte mudou" : `${parts.length} partes mudaram`}</b> · ${parts.map((p) => PARTS[p]).join(", ")}`
+    : "Tudo salvo."
+  $$(".sec[data-part]").forEach((sec) => sec.classList.toggle("dirty", parts.includes(sec.dataset.part)))
+}
+
+// ---------------------------------------------------------------- a prévia
+function renderBio(text) {
+  let html = esc(text)
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+  html = html.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+  html = html.replace(/__(.+?)__/g, "<u>$1</u>")
+  html = html.replace(/~~(.+?)~~/g, "<s>$1</s>")
+  html = html.replace(/\*(.+?)\*/g, "<i>$1</i>")
+  return html
+}
+
+function handleOf(id, value) {
+  const v = value.trim()
+  if (!v) return ""
+  const m = v.match(/^https?:\/\/(?:www\.)?[^/]+\/(?:@)?([^/?#]+)/)
+  if (m) return id === "spotify" ? "perfil" : id === "discord" ? "convite" : "@" + m[1]
+  return id === "discord" ? v.replace(/^@/, "") : "@" + v.replace(/^@/, "")
+}
+
+function renderCard() {
+  const img = $("#banner-img")
+  img.hidden = !S.bannerUrl
+  if (S.bannerUrl && img.getAttribute("src") !== S.bannerUrl) img.src = S.bannerUrl
+  img.style.objectPosition = `center ${S.bannerPos}%`
+  $("#banner").classList.toggle("has", Boolean(S.bannerUrl))
+  $("#drag-hint").hidden = !S.bannerUrl
+  $("#banner-btn-text").textContent = S.bannerUrl ? "Trocar" : "Pôr banner"
+  const name = S.name.trim() || "lay.vitrine"
+  $("#avatar").innerHTML = S.avatarUrl ? `<img src="${esc(S.avatarUrl)}" alt="">` : esc(name[0].toUpperCase())
+  $("#card-name").textContent = name
+  $("#card-bio").innerHTML = renderBio(S.bio)
+  $("#card-links").innerHTML = SOCIALS.filter(({ id }) => S.links[id].trim() && !linkError(id, S.links[id]))
+    .map(({ id, label, icon }) => `<span>${ico(icon, "i-xs")}<b>${label}</b>${esc(handleOf(id, S.links[id]))}</span>`)
+    .join("")
+  $("#card-hl").innerHTML = S.ids
+    .map((id) => byId.get(id))
+    .map((c) => `<div class="hl"><div class="hl-top"><span class="em" aria-hidden="true">${c.icon}</span><span style="min-width:0"><span class="hl-name" style="display:block">${esc(c.name)}</span><span class="hl-count">${c.total} ${c.total === 1 ? "item" : "itens"}</span></span></div><div class="hl-photos">${c.colors.map((col) => `<span style="background:${col}"></span>`).join("")}</div></div>`)
+    .join("")
+}
+
+// ---------------------------------------------------------------- formulário
+const FORMATS = [
+  { label: "Negrito", icon: "bold", open: "**", close: "**" },
+  { label: "Itálico", icon: "italic", open: "*", close: "*" },
+  { label: "Sublinhado", icon: "underline", open: "__", close: "__" },
+  { label: "Riscado", icon: "strikethrough", open: "~~", close: "~~" },
+  { label: "Link", icon: "link-2", open: "[", close: "](https://)" },
+]
+$("#fmt").innerHTML = FORMATS.map((f, i) => `<button type="button" class="icon-btn" data-fmt="${i}" aria-label="${f.label}" title="${f.label}">${ico(f.icon)}</button>`).join("")
+$("#fmt").addEventListener("mousedown", (event) => event.preventDefault())
+$("#fmt").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-fmt]")
+  if (!button) return
+  const format = FORMATS[Number(button.dataset.fmt)]
+  const area = $("#bio")
+  const start = area.selectionStart
+  const end = area.selectionEnd
+  const core = area.value.slice(start, end).trim() || "texto"
+  const next = area.value.slice(0, start) + format.open + core + format.close + area.value.slice(end)
+  if (next.length > BIO_MAX) return toast(`Não cabe: a bio tem no máximo ${BIO_MAX} caracteres.`)
+  area.value = next
+  S.bio = next
+  area.focus()
+  area.setSelectionRange(start + format.open.length, start + format.open.length + core.length)
+  renderAll()
+})
+
+function renderPicked() {
+  $("#picked").innerHTML = S.ids
+    .map((id, index) => {
+      const c = byId.get(id)
+      return `<li data-id="${id}">
+        <button type="button" class="icon-btn grip" aria-label="Mover ${esc(c.name)} (setas sobem e descem)">${ico("grip-vertical")}</button>
+        <span class="n">${index + 1}</span><span class="em" aria-hidden="true">${c.icon}</span>
+        <span class="nm">${esc(c.name)}</span><span class="ct">${c.total}</span>
+        <button type="button" class="icon-btn" data-up="${index}" aria-label="Subir ${esc(c.name)}" ${index === 0 ? "disabled" : ""}>${ico("arrow-up", "i-sm")}</button>
+        <button type="button" class="icon-btn" data-down="${index}" aria-label="Descer ${esc(c.name)}" ${index === S.ids.length - 1 ? "disabled" : ""}>${ico("arrow-down", "i-sm")}</button>
+        <button type="button" class="icon-btn" data-out="${id}" aria-label="Tirar ${esc(c.name)} do cartão">${ico("x")}</button>
+      </li>`
+    })
+    .join("")
+  const full = S.ids.length >= CARD_MAX
+  const available = CATEGORIES.filter((c) => !S.ids.includes(c.id))
+  $("#available").innerHTML = available
+    .map((c) => `<button type="button" class="chip dashed" data-in="${c.id}" ${full ? "disabled" : ""}>${ico("plus", "i-sm")}<span aria-hidden="true">${c.icon}</span>${esc(c.name)}</button>`)
+    .join("")
+  $("#hl-full").hidden = !(full && available.length > 0)
+  $("#hl-count").textContent = `${S.ids.length} de ${CARD_MAX}`
+}
+
+function linkError(id, value) {
+  const v = value.trim()
+  if (!v) return null
+  if (/\s/.test(v)) return "Sem espaços: o @ ou o link."
+  if (id === "spotify" && !/^https?:\/\/open\.spotify\.com\//.test(v)) return "Cole o link do Spotify (open.spotify.com/…)."
+  if (/^https?:\/\//.test(v)) return null
+  if (!/^@?[\w.\-]{2,40}$/.test(v)) return "Use o @ ou o link do perfil."
+  return null
+}
+
+function renderSocialInputs() {
+  $("#social").innerHTML = SOCIALS.map(({ id, label, icon, placeholder }) => `<div class="social-row">
+      <span class="social-ico" title="${label}">${ico(icon)}</span>
+      <span><label class="sr-only" for="s-${id}">${label}</label><input class="input" id="s-${id}" data-social="${id}" placeholder="${label}: ${esc(placeholder)}" value="${esc(S.links[id])}" autocapitalize="none" autocomplete="off" spellcheck="false"></span>
+      <p class="err" id="e-${id}" hidden></p>
+    </div>`).join("")
+}
+
+function renderAll() {
+  renderCard()
+  renderPicked()
+  $("#bio-count").textContent = `${S.bio.length}/${BIO_MAX}`
+  renderSaveBar()
+}
+
+// ---------------------------------------------------------------- eventos
+$("#name").addEventListener("input", (event) => {
+  S.name = event.target.value
+  renderAll()
+})
+$("#bio").addEventListener("input", (event) => {
+  S.bio = event.target.value.slice(0, BIO_MAX)
+  renderAll()
+})
+$("#social").addEventListener("input", (event) => {
+  const id = event.target.dataset.social
+  if (!id) return
+  S.links[id] = event.target.value
+  $(`#e-${id}`).hidden = true
+  event.target.classList.remove("invalid")
+  renderAll()
+})
+$("#social").addEventListener("focusout", (event) => {
+  const id = event.target.dataset.social
+  if (!id) return
+  const error = linkError(id, S.links[id])
+  $(`#e-${id}`).textContent = error || ""
+  $(`#e-${id}`).hidden = !error
+  event.target.classList.toggle("invalid", Boolean(error))
+})
+$("#handle-link").addEventListener("click", () => toast("No app, abre Configurações › Nome de usuário."))
+
+$(".sec[data-part='card']").addEventListener("click", (event) => {
+  const t = event.target
+  const up = t.closest("[data-up]")
+  const down = t.closest("[data-down]")
+  const out = t.closest("[data-out]")
+  const add = t.closest("[data-in]")
+  const move = (from, to) => {
+    const [item] = S.ids.splice(from, 1)
+    S.ids.splice(to, 0, item)
+  }
+  if (up && !up.disabled) move(Number(up.dataset.up), Number(up.dataset.up) - 1)
+  else if (down && !down.disabled) move(Number(down.dataset.down), Number(down.dataset.down) + 1)
+  else if (out) S.ids = S.ids.filter((id) => id !== out.dataset.out)
+  else if (add && !add.disabled) S.ids.push(add.dataset.in)
+  else return
+  renderAll()
+})
+// Arrastar pela alça (mouse ou dedo) e as setas com a alça em foco.
+$("#picked").addEventListener("pointerdown", (event) => {
+  const grip = event.target.closest(".grip")
+  if (!grip) return
+  const row = grip.closest("li")
+  event.preventDefault()
+  grip.setPointerCapture(event.pointerId)
+  row.classList.add("dragging")
+  const moveTo = (e) => {
+    const over = document.elementFromPoint(e.clientX, e.clientY)?.closest("#picked li")
+    if (!over || over === row) return
+    const from = S.ids.indexOf(row.dataset.id)
+    const to = S.ids.indexOf(over.dataset.id)
+    const [item] = S.ids.splice(from, 1)
+    S.ids.splice(to, 0, item)
+    if (from < to) over.after(row)
+    else over.before(row)
+  }
+  const end = () => {
+    grip.removeEventListener("pointermove", moveTo)
+    renderAll()
+  }
+  grip.addEventListener("pointermove", moveTo)
+  grip.addEventListener("pointerup", end, { once: true })
+  grip.addEventListener("pointercancel", end, { once: true })
+})
+$("#picked").addEventListener("keydown", (event) => {
+  const grip = event.target.closest(".grip")
+  if (!grip || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return
+  event.preventDefault()
+  const id = grip.closest("li").dataset.id
+  const from = S.ids.indexOf(id)
+  const to = clamp(from + (event.key === "ArrowUp" ? -1 : 1), 0, S.ids.length - 1)
+  const [item] = S.ids.splice(from, 1)
+  S.ids.splice(to, 0, item)
+  renderAll()
+  $(`#picked [data-id="${id}"] .grip`).focus()
+})
+
+// banner: botão, painel e arrastar a posição
+function togglePanel(panel, input) {
+  const open = $(panel).hidden
+  $("#banner-panel").hidden = true
+  $("#avatar-panel").hidden = true
+  $(panel).hidden = !open
+  if (open) $(input).focus()
+}
+$("#banner-btn").addEventListener("click", () => {
+  $("#banner-url").value = S.bannerUrl === SAMPLE_BANNER ? "https://exemplo.com/banner.jpg" : S.bannerUrl
+  togglePanel("#banner-panel", "#banner-url")
+})
+$("#banner-url").addEventListener("input", (event) => {
+  S.bannerUrl = event.target.value.trim()
+  S.bannerPos = 50
+  renderAll()
+})
+$("#banner-sample").addEventListener("click", () => {
+  $("#banner-url").value = "https://exemplo.com/banner.jpg"
+  S.bannerUrl = SAMPLE_BANNER
+  S.bannerPos = 50
+  renderAll()
+})
+$("#banner-remove").addEventListener("click", () => {
+  $("#banner-url").value = ""
+  S.bannerUrl = ""
+  renderAll()
+})
+$("#banner-done").addEventListener("click", () => ($("#banner-panel").hidden = true))
+const bannerEl = $("#banner")
+bannerEl.addEventListener("pointerdown", (event) => {
+  if (!S.bannerUrl || event.target.closest("button")) return
+  bannerEl.setPointerCapture(event.pointerId)
+  const img = $("#banner-img")
+  const rect = bannerEl.getBoundingClientRect()
+  // Quanto a imagem sobra na altura (com cover): é o curso do arrasto.
+  const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1 / 3
+  const overflowPx = Math.max(1, rect.width * ratio - rect.height)
+  let lastY = event.clientY
+  const move = (e) => {
+    const dy = e.clientY - lastY
+    lastY = e.clientY
+    S.bannerPos = clamp(S.bannerPos - (dy / overflowPx) * 100, 0, 100)
+    renderAll()
+  }
+  const end = () => {
+    bannerEl.removeEventListener("pointermove", move)
+    S.bannerPos = Math.round(S.bannerPos)
+    renderAll()
+  }
+  bannerEl.addEventListener("pointermove", move)
+  bannerEl.addEventListener("pointerup", end, { once: true })
+  bannerEl.addEventListener("pointercancel", end, { once: true })
+})
+
+// foto
+$("#avatar-btn").addEventListener("click", () => {
+  $("#avatar-url").value = S.avatarUrl === SAMPLE_AVATAR ? "https://exemplo.com/foto.jpg" : S.avatarUrl
+  togglePanel("#avatar-panel", "#avatar-url")
+})
+$("#avatar-url").addEventListener("input", (event) => {
+  S.avatarUrl = event.target.value.trim()
+  renderAll()
+})
+$("#avatar-sample").addEventListener("click", () => {
+  $("#avatar-url").value = "https://exemplo.com/foto.jpg"
+  S.avatarUrl = SAMPLE_AVATAR
+  renderAll()
+})
+$("#avatar-remove").addEventListener("click", () => {
+  $("#avatar-url").value = ""
+  S.avatarUrl = ""
+  renderAll()
+})
+$("#avatar-done").addEventListener("click", () => ($("#avatar-panel").hidden = true))
+
+// salvar, descartar, sair
+$("#save").addEventListener("click", () => {
+  const bad = SOCIALS.find(({ id }) => linkError(id, S.links[id]))
+  if (bad) {
+    $(`#s-${bad.id}`).focus()
+    $(`#s-${bad.id}`).dispatchEvent(new FocusEvent("focusout", { bubbles: true }))
+    return toast(`Confira o ${bad.label} antes de salvar.`)
+  }
+  const parts = changedParts()
+  $("#save").disabled = true
+  $("#save").textContent = "Salvando…"
+  setTimeout(() => {
+    saved = structuredClone(S)
+    $("#save").textContent = "Salvar"
+    renderAll()
+    toast(`Perfil salvo (${parts.map((p) => PARTS[p]).join(", ")}).`)
+  }, 700)
+})
+$("#discard").addEventListener("click", () => {
+  S = structuredClone(saved)
+  $("#name").value = S.name
+  $("#bio").value = S.bio
+  renderSocialInputs()
+  renderAll()
+  toast("Voltou ao que estava salvo.")
+})
+$("#back").addEventListener("click", () => {
+  if (changedParts().length === 0) return toast("No app, volta para o perfil.")
+  const layer = $("#modal")
+  layer.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><h3>Sair sem salvar?</h3><p class="micro">O que você mudou aqui se perde.</p><div class="modal-actions"><button type="button" class="btn btn-ghost" data-stay>Continuar editando</button><button type="button" class="btn btn-outline" data-leave>Sair sem salvar</button></div></div>`
+  layer.hidden = false
+  layer.querySelector("[data-stay]").focus()
+})
+$("#modal").addEventListener("click", (event) => {
+  if (event.target.closest("[data-leave]")) {
+    $("#modal").hidden = true
+    toast("No app, volta para o perfil sem salvar.")
+    reset()
+  } else if (event.target === event.currentTarget || event.target.closest("[data-stay]")) $("#modal").hidden = true
+})
+$("#restart").addEventListener("click", reset)
+
+reset()
+</script>
+</body>
+</html>

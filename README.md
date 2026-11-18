@@ -59,7 +59,9 @@ mais cria conta com e-mail e senha.
   destaque** com os 3 melhores itens de cada uma. A bio aceita **negrito**,
   *itálico*, sublinhado, riscado e links. Embaixo, as abas
   **Coleções**, **Favoritas** e **Mapa**. Você edita tudo no próprio perfil,
-  em **Editar perfil**.
+  em **Editar perfil**: o cartão de lá é a prévia ao vivo (o banner e a foto
+  se trocam nele; a posição do banner, arrastando) e um **Salvar** só grava
+  tudo de uma vez.
 - **Story.** Um toque gera uma imagem pronta para o story do Instagram, com o
   seu cartão e um QR do seu perfil (no computador, ela vai para a área de
   transferência).

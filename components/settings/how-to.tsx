@@ -167,7 +167,8 @@ export function HowTo() {
         <ul>
           <li>
             Em <b>Editar perfil</b>: banner, foto, nome, bio, até 6 categorias em destaque e as suas
-            redes. A bio aceita <b>negrito</b>, <i>itálico</i>, <u>sublinhado</u>, <s>riscado</s> e
+            redes, com um <b>Salvar</b> só no fim. O cartão do topo mostra como fica; arraste o banner
+            para escolher o pedaço que aparece. A bio aceita <b>negrito</b>, <i>itálico</i>, <u>sublinhado</u>, <s>riscado</s> e
             links: selecione um trecho e toque num dos botões acima da caixa.
           </li>
           <li>
