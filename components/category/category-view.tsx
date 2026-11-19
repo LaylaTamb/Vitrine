@@ -16,7 +16,6 @@ import {
   rectSortingStrategy,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import {
@@ -80,7 +79,12 @@ import { applyOrder, breadcrumbOf, foldersOf } from "@/lib/domain/collections"
 import { readDropTarget } from "@/lib/domain/drag"
 import { entryFolderTotals, itemsAt, itemsUnder, resolveFolderId } from "@/lib/domain/entry-folders"
 import { locationFieldsOf } from "@/lib/domain/fields"
-import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
+import {
+  DEFAULT_GRID_SIZE,
+  GRID_CLASSES,
+  LIST_CLASSES,
+  normalizeGridSize,
+} from "@/lib/domain/grid-size"
 import type { ConnectedProvider } from "@/lib/domain/connected"
 import { canFavorite } from "@/lib/domain/favorites"
 import { isInbox } from "@/lib/domain/inbox"
@@ -319,7 +323,6 @@ export function CategoryView({
   const isTier = view === "tier"
   const canDragItems =
     canEdit && manual && !active && !selecting && !isTier && filtered.length > 1
-  const dragStrategy = cardView === "grid" ? rectSortingStrategy : verticalListSortingStrategy
   // Levar um item para uma subpasta (ou subir um nível) arrastando vale em
   // qualquer ordenação, até com filtro; reordenar, só na ordem manual.
   const canMoveItems =
@@ -328,7 +331,8 @@ export function CategoryView({
     !isTier &&
     (levelFolders.length > 0 || currentFolderId !== null)
   const itemsDraggable = canDragItems || (canMoveItems && filtered.length > 0)
-  const itemStrategy = canDragItems ? dragStrategy : noShiftStrategy
+  // A lista também é grade (duas colunas): a mesma estratégia serve para as duas.
+  const itemStrategy = canDragItems ? rectSortingStrategy : noShiftStrategy
 
   async function onDragEnd({ active: dragged, over }: DragEndEvent) {
     if (!over || dragged.id === over.id) return
@@ -844,9 +848,7 @@ export function CategoryView({
                 <SortableContext items={filtered.map((item) => item.id)} strategy={itemStrategy}>
                   <div
                     className={cn(
-                      cardView === "grid"
-                        ? cn("grid", GRID_CLASSES[gridSize])
-                        : "flex flex-col gap-2",
+                      cardView === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : LIST_CLASSES,
                       selected.length > 0 && "pb-16"
                     )}
                   >

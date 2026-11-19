@@ -10,7 +10,7 @@
  */
 
 import { DEFAULT_CURRENCY } from "./fields"
-import { formatDateBR, formatDecimal, formatMinutes, formatRating } from "./format"
+import { formatDateBR, formatDecimal, formatMinutes, formatMoney, formatRating } from "./format"
 import { TIERS, tierOf } from "./tiers"
 import type { EntryView, Estrutura, FieldType, Tag } from "./types"
 
@@ -66,7 +66,7 @@ function formatNumber(tipo: FieldType, value: number, moeda?: string): string {
     case "star":
       return `★ ${formatRating(Math.round(value * 10) / 10)}`
     case "currency":
-      return `${moeda ?? DEFAULT_CURRENCY} ${formatDecimal(value, 2)}`
+      return `${moeda ?? DEFAULT_CURRENCY} ${formatMoney(value)}`
     case "decimal":
       return formatDecimal(value, 2)
     default:

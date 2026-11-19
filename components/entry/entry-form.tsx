@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { moveTargets } from "@/lib/domain/collections"
-import { locationFieldsOf } from "@/lib/domain/fields"
+import { fieldInputValue, locationFieldsOf } from "@/lib/domain/fields"
 import { formatRating } from "@/lib/domain/format"
 import { moveSummary } from "@/lib/domain/migrate"
 import { DEFAULT_TAG_COLOR } from "@/lib/domain/tags"
@@ -128,7 +128,13 @@ export function EntryForm({
     setValues(
       entry
         ? Object.fromEntries(
-            Object.entries(entry.values).map(([key, value]) => [key, String(value)])
+            Object.entries(entry.values).map(([key, value]) => [
+              key,
+              fieldInputValue(
+                estrutura.find((field) => field.id === key),
+                value
+              ),
+            ])
           )
         : {}
     )
@@ -139,6 +145,9 @@ export function EntryForm({
     setCreatingTag(false)
     setNewTagName("")
     setNewTagColor(DEFAULT_TAG_COLOR)
+    // Sem `estrutura`: ela só formata ao abrir. Com ela, um refresh do servidor
+    // (ao criar uma tag, por exemplo) apagaria o que já foi digitado.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, entry, defaultFolderId])
 
   function setValue(fieldId: string, value: string) {

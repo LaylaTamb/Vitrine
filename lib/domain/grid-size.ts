@@ -26,6 +26,12 @@ export const GRID_CLASSES: Record<GridSize, string> = {
   large: "grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
 }
 
+/**
+ * A lista: duas colunas lado a lado a partir de 640px; no celular, uma (duas
+ * linhas de ~165px não deixariam espaço para o nome).
+ */
+export const LIST_CLASSES = "grid grid-cols-1 gap-2 sm:grid-cols-2"
+
 /** Largura da miniatura no tier list: ≈ 56, 80 e 112 px. */
 export const TIER_THUMB_CLASSES: Record<GridSize, string> = {
   small: "w-14",

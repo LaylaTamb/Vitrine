@@ -12,7 +12,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import type { EntryView } from "@/lib/domain/types"
 import { categoryTintVars, cn } from "@/lib/utils"
 
-/** O item no modo lista: miniatura 1:1, nome, resumo, tags e a nota à direita. */
+/**
+ * O item no modo lista: miniatura 1:1, nome, resumo, tags e a nota à direita.
+ * A lista tem duas colunas, então as estrelas e as tags dependem da largura
+ * da LINHA (`@container`), não da tela.
+ */
 export function EntryRow({
   view,
   canEdit,
@@ -43,7 +47,7 @@ export function EntryRow({
   return (
     <div
       className={cn(
-        "group/card vitrine-card flex items-center gap-3 p-2",
+        "group/card vitrine-card @container flex items-center gap-3 p-2",
         selected && "border-brand-dim bg-surface-hi"
       )}
       style={categoryTintVars(categoryColor)}
@@ -91,7 +95,7 @@ export function EntryRow({
         </div>
 
         {view.tags.length > 0 ? (
-          <div className="hidden shrink-0 gap-1 sm:flex">
+          <div className="hidden shrink-0 gap-1 @lg:flex">
             {view.tags.slice(0, 2).map((tag) => (
               <TagPill key={tag.id} tag={tag} size="xs" />
             ))}
@@ -100,8 +104,8 @@ export function EntryRow({
 
         {showRating ? (
           <div className="flex shrink-0 items-center gap-2">
-            {/* No celular, só o número: o nome precisa do espaço. */}
-            <span className="hidden sm:inline-flex">
+            {/* Linha estreita, só o número: o nome precisa do espaço. */}
+            <span className="hidden @sm:inline-flex">
               <Stars percent={view.ratingPercent} size="sm" />
             </span>
             <span
@@ -116,14 +120,14 @@ export function EntryRow({
         ) : null}
       </Link>
 
-      {/* No celular as ações saem da linha, mas a alça fica: é por ela que se arrasta. */}
-      {canEdit && dragHandle ? <div className="shrink-0 sm:hidden">{dragHandle}</div> : null}
+      {/* Na linha estreita as ações saem, mas a alça fica: é por ela que se arrasta. */}
+      {canEdit && dragHandle ? <div className="shrink-0 @md:hidden">{dragHandle}</div> : null}
 
       {canEdit ? (
-        // No celular (sem hover) estas ações nem aparecem: fora da linha, o nome
-        // ganha o espaço. Editar e excluir seguem na página do item. Em tablet
-        // de toque, à vista.
-        <div className="card-actions hidden shrink-0 items-center gap-0.5 sm:flex [@media(hover:none)]:opacity-100">
+        // Na linha estreita (celular, ou a lista em duas colunas) estas ações nem
+        // aparecem: fora da linha, o nome ganha o espaço. Editar e excluir seguem
+        // na página do item. Em tablet de toque, à vista.
+        <div className="card-actions hidden shrink-0 items-center gap-0.5 @md:flex [@media(hover:none)]:opacity-100">
           {dragHandle}
           <button
             type="button"

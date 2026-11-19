@@ -188,7 +188,7 @@ describe("fields", () => {
   it("exibe moeda com o símbolo do campo, e decimal com 2 casas", () => {
     const currency = { id: "f_cur", nome: "Preço", tipo: "currency" as const, moeda: "$" }
     const decimal = { id: "f_dec", nome: "Peso", tipo: "decimal" as const }
-    expect(formatFieldValue(currency, 49.9)).toBe("$ 49,9")
+    expect(formatFieldValue(currency, 49.9)).toBe("$ 49,90")
     expect(formatFieldValue(decimal, 4.5)).toBe("4,5")
   })
 

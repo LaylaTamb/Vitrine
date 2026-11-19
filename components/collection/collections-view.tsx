@@ -13,7 +13,6 @@ import {
   arrayMove,
   rectSortingStrategy,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import Link from "next/link"
 import { FolderPlus, Library, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react"
@@ -52,7 +51,12 @@ import { breadcrumbOf, folderGlyphs, folderTotals, levelItems } from "@/lib/doma
 import { readDropTarget } from "@/lib/domain/drag"
 import { canFavorite, withFavorite } from "@/lib/domain/favorites"
 import { itemCount, plural } from "@/lib/domain/format"
-import { DEFAULT_GRID_SIZE, GRID_CLASSES, normalizeGridSize } from "@/lib/domain/grid-size"
+import {
+  DEFAULT_GRID_SIZE,
+  GRID_CLASSES,
+  LIST_CLASSES,
+  normalizeGridSize,
+} from "@/lib/domain/grid-size"
 import { splitInbox } from "@/lib/domain/inbox"
 import {
   restrictingAncestor,
@@ -338,8 +342,6 @@ export function CollectionsView({
     setDeleteTarget(null)
   }
 
-  const strategy = view === "grid" ? rectSortingStrategy : verticalListSortingStrategy
-
   return (
     <>
       {top ? <div className="space-y-4 pt-6">{top}</div> : null}
@@ -519,12 +521,8 @@ export function CollectionsView({
               }
             />
           ) : (
-            <SortableContext items={items.map((item) => item.id)} strategy={strategy}>
-              <div
-                className={cn(
-                  view === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : "flex flex-col gap-2"
-                )}
-              >
+            <SortableContext items={items.map((item) => item.id)} strategy={rectSortingStrategy}>
+              <div className={view === "grid" ? cn("grid", GRID_CLASSES[gridSize]) : LIST_CLASSES}>
                 {items.map((item) =>
                   item.kind === "folder" ? (
                     <CollectionCard

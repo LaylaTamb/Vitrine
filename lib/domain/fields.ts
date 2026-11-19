@@ -4,6 +4,7 @@
  * usado pelo modo JSON do editor de categoria.
  */
 
+import { formatMoney } from "./format"
 import {
   FIELD_TYPES,
   type CustomFields,
@@ -291,6 +292,38 @@ export function coerceCustomFields(
     if (value !== null) out[field.id] = value
   }
   return out
+}
+
+// ---------------------------------------------------------------------------
+// Digitação de Número e Moeda
+// ---------------------------------------------------------------------------
+
+/**
+ * O que se digita num campo de Número ou Moeda: algarismos, um "-" no começo
+ * e UMA vírgula, com até 2 casas (o que se grava). Decimal só com vírgula: o
+ * ponto não entra, então "1.500" fica 1500, como se escreve no Brasil.
+ */
+export function decimalInput(raw: string): string {
+  const sign = raw.trimStart().startsWith("-") ? "-" : ""
+  const [whole, ...rest] = raw.replace(/[^\d,]/g, "").split(",")
+  return rest.length > 0 ? `${sign}${whole},${rest.join("").slice(0, 2)}` : `${sign}${whole}`
+}
+
+/** Moeda ao sair do campo: `"50" → "50,00"`, `"12,5" → "12,50"`. Vazio ou só "-" fica como está. */
+export function moneyInput(raw: string): string {
+  const text = decimalInput(raw)
+  const num = Number(text.replace(",", "."))
+  if (!/\d/.test(text) || !Number.isFinite(num)) return text
+  return formatMoney(num)
+}
+
+/** O valor gravado como texto do formulário: com vírgula, e a moeda com os centavos. */
+export function fieldInputValue(field: FieldDef | undefined, value: FieldValue): string {
+  const num = Number(value)
+  if (field?.tipo === "currency" && Number.isFinite(num)) return formatMoney(num)
+  // O gravado vem com ponto (12.5): aqui ele é a vírgula, não um milhar.
+  if (field?.tipo === "decimal") return String(value).replace(".", ",")
+  return String(value)
 }
 
 // ---------------------------------------------------------------------------

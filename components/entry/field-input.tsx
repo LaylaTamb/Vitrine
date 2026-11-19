@@ -3,7 +3,12 @@
 import { DurationInput } from "@/components/entry/duration-input"
 import { StarInput } from "@/components/entry/stars"
 import { Input } from "@/components/ui/input"
-import { DEFAULT_CURRENCY, LOCATION_MAX_LENGTH } from "@/lib/domain/fields"
+import {
+  DEFAULT_CURRENCY,
+  LOCATION_MAX_LENGTH,
+  decimalInput,
+  moneyInput,
+} from "@/lib/domain/fields"
 import { formatRating } from "@/lib/domain/format"
 import type { FieldDef } from "@/lib/domain/types"
 import { cn } from "@/lib/utils"
@@ -105,7 +110,9 @@ export function FieldInput({
           placeholder="0,00"
           autoFocus={autoFocus}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => onChange(decimalInput(event.target.value))}
+          // Ao sair, os centavos que faltam: "50" vira "50,00".
+          onBlur={() => value && onChange(moneyInput(value))}
         />
       </div>
     )
@@ -136,7 +143,7 @@ export function FieldInput({
         placeholder="0"
         autoFocus={autoFocus}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(decimalInput(event.target.value))}
       />
     )
   }

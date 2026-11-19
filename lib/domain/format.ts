@@ -46,6 +46,12 @@ export function formatDecimal(value: number, decimals = 1): string {
   return (trimmed === "" ? "0" : trimmed).replace(".", ",")
 }
 
+/** Dinheiro: sempre com os centavos. `50 → "50,00"`, `12.5 → "12,50"` */
+export function formatMoney(value: number): string {
+  if (!Number.isFinite(value)) return ""
+  return value.toFixed(2).replace(".", ",")
+}
+
 /** Distância em metros: `850 → "850 m"`, `1234 → "1,2 km"`, `25000 → "25 km"`. */
 export function formatDistance(meters: number): string {
   if (!Number.isFinite(meters) || meters < 0) return ""

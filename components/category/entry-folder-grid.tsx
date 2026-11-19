@@ -1,16 +1,12 @@
 "use client"
 
-import {
-  SortableContext,
-  rectSortingStrategy,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable"
 import { Plus } from "lucide-react"
 
 import { CollectionCard } from "@/components/collection/collection-card"
 import type { ViewMode } from "@/components/layout/view-toggle"
 import { itemCount } from "@/lib/domain/format"
-import { GRID_CLASSES, type GridSize } from "@/lib/domain/grid-size"
+import { GRID_CLASSES, LIST_CLASSES, type GridSize } from "@/lib/domain/grid-size"
 import { cn } from "@/lib/utils"
 
 interface GridFolder {
@@ -20,7 +16,7 @@ interface GridFolder {
 
 /**
  * As subpastas do nível aberto, no mesmo cartão das pastas das Coleções e do
- * tamanho dos itens (a grade segue o P / M / G; na Lista, linhas). Cada uma
+ * tamanho dos itens (a grade segue o P / M / G; na Lista, duas colunas). Cada uma
  * abre a subpasta, recebe o item arrastado para o miolo dela e, para o dono,
  * se arrasta pela alça para mudar a ordem ou entrar em outra subpasta.
  */
@@ -45,11 +41,8 @@ export function EntryFolderGrid({
 }) {
   const list = view === "list"
   return (
-    <SortableContext
-      items={folders.map((folder) => folder.id)}
-      strategy={list ? verticalListSortingStrategy : rectSortingStrategy}
-    >
-      <div className={list ? "flex flex-col gap-2" : cn("grid", GRID_CLASSES[gridSize])}>
+    <SortableContext items={folders.map((folder) => folder.id)} strategy={rectSortingStrategy}>
+      <div className={list ? LIST_CLASSES : cn("grid", GRID_CLASSES[gridSize])}>
         {folders.map((folder) => (
           <CollectionCard
             key={folder.id}
