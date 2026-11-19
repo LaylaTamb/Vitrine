@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import {
   DndContext,
   KeyboardSensor,
-  TouchSensor,
+  PointerSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -41,7 +41,7 @@ import { restoreTrashAction } from "@/app/lixeira/actions"
 
 import { CategoryEditor } from "@/components/category/category-editor"
 import { DeleteEntryFolderDialog } from "@/components/category/delete-entry-folder-dialog"
-import { EntryFolderChips } from "@/components/category/entry-folder-chips"
+import { EntryFolderGrid } from "@/components/category/entry-folder-grid"
 import { ShareCategoryDialog } from "@/components/category/share-category-dialog"
 import { FilterBar } from "@/components/category/filter-bar"
 import { StatsPanel } from "@/components/category/stats-panel"
@@ -56,7 +56,7 @@ import { EntryRow } from "@/components/entry/entry-row"
 import { TierList } from "@/components/entry/tier-list"
 import { LinkedBar, type LinkView } from "@/components/explore/linked-bar"
 import { EmptyState } from "@/components/layout/empty-state"
-import { HandlePointerSensor, moveCollision, noShiftStrategy } from "@/components/layout/drag-move"
+import { moveCollision, noShiftStrategy } from "@/components/layout/drag-move"
 import { LevelNav, type Crumb } from "@/components/layout/level-nav"
 import { MoreMenu } from "@/components/layout/more-menu"
 import { Notice } from "@/components/layout/notice"
@@ -236,12 +236,11 @@ export function CategoryView({
   const cardView = view === "list" ? "list" : "grid"
 
   const sensors = useSensors(
-    useSensor(HandlePointerSensor, { activationConstraint: { distance: 4 } }),
-    // Só os chips de subpasta chegam aqui (o resto o de cima já pegou).
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
+    // Itens e subpastas se arrastam pela alça (`touch-none`): no dedo também.
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-      // Enter abre o chip de subpasta; Espaço pega para arrastar.
+      // Na alça, Espaço pega para arrastar (o Enter fica para os botões).
       keyboardCodes: { start: ["Space"], cancel: ["Escape"], end: ["Space", "Enter", "Tab"] },
     })
   )
@@ -735,7 +734,7 @@ export function CategoryView({
           />
 
           {tab === "itens" && levelFolders.length > 0 ? (
-            <EntryFolderChips
+            <EntryFolderGrid
               folders={levelFolders}
               countOf={(folderId) => totals.get(folderId)?.entries ?? 0}
               onOpen={setFolderParam}
@@ -743,6 +742,8 @@ export function CategoryView({
                 canEdit ? () => setFolderDialog({ open: true, folder: null }) : undefined
               }
               canEdit={canEdit}
+              view={cardView}
+              gridSize={gridSize}
             />
           ) : null}
 
