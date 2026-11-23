@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine — Modo visitante (proposta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Os mesmos tokens do app (app/globals.css): só escuro. */
+:root {
+  --bg: #121214; --bg-soft: #16161a; --surface: #1b1b1f; --surface-hi: #232328;
+  --line: #2a2a31; --line-hi: #3a3a43;
+  --ink: #ececef; --muted: #9d9da8; --faint: #6e6e78;
+  --brand: #b98cc2; --brand-dim: #8e6c96; --brand-wash: rgb(185 140 194 / 0.14);
+  --on-brand: #1a1220;
+  --display: "Fraunces", ui-serif, Georgia, serif;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--brand-dim); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.i-lg { width: 22px; height: 22px; }
+.plaque { margin: 0; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.display { font-family: var(--display); font-style: italic; font-weight: 400; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell { max-width: 1280px; margin-inline: auto; padding-inline: 16px; }
+
+/* ---------- página da proposta ---------- */
+.top { padding: 28px 0 8px; }
+.top h1 { margin: 6px 0 4px; font-size: clamp(30px, 5vw, 42px); line-height: 1.1; }
+.lead { margin: 0; max-width: 72ch; color: var(--muted); }
+.panel { display: grid; gap: 24px; padding: 20px 0 56px; }
+@media (min-width: 1200px) { .panel { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } }
+.toolbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 14px; }
+.panel > * { min-width: 0; }
+#screens { flex-wrap: wrap; justify-content: center; }
+.notes { display: grid; gap: 14px; }
+.note { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.note h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.note ul { margin: 0; padding-left: 18px; color: var(--muted); }
+.note li + li { margin-top: 6px; }
+.note b { color: var(--ink); font-weight: 500; }
+
+/* ---------- peças ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 13px; border: 1px solid transparent; border-radius: 10px; font-size: 13.5px; font-weight: 500; white-space: nowrap; background: none; }
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-outline { border-color: var(--line-hi); }
+.btn-ghost { color: var(--muted); }
+.btn-lg { height: 44px; padding: 0 18px; font-size: 15px; border-radius: 12px; }
+.btn-sm { height: 30px; padding: 0 10px; font-size: 12.5px; border-radius: 9px; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.seg button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--brand-wash); color: var(--brand); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 13px; background: none; }
+.chip.on { border-color: var(--brand-dim); background: var(--brand-wash); color: var(--ink); }
+.avatar { display: inline-grid; place-items: center; flex-shrink: 0; border-radius: 999px; color: #fff; font-weight: 600; }
+.photo { display: grid; place-items: center; overflow: hidden; border-radius: 12px; color: rgb(255 255 255 / 0.55); font-family: var(--display); font-style: italic; }
+.tag-sample { display: inline-flex; padding: 2px 8px; border: 1px dashed var(--line-hi); border-radius: 999px; color: var(--faint); font-size: 11px; }
+
+/* ---------- o palco ---------- */
+.stage { position: relative; max-width: 100%; height: 820px; margin-inline: auto; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: var(--bg); }
+.stage[data-device="phone"] { width: 375px; }
+.stage[data-device="desktop"] { width: 100%; max-width: 1060px; }
+@media (max-width: 560px) { .stage { height: 86dvh; min-height: 620px; border-radius: 18px; } .device-toggle { display: none !important; } }
+.app { position: absolute; inset: 0; display: flex; }
+.side { display: none; width: 200px; flex-shrink: 0; flex-direction: column; gap: 2px; padding: 20px 12px; border-right: 1px solid var(--line); }
+.stage[data-device="desktop"] .side { display: flex; }
+.word { margin: 0 10px 18px; font-family: var(--display); font-style: italic; font-size: 24px; }
+.side a { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; color: var(--muted); font-size: 14px; cursor: pointer; }
+.side a.on { background: var(--brand-wash); color: var(--ink); }
+.side .btn { margin-top: 10px; }
+.side .foot { display: grid; gap: 8px; margin-top: auto; }
+.main { position: relative; flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; }
+.phone-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--line); background: rgb(18 18 20 / 0.92); backdrop-filter: blur(12px); }
+.phone-top .word { margin: 0; font-size: 21px; }
+.stage[data-device="desktop"] .phone-top, .stage[data-device="desktop"] .tabbar { display: none; }
+.tabbar { position: absolute; inset: auto 0 0; z-index: 6; display: flex; border-top: 1px solid var(--line); background: rgb(18 18 20 / 0.95); }
+.tabbar a { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 10px; color: var(--faint); font-size: 10.5px; cursor: pointer; }
+.tabbar a.on { color: var(--ink); }
+.tabbar a.on .i { color: var(--brand); }
+.tabbar .add { display: grid; place-items: center; width: 44px; height: 44px; margin: 6px auto; border-radius: 15px; background: var(--brand); color: var(--on-brand); cursor: pointer; }
+.banner { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; padding: 9px 12px 9px 14px; border-bottom: 1px solid rgb(185 140 194 / 0.3); background: var(--brand-wash); font-size: 13px; }
+.banner span { flex: 1; min-width: 0; }
+.banner .x { padding: 4px; border: 0; background: none; color: var(--muted); }
+.content { padding: 16px 16px 110px; }
+.stage[data-device="desktop"] .content { max-width: 760px; margin-inline: auto; padding: 24px 24px 48px; }
+.screen { display: grid; gap: 16px; }
+
+/* boas-vindas (sem a navegação do app) */
+.welcome { position: absolute; inset: 0; overflow-y: auto; background: radial-gradient(700px 420px at 80% -10%, rgb(185 140 194 / 0.25), transparent 70%), var(--bg); }
+.w-top { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; height: 56px; padding: 0 16px; background: rgb(18 18 20 / 0.85); backdrop-filter: blur(12px); }
+.w-top .word { margin: 0 auto 0 0; font-size: 22px; }
+.w-body { display: grid; gap: 34px; max-width: 880px; margin-inline: auto; padding: 28px 20px 48px; }
+.hero h2 { margin: 0; font-size: clamp(34px, 8vw, 58px); line-height: 1.05; }
+.hero p { margin: 14px 0 22px; max-width: 46ch; color: var(--muted); font-size: 16px; }
+.hero .ctas { display: flex; flex-wrap: wrap; gap: 10px; }
+.hero small { display: block; margin-top: 10px; color: var(--faint); font-size: 12.5px; }
+.how { display: grid; gap: 12px; }
+.stage[data-device="desktop"] .how { grid-template-columns: repeat(3, 1fr); }
+.how div { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.how b { display: block; margin: 8px 0 4px; font-size: 15px; font-weight: 600; }
+.how p { margin: 0; color: var(--muted); font-size: 13px; }
+.how .emo { font-size: 26px; }
+.examples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stage[data-device="desktop"] .examples { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ex { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); cursor: pointer; }
+.ex .cv { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; aspect-ratio: 4 / 3; }
+.ex .cv .photo { border-radius: 0; font-size: 22px; }
+.ex .cv .photo:first-child { grid-row: span 2; font-size: 34px; }
+.ex div.t { padding: 10px 12px; }
+.ex b { display: block; font: italic 16px var(--display); }
+.ex small { color: var(--muted); font-size: 12px; }
+.final { padding: 22px; border: 1px solid var(--brand-dim); border-radius: 20px; background: var(--brand-wash); text-align: center; }
+.final h3 { margin: 0 0 6px; font-size: 26px; }
+.final p { margin: 0 0 14px; color: var(--muted); }
+.legal { display: flex; justify-content: center; gap: 16px; color: var(--faint); font-size: 12px; }
+
+/* início */
+.switch .seg { display: flex; width: 100%; }
+.switch .seg button { flex: 1; justify-content: center; padding: 8px 12px; font-size: 14px; }
+.search { position: relative; }
+.search .i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+.search input { width: 100%; height: 44px; padding: 0 14px 0 40px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); outline: none; }
+.search input::placeholder { color: var(--faint); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.head h2 { margin: 0; font-size: 22px; }
+.head a { color: var(--muted); font-size: 13px; cursor: pointer; }
+.people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stage[data-device="desktop"] .people { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.person { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 14px 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); text-align: center; }
+.person b { display: block; max-width: 100%; font-weight: 500; font-size: 13.5px; }
+.person small { display: block; max-width: 100%; color: var(--muted); font-size: 12px; }
+.card { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.who { display: flex; align-items: center; gap: 12px; }
+.who p { margin: 0; min-width: 0; font-size: 13.5px; line-height: 1.35; }
+.who b { font-weight: 500; }
+.who small { display: block; color: var(--faint); font-size: 12px; }
+.cover { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; }
+.cover .photo { border-radius: 0; font-size: 30px; }
+.cover .photo:first-child { grid-row: span 2; font-size: 50px; }
+.acts { display: flex; gap: 8px; }
+.acts .btn-primary { flex: 1; }
+.empty { display: grid; justify-items: center; gap: 10px; padding: 34px 20px; border: 1px dashed var(--line); border-radius: 18px; background: var(--bg-soft); text-align: center; }
+.empty h3 { margin: 0; font-size: 22px; }
+.empty p { margin: 0; max-width: 36ch; color: var(--muted); font-size: 13.5px; }
+
+/* categoria e perfil */
+.crumb { color: var(--faint); font-size: 12.5px; }
+.cat-head h2 { margin: 2px 0 4px; font-size: 32px; line-height: 1.1; }
+.cat-head .by { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bar .s { position: relative; flex: 1 1 100%; }
+.stage[data-device="desktop"] .bar .s { flex-basis: 0; }
+.bar .s input { width: 100%; height: 36px; padding: 0 10px 0 32px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); outline: none; }
+.bar .s .i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+.tg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.tg span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: var(--muted); font-size: 12px; }
+.tg span.on { background: var(--brand-wash); color: var(--brand); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stage[data-device="desktop"] .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tile .ph { position: relative; aspect-ratio: 4 / 5; border-radius: 12px; font-size: 30px; }
+.tile .ph .r { position: absolute; left: 6px; bottom: 6px; padding: 0 6px; border-radius: 6px; background: rgb(18 18 20 / 0.85); color: var(--ink); font: 500 11px/18px var(--sans); }
+.tile .ph .r::before { content: "★ "; color: var(--brand); }
+.tile p { margin: 6px 0 0; font: italic 14px var(--display); }
+.profile { overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.profile .banner-img { height: 96px; background: linear-gradient(135deg, #4a3a5a, #2a2030 60%, #3a2a2a); }
+.profile .body { padding: 0 16px 16px; }
+.profile .av { margin-top: -34px; border: 4px solid var(--surface); }
+.profile h2 { margin: 8px 0 0; font-size: 26px; }
+.profile .handle { color: var(--muted); font-size: 13px; }
+.profile .stats { display: flex; gap: 16px; margin: 10px 0 12px; font-size: 13px; }
+.profile .stats a { cursor: pointer; }
+.profile .stats b { font-weight: 600; }
+.rowlist { display: grid; gap: 8px; }
+.rowp { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.rowp div { min-width: 0; flex: 1; }
+.rowp small { display: block; color: var(--muted); font-size: 12px; }
+
+/* amostras */
+.sample-hero { display: grid; gap: 8px; }
+.sample-hero h2 { margin: 0; font-size: 30px; line-height: 1.1; }
+.sample-hero p { margin: 0; color: var(--muted); }
+.match { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 20px; background: linear-gradient(180deg, #2a2030, var(--surface) 70%); }
+.match .avs { display: flex; justify-content: center; }
+.match .avs span + span { margin-left: -14px; }
+.match .pct { text-align: center; font: 600 54px/1 var(--sans); color: var(--brand); }
+.match .why { text-align: center; color: var(--muted); font-size: 13px; }
+.mrow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.mrow span:last-child { margin-left: auto; color: var(--faint); font-size: 12px; }
+.map { position: relative; height: 300px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background:
+  linear-gradient(90deg, transparent 49%, rgb(255 255 255 / 0.04) 50%, transparent 51%) 0 0 / 60px 60px,
+  linear-gradient(0deg, transparent 49%, rgb(255 255 255 / 0.04) 50%, transparent 51%) 0 0 / 60px 60px,
+  radial-gradient(circle at 30% 40%, #22303a, #17191d 70%); }
+.pin { position: absolute; display: grid; place-items: center; width: 34px; height: 34px; border: 2px solid var(--bg); border-radius: 999px 999px 999px 4px; background: var(--brand); transform: rotate(-45deg); }
+.pin span { transform: rotate(45deg); font-size: 15px; }
+.sheet-list { display: grid; gap: 2px; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.sheet-list a { display: flex; align-items: center; gap: 12px; padding: 13px 14px; cursor: pointer; }
+.sheet-list a + a { border-top: 1px solid var(--line); }
+.sheet-list small { display: block; color: var(--muted); font-size: 12px; }
+.sheet-list .emo { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--surface-hi); font-size: 18px; }
+
+/* a janela de convite */
+.veil { position: absolute; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 0.6); }
+.stage[data-device="desktop"] .veil { align-items: center; }
+.invite { width: 100%; max-width: 400px; padding: 22px 20px 20px; border: 1px solid var(--line-hi); border-radius: 22px 22px 0 0; background: var(--surface); text-align: center; }
+.stage[data-device="desktop"] .invite { border-radius: 22px; }
+.invite .emo { font-size: 38px; }
+.invite h3 { margin: 6px 0 6px; font-size: 26px; line-height: 1.15; }
+.invite p { margin: 0 0 16px; color: var(--muted); font-size: 13.5px; }
+.invite .col { display: grid; gap: 8px; }
+.invite .col .btn { width: 100%; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+  <symbol id="map" viewBox="0 0 24 24"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="login" viewBox="0 0 24 24"><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></symbol>
+  <symbol id="download" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/></symbol>
+  <symbol id="userplus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="list" viewBox="0 0 24 24"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></symbol>
+  <symbol id="rows" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3"/><path d="M21 15H3"/></symbol>
+  <symbol id="sliders" viewBox="0 0 24 24"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></symbol>
+</svg>
+
+<div class="shell">
+  <header class="top">
+    <p class="plaque">Proposta · Modo visitante</p>
+    <h1 class="display">Conhecer o Vitrine antes de criar conta</h1>
+    <p class="lead">Quem chega sem conta vê uma página de boas-vindas e pode explorar o que é Público: as Sugestões,
+      as pessoas, as listas, os itens, os perfis e quem segue quem. As ações que gravam algo abrem um convite
+      para criar a conta, que volta para a mesma tela depois. Use os botões abaixo e toque em tudo dentro da
+      tela: Seguir, Pegar, ＋, Match.</p>
+  </header>
+
+  <div class="panel">
+    <div>
+      <div class="toolbar">
+        <div class="seg device-toggle" role="group" aria-label="Tamanho da tela">
+          <button type="button" data-device="phone" aria-pressed="true">Celular</button>
+          <button type="button" data-device="desktop" aria-pressed="false">Computador</button>
+        </div>
+        <div class="seg" role="group" aria-label="Tela" id="screens">
+          <button type="button" data-go="welcome" aria-pressed="true">Boas-vindas</button>
+          <button type="button" data-go="sugestoes" aria-pressed="false">Início</button>
+          <button type="button" data-go="categoria" aria-pressed="false">Categoria</button>
+          <button type="button" data-go="perfil" aria-pressed="false">Perfil</button>
+          <button type="button" data-go="match" aria-pressed="false">Amostras</button>
+        </div>
+      </div>
+
+      <div class="stage" id="stage" data-device="phone">
+        <!-- ================= BOAS-VINDAS (sem a navegação do app) ================= -->
+        <section class="welcome" data-screen="welcome">
+          <div class="w-top">
+            <p class="word">Vitrine</p>
+            <span class="btn btn-ghost btn-sm" data-invite="entrar">Entrar</span>
+            <span class="btn btn-primary btn-sm" data-invite="cadastro">Criar conta</span>
+          </div>
+          <div class="w-body">
+            <div class="hero">
+              <p class="plaque">A sua rede de gostos</p>
+              <h2 class="display">Guarde o que você ama. Mostre para quem quiser.</h2>
+              <p>Restaurantes, filmes, livros, jogos, viagens: catalogue do seu jeito, com as suas notas, e
+                compartilhe em um toque.</p>
+              <div class="ctas">
+                <span class="btn btn-primary btn-lg" data-invite="cadastro">Criar conta grátis</span>
+                <span class="btn btn-outline btn-lg" data-go="sugestoes">Explorar sem conta</span>
+              </div>
+              <small>Sem cadastro, você vê as listas públicas de quem já está aqui.</small>
+            </div>
+
+            <div class="how">
+              <div><span class="emo">🗂️</span><b>Catalogue</b><p>Pastas, categorias com os campos que você quiser e uma nota para cada item.</p></div>
+              <div><span class="emo">📲</span><b>Mostre</b><p>Pública, só para amigos ou privada. E a lista vira imagem para o story.</p></div>
+              <div><span class="emo">💞</span><b>Compare</b><p>Faça um match com amigos e descubra o que vocês têm em comum.</p></div>
+            </div>
+
+            <div>
+              <div class="head" style="margin-bottom:10px"><h2 class="display">Listas de quem já está aqui</h2><a data-go="sugestoes">Ver mais</a></div>
+              <div class="examples">
+                <div class="ex" data-go="categoria"><div class="cv"><div class="photo" style="background:linear-gradient(135deg,#5a4636,#2b2420)">G</div><div class="photo" style="background:linear-gradient(135deg,#3d4a3a,#1f2620)">S</div><div class="photo" style="background:linear-gradient(135deg,#4a3a4d,#241f27)">P</div></div><div class="t"><b>☕ Cafés de SP</b><small>@ana · 24 itens</small></div></div>
+                <div class="ex" data-go="categoria"><div class="cv"><div class="photo" style="background:linear-gradient(135deg,#3a4256,#1d2029)">D</div><div class="photo" style="background:linear-gradient(135deg,#523d33,#2a1f1b)">P</div><div class="photo" style="background:linear-gradient(135deg,#334a52,#1b2629)">C</div></div><div class="t"><b>🎬 Filmes de 2026</b><small>@bruno · 41 itens</small></div></div>
+                <div class="ex" data-go="categoria"><div class="cv"><div class="photo" style="background:linear-gradient(135deg,#4d3a3a,#271f1f)">T</div><div class="photo" style="background:linear-gradient(135deg,#3a4d4a,#1f2726)">O</div><div class="photo" style="background:linear-gradient(135deg,#4a4a3a,#26261f)">M</div></div><div class="t"><b>📚 Livros</b><small>@carol · 17 itens</small></div></div>
+                <div class="ex" data-go="categoria"><div class="cv"><div class="photo" style="background:linear-gradient(135deg,#5a3d33,#2a1f1b)">J</div><div class="photo" style="background:linear-gradient(135deg,#4a4033,#25201b)">K</div><div class="photo" style="background:linear-gradient(135deg,#3d3a52,#1f1e29)">A</div></div><div class="t"><b>🍜 Ramen</b><small>@elisa · 18 itens</small></div></div>
+              </div>
+              <p class="faint" style="margin:8px 0 0;font-size:12px">Listas públicas de verdade, as mais copiadas — vêm do banco.</p>
+            </div>
+
+            <div class="final">
+              <h3 class="display">Monte a sua vitrine em um minuto</h3>
+              <p>É grátis. Você escolhe o que fica público.</p>
+              <span class="btn btn-primary btn-lg" data-invite="cadastro">Criar conta</span>
+            </div>
+            <div class="legal"><span>Termos</span><span>Privacidade</span><span data-invite="entrar">Já tenho conta</span></div>
+          </div>
+        </section>
+
+        <!-- ================= O APP, COMO VISITANTE ================= -->
+        <div class="app" data-screen="app" hidden>
+          <nav class="side" aria-label="Principal">
+            <p class="word">Vitrine</p>
+            <a data-go="sugestoes" data-nav="inicio" class="on"><svg class="i"><use href="#house"/></svg> Início</a>
+            <a data-go="match" data-nav="match"><svg class="i"><use href="#heart"/></svg> Match</a>
+            <a data-go="mapa" data-nav="mapa"><svg class="i"><use href="#map"/></svg> Mapa</a>
+            <span class="btn btn-primary" data-go="adicionar"><svg class="i"><use href="#plus"/></svg> Adicionar</span>
+            <div class="foot">
+              <span class="btn btn-primary" data-invite="cadastro">Criar conta</span>
+              <span class="btn btn-outline" data-invite="entrar"><svg class="i"><use href="#login"/></svg> Entrar</span>
+            </div>
+          </nav>
+
+          <div class="main" id="main">
+            <div class="phone-top">
+              <p class="word">Vitrine</p>
+              <span class="btn btn-outline btn-sm" data-invite="entrar">Entrar</span>
+            </div>
+            <div class="banner" id="banner">
+              <span>Você está como visitante. <b style="font-weight:500">Monte a sua vitrine</b>, é grátis.</span>
+              <span class="btn btn-primary btn-sm" data-invite="cadastro">Criar conta</span>
+              <button class="x" type="button" aria-label="Fechar o aviso" onclick="this.parentElement.hidden = true"><svg class="i"><use href="#x"/></svg></button>
+            </div>
+
+            <div class="content">
+              <!-- INÍCIO: SUGESTÕES -->
+              <section class="screen" data-screen="sugestoes">
+                <div class="switch"><div class="seg"><button data-go="amigos" aria-pressed="false"><svg class="i"><use href="#users"/></svg> Amigos</button><button data-go="sugestoes" aria-pressed="true"><svg class="i"><use href="#sparkles"/></svg> Sugestões</button></div></div>
+                <label class="search"><svg class="i"><use href="#search"/></svg><input placeholder="Buscar pessoas e categorias…"></label>
+                <div class="chips"><span class="chip on">Tudo</span><span class="chip">☕ Cafés</span><span class="chip">🎬 Filmes</span><span class="chip">📚 Livros</span><span class="chip">🍜 Ramen</span></div>
+                <div class="head"><h2 class="display">Pessoas para seguir</h2><a>Ver todas (24)</a></div>
+                <div class="people">
+                  <div class="person"><span class="avatar" style="width:52px;height:52px;background:#9c6a7a" data-go="perfil">A</span><b class="truncate">Ana Lima</b><small class="truncate">@ana · 6 listas</small><span class="btn btn-primary btn-sm" data-invite="seguir:@ana"><svg class="i"><use href="#userplus"/></svg> Seguir</span></div>
+                  <div class="person"><span class="avatar" style="width:52px;height:52px;background:#5f8a7a">B</span><b class="truncate">Bruno</b><small class="truncate">@bruno · 3 listas</small><span class="btn btn-primary btn-sm" data-invite="seguir:@bruno"><svg class="i"><use href="#userplus"/></svg> Seguir</span></div>
+                  <div class="person"><span class="avatar" style="width:52px;height:52px;background:#6a7a9c">C</span><b class="truncate">Carol</b><small class="truncate">@carol · 4 listas</small><span class="btn btn-primary btn-sm" data-invite="seguir:@carol"><svg class="i"><use href="#userplus"/></svg> Seguir</span></div>
+                  <div class="person"><span class="avatar" style="width:52px;height:52px;background:#5f6a8a">E</span><b class="truncate">Elisa</b><small class="truncate">@elisa · 2 listas</small><span class="btn btn-primary btn-sm" data-invite="seguir:@elisa"><svg class="i"><use href="#userplus"/></svg> Seguir</span></div>
+                </div>
+                <p class="faint" style="margin:-6px 0 0;font-size:12px">Só aparece quem tem pelo menos uma lista Pública.</p>
+                <div class="head"><h2 class="display">Categorias para pegar</h2></div>
+                <article class="card">
+                  <div class="who"><span class="avatar" style="width:40px;height:40px;background:#5f6a8a">E</span><p><b>Elisa</b> <span class="muted">· 🍜 Ramen em SP</span><small>18 itens · pega por 7 pessoas</small></p></div>
+                  <div class="cover" data-go="categoria"><div class="photo" style="background:linear-gradient(135deg,#5a3d33,#2a1f1b)">J</div><div class="photo" style="background:linear-gradient(135deg,#4a4033,#25201b)">K</div><div class="photo" style="background:linear-gradient(135deg,#3d3a52,#1f1e29)">A</div></div>
+                  <div class="acts"><span class="btn btn-primary" data-invite="pegar:Ramen em SP"><svg class="i"><use href="#download"/></svg> Pegar com os 18 itens</span><span class="btn btn-ghost" data-go="categoria">Ver</span></div>
+                </article>
+              </section>
+
+              <!-- INÍCIO: AMIGOS -->
+              <section class="screen" data-screen="amigos" hidden>
+                <div class="switch"><div class="seg"><button data-go="amigos" aria-pressed="true"><svg class="i"><use href="#users"/></svg> Amigos</button><button data-go="sugestoes" aria-pressed="false"><svg class="i"><use href="#sparkles"/></svg> Sugestões</button></div></div>
+                <div class="empty">
+                  <span style="font-size:34px">👋</span>
+                  <h3 class="display">O que seus amigos andam catalogando</h3>
+                  <p>Com uma conta, aqui aparecem as novidades de quem você segue: o café novo, o filme de ontem, o livro do mês.</p>
+                  <span class="btn btn-primary" data-invite="cadastro">Criar conta</span>
+                  <span class="btn btn-ghost btn-sm" data-go="sugestoes">Ver as Sugestões</span>
+                </div>
+              </section>
+
+              <!-- CATEGORIA -->
+              <section class="screen" data-screen="categoria" hidden>
+                <div class="cat-head">
+                  <span class="crumb">Coleções de Ana › Comer</span>
+                  <h2 class="display">☕ Cafés de SP</h2>
+                  <div class="by"><span class="avatar" style="width:22px;height:22px;background:#9c6a7a;font-size:11px" data-go="perfil">A</span> coleção de Ana Lima · 24 itens</div>
+                </div>
+                <div class="acts">
+                  <span class="btn btn-primary" data-invite="pegar:Cafés de SP"><svg class="i"><use href="#download"/></svg> Pegar com os 24 itens</span>
+                  <span class="btn btn-outline" data-invite="seguir:@ana"><svg class="i"><use href="#userplus"/></svg> Seguir</span>
+                </div>
+                <div class="bar">
+                  <label class="s"><svg class="i"><use href="#search"/></svg><input placeholder="Buscar por nome, tag ou campo…"></label>
+                  <span class="btn btn-outline" style="width:36px;padding:0"><svg class="i"><use href="#sliders"/></svg></span>
+                  <div class="tg"><span class="on"><svg class="i"><use href="#grid"/></svg></span><span><svg class="i"><use href="#list"/></svg></span><span><svg class="i"><use href="#rows"/></svg></span></div>
+                  <div class="tg"><span>P</span><span class="on">M</span><span>G</span></div>
+                  <span class="btn btn-primary" style="width:36px;padding:0" title="Compartilhar (funciona sem conta)"><svg class="i"><use href="#share"/></svg></span>
+                </div>
+                <div class="grid">
+                  <div class="tile"><div class="ph photo" style="background:linear-gradient(135deg,#5a4636,#2b2420)">G<span class="r">4,5</span></div><p class="truncate">Girondino</p></div>
+                  <div class="tile"><div class="ph photo" style="background:linear-gradient(135deg,#3d4a3a,#1f2620)">S<span class="r">5</span></div><p class="truncate">Sofá Café</p></div>
+                  <div class="tile"><div class="ph photo" style="background:linear-gradient(135deg,#4a3a4d,#241f27)">P<span class="r">4</span></div><p class="truncate">Por Um Punhado</p></div>
+                  <div class="tile"><div class="ph photo" style="background:linear-gradient(135deg,#3a4256,#1d2029)">F</div><p class="truncate">Futuro Refeitório</p></div>
+                </div>
+                <p class="faint" style="margin:0;font-size:12px">Busca, filtros, exibição, Números (no ⋯), abrir o item e a imagem do Compartilhar funcionam sem conta.</p>
+              </section>
+
+              <!-- PERFIL -->
+              <section class="screen" data-screen="perfil" hidden>
+                <div class="profile">
+                  <div class="banner-img"></div>
+                  <div class="body">
+                    <span class="avatar av" style="width:72px;height:72px;background:#9c6a7a;font-size:28px">A</span>
+                    <h2 class="display">Ana Lima</h2>
+                    <span class="handle">@ana</span>
+                    <div class="stats"><a data-go="seguidores"><b>128</b> seguidores</a><a data-go="seguidores"><b>96</b> seguindo</a></div>
+                    <div class="acts"><span class="btn btn-primary" data-invite="seguir:@ana"><svg class="i"><use href="#userplus"/></svg> Seguir</span><span class="btn btn-outline"><svg class="i"><use href="#share"/></svg> Compartilhar</span></div>
+                  </div>
+                </div>
+                <div class="head"><h2 class="display">Coleções</h2></div>
+                <div class="grid">
+                  <div class="tile" data-go="categoria"><div class="ph photo" style="background:linear-gradient(135deg,#5a4636,#2b2420);aspect-ratio:4/3">☕</div><p>Cafés de SP</p></div>
+                  <div class="tile"><div class="ph photo" style="background:linear-gradient(135deg,#3a4256,#1d2029);aspect-ratio:4/3">🎬</div><p>Filmes</p></div>
+                </div>
+              </section>
+
+              <!-- SEGUIDORES -->
+              <section class="screen" data-screen="seguidores" hidden>
+                <span class="crumb" data-go="perfil" style="cursor:pointer">← Ana Lima</span>
+                <div class="switch"><div class="seg"><button aria-pressed="true">Seguidores · 128</button><button aria-pressed="false">Seguindo · 96</button></div></div>
+                <div class="rowlist">
+                  <div class="rowp"><span class="avatar" style="width:40px;height:40px;background:#5f8a7a">B</span><div><b style="font-weight:500">Bruno</b><small>@bruno</small></div><span class="btn btn-primary btn-sm" data-invite="seguir:@bruno">Seguir</span></div>
+                  <div class="rowp"><span class="avatar" style="width:40px;height:40px;background:#6a7a9c">C</span><div><b style="font-weight:500">Carol</b><small>@carol</small></div><span class="btn btn-primary btn-sm" data-invite="seguir:@carol">Seguir</span></div>
+                  <div class="rowp"><span class="avatar" style="width:40px;height:40px;background:#8a6a5f">D</span><div><b style="font-weight:500">Davi Rocha</b><small>@davi</small></div><span class="btn btn-primary btn-sm" data-invite="seguir:@davi">Seguir</span></div>
+                </div>
+                <p class="faint" style="margin:0;font-size:12px">Só o nome, o @ e a foto. Quem não tem nada público aparece, mas o perfil dele não mostra nada.</p>
+              </section>
+
+              <!-- AMOSTRA: MATCH -->
+              <section class="screen" data-screen="match" hidden>
+                <div class="sample-hero"><span class="tag-sample">Exemplo</span><h2 class="display">Match: o que vocês têm em comum</h2><p>Chame até 7 amigos. O Vitrine junta as listas de vocês, mostra a % de compatibilidade e uma lista nova por dia.</p></div>
+                <div class="match">
+                  <div class="avs"><span class="avatar" style="width:58px;height:58px;background:#9c6a7a;border:3px solid #c9879b">A</span><span class="avatar" style="width:58px;height:58px;background:#5f8a7a;border:3px solid #7fb39f">B</span></div>
+                  <div class="pct">78%</div>
+                  <div class="why">Vocês dois dão 5 estrelas para cafés de coado e filmes de terror.</div>
+                  <div><div class="mrow">☕ Sofá Café<span>em comum</span></div><div class="mrow">🎬 Hereditário<span>sugestão da Ana</span></div><div class="mrow">📚 Torto Arado<span>descoberta</span></div></div>
+                </div>
+                <span class="btn btn-primary btn-lg" data-invite="match">Criar conta para fazer um match</span>
+              </section>
+
+              <!-- AMOSTRA: MAPA -->
+              <section class="screen" data-screen="mapa" hidden>
+                <div class="sample-hero"><span class="tag-sample">Exemplo</span><h2 class="display">Tudo o que você guardou, no mapa</h2><p>Restaurantes, cafés e viagens aparecem no mapa, com o que está perto de você agora.</p></div>
+                <div class="map">
+                  <span class="pin" style="left:22%;top:30%"><span>☕</span></span>
+                  <span class="pin" style="left:55%;top:45%"><span>🍜</span></span>
+                  <span class="pin" style="left:38%;top:62%"><span>🍕</span></span>
+                  <span class="pin" style="left:70%;top:22%"><span>🍷</span></span>
+                </div>
+                <span class="btn btn-primary btn-lg" data-invite="mapa">Criar conta para montar o seu mapa</span>
+              </section>
+
+              <!-- AMOSTRA: ＋ ADICIONAR -->
+              <section class="screen" data-screen="adicionar" hidden>
+                <div class="sample-hero"><h2 class="display">Adicionar</h2><p>Tudo isto fica com você depois de criar a conta.</p></div>
+                <div class="sheet-list">
+                  <a data-invite="add:um item"><span class="emo">✨</span><div><b style="font-weight:500">Item</b><small>O restaurante de ontem, o livro que você terminou</small></div></a>
+                  <a data-invite="add:uma categoria"><span class="emo">🗂️</span><div><b style="font-weight:500">Categoria</b><small>Com os campos que você quiser</small></div></a>
+                  <a data-invite="add:o que já está no Google Maps"><span class="emo">📍</span><div><b style="font-weight:500">Trazer do Google Maps</b><small>As listas salvas viram categorias</small></div></a>
+                  <a data-invite="add:os seus filmes do Letterboxd"><span class="emo">🎬</span><div><b style="font-weight:500">Letterboxd e Steam</b><small>Os filmes e os jogos chegam sozinhos</small></div></a>
+                </div>
+              </section>
+            </div>
+
+            <nav class="tabbar" aria-label="Principal">
+              <a data-go="sugestoes" data-nav="inicio" class="on"><svg class="i i-lg"><use href="#house"/></svg>Início</a>
+              <a data-go="match" data-nav="match"><svg class="i i-lg"><use href="#heart"/></svg>Match</a>
+              <span style="flex:1"><span class="add" data-go="adicionar"><svg class="i i-lg"><use href="#plus"/></svg></span></span>
+              <a data-go="mapa" data-nav="mapa"><svg class="i i-lg"><use href="#map"/></svg>Mapa</a>
+              <a data-invite="entrar"><svg class="i i-lg"><use href="#login"/></svg>Entrar</a>
+            </nav>
+          </div>
+        </div>
+
+        <!-- ================= A JANELA DE CONVITE ================= -->
+        <div class="veil" id="veil" hidden>
+          <div class="invite" role="dialog" aria-modal="true" aria-labelledby="inv-title">
+            <div class="emo" id="inv-emo">✨</div>
+            <h3 class="display" id="inv-title">Crie sua conta</h3>
+            <p id="inv-text">É grátis e leva um minuto. Depois você volta direto para cá.</p>
+            <div class="col">
+              <span class="btn btn-primary btn-lg" id="inv-main">Criar conta</span>
+              <span class="btn btn-outline">Já tenho conta — Entrar</span>
+              <button type="button" class="btn btn-ghost" id="inv-close">Agora não</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note">
+        <h2>Como fica para o visitante</h2>
+        <ul>
+          <li><b>Boas-vindas</b> é o que abre no endereço do site e no ícone do app: o que é o Vitrine, listas públicas de verdade como exemplo e os botões Criar conta / Explorar sem conta.</li>
+          <li>Explorando, ele vê o <b>app de verdade</b>: barra lateral (computador) ou abas de baixo (celular) com Início, Match, ＋ e Mapa. No lugar do Perfil, <b>Entrar</b>.</li>
+          <li>Uma <b>faixa fina</b> convida a criar conta. Ela fecha no ×, até a próxima visita, e nunca bloqueia nada.</li>
+          <li><b>Início:</b> a aba Sugestões vem completa. A aba Amigos explica o que aparece ali com uma conta.</li>
+          <li><b>Categoria, item e perfil:</b> como hoje, mais Pegar e Seguir à vista (abrem o convite). Busca, filtros, exibição, Números e a imagem do Compartilhar funcionam sem conta.</li>
+          <li><b>Seguidores e seguindo</b> de um perfil abrem sem conta.</li>
+          <li><b>Match, Mapa e ＋</b> mostram uma amostra com dados de exemplo (nada do banco) e o convite.</li>
+        </ul>
+      </div>
+      <div class="note">
+        <h2>A janela de convite</h2>
+        <ul>
+          <li>O texto muda com a ação: “seguir @ana”, “pegar Cafés de SP”, “fazer um match”…</li>
+          <li><b>Criar conta</b> e <b>Entrar</b> voltam para a mesma tela depois (passando pela confirmação do e-mail e pelos Termos). Aí é só tocar de novo.</li>
+          <li>“Agora não” fecha e a pessoa segue navegando.</li>
+        </ul>
+      </div>
+      <div class="note">
+        <h2>Fica igual</h2>
+        <ul>
+          <li>Só o que é <b>Público</b> aparece. Lista de Amigos ou Privada continua escondida, quem decide é o banco.</li>
+          <li>Avisos, Configurações, Lixeira, Importar e QR continuam pedindo conta.</li>
+          <li>Quem tem conta não vê nada disso: tudo como hoje.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById("stage")
+  const main = document.getElementById("main")
+  const APP_SCREENS = ["sugestoes", "amigos", "categoria", "perfil", "seguidores", "match", "mapa", "adicionar"]
+  const NAV_OF = { sugestoes: "inicio", amigos: "inicio", match: "match", mapa: "mapa" }
+  const TOP_OF = { welcome: "welcome", sugestoes: "sugestoes", amigos: "sugestoes", categoria: "categoria", perfil: "perfil", seguidores: "perfil", match: "match", mapa: "match", adicionar: "match" }
+
+  function go(screen) {
+    const inApp = APP_SCREENS.includes(screen)
+    document.querySelector('[data-screen="welcome"]').hidden = inApp
+    document.querySelector('[data-screen="app"]').hidden = !inApp
+    APP_SCREENS.forEach((id) => (document.querySelector(`[data-screen="${id}"]`).hidden = id !== screen))
+    document.querySelectorAll("[data-nav]").forEach((a) => a.classList.toggle("on", a.dataset.nav === NAV_OF[screen]))
+    document.querySelectorAll("#screens button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.go === TOP_OF[screen])))
+    main.scrollTop = 0
+  }
+
+  const INVITES = {
+    cadastro: ["✨", "Crie sua conta", "É grátis e leva um minuto. Depois você volta direto para cá.", "Criar conta"],
+    entrar: ["👋", "Que bom te ver de novo", "Entre na sua conta para continuar de onde parou.", "Entrar"],
+    match: ["💞", "Crie sua conta para fazer um match", "Siga seus amigos e descubra o que vocês têm em comum.", "Criar conta"],
+    mapa: ["📍", "Crie sua conta para montar o seu mapa", "Os lugares das suas listas aparecem aqui, com o que está perto.", "Criar conta"],
+  }
+  function invite(key) {
+    let data = INVITES[key]
+    const [kind, arg] = key.split(":")
+    if (kind === "seguir") data = ["👤", `Crie sua conta para seguir ${arg}`, "Você vê as novidades de quem segue na aba Amigos do Início.", "Criar conta"]
+    if (kind === "pegar") data = ["📥", `Crie sua conta para pegar “${arg}”`, "A cópia fica com você e continua recebendo as novidades de quem fez.", "Criar conta"]
+    if (kind === "add") data = ["✨", `Crie sua conta para adicionar ${arg}`, "É grátis e leva um minuto. Depois você volta direto para cá.", "Criar conta"]
+    const [emo, title, text, mainLabel] = data
+    document.getElementById("inv-emo").textContent = emo
+    document.getElementById("inv-title").textContent = title
+    document.getElementById("inv-text").textContent = text
+    document.getElementById("inv-main").textContent = mainLabel
+    document.getElementById("veil").hidden = false
+  }
+
+  document.addEventListener("click", (event) => {
+    const deviceButton = event.target.closest(".device-toggle button")
+    if (deviceButton) {
+      stage.dataset.device = deviceButton.dataset.device
+      document.querySelectorAll(".device-toggle button").forEach((b) => b.setAttribute("aria-pressed", String(b === deviceButton)))
+      return
+    }
+    const target = event.target.closest("[data-invite], [data-go]")
+    if (!target) return
+    if (target.dataset.invite) invite(target.dataset.invite)
+    else go(target.dataset.go)
+  })
+  document.getElementById("inv-close").addEventListener("click", () => (document.getElementById("veil").hidden = true))
+  document.getElementById("veil").addEventListener("click", (event) => {
+    if (event.target.id === "veil") event.currentTarget.hidden = true
+  })
+</script>
+</body>
+</html>

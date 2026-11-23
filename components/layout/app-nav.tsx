@@ -135,15 +135,53 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
   )
 }
 
-function SideItem({
+/**
+ * Um link (`href`) ou um botão (`onClick`) com o mesmo visual: o visitante
+ * usa o botão para o que abre a janela de convite.
+ */
+function NavTarget({
   href,
+  onClick,
+  active,
+  title,
+  className,
+  children,
+}: {
+  href?: string
+  onClick?: () => void
+  active: boolean
+  title?: string
+  className: string
+  children: ReactNode
+}) {
+  return href ? (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      title={title}
+      className={className}
+    >
+      {children}
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} title={title} className={className}>
+      {children}
+    </button>
+  )
+}
+
+/** Um lugar da barra lateral (também usado pela do visitante). */
+export function SideItem({
+  href,
+  onClick,
   icon: Icon,
   label,
   active,
   badge,
   children,
 }: {
-  href: string
+  href?: string
+  onClick?: () => void
   icon?: LucideIcon
   label: string
   active: boolean
@@ -151,12 +189,13 @@ function SideItem({
   children?: ReactNode
 }) {
   return (
-    <Link
+    <NavTarget
       href={href}
-      aria-current={active ? "page" : undefined}
+      onClick={onClick}
+      active={active}
       title={label}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.95rem] transition-colors",
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[0.95rem] transition-colors",
         active
           ? "bg-brand-wash text-foreground"
           : "text-muted-foreground hover:bg-surface-hi hover:text-foreground"
@@ -168,19 +207,22 @@ function SideItem({
       </span>
       <span className="hidden lg:inline">{label}</span>
       <span className="sr-only lg:hidden">{label}</span>
-    </Link>
+    </NavTarget>
   )
 }
 
-function TabItem({
+/** Uma aba de baixo, no celular (também usada pela do visitante). */
+export function TabItem({
   href,
+  onClick,
   icon: Icon,
   label,
   active,
   badge,
   children,
 }: {
-  href: string
+  href?: string
+  onClick?: () => void
   icon?: LucideIcon
   label: string
   active: boolean
@@ -188,9 +230,10 @@ function TabItem({
   children?: ReactNode
 }) {
   return (
-    <Link
+    <NavTarget
       href={href}
-      aria-current={active ? "page" : undefined}
+      onClick={onClick}
+      active={active}
       className={cn(
         "flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[0.65rem]",
         active ? "text-foreground" : "text-muted-foreground"
@@ -205,6 +248,6 @@ function TabItem({
         <span className={cn("rounded-full", active && "ring-2 ring-brand")}>{children}</span>
       )}
       <span>{label}</span>
-    </Link>
+    </NavTarget>
   )
 }

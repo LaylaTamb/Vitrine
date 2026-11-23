@@ -12,6 +12,9 @@ const AUTH_PAGES = ["/login", "/cadastro", "/recuperar-senha"]
  * Rotas que não exigem sessão. (`/redefinir-senha` exige: a sessão vem do link.)
  * `/v` (perfil) e `/categoria` (categoria e item) abrem sem login mostrando só o
  * que é público — a própria página decide, e quem esconde o resto é o banco.
+ * Modo visitante (migração 50): `/inicio` (as Sugestões) e os antigos
+ * `/explorar` e `/usuarios`, que levam a elas. A raiz `/` também abre: sem
+ * conta, é a página de boas-vindas (`isPublic`).
  * `/termos` e `/privacidade` são os textos legais.
  */
 const PUBLIC_PREFIXES = [
@@ -19,6 +22,9 @@ const PUBLIC_PREFIXES = [
   "/auth",
   "/v",
   "/categoria",
+  "/inicio",
+  "/explorar",
+  "/usuarios",
   "/termos",
   "/privacidade",
   // Chamada pelo Cron da Vercel, sem sessão: a própria rota confere o segredo.
@@ -29,8 +35,14 @@ function matches(prefixes: string[], pathname: string): boolean {
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
 
+/**
+ * Abrem sem sessão só no endereço exato: a raiz (as boas-vindas) e as amostras
+ * de Match e Mapa do visitante. `/matches/<id>` (um match de verdade) não.
+ */
+const EXACT_PUBLIC = ["/", "/matches", "/mapa"]
+
 function isPublic(pathname: string): boolean {
-  return matches(PUBLIC_PREFIXES, pathname)
+  return EXACT_PUBLIC.includes(pathname) || matches(PUBLIC_PREFIXES, pathname)
 }
 
 /**

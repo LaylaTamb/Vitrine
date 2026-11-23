@@ -97,6 +97,10 @@ export function HowTo() {
           você). Uma pasta privada esconde tudo o que está dentro dela.
         </p>
         <p>
+          Quem ainda não tem conta também explora o que é Público: as Sugestões, os perfis com
+          alguma lista Pública e quem segue quem neles (só o nome, o @ e a foto de cada pessoa).
+        </p>
+        <p>
           O padrão para as próximas fica em{" "}
           <Link href="/configuracoes?secao=privacidade" className={LINK}>
             Quem vê o que você cria

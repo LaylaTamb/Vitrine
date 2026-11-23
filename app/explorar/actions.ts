@@ -22,6 +22,7 @@ import {
   parseExploreResults,
   type ExploreCategory,
 } from "@/lib/domain/explore"
+import { GUEST_NOT_READY, isGuestBlocked } from "@/lib/domain/guest"
 import {
   parseTemplates,
   TEMPLATES_NOT_READY,
@@ -29,7 +30,8 @@ import {
   type TemplateSort,
 } from "@/lib/domain/templates"
 import { getCoversOf } from "@/lib/queries/explore"
-import { requireUser } from "@/lib/queries/session"
+import { getPublicCovers } from "@/lib/queries/public"
+import { getSessionUser, requireUser } from "@/lib/queries/session"
 import { serverSecret } from "@/lib/steam/client"
 import { createClient } from "@/lib/supabase/server"
 
@@ -65,16 +67,23 @@ export async function exploreAction(input: {
   const parsed = templateSearchSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
 
-  await requireUser()
+  // Sem conta também (modo visitante, migração 50): o banco só devolve o Público.
+  const user = await getSessionUser()
   const supabase = await createClient()
   const { data, error } = await supabase.rpc("explore_public_categories", {
     p_query: parsed.data.query,
     p_sort: parsed.data.sort,
     p_limit: 30,
   })
-  if (error) return isMissingSchema(error) ? { ok: false, error: EXPLORE_NOT_READY } : fail(error)
+  if (error) {
+    if (!user && (isMissingSchema(error) || isGuestBlocked(error))) {
+      return { ok: false, error: GUEST_NOT_READY }
+    }
+    return isMissingSchema(error) ? { ok: false, error: EXPLORE_NOT_READY } : fail(error)
+  }
   const results = parseExploreResults(data)
-  return ok({ results, covers: await getCoversOf(results.map((category) => category.id)) })
+  const ids = results.map((category) => category.id)
+  return ok({ results, covers: await (user ? getCoversOf(ids) : getPublicCovers(ids)) })
 }
 
 /**

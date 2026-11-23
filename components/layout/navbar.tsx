@@ -3,6 +3,7 @@ import Link from "next/link"
 import type { VisitorInfo } from "@/components/layout/app-shell"
 import { Wordmark } from "@/components/layout/wordmark"
 import { buttonVariants } from "@/components/ui/button"
+import { authHref } from "@/lib/domain/auth"
 
 /**
  * A barra de cima de quem não está no app logado: a página pública aberta
@@ -30,12 +31,15 @@ export function Navbar({ visitor }: { visitor?: VisitorInfo }) {
         {visitor ? (
           <div className="flex shrink-0 items-center gap-2">
             <Link
-              href={`/login?proximo=${encodeURIComponent(visitor.next)}`}
+              href={authHref("/login", visitor.next)}
               className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Entrar
             </Link>
-            <Link href="/cadastro" className={buttonVariants({ size: "sm" })}>
+            <Link
+              href={authHref("/cadastro", visitor.next)}
+              className={buttonVariants({ size: "sm" })}
+            >
               Criar conta
             </Link>
           </div>

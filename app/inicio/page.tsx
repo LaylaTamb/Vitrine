@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Compass, Sparkles } from "lucide-react"
+import { Compass, Sparkles, Users } from "lucide-react"
 
 import { ExploreView } from "@/components/explore/explore-view"
 import { FeedCard } from "@/components/feed/feed-card"
@@ -11,20 +11,26 @@ import { HereBanner } from "@/components/nearby/here-banner"
 import { PersonRow } from "@/components/social/person-row"
 import { Avatar } from "@/components/ui/avatar-image"
 import { buttonVariants } from "@/components/ui/button"
+import { authHref } from "@/lib/domain/auth"
 import { EXPLORE_NOT_READY } from "@/lib/domain/explore"
 import { feedPeople, groupFeed } from "@/lib/domain/feed"
+import { GUEST_NOT_READY } from "@/lib/domain/guest"
 import { placeTargets } from "@/lib/domain/nearby"
 import { profilePath } from "@/lib/domain/username"
 import { getCoversOf, getExplore } from "@/lib/queries/explore"
 import { getFeed, getMyPlaceCategories } from "@/lib/queries/feed"
 import { listProfiles } from "@/lib/queries/profiles"
-import { getMyProfile, requireUser } from "@/lib/queries/session"
+import { getPublicCovers, getPublicPeople } from "@/lib/queries/public"
+import { getMyProfile, getSessionUser } from "@/lib/queries/session"
 import { getMyFollows } from "@/lib/queries/social"
 
 export const metadata: Metadata = { title: "Início · Vitrine" }
 
 /** Quantas pessoas a coluna "Pessoas para seguir" sugere (no computador). */
 const SUGGESTED = 3
+
+/** Quantas pessoas com lista Pública o visitante recebe (a busca delas roda na tela). */
+const GUEST_PEOPLE = 60
 
 type SearchParams = Promise<{ aba?: string | string[]; buscar?: string | string[] }>
 
@@ -37,10 +43,14 @@ type SearchParams = Promise<{ aba?: string | string[]; buscar?: string | string[
  *   categorias públicas para pegar. `&buscar=1` (a lupa do celular) já abre
  *   com o cursor na busca.
  * O app abre no seu perfil (`/`); o Início é um dos lugares da barra.
+ *
+ * Sem conta (modo visitante, migração 50): abre nas Sugestões, só com o que é
+ * Público; a aba Amigos convida a criar a conta.
  */
 export default async function HomePage({ searchParams }: { searchParams: SearchParams }) {
-  const user = await requireUser()
+  const user = await getSessionUser()
   const query = await searchParams
+  if (!user) return <GuestHome query={query} />
   const tab = homeTabOf(query.aba)
   const friends = tab === "amigos"
 
@@ -170,6 +180,57 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
             </section>
           )}
         </aside>
+      </div>
+    </AppShell>
+  )
+}
+
+/** O Início de quem não tem conta: as Sugestões, ou o convite na aba Amigos. */
+async function GuestHome({ query }: { query: Awaited<SearchParams> }) {
+  const tab = homeTabOf(query.aba, "sugestoes")
+  const next = `/inicio?aba=${tab}`
+  const [explore, people] =
+    tab === "sugestoes" ? await Promise.all([getExplore(), getPublicPeople("", GUEST_PEOPLE)]) : []
+  const covers = explore
+    ? await getPublicCovers(explore.results.map((category) => category.id))
+    : {}
+
+  return (
+    <AppShell profile={null} visitor={{ next }}>
+      <h1 className="sr-only">Início</h1>
+      <div className="mx-auto max-w-[40rem] space-y-5 pt-2 md:pt-4">
+        <HomeTabs current={tab} news={0} />
+        {explore ? (
+          <ExploreView
+            initial={explore.results}
+            initialCovers={covers}
+            // Sem o 50, o banco recusa o visitante: a tela diz que falta rodar.
+            notReady={explore.ready && people !== null ? explore.error : GUEST_NOT_READY}
+            people={people ?? []}
+            following={[]}
+            followers={[]}
+            autoFocus={query.buscar === "1"}
+          />
+        ) : (
+          <EmptyState
+            icon={Users}
+            title="O que seus amigos andam catalogando"
+            description="Com uma conta, aqui aparecem as novidades de quem você segue: o café novo, o filme de ontem, o livro do mês."
+            action={
+              <div className="flex flex-col items-center gap-2">
+                <Link href={authHref("/cadastro", next)} className={buttonVariants()}>
+                  Criar conta
+                </Link>
+                <Link
+                  href="/inicio?aba=sugestoes"
+                  className={buttonVariants({ variant: "ghost", size: "sm" })}
+                >
+                  Ver as Sugestões
+                </Link>
+              </div>
+            }
+          />
+        )}
       </div>
     </AppShell>
   )

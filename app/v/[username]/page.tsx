@@ -26,7 +26,12 @@ import { getAcervo } from "@/lib/queries/acervo"
 import { getMyFavoriteIds } from "@/lib/queries/favorites"
 import { getMyPlaces } from "@/lib/queries/places"
 import { getCollectionsByUsername } from "@/lib/queries/profiles"
-import { getProfileCard, getPublicProfile, resolveUsername } from "@/lib/queries/public"
+import {
+  getProfileCard,
+  getPublicFollows,
+  getPublicProfile,
+  resolveUsername,
+} from "@/lib/queries/public"
 import { getProfileSocial } from "@/lib/queries/social"
 import { getMyProfile, getSessionUser } from "@/lib/queries/session"
 import { getMyTrashCount } from "@/lib/queries/trash"
@@ -136,7 +141,12 @@ export default async function ProfilePage({
   if (!user && qr) redirect(`/login?proximo=${encodeURIComponent(withQr(path, qr))}`)
 
   if (!user) {
-    const data = USERNAME_PATTERN.test(username) ? await getPublicProfile(username) : null
+    const valid = USERNAME_PATTERN.test(username)
+    const [data, follows] = await Promise.all([
+      valid ? getPublicProfile(username) : null,
+      // Só as contagens (o SQL 50); sem ele, o perfil sai sem elas.
+      valid ? getPublicFollows(username, "followers", 1) : null,
+    ])
     if (!data) return notFound(username, null, visitor, null)
 
     const { profile, card, folders, categories, counts } = data
@@ -156,7 +166,12 @@ export default async function ProfilePage({
               card={card ?? bareCard(profile)}
               isMe={false}
               ready={card !== null}
-              social={<VisitorFollowInvite username={profile.username} />}
+              social={
+                <VisitorFollowInvite
+                  username={profile.username}
+                  counts={follows && follows !== "missing" ? follows : null}
+                />
+              }
             />
           }
         />

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { newPasswordSchema, signInSchema, signUpSchema } from "@/lib/actions/schemas"
 
 import {
+  authHref,
   authMethodsOf,
   needsNewPassword,
   passwordChecks,
@@ -79,6 +80,16 @@ describe("destino depois de entrar", () => {
     expect(safeNextPath("//malicioso.com")).toBe("/")
     expect(safeNextPath("/\\malicioso.com")).toBe("/")
     expect(safeNextPath("/\tx")).toBe("/")
+  })
+
+  it("leva o destino para o Entrar e o Criar conta", () => {
+    expect(authHref("/cadastro", "/inicio?aba=sugestoes")).toBe(
+      "/cadastro?proximo=%2Finicio%3Faba%3Dsugestoes"
+    )
+    expect(authHref("/login", "/v/ana")).toBe("/login?proximo=%2Fv%2Fana")
+    expect(authHref("/cadastro", "/")).toBe("/cadastro")
+    expect(authHref("/login", "//malicioso.com")).toBe("/login")
+    expect(authHref("/login", null)).toBe("/login")
   })
 
   it("quem chega por recuperação ou convite vai criar a senha", () => {

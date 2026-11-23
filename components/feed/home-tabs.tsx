@@ -6,13 +6,16 @@ import { cn } from "@/lib/utils"
 export type HomeTab = "amigos" | "sugestoes"
 
 const TABS: { id: HomeTab; label: string; href: string; Icon: LucideIcon }[] = [
-  { id: "amigos", label: "Amigos", href: "/inicio", Icon: Users },
+  { id: "amigos", label: "Amigos", href: "/inicio?aba=amigos", Icon: Users },
   { id: "sugestoes", label: "Sugestões", href: "/inicio?aba=sugestoes", Icon: Sparkles },
 ]
 
-/** `?aba=` → a aba do Início (sem ou estranho = Amigos). */
-export function homeTabOf(raw: unknown): HomeTab {
-  return raw === "sugestoes" ? "sugestoes" : "amigos"
+/**
+ * `?aba=` → a aba do Início. Sem ou estranho: Amigos para quem tem conta;
+ * Sugestões para o visitante (`fallback`), que não segue ninguém.
+ */
+export function homeTabOf(raw: unknown, fallback: HomeTab = "amigos"): HomeTab {
+  return raw === "sugestoes" || raw === "amigos" ? raw : fallback
 }
 
 /**

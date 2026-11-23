@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { copyCategoryAction, exploreAction } from "@/app/explorar/actions"
 import { CoverMosaic } from "@/components/collection/collection-card"
+import { useGuestInvite } from "@/components/guest/guest-invite"
 import { EmptyState } from "@/components/layout/empty-state"
 import { FollowButton } from "@/components/social/follow-button"
 import { PersonRow } from "@/components/social/person-row"
@@ -344,10 +345,13 @@ function PersonCard({ person, followsMe }: { person: Person; followsMe: boolean 
 
 function ExploreCard({ category, photos }: { category: ExploreCategory; photos: string[] }) {
   const router = useRouter()
+  const invite = useGuestInvite()
   const [pending, setPending] = useState(false)
   const href = `/categoria/${category.id}`
 
   async function take() {
+    // Sem conta, o convite: pegar é criar uma cópia sua.
+    if (invite) return invite({ kind: "take", name: category.name })
     setPending(true)
     const result = await copyCategoryAction({ sourceId: category.id })
     if (!result.ok || !result.data) {

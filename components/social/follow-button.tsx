@@ -5,12 +5,14 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { followAction, unfollowAction } from "@/app/v/actions"
+import { useGuestInvite } from "@/components/guest/guest-invite"
 import { Button } from "@/components/ui/button"
 import { followButtonLabel } from "@/lib/domain/social"
 
 /**
  * Seguir / Seguindo, com a troca na hora (otimista). Deixar de seguir também
- * é um toque — o aviso traz "Desfazer", para o toque sem querer.
+ * é um toque — o aviso traz "Desfazer", para o toque sem querer. Sem conta
+ * (modo visitante), abre a janela de convite.
  */
 export function FollowButton({
   profileId,
@@ -30,6 +32,7 @@ export function FollowButton({
 }) {
   const [optimistic, setOptimistic] = useState<boolean | null>(null)
   const [pending, setPending] = useState(false)
+  const invite = useGuestInvite()
   const active = optimistic ?? following
 
   // O dado do servidor chegou: ele manda de novo.
@@ -67,7 +70,7 @@ export function FollowButton({
       variant={active ? "outline" : "default"}
       disabled={pending}
       aria-pressed={active}
-      onClick={() => change(!active)}
+      onClick={() => (invite ? invite({ kind: "follow", username }) : change(!active))}
     >
       {active ? <Check className="size-4" /> : <UserPlus className="size-4" />}
       {followButtonLabel({ following: active, followsMe })}

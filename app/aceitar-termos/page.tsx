@@ -39,10 +39,12 @@ export default async function AcceptTermsPage({
       title="Antes de continuar"
       description={
         <>
-          O Vitrine agora tem Termos de uso e Política de privacidade (em vigor desde{" "}
-          {TERMS_EFFECTIVE_DATE}). Uma mudança importante: o que estiver marcado como{" "}
-          <span className="text-foreground">Público</span> passa a ser visível na internet,
-          também para quem não tem conta. Para seguir usando, é só aceitar uma vez.
+          Os Termos de uso e a Política de privacidade mudaram (em vigor desde{" "}
+          {TERMS_EFFECTIVE_DATE}). O que está marcado como{" "}
+          <span className="text-foreground">Público</span> é visível na internet, também para
+          quem não tem conta — e agora quem não tem conta também explora o Vitrine: as
+          Sugestões, a lista de pessoas com alguma lista Pública e, nesses perfis, quem segue
+          quem (só o nome, o @ e a foto). Para seguir usando, é só aceitar.
         </>
       }
       footer={

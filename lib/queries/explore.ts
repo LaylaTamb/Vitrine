@@ -1,5 +1,6 @@
 import { coversByCategory } from "@/lib/domain/collections"
 import { isMissingSchema, translateError } from "@/lib/domain/errors"
+import { isGuestBlocked } from "@/lib/domain/guest"
 import {
   parseExploreResults,
   parseLinkSync,
@@ -13,7 +14,7 @@ import { createClient } from "@/lib/supabase/server"
  * copiadas). `ready = false`: a migração 26 ainda não rodou. `error`: o
  * banco recusou — a tela mostra a frase, em vez de uma lista vazia.
  */
-export async function getExplore(): Promise<{
+export async function getExplore(limit = 30): Promise<{
   ready: boolean
   results: ExploreCategory[]
   error: string | null
@@ -22,10 +23,11 @@ export async function getExplore(): Promise<{
   const { data, error } = await supabase.rpc("explore_public_categories", {
     p_query: "",
     p_sort: "popular",
-    p_limit: 30,
+    p_limit: limit,
   })
   if (error) {
-    return isMissingSchema(error)
+    // Sem conta e sem o 50, o banco recusa (42501): é o mesmo que não estar pronto.
+    return isMissingSchema(error) || isGuestBlocked(error)
       ? { ready: false, results: [], error: null }
       : { ready: true, results: [], error: translateError(error) }
   }

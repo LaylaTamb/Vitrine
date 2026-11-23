@@ -1,6 +1,14 @@
 import { cache } from "react"
 
 import { parseProfileCard, type ProfileCard } from "@/lib/domain/card"
+import { coversByCategory } from "@/lib/domain/collections"
+import { isMissingSchema } from "@/lib/domain/errors"
+import {
+  parsePublicFollows,
+  parsePublicPeople,
+  type PublicFollows,
+  type PublicPerson,
+} from "@/lib/domain/guest"
 import { toCategory } from "@/lib/queries/collections"
 import type {
   Category,
@@ -110,4 +118,52 @@ export async function resolveUsername(username: string): Promise<string | null> 
   const { data, error } = await supabase.rpc("resolve_username", { p_username: username })
   if (error || typeof data !== "string" || !data) return null
   return data
+}
+
+// ---------------------------------------------------------------------------
+// Modo visitante (migração 50): explorar sem conta
+// ---------------------------------------------------------------------------
+
+/**
+ * As pessoas com alguma lista Pública, para as Sugestões de quem não tem
+ * conta. `null`: o 50 ainda não rodou (a tela avisa, em vez de mostrar vazio).
+ */
+export async function getPublicPeople(query = "", limit = 24): Promise<PublicPerson[] | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("public_people", {
+    p_query: query.trim(),
+    p_limit: limit,
+  })
+  if (error) return isMissingSchema(error) ? null : []
+  return parsePublicPeople(data)
+}
+
+/** As capas (até 3 fotos) das categorias Públicas, pelos ids. Antes do 50, {}. */
+export async function getPublicCovers(categoryIds: string[]): Promise<Record<string, string[]>> {
+  if (categoryIds.length === 0) return {}
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("public_category_covers", {
+    p_category_ids: categoryIds,
+  })
+  return error ? {} : coversByCategory(data ?? [])
+}
+
+/**
+ * Seguidores ou quem um perfil segue, sem conta. `"missing"`: o 50 não rodou
+ * (a tela volta a pedir para entrar); `null`: o @ não existe.
+ */
+export async function getPublicFollows(
+  username: string,
+  kind: "followers" | "following",
+  /** Até quantas pessoas (só as contagens: 1). */
+  limit = 200
+): Promise<PublicFollows | null | "missing"> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc("public_follows", {
+    p_username: username,
+    p_kind: kind,
+    p_limit: limit,
+  })
+  if (error) return isMissingSchema(error) ? "missing" : null
+  return parsePublicFollows(data)
 }

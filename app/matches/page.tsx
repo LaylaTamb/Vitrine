@@ -1,19 +1,28 @@
 import type { Metadata } from "next"
 
+import { MatchSample } from "@/components/guest/guest-samples"
 import { AppShell } from "@/components/layout/app-shell"
 import { MatchesView } from "@/components/match/matches-view"
 import { MATCHES_NOT_READY } from "@/lib/domain/match"
 import { getMyFriends, getMyMatches } from "@/lib/queries/matches"
-import { getMyProfile, requireUser } from "@/lib/queries/session"
+import { getMyProfile, getSessionUser } from "@/lib/queries/session"
 
 export const metadata: Metadata = { title: "Match · Vitrine" }
 
 /**
  * `/matches` — os convites e os matches de quem está logado (migração 30), e
- * o "Novo match" (só com amigos, até 8 pessoas).
+ * o "Novo match" (só com amigos, até 8 pessoas). Sem conta (modo visitante),
+ * a amostra: como um match funciona, com um exemplo, e o convite.
  */
 export default async function MatchesPage() {
-  const user = await requireUser()
+  const user = await getSessionUser()
+  if (!user) {
+    return (
+      <AppShell profile={null} visitor={{ next: "/matches" }}>
+        <MatchSample />
+      </AppShell>
+    )
+  }
   const [profile, { ready, matches }, friends] = await Promise.all([
     getMyProfile(),
     getMyMatches(user.id),

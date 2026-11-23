@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 import { appOrigin } from "@/lib/actions/origin"
@@ -13,7 +14,7 @@ import {
   signInSchema,
   signUpSchema,
 } from "@/lib/actions/schemas"
-import { safeNextPath } from "@/lib/domain/auth"
+import { safeNextPath, SIGNUP_NEXT_COOKIE } from "@/lib/domain/auth"
 import { isMissingSchema, translateError } from "@/lib/domain/errors"
 import { deleteConfirmationMatches, termsAcceptance } from "@/lib/domain/terms"
 import { requireUser } from "@/lib/queries/session"
@@ -95,9 +96,12 @@ export async function signUpAction(input: {
   confirm: string
   /** A caixa dos 18 anos + Termos + Política — conferida aqui também. */
   acceptTerms: boolean
+  /** Para onde voltar depois (a tela de onde o visitante veio). */
+  next?: string
 }): Promise<ActionResult<{ confirmEmail: boolean }>> {
   const parsed = signUpSchema.safeParse(input)
   if (!parsed.success) return failValidation(parsed.error.issues)
+  const next = safeNextPath(input.next)
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
@@ -123,7 +127,18 @@ export async function signUpAction(input: {
   // Confirmação de e-mail desligada no Supabase: a conta já entra.
   if (data.session) {
     revalidatePath("/", "layout")
-    redirect("/")
+    redirect(next)
+  }
+
+  // O destino espera a confirmação num cookie (veja `SIGNUP_NEXT_COOKIE`).
+  if (next !== "/") {
+    ;(await cookies()).set(SIGNUP_NEXT_COOKIE, next, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    })
   }
 
   // Ligada (o recomendado): a conta só entra depois do link. Com e-mail que

@@ -89,7 +89,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Mostrar para os outros o que você abriu</strong>: o que é Público, para
-            qualquer pessoa; o que é de Amigos, para os seus amigos (mesma base).
+            qualquer pessoa; o que é de Amigos, para os seus amigos (mesma base). Quem ainda não
+            tem conta também explora o que é Público: as Sugestões, a lista de pessoas (só quem
+            tem alguma lista Pública) e, nesses perfis, quem segue quem — ali aparecem só o nome,
+            o @ e a foto de cada pessoa.
           </li>
           <li>
             <strong>Mandar os e-mails da conta</strong>: confirmação de cadastro e troca de

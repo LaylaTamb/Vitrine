@@ -148,6 +148,7 @@ export function CategoryView({
   autoRefresh = null,
   link = null,
   signedIn = true,
+  visitorActions = null,
 }: {
   category: Category
   owner: Profile | null
@@ -182,6 +183,8 @@ export function CategoryView({
   link?: LinkView | null
   /** Quem abre sem conta (lista pública): o Compartilhar fica sem o QR do link. */
   signedIn?: boolean
+  /** Sem conta: Pegar e Seguir no topo, que abrem o convite (modo visitante). */
+  visitorActions?: ReactNode
 }) {
   const { actions } = useVitrine()
   const router = useRouter()
@@ -712,7 +715,10 @@ export function CategoryView({
                 {moreMenu}
               </>
             ) : (
-              moreMenu
+              <>
+                {visitorActions}
+                {moreMenu}
+              </>
             )
           }
         />

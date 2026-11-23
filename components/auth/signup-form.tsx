@@ -11,10 +11,13 @@ import { TermsCheckbox } from "@/components/auth/terms-checkbox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { passwordChecks, passwordProblem } from "@/lib/domain/auth"
+import { authHref, passwordChecks, passwordProblem } from "@/lib/domain/auth"
 
-/** Criar conta: e-mail, senha, a confirmação da senha e a caixa dos 18 anos + Termos. */
-export function SignUpForm() {
+/**
+ * Criar conta: e-mail, senha, a confirmação da senha e a caixa dos 18 anos +
+ * Termos. `next`: para onde voltar depois (a tela de onde o visitante veio).
+ */
+export function SignUpForm({ next = "/" }: { next?: string }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
@@ -44,7 +47,7 @@ export function SignUpForm() {
 
     setPending(true)
     setError(null)
-    const result = await signUpAction({ email, password, confirm, acceptTerms })
+    const result = await signUpAction({ email, password, confirm, acceptTerms, next })
     // Com a confirmação de e-mail desligada no Supabase, o servidor já leva para dentro.
     if (!result) return
     setPending(false)
@@ -80,7 +83,7 @@ export function SignUpForm() {
         </div>
         <p className="text-xs leading-relaxed text-muted-foreground">
           Esse e-mail já tinha conta? Então nada foi enviado:{" "}
-          <Link href="/login" className={AUTH_LINK_CLASS}>
+          <Link href={authHref("/login", next)} className={AUTH_LINK_CLASS}>
             entre
           </Link>{" "}
           ou use{" "}

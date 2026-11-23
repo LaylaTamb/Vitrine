@@ -6,7 +6,7 @@ seu jeito, e mostra para quem quiser. É também uma rede: você segue amigos,
 descobre as coleções de outras pessoas e compara gostos com quem conhece.
 
 A interface é inteira em português do Brasil. Qualquer pessoa com 18 anos ou
-mais cria conta com e-mail e senha.
+mais cria conta com e-mail e senha — e dá para conhecer o app antes, sem conta.
 
 ---
 
@@ -71,6 +71,11 @@ mais cria conta com e-mail e senha.
 - **Story.** Um toque gera uma imagem pronta para o story do Instagram, com o
   seu cartão e um QR do seu perfil (no computador, ela vai para a área de
   transferência).
+- **Explorar sem conta.** Quem ainda não tem conta abre o Vitrine numa página
+  de boas-vindas e pode explorar o que é Público: as Sugestões (pessoas e
+  listas), os perfis, as categorias, os itens e quem segue quem. Match, Mapa e
+  ＋ mostram um exemplo. Para seguir, pegar uma lista ou adicionar, o app
+  convida a criar a conta — e depois volta para a mesma tela.
 - **Links públicos.** Perfis, categorias e itens públicos abrem por link para
   qualquer pessoa, mesmo sem conta — só para ver.
 

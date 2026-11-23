@@ -3,7 +3,7 @@ import Link from "next/link"
 
 import { AUTH_LINK_CLASS, AuthShell } from "@/components/auth/auth-shell"
 import { LoginForm } from "@/components/auth/login-form"
-import { safeNextPath } from "@/lib/domain/auth"
+import { authHref, safeNextPath } from "@/lib/domain/auth"
 import { translateErrorCode } from "@/lib/domain/errors"
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ export default async function LoginPage({
       footer={
         <p>
           Ainda não tem conta?{" "}
-          <Link href="/cadastro" className={AUTH_LINK_CLASS}>
+          <Link href={authHref("/cadastro", next)} className={AUTH_LINK_CLASS}>
             Criar conta
           </Link>
         </p>

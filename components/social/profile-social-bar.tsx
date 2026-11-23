@@ -1,11 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { Ban, Ellipsis, HeartHandshake, Users } from "lucide-react"
+import { Ban, Ellipsis, HeartHandshake, UserPlus, Users } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
 import { blockAction, unblockAction } from "@/app/v/actions"
+import { useGuestInvite } from "@/components/guest/guest-invite"
 import { NewMatchDialog } from "@/components/match/new-match-dialog"
 import { FollowButton } from "@/components/social/follow-button"
 import { Button } from "@/components/ui/button"
@@ -158,17 +159,36 @@ export function ProfileSocialBar({
   )
 }
 
-/** Para quem abre o perfil sem conta: o convite para seguir (que leva ao login). */
-export function VisitorFollowInvite({ username }: { username: string }) {
+/**
+ * Para quem abre o perfil sem conta: seguidores e seguindo (quando o SQL 50
+ * já rodou — `counts`) e o Seguir, que abre a janela de convite.
+ */
+export function VisitorFollowInvite({
+  username,
+  counts,
+}: {
+  username: string
+  counts?: { followers: number; following: number } | null
+}) {
+  const invite = useGuestInvite()
   const path = profilePath(username)
   return (
-    <div>
-      <Link
-        href={`/login?proximo=${encodeURIComponent(path)}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
-      >
-        Entre para seguir @{username} e ver as coleções de amigos
-      </Link>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+      {counts ? (
+        <div className="flex items-center gap-4 text-sm">
+          <Link href={`${path}/seguidores`} className="text-muted-foreground hover:text-foreground">
+            <span className="text-foreground">{counts.followers.toLocaleString("pt-BR")}</span>{" "}
+            {counts.followers === 1 ? "seguidor" : "seguidores"}
+          </Link>
+          <Link href={`${path}/seguindo`} className="text-muted-foreground hover:text-foreground">
+            <span className="text-foreground">{counts.following.toLocaleString("pt-BR")}</span>{" "}
+            seguindo
+          </Link>
+        </div>
+      ) : null}
+      <Button onClick={() => invite?.({ kind: "follow", username })}>
+        <UserPlus className="size-4" /> Seguir
+      </Button>
     </div>
   )
 }

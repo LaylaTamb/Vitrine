@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { Library } from "lucide-react"
 
 import { CategoryView } from "@/components/category/category-view"
+import { GuestCategoryActions } from "@/components/guest/guest-category-actions"
 import type { LinkView } from "@/components/explore/linked-bar"
 import { AppShell } from "@/components/layout/app-shell"
 import { EmptyState } from "@/components/layout/empty-state"
@@ -202,6 +203,9 @@ async function VisitorCategoryPage({
         collectionsHref={profilePath(owner.username)}
         canEdit={false}
         signedIn={false}
+        visitorActions={
+          <GuestCategoryActions name={category.name} username={owner.username} />
+        }
         initialFilter={categoryFilterFromParams(query, category)}
         initialTab={query.aba === "numeros" ? "numeros" : "itens"}
       />

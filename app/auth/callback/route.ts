@@ -1,7 +1,12 @@
 import type { EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
 
-import { authMethodsOf, needsNewPassword, safeNextPath } from "@/lib/domain/auth"
+import {
+  authMethodsOf,
+  needsNewPassword,
+  safeNextPath,
+  SIGNUP_NEXT_COOKIE,
+} from "@/lib/domain/auth"
 import { createClient } from "@/lib/supabase/server"
 
 /** Os tipos de link que os e-mails do app mandam (ver "Templates" de e-mail no GUIA-LOCAL.md). */
@@ -18,7 +23,8 @@ const LINK_TYPES: EmailOtpType[] = ["email", "signup", "recovery", "invite", "em
  *   mesmo navegador que pediu o e-mail (o verificador fica num cookie dele).
  *
  * Quem chega por recuperação ou convite vai criar a senha; o resto, para o
- * app (ou para `?proximo=`, se for um caminho interno).
+ * app (ou para `?proximo=`, se for um caminho interno; ou para a tela de onde
+ * a pessoa criou a conta, guardada no cookie `SIGNUP_NEXT_COOKIE`).
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
@@ -53,5 +59,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/redefinir-senha`)
   }
 
-  return NextResponse.redirect(`${origin}${safeNextPath(searchParams.get("proximo"))}`)
+  const saved = request.cookies.get(SIGNUP_NEXT_COOKIE)?.value
+  const response = NextResponse.redirect(
+    `${origin}${safeNextPath(searchParams.get("proximo") ?? saved)}`
+  )
+  if (saved) response.cookies.delete(SIGNUP_NEXT_COOKIE)
+  return response
 }

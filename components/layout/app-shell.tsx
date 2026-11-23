@@ -2,6 +2,8 @@ import Link from "next/link"
 import { QrCode, Search } from "lucide-react"
 import { Suspense, type ReactNode } from "react"
 
+import { GuestInviteProvider } from "@/components/guest/guest-invite"
+import { GuestBanner, GuestNav, GuestTopBar } from "@/components/guest/guest-nav"
 import { AppNav } from "@/components/layout/app-nav"
 import { Navbar } from "@/components/layout/navbar"
 import { Wordmark } from "@/components/layout/wordmark"
@@ -26,8 +28,10 @@ export interface VisitorInfo {
  * Com login: a barra lateral (computador) ou as abas de baixo e o topo com a
  * busca e o QR (celular) — `AppNav`.
  *
- * `visitor`: página pública aberta sem login (`/v/...`, categoria pública) —
- * a barra de cima com Entrar e Criar conta, e um convite embaixo dela.
+ * `visitor`: página aberta sem login (modo visitante: o Início, `/v/...`, a
+ * categoria pública) — a navegação do visitante (`GuestNav`), a faixa "Monte
+ * a sua vitrine" e a janela de convite (`useGuestInvite`). `next`: esta
+ * tela, para onde Entrar e Criar conta voltam.
  */
 export function AppShell({
   profile,
@@ -38,19 +42,28 @@ export function AppShell({
   visitor?: VisitorInfo
   children: ReactNode
 }) {
-  if (!profile || visitor) {
+  // Sem conta (modo visitante): a mesma casa do app, com a navegação do
+  // visitante, a faixa "Monte a sua vitrine" e a janela de convite.
+  if (visitor) {
+    return (
+      <GuestInviteProvider>
+        <div className="min-h-dvh md:flex">
+          <GuestNav next={visitor.next} />
+          <div className="min-w-0 flex-1">
+            <GuestTopBar next={visitor.next} />
+            <GuestBanner next={visitor.next} />
+            <main className="shell pb-28 md:pb-12">{children}</main>
+          </div>
+        </div>
+      </GuestInviteProvider>
+    )
+  }
+
+  // Conta sem perfil (cadastro incompleto): só a barra de cima, com a marca.
+  if (!profile) {
     return (
       <div className="min-h-dvh">
-        <Navbar visitor={visitor} />
-        {visitor ? (
-          <div className="border-b border-brand-dim/40 bg-brand-wash px-4 py-2 text-center text-sm text-foreground">
-            Gostou? Monte a sua vitrine também: catalogue o que você consome e mostre para quem
-            quiser.{" "}
-            <Link href="/cadastro" className="underline underline-offset-2 hover:text-brand">
-              Criar conta
-            </Link>
-          </div>
-        ) : null}
+        <Navbar />
         <main className="shell pb-24">{children}</main>
       </div>
     )

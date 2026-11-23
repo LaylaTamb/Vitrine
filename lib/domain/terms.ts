@@ -10,8 +10,9 @@
 import { normalizeUsername } from "./username"
 
 /** Mudou o texto de um dos dois? Nova versão: todo mundo aceita de novo. */
-export const TERMS_VERSION = "2026-10-19"
-export const TERMS_EFFECTIVE_DATE = "19 de outubro de 2026"
+// 2026-11-23: a Política conta o que quem não tem conta explora (modo visitante).
+export const TERMS_VERSION = "2026-11-23"
+export const TERMS_EFFECTIVE_DATE = "23 de novembro de 2026"
 
 export const MINIMUM_AGE = 18
 

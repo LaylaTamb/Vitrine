@@ -60,8 +60,10 @@ As 12 regras de carregamento estão no `GUIA-LOCAL.md`, seção "Arquitetura". O
   dados por props, sem `useEffect` para a primeira pintura. As leituras ficam em `lib/queries/*` e
   usam `createClient()` de `lib/supabase/server.ts` (sessão em cookies httpOnly via
   `@supabase/ssr`). Quem autoriza é a RLS.
-- **Sem login**, o papel `anon` não lê nenhuma tabela. Ele lê só pelas RPCs `public_profile` e
-  `public_category` (`lib/queries/public.ts`), uma de cada vez e só o que é público.
+- **Sem login**, o papel `anon` não lê nenhuma tabela. Ele lê só pelas RPCs `public_profile`,
+  `public_category` e as do modo visitante (migração 50: `explore_public_categories`,
+  `public_category_covers`, `public_people`, `public_follows`), em `lib/queries/public.ts`, e só o
+  que é público.
 - **Escrita.** São Server Actions em `app/**/actions.ts`, ao lado da rota. O fluxo:
   1. valida com o zod (`lib/actions/schemas.ts`);
   2. chama o Supabase;
@@ -79,9 +81,9 @@ As 12 regras de carregamento estão no `GUIA-LOCAL.md`, seção "Arquitetura". O
   `"use client"`: ponha-o em `lib/domain/`.
 - **Middleware** (`middleware.ts` → `lib/supabase/middleware.ts`):
   - renova a sessão (não ponha nada entre o `createServerClient` e o `getUser`);
-  - manda quem não tem sessão para `/login?proximo=…`, fora dos `PUBLIC_PREFIXES` (`/login`,
-    `/cadastro`, `/recuperar-senha`, `/auth`, `/v`, `/categoria`, `/termos`, `/privacidade`,
-    `/api/cron`);
+  - manda quem não tem sessão para `/login?proximo=…`, fora da raiz `/` e dos `PUBLIC_PREFIXES`
+    (`/login`, `/cadastro`, `/recuperar-senha`, `/auth`, `/v`, `/categoria`, `/inicio`,
+    `/explorar`, `/usuarios`, `/termos`, `/privacidade`, `/api/cron`);
   - tira quem está logado das telas de entrar;
   - leva ao `/aceitar-termos` quem não aceitou a versão em vigor dos Termos (`TERMS_VERSION` em
     `lib/domain/terms.ts`: mudá-la obriga todo mundo a aceitar de novo);
@@ -97,10 +99,12 @@ As 12 regras de carregamento estão no `GUIA-LOCAL.md`, seção "Arquitetura". O
 
 Rotas (nomes em pt-BR):
 
-- **Raiz:** `/` só redireciona para o seu perfil (as Coleções), levando a query junto: é onde o
-  app abre (login, ícone do app instalado).
+- **Raiz:** `/` com conta redireciona para o seu perfil (as Coleções), levando a query junto: é
+  onde o app abre (login, ícone do app instalado). Sem conta, as boas-vindas do modo visitante
+  (`components/guest/welcome.tsx`).
 - **Início:** `/inicio`, com duas abas: Amigos (o feed de quem você segue) e Sugestões
   (`?aba=sugestoes`, o antigo Descobrir: pessoas e categorias; `&buscar=1` já foca a busca).
+  Sem conta, abre nas Sugestões (só o Público) e a aba Amigos convida a criar a conta.
 - **Categorias:** `/categoria/[categoryId]/[entryId]` e `story/` (a imagem 9:16 da lista como está na
   tela, via `next/og`, para quem pode vê-la). As Coleções moram na aba do seu perfil.
 - **Perfil:**
@@ -109,17 +113,23 @@ Rotas (nomes em pt-BR):
     o Filtros em `?filtros=1`;
   - `/u/:username` redireciona para `/v/` (`next.config.ts`);
   - `/perfil` leva ao próprio perfil.
-- **Telas logadas:** `/avisos`, `/matches` (e
-  `/matches/[id]`, a lista de um match, com `story/` via `next/og`),
+- **Telas logadas:** `/avisos`, `/matches` (sem conta, a amostra do Match) (e
+  `/matches/[id]`, a lista de um match, com `story/` via `next/og`, que pede conta),
   `/importar`, `/lixeira`, `/qr`, `/compartilhar` (o share target do app instalável, e o "Item" do
   ＋ Adicionar) e `/configuracoes` (lista em grupos; cada
   seção, inclusive o Editar perfil, a Steam e as Tags, abre em `?secao=…`).
-- **Só redirecionam:** `/favoritos`, `/mapa`, `/filtro` (para as abas do perfil), `/tags` (para
+- **Só redirecionam:** `/favoritos`, `/mapa` (sem conta, a amostra do Mapa), `/filtro` (para as abas do perfil), `/tags` (para
   as Configurações), `/explorar` e `/usuarios` (para as Sugestões do Início; as actions do
   Descobrir continuam em `app/explorar/actions.ts`).
 - **Navegação** (com login): `AppNav` (`components/layout/app-nav.tsx`) — barra lateral a partir de
   768px, abas de baixo no celular (Início, Match, ＋, Avisos, Perfil), o ＋ Adicionar; o item aceso sai de `navSectionOf`
-  (`lib/domain/nav.ts`). Sem login, a `Navbar` de cima.
+  (`lib/domain/nav.ts`).
+- **Modo visitante** (sem login; `AppShell` com `visitor`): `GuestNav` (Início, Match, ＋, Mapa e
+  Entrar), a faixa "Monte a sua vitrine" e a janela de convite (`components/guest/`). **Toda ação
+  que grava e aparece para o visitante chama `useGuestInvite()`**: com conta ele é `null` e a ação
+  segue normal; sem conta, abre o convite (texto em `inviteCopy`, `lib/domain/guest.ts`). Criar
+  conta e Entrar voltam para a mesma tela (`authHref`, e o cookie `SIGNUP_NEXT_COOKIE` até a
+  confirmação do e-mail). Conta sem perfil usa a `Navbar` de cima.
 - **Auth e textos legais:** as telas de auth, `/auth/callback`, `/termos`, `/privacidade` e
   `/aceitar-termos`.
 - **APIs:** `/api/steam/{conectar,retorno}` (OpenID) e `/api/cron/{contas,lixeira}`.

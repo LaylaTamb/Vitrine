@@ -76,6 +76,23 @@ export function safeNextPath(raw: string | null | undefined, fallback = "/"): st
   return raw
 }
 
+/**
+ * Entrar ou Criar conta levando para onde a pessoa estava: `/cadastro?proximo=…`.
+ * Sem destino (ou destino estranho), só a tela.
+ */
+export function authHref(page: "/login" | "/cadastro", next: string | null | undefined): string {
+  const safe = safeNextPath(next)
+  return safe === "/" ? page : `${page}?proximo=${encodeURIComponent(safe)}`
+}
+
+/**
+ * O cookie que guarda, do cadastro até a confirmação do e-mail, para onde
+ * voltar. O destino não vai no link do e-mail: o modelo do Supabase emenda o
+ * `?token_hash=` no endereço, e a lista de endereços permitidos só tem o
+ * `/auth/callback`. Abrir o e-mail em outro navegador só perde o destino.
+ */
+export const SIGNUP_NEXT_COOKIE = "vitrine-proximo"
+
 /** As formas de entrar que o `amr` do token registra ("recovery", "invite", "password"…). */
 export function authMethodsOf(amr: unknown): string[] {
   if (!Array.isArray(amr)) return []
