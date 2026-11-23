@@ -101,7 +101,8 @@ Rotas (nomes em pt-BR):
   app abre (login, ícone do app instalado).
 - **Início:** `/inicio`, com duas abas: Amigos (o feed de quem você segue) e Sugestões
   (`?aba=sugestoes`, o antigo Descobrir: pessoas e categorias; `&buscar=1` já foca a busca).
-- **Categorias:** `/categoria/[categoryId]/[entryId]`. As Coleções moram na aba do seu perfil.
+- **Categorias:** `/categoria/[categoryId]/[entryId]` e `story/` (a imagem 9:16 da lista como está na
+  tela, via `next/og`, para quem pode vê-la). As Coleções moram na aba do seu perfil.
 - **Perfil:**
   - `/v/[username]` (perfil, seguidores, seguindo e `story/`, a imagem via `next/og`); o
     próprio perfil tem as abas Coleções, Favoritas (`?aba=favoritas`) e Mapa (`?aba=mapa`), e
@@ -134,7 +135,7 @@ Rotas (nomes em pt-BR):
 | TMDB | `lib/tmdb/client.ts` (tem `import "server-only"`), parse puro em `lib/domain/tmdb.ts` | diretor, gênero, duração, país, sinopse e o pôster de quem está sem dos filmes do Letterboxd, aos poucos (migrações 43 e 44); só título e ano vão para lá; o crédito `TMDB_CREDIT` aparece em Configurações → Letterboxd |
 | Gemini | `lib/ai/gemini.ts` | só recebe o nome da categoria; limite de 10 por dia no banco (`take_ai_suggestion_quota`, migração 27) |
 | OpenFreeMap | `components/map/` (MapLibre + supercluster) | sem chave |
-| QR / story | `qrcode` no servidor; `app/v/[username]/story/route.tsx` (`next/og`) | o satori ignora `object-position`: corte manual com `imageSizeOf`/`coverBox` (`lib/domain/remote-image.ts`) |
+| QR / story | `qrcode` no servidor; `story/route.tsx` do perfil, do match e da categoria (`next/og`) | o satori ignora `object-position` e `transform`: corte manual com `imageSizeOf`/`coverBox`/`framedBox` (`lib/domain/remote-image.ts`) |
 
 **Segredo do servidor.** O `CRON_SECRET` protege as rotas `/api/cron/*`:
 

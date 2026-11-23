@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine — Exibição da categoria e imagem da lista (proposta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Os mesmos tokens do app (app/globals.css): só escuro. */
+:root {
+  --bg: #121214; --bg-soft: #16161a; --surface: #1b1b1f; --surface-hi: #232328;
+  --line: #2a2a31; --line-hi: #3a3a43;
+  --ink: #ececef; --muted: #9d9da8; --faint: #6e6e78;
+  --brand: #b98cc2; --brand-dim: #8e6c96; --brand-wash: rgb(185 140 194 / 0.14);
+  --on-brand: #1a1220;
+  --display: "Fraunces", ui-serif, Georgia, serif;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--brand-dim); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.plaque { margin: 0; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.display { font-family: var(--display); font-style: italic; font-weight: 400; }
+.muted { color: var(--muted); }
+.shell { max-width: 1240px; margin-inline: auto; padding-inline: 16px; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.top { padding: 28px 0 4px; }
+.top h1 { margin: 6px 0 4px; font-size: clamp(30px, 5vw, 42px); line-height: 1.1; }
+.lead { margin: 0; max-width: 70ch; color: var(--muted); }
+section.block { padding: 28px 0; border-bottom: 1px solid var(--line); }
+section.block > h2 { margin: 0 0 4px; font-size: 26px; }
+section.block > p.muted { margin: 0 0 18px; max-width: 72ch; }
+.two { display: grid; gap: 20px; }
+@media (min-width: 980px) { .two { grid-template-columns: 400px minmax(0, 1fr); align-items: start; } }
+.frame { overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--bg); }
+.frame.phone { width: 375px; max-width: 100%; }
+.frame-label { margin: 0 0 8px; }
+.note { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.note h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.note ul { margin: 0; padding-left: 18px; color: var(--muted); }
+.note li + li { margin-top: 6px; }
+.note b { color: var(--ink); font-weight: 500; }
+
+/* ---------- peças do app ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid transparent; border-radius: 10px; font-size: 13.5px; font-weight: 500; white-space: nowrap; background: none; }
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-outline { border-color: var(--line-hi); }
+.btn-ghost { color: var(--muted); }
+.icon-only { width: 36px; padding: 0; }
+.tg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.tg button { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 7px; background: none; color: var(--muted); font-size: 12px; font-weight: 500; }
+.tg button[aria-pressed="true"] { background: var(--brand-wash); color: var(--brand); }
+.new { box-shadow: 0 0 0 2px var(--brand); border-radius: 11px; }
+.search { position: relative; flex: 1 1 100%; min-width: 0; }
+.search .i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+.search input { width: 100%; height: 36px; padding: 0 10px 0 32px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); outline: none; }
+.search input::placeholder { color: var(--faint); }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.frame.desk .search { flex-basis: 0; }
+.app-head { padding: 16px; }
+.app-head .crumb { color: var(--faint); font-size: 12.5px; }
+.app-head h3 { margin: 2px 0 10px; font-size: 30px; line-height: 1.15; }
+.app-head .row { display: flex; align-items: center; gap: 8px; }
+.app-head .row .more { margin-left: auto; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 0 16px 18px; }
+.frame.desk .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.tile { display: grid; gap: 6px; }
+.ph { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 5; border-radius: 12px; color: rgb(255 255 255 / 0.5); font: italic 30px var(--display); overflow: hidden; }
+.ph .r { position: absolute; left: 6px; bottom: 6px; padding: 0 6px; border-radius: 6px; background: rgb(18 18 20 / 0.85); color: var(--ink); font: 500 11px/18px var(--sans); }
+.ph .r::before { content: "★ "; color: var(--brand); }
+.tile p { margin: 0; font: italic 14px var(--display); }
+.menu { width: 230px; padding: 6px; border: 1px solid var(--line-hi); border-radius: 12px; background: var(--surface); box-shadow: 0 12px 40px rgb(0 0 0 / 0.5); }
+.menu div { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--ink); font-size: 13.5px; }
+.menu div.hl { background: var(--brand-wash); }
+.menu hr { margin: 4px 0; border: 0; border-top: 1px solid var(--line); }
+.numbar { display: flex; align-items: center; gap: 10px; margin: 0 16px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); font-size: 13px; }
+.numbar .btn { margin-left: auto; height: 30px; }
+.sheet { padding: 18px 16px 20px; border: 1px solid var(--line-hi); border-radius: 22px 22px 0 0; background: var(--surface); }
+.sheet h4 { margin: 0 0 2px; font-size: 22px; }
+.sheet .sub { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+.sheet .prev { display: flex; gap: 14px; align-items: flex-start; }
+.sheet .acts { display: grid; gap: 8px; flex: 1; min-width: 0; }
+.sheet .acts .btn { width: 100%; }
+.sheet .linkrow { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.sheet .linkrow input { flex: 1; min-width: 0; height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); color: var(--muted); font-size: 12.5px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; }
+
+/* ---------- a imagem do story: desenhada em 1080×1920 e mostrada reduzida ---------- */
+.stories { display: flex; flex-wrap: wrap; gap: 22px; justify-content: center; }
+.story-wrap { display: grid; gap: 8px; justify-items: center; }
+.mini { position: relative; width: 270px; height: 480px; overflow: hidden; border-radius: 16px; box-shadow: 0 0 0 1px var(--line); }
+.mini.sheet-size { width: 117px; height: 208px; border-radius: 10px; flex-shrink: 0; }
+.mini > .story { transform: scale(0.25); transform-origin: 0 0; }
+.mini.sheet-size > .story { transform: scale(0.1083); }
+.story { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; width: 1080px; height: 1920px; padding: 80px 72px 72px; background: radial-gradient(900px 600px at 80% -10%, rgb(185 140 194 / 0.22), transparent 70%), #121214; color: var(--ink); font-family: var(--sans); }
+.s-top { display: flex; align-items: center; gap: 22px; }
+.s-av { display: grid; place-items: center; width: 76px; height: 76px; border-radius: 999px; background: #5f6a8a; color: #fff; font: 600 34px var(--sans); }
+.s-user { color: var(--muted); font-size: 34px; }
+.s-brand { margin-left: auto; font: italic 46px var(--display); }
+.s-brand::before { content: ""; display: inline-block; width: 16px; height: 16px; margin: 0 14px 6px 0; border-radius: 999px; background: var(--brand); box-shadow: 0 0 22px 6px rgb(185 140 194 / 0.35); }
+.s-title { display: flex; align-items: center; gap: 26px; margin-top: 54px; }
+.s-title .ic { font-size: 104px; line-height: 1; }
+.s-title h5 { margin: 0; font: italic 104px/1.05 var(--display); }
+.s-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 26px; color: var(--muted); font-size: 32px; }
+.s-meta .c { padding: 6px 20px; border: 2px solid var(--line-hi); border-radius: 999px; font-size: 28px; }
+.s-body { flex: 1; min-height: 0; margin-top: 54px; overflow: hidden; }
+.s-grid { display: grid; gap: 28px; }
+.s-grid.g { grid-template-columns: repeat(2, 1fr); }
+.s-grid.m { grid-template-columns: repeat(3, 1fr); }
+.s-grid.p { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.s-cell .ph { aspect-ratio: 1; border-radius: 24px; font-size: 90px; }
+.s-grid.p .s-cell .ph { font-size: 64px; border-radius: 18px; }
+.s-cell .ph .r { left: 16px; bottom: 16px; padding: 4px 16px; border-radius: 14px; font-size: 30px; line-height: 44px; }
+.s-grid.p .s-cell .ph .r { font-size: 24px; line-height: 36px; padding: 2px 12px; }
+.s-cell p { margin: 14px 0 0; font: italic 36px/1.15 var(--display); }
+.s-grid.p .s-cell p { margin-top: 8px; font-size: 28px; }
+.s-more { display: grid; place-items: center; aspect-ratio: 1; border: 3px dashed var(--line-hi); border-radius: 24px; color: var(--muted); font-size: 44px; text-align: center; line-height: 1.2; }
+.s-more small { display: block; font-size: 28px; }
+.s-list { display: grid; gap: 16px; }
+.s-row { display: flex; align-items: center; gap: 26px; padding: 14px 18px; border: 2px solid var(--line); border-radius: 26px; background: var(--surface); }
+.s-row .ph { width: 88px; flex-shrink: 0; aspect-ratio: 1; border-radius: 18px; font-size: 48px; }
+.s-row .n { min-width: 0; flex: 1; }
+.s-row .n b { display: block; font: italic 40px/1.2 var(--display); }
+.s-row .n span { display: block; color: var(--muted); font-size: 26px; }
+.s-row .rt { color: var(--ink); font: 500 36px var(--sans); }
+.s-row .rt::before { content: "★ "; color: var(--brand); }
+.s-row.more { justify-content: center; border-style: dashed; color: var(--muted); font-size: 34px; }
+.s-tier { display: grid; gap: 14px; }
+.s-trow { display: flex; gap: 14px; }
+.s-tl { display: grid; place-items: center; width: 132px; flex-shrink: 0; border-radius: 18px; color: #131315; font: 600 64px var(--sans); }
+.s-tt { display: flex; flex: 1; gap: 12px; min-width: 0; padding: 12px; border-radius: 18px; background: var(--bg-soft); }
+.s-tt .ph { width: 118px; flex-shrink: 0; border-radius: 12px; font-size: 52px; }
+.s-tt .plus { display: grid; place-items: center; width: 118px; border: 3px dashed var(--line-hi); border-radius: 12px; color: var(--muted); font-size: 34px; }
+.s-foot { display: flex; align-items: center; gap: 36px; margin-top: 44px; padding-top: 44px; border-top: 2px solid var(--line); }
+.s-qr { width: 196px; height: 196px; flex-shrink: 0; padding: 14px; border-radius: 24px; background: #fff; }
+.s-qr svg { width: 100%; height: 100%; }
+.s-foot b { display: block; font: italic 54px/1.1 var(--display); }
+.s-foot span { display: block; margin-top: 10px; color: var(--muted); font-size: 32px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="sliders" viewBox="0 0 24 24"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></symbol>
+  <symbol id="grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="list" viewBox="0 0 24 24"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></symbol>
+  <symbol id="rows" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3"/><path d="M21 15H3"/></symbol>
+  <symbol id="share" viewBox="0 0 24 24"><path d="M12 2v13"/><path d="m16 6-4-4-4 4"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+  <symbol id="tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="map" viewBox="0 0 24 24"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></symbol>
+  <symbol id="back" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="down" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="qr" viewBox="0 0 29 29"><path fill="#121214" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM22 0h7v7h-7zm1 1v5h5V1zm1 1h3v3h-3zM0 22h7v7H0zm1 1v5h5v-5zm1 1h3v3H2zM9 0h2v2H9zm4 0h1v3h-1zm3 1h2v1h-2zm-7 3h1v2H9zm3 0h3v1h-3zm5 0h2v3h-2zM9 8h2v1H9zm4 0h3v2h-3zM0 9h2v1H0zm4 0h4v1H4zm6 1h2v2h-2zm7 0h3v1h-3zm5 0h2v2h-2zm4 0h1v3h-1zM2 12h3v1H2zm6 0h1v3H8zm6 0h2v2h-2zm6 0h1v4h-1zM0 14h2v2H0zm11 1h2v1h-2zm6 0h2v3h-2zm6 0h3v1h-3zM4 16h3v1H4zm10 1h1v3h-1zm-5 1h3v1H9zm13 1h2v2h-2zm4 0h3v1h-3zm-17 2h2v1H9zm4 0h1v4h-1zm5 0h3v2h-3zm8 2h1v3h-1zm-16 1h2v2h-2zm6 1h2v1h-2zm4 1h3v1h-3zm-6 1h1v1h-1z"/></symbol>
+</svg>
+
+<div class="shell">
+  <header class="top">
+    <p class="plaque">Proposta · Categoria</p>
+    <h1 class="display">Botões como nas pastas, e a lista vira imagem</h1>
+    <p class="lead">O menu “Exibição” da categoria some: Grade, Lista e Tier list viram botões de um toque, com o
+      P / M / G ao lado, igual às suas Coleções. O Números vai para o ⋯. E um botão novo,
+      <b>Compartilhar</b>, gera a imagem da lista do jeito que está na tela (9:16, para o story), com
+      o link e o QR para quem vê abrir a lista no Vitrine.</p>
+  </header>
+
+  <!-- ========== 1. A barra ========== -->
+  <section class="block">
+    <h2 class="display">1. A barra da categoria</h2>
+    <p class="muted">No celular, a busca fica na primeira linha e o resto cabe numa só embaixo. Os botões em
+      destaque (contorno roxo) são o que muda. Toque nos botões para ver o P / M / G sumir na Lista,
+      como nas pastas.</p>
+    <div class="two">
+      <div>
+        <p class="plaque frame-label">Celular</p>
+        <div class="frame phone" id="phone-frame">
+          <div class="app-head">
+            <span class="crumb">Coleções › Comer</span>
+            <h3 class="display">☕ Cafés</h3>
+            <div class="row"><span class="btn btn-outline">Editar</span><span class="btn btn-outline">Subpasta</span><span class="btn btn-ghost icon-only more"><svg class="i"><use href="#dots"/></svg></span></div>
+          </div>
+          <div class="bar" style="padding: 0 16px 14px">
+            <label class="search"><svg class="i"><use href="#search"/></svg><input placeholder="Buscar por nome, tag ou campo…"></label>
+            <span class="btn btn-outline"><svg class="i"><use href="#sliders"/></svg> Filtros</span>
+            <div class="tg new" data-views><button aria-pressed="true" data-v="grid" title="Grade"><svg class="i"><use href="#grid"/></svg></button><button aria-pressed="false" data-v="list" title="Lista"><svg class="i"><use href="#list"/></svg></button><button aria-pressed="false" data-v="tier" title="Tier list"><svg class="i"><use href="#rows"/></svg></button></div>
+            <div class="tg new" data-sizes><button aria-pressed="false">P</button><button aria-pressed="true">M</button><button aria-pressed="false">G</button></div>
+            <span class="btn btn-primary icon-only new" title="Compartilhar"><svg class="i"><use href="#share"/></svg></span>
+          </div>
+          <div class="grid">
+            <div class="tile"><div class="ph" style="background:linear-gradient(135deg,#5a4636,#2b2420)">G<span class="r">4,5</span></div><p class="truncate">Girondino</p></div>
+            <div class="tile"><div class="ph" style="background:linear-gradient(135deg,#3d4a3a,#1f2620)">S<span class="r">5</span></div><p class="truncate">Sofá Café</p></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="plaque frame-label">Computador</p>
+        <div class="frame desk">
+          <div class="app-head">
+            <span class="crumb">Coleções › Comer</span>
+            <h3 class="display">☕ Cafés</h3>
+          </div>
+          <div class="bar" style="padding: 0 16px 14px">
+            <label class="search"><svg class="i"><use href="#search"/></svg><input placeholder="Buscar por nome, tag ou campo…"></label>
+            <span class="btn btn-outline"><svg class="i"><use href="#sliders"/></svg> Filtros</span>
+            <div class="tg new" data-views><button aria-pressed="true" data-v="grid" title="Grade"><svg class="i"><use href="#grid"/></svg></button><button aria-pressed="false" data-v="list" title="Lista"><svg class="i"><use href="#list"/></svg></button><button aria-pressed="false" data-v="tier" title="Tier list"><svg class="i"><use href="#rows"/></svg></button></div>
+            <div class="tg new" data-sizes><button aria-pressed="false">P</button><button aria-pressed="true">M</button><button aria-pressed="false">G</button></div>
+            <span class="btn btn-primary new"><svg class="i"><use href="#share"/></svg> Compartilhar</span>
+          </div>
+          <div class="grid">
+            <div class="tile"><div class="ph" style="background:linear-gradient(135deg,#5a4636,#2b2420)">G<span class="r">4,5</span></div><p class="truncate">Girondino</p></div>
+            <div class="tile"><div class="ph" style="background:linear-gradient(135deg,#3d4a3a,#1f2620)">S<span class="r">5</span></div><p class="truncate">Sofá Café</p></div>
+            <div class="tile"><div class="ph" style="background:linear-gradient(135deg,#4a3a4d,#241f27)">P<span class="r">4</span></div><p class="truncate">Por Um Punhado</p></div>
+            <div class="tile"><div class="ph" style="background:linear-gradient(135deg,#3a4256,#1d2029)">F</div><p class="truncate">Futuro Refeitório</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 2. Números no ⋯ ========== -->
+  <section class="block">
+    <h2 class="display">2. O Números vai para o ⋯</h2>
+    <p class="muted">Aberto, ele mostra uma faixa com “Voltar aos itens”, e qualquer botão de exibição também
+      volta. Na lista de outra pessoa, o ⋯ aparece só com o Números (hoje ele só existe para o dono).</p>
+    <div class="two">
+      <div class="menu">
+        <div><svg class="i"><use href="#tag"/></svg> Tags</div>
+        <div class="hl"><svg class="i"><use href="#chart"/></svg> Números</div>
+        <div><svg class="i"><use href="#map"/></svg> Ver no mapa</div>
+        <hr>
+        <div style="color:var(--muted)">Renomear subpasta…</div>
+      </div>
+      <div class="frame" style="max-width:520px">
+        <div class="app-head" style="padding-bottom:10px"><h3 class="display" style="margin:0">☕ Cafés</h3></div>
+        <div class="numbar"><svg class="i" style="color:var(--brand)"><use href="#chart"/></svg> Números de 24 itens <span class="btn btn-outline"><svg class="i"><use href="#back"/></svg> Voltar aos itens</span></div>
+        <p class="muted" style="margin:0 16px 18px;font-size:13px">(o painel de Números de hoje, sem mudança)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 3. Compartilhar ========== -->
+  <section class="block">
+    <h2 class="display">3. O botão Compartilhar</h2>
+    <p class="muted">Um lugar só para compartilhar: a imagem (nova) e o link com o QR (o que hoje está no ⋯ como
+      “Compartilhar (QR e link)”). A janela diz o que vai na imagem; para mudar, feche, troque a
+      exibição ou o filtro e abra de novo.</p>
+    <div class="two">
+      <div class="frame phone">
+        <div style="height:120px;background:linear-gradient(transparent,rgb(0 0 0 / 0.6))"></div>
+        <div class="sheet">
+          <h4 class="display">Compartilhar “Cafés”</h4>
+          <p class="sub">A imagem mostra a <b style="color:var(--ink);font-weight:500">Grade M</b> com o filtro de agora: 8 de 24 itens.</p>
+          <div class="prev">
+            <div class="mini sheet-size" id="sheet-mini"></div>
+            <div class="acts">
+              <span class="btn btn-primary"><svg class="i"><use href="#share"/></svg> Compartilhar imagem</span>
+              <span class="btn btn-outline"><svg class="i"><use href="#down"/></svg> Baixar PNG</span>
+              <span class="muted" style="font-size:12px;line-height:1.4">No computador, o primeiro botão vira “Copiar imagem”.</span>
+            </div>
+          </div>
+          <div class="linkrow"><input value="vitrine.app/categoria/8f2c…" readonly><span class="btn btn-outline icon-only" title="Copiar link"><svg class="i"><use href="#copy"/></svg></span><span class="btn btn-outline">QR</span></div>
+          <p class="muted" style="margin:10px 0 0;font-size:12px">Qualquer pessoa abre, mesmo sem conta no Vitrine.</p>
+        </div>
+      </div>
+      <div class="note">
+        <h3>Como fica</h3>
+        <ul>
+          <li><b>O que está na tela:</b> a subpasta aberta, a busca, as tags, a nota e a ordem. Entra até onde cabe, e o resto vira “+N”.</li>
+          <li><b>Quem gera:</b> qualquer um que vê a lista, inclusive sem conta numa lista pública. A imagem leva o @ de quem fez.</li>
+          <li><b>Privacidade:</b> o servidor monta a imagem com o que a pessoa já pode ver. Lista de Amigos ou Privada vira imagem para quem pode vê-la, e o QR só abre para quem pode ver.</li>
+          <li><b>Celular:</b> abre o compartilhar do sistema (Instagram, WhatsApp…). <b>Computador:</b> copia a imagem e oferece baixar.</li>
+          <li>Na “A organizar”, o botão não aparece (é a sua caixa de entrada).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 4. A imagem ========== -->
+  <section class="block">
+    <h2 class="display">4. A imagem (Story 9:16, 1080 × 1920)</h2>
+    <p class="muted">A mesma lista em cada exibição. O tamanho P / M / G muda quantos cabem. Embaixo, o QR e o
+      convite para abrir a lista no Vitrine. Troque o tamanho da grade:</p>
+    <div class="tg" id="story-size" style="margin-bottom:18px"><button aria-pressed="false" data-s="p">P</button><button aria-pressed="true" data-s="m">M</button><button aria-pressed="false" data-s="g">G</button></div>
+    <div class="stories">
+      <div class="story-wrap"><div class="mini" id="mini-grid"></div><span class="plaque">Grade</span></div>
+      <div class="story-wrap"><div class="mini" id="mini-list"></div><span class="plaque">Lista</span></div>
+      <div class="story-wrap"><div class="mini" id="mini-tier"></div><span class="plaque">Tier list</span></div>
+    </div>
+    <div class="note" style="margin-top:22px">
+      <h3>Quantos cabem</h3>
+      <ul>
+        <li><b>Grade:</b> G = 2 × 2, M = 3 × 3, P = 4 × 4. Com mais itens, o último lugar vira “+N na lista”.</li>
+        <li><b>Lista:</b> até 7 linhas, com a miniatura, o nome, o resumo e a nota.</li>
+        <li><b>Tier list:</b> as fileiras S a E que têm itens, com até 4 (G), 6 (M) ou 8 (P) miniaturas cada, e “+N” no fim.</li>
+        <li>Foto que não carrega vira a inicial, como no app. Com filtro ativo, os chips do filtro aparecem embaixo do nome.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+  const ITEMS = [
+    ["Girondino", "4,5", "#5a4636", "Pinheiros · Coado"], ["Sofá Café", "5", "#3d4a3a", "Pinheiros · Espresso"],
+    ["Por Um Punhado", "4", "#4a3a4d", "Vila Madalena"], ["Futuro Refeitório", "4,5", "#3a4256", "Centro"],
+    ["Takkø", "5", "#4d3a3a", "Pinheiros"], ["Coffee Lab", "4", "#3a4d4a", "Vila Madalena"],
+    ["Isso É Café", "3,5", "#4a4a3a", "Centro"], ["Mirante 9", "4", "#3d3a52", "Bela Vista"],
+    ["Café Zinn", "3", "#523d33", "Jardins"], ["Urbe", "4,5", "#334a52", "Pinheiros"],
+    ["Clemente", "2,5", "#4d4a3a", "Itaim"], ["Kof", "4", "#3a523d", "Vila Mariana"],
+    ["Sensi", "5", "#523a4a", "Consolação"], ["Blend", "3,5", "#3a3d52", "Moema"],
+    ["Ponto", "4", "#4a3a3a", "Liberdade"], ["Feio", "3", "#3a4a3a", "Centro"],
+  ]
+  const TOTAL = 24
+  const ph = (it, extra = "") => `<div class="ph" style="background:linear-gradient(135deg,${it[2]},#1a1a1f)">${it[0][0]}${extra}</div>`
+  const head = (chips) => `
+    <div class="s-top"><span class="s-av">L</span><span class="s-user">@layla</span><span class="s-brand">Vitrine</span></div>
+    <div class="s-title"><span class="ic">☕</span><h5>Cafés de SP</h5></div>
+    <div class="s-meta">${TOTAL} itens ${chips ? '<span class="c">★ 4 ou mais</span><span class="c">#favoritos</span>' : ""}</div>`
+  const foot = `
+    <div class="s-foot"><div class="s-qr"><svg viewBox="0 0 29 29"><use href="#qr"/></svg></div>
+    <div><b>Veja a lista inteira no Vitrine</b><span>vitrine.app/v/layla</span></div></div>`
+
+  function gridStory(size) {
+    const cols = { g: 2, m: 3, p: 4 }[size]
+    const cap = cols * cols
+    const shown = ITEMS.slice(0, Math.min(cap - 1, ITEMS.length))
+    const cells = shown.map((it) => `<div class="s-cell">${ph(it, `<span class="r">${it[1]}</span>`)}<p class="truncate">${it[0]}</p></div>`).join("")
+    const more = `<div class="s-cell"><div class="s-more"><span>+${TOTAL - shown.length}<small>na lista</small></span></div></div>`
+    return `<div class="story">${head(false)}<div class="s-body"><div class="s-grid ${size}">${cells}${more}</div></div>${foot}</div>`
+  }
+  function listStory() {
+    const rows = ITEMS.slice(0, 7).map((it) => `<div class="s-row">${ph(it)}<div class="n"><b class="truncate">${it[0]}</b><span class="truncate">${it[3]}</span></div><span class="rt">${it[1]}</span></div>`).join("")
+    return `<div class="story">${head(true)}<div class="s-body"><div class="s-list">${rows}<div class="s-row more">+${TOTAL - 7} na lista</div></div></div>${foot}</div>`
+  }
+  function tierStory(size) {
+    const per = { g: 4, m: 6, p: 8 }[size]
+    const tiers = [["S", "#FF7F7F", ["5"]], ["A", "#FFBF7F", ["4,5", "4"]], ["B", "#FFDF7F", ["3,5", "3"]], ["C", "#FFFF7F", ["2,5", "2"]]]
+    const rows = tiers.map(([id, color, notes]) => {
+      const its = ITEMS.filter((it) => notes.includes(it[1]))
+      const extra = id === "A" ? 4 : 0
+      const shown = its.slice(0, per)
+      const hidden = its.length - shown.length + extra
+      return `<div class="s-trow"><div class="s-tl" style="background:${color}">${id}</div><div class="s-tt">${shown.map((it) => ph(it)).join("")}${hidden > 0 ? `<div class="plus">+${hidden}</div>` : ""}</div></div>`
+    }).join("")
+    return `<div class="story">${head(false)}<div class="s-body"><div class="s-tier">${rows}</div></div>${foot}</div>`
+  }
+
+  let size = "m"
+  function render() {
+    document.getElementById("mini-grid").innerHTML = gridStory(size)
+    document.getElementById("mini-list").innerHTML = listStory()
+    document.getElementById("mini-tier").innerHTML = tierStory(size)
+    document.getElementById("sheet-mini").innerHTML = gridStory("m")
+  }
+  render()
+  document.querySelectorAll("#story-size button").forEach((b) => b.addEventListener("click", () => {
+    size = b.dataset.s
+    document.querySelectorAll("#story-size button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)))
+    render()
+  }))
+  // Os botões da barra: a Lista esconde o P / M / G, como nas pastas.
+  document.querySelectorAll("[data-views]").forEach((group) => {
+    group.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      group.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)))
+      group.parentElement.querySelector("[data-sizes]").hidden = b.dataset.v === "list"
+    }))
+  })
+  document.querySelectorAll("[data-sizes]").forEach((group) => {
+    group.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      group.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)))
+    }))
+  })
+</script>
+</body>
+</html>

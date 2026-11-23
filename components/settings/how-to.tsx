@@ -116,8 +116,9 @@ export function HowTo() {
             campos). Dentro de uma categoria, o <b>Filtros</b> olha só ela.
           </li>
           <li>
-            No botão <b>Exibição</b> da categoria, veja os itens em grade, lista ou <b>tier list</b>{" "}
-            (pelas notas), troque o tamanho ou abra os <b>Números</b>, que resumem a categoria.
+            Nos botões da barra da categoria, veja os itens em grade, lista ou <b>tier list</b>{" "}
+            (pelas notas) e troque o tamanho (P / M / G). Os <b>Números</b>, que resumem a
+            categoria, ficam no <b>⋯</b>.
           </li>
           <li>
             A <b>estrela</b> de uma categoria a leva para a aba <b>Favoritas</b> do perfil, sem
@@ -172,7 +173,8 @@ export function HowTo() {
           </li>
           <li>
             <b>Compartilhar</b> (no perfil) copia o link, gera a imagem para o story e mostra o seu
-            QR. No <b>⋯</b> de uma categoria, <b>Compartilhar</b> mostra o QR e o link dela.
+            QR. Numa categoria, <b>Compartilhar</b> gera a imagem da lista como está na tela
+            (para o story ou para mandar) e mostra o link e o QR dela.
           </li>
         </ul>
       </Topic>

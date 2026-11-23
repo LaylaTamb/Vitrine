@@ -52,6 +52,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { emojiIconOrNull } from "@/lib/domain/emoji"
 import { SUGGEST_MIN_NAME } from "@/lib/domain/field-suggestions"
 import {
   CURRENCY_SYMBOLS,
@@ -148,7 +149,8 @@ export function CategoryEditor({
   /** O modelo usado: a categoria nova lembra de onde veio (migração 25). */
   const [source, setSource] = useState<{ id: string; name: string; username: string } | null>(null)
   const [name, setName] = useState(initial.name)
-  const [icon, setIcon] = useState(initial.icon ?? "")
+  // Um ícone antigo que não é emoji (de antes da regra) aparece vazio: é só escolher outro.
+  const [icon, setIcon] = useState(emojiIconOrNull(initial.icon) ?? "")
   const [color, setColor] = useState<string | null>(initial.color)
   const [fields, setFields] = useState<Estrutura>(initial.estrutura)
   const [ratingEnabled, setRatingEnabled] = useState(initial.ratingEnabled)
@@ -212,7 +214,7 @@ export function CategoryEditor({
     setView("form")
     setSource(null)
     setName(current.name)
-    setIcon(current.icon ?? "")
+    setIcon(emojiIconOrNull(current.icon) ?? "")
     setColor(current.color)
     setFields(current.estrutura)
     setRatingEnabled(current.ratingEnabled)
@@ -262,7 +264,7 @@ export function CategoryEditor({
    */
   function applyTemplate(template: CategoryTemplate) {
     setName(template.name)
-    setIcon(template.icon ?? "")
+    setIcon(emojiIconOrNull(template.icon) ?? "")
     setColor(template.color)
     setFields(template.estrutura)
     setRatingEnabled(template.ratingEnabled)
@@ -277,7 +279,7 @@ export function CategoryEditor({
   function clearTemplate() {
     const current = initialRef.current
     setName(current.name)
-    setIcon(current.icon ?? "")
+    setIcon(emojiIconOrNull(current.icon) ?? "")
     setColor(current.color)
     setFields(current.estrutura)
     setRatingEnabled(current.ratingEnabled)

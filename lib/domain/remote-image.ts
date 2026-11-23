@@ -98,3 +98,34 @@ export function coverBox(
     top: Math.round((box.height - height) * fraction) || 0,
   }
 }
+
+/**
+ * O enquadramento do item (x, y e zoom, como no app: `object-position` x% y%
+ * e `scale(zoom)` a partir do mesmo ponto) feito na mão, para o gerador de
+ * imagem, que ignora `object-position` e `transform`. Devolve o tamanho e o
+ * lugar da imagem dentro da caixa.
+ */
+export function framedBox(
+  image: { width: number; height: number },
+  box: { width: number; height: number },
+  display: { x: number; y: number; zoom: number }
+): { width: number; height: number; left: number; top: number } {
+  const zoom = Math.max(1, display.zoom)
+  const scale = Math.max(box.width / image.width, box.height / image.height)
+  const coverWidth = image.width * scale
+  const coverHeight = image.height * scale
+  const fx = Math.min(100, Math.max(0, display.x)) / 100
+  const fy = Math.min(100, Math.max(0, display.y)) / 100
+  // O zoom cresce a partir do ponto (x%, y%) da caixa, como o `transform-origin`.
+  const originX = box.width * fx
+  const originY = box.height * fy
+  const left = originX + ((box.width - coverWidth) * fx - originX) * zoom
+  const top = originY + ((box.height - coverHeight) * fy - originY) * zoom
+  return {
+    width: Math.ceil(coverWidth * zoom),
+    height: Math.ceil(coverHeight * zoom),
+    // `|| 0`: sem o -0 de "nada sobrando".
+    left: Math.round(left) || 0,
+    top: Math.round(top) || 0,
+  }
+}

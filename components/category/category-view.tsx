@@ -19,6 +19,8 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import {
+  ArrowLeft,
+  BarChart3,
   CheckSquare,
   FolderOpen,
   FolderPlus,
@@ -28,7 +30,6 @@ import {
   MapIcon,
   Pencil,
   Plus,
-  Share2,
   SlidersHorizontal,
   Tags as TagsIcon,
   Trash2,
@@ -62,7 +63,7 @@ import { Notice } from "@/components/layout/notice"
 import { PageHeader } from "@/components/layout/page-header"
 import { useFolderParam } from "@/components/layout/use-folder-param"
 import { useStoredPreference } from "@/components/layout/use-stored-preference"
-import type { EntryViewMode } from "@/components/layout/view-toggle"
+import { VIEW_MODES, type EntryViewMode } from "@/components/layout/view-toggle"
 import { useVitrine } from "@/components/providers/vitrine-context"
 import { Button } from "@/components/ui/button"
 import { TagsView } from "@/components/tag/tags-view"
@@ -82,9 +83,11 @@ import { locationFieldsOf } from "@/lib/domain/fields"
 import {
   DEFAULT_GRID_SIZE,
   GRID_CLASSES,
+  GRID_SIZE_OPTIONS,
   LIST_CLASSES,
   normalizeGridSize,
 } from "@/lib/domain/grid-size"
+import { storyHref } from "@/lib/domain/list-story"
 import type { ConnectedProvider } from "@/lib/domain/connected"
 import { canFavorite } from "@/lib/domain/favorites"
 import { isInbox } from "@/lib/domain/inbox"
@@ -144,6 +147,7 @@ export function CategoryView({
   isFavorite = false,
   autoRefresh = null,
   link = null,
+  signedIn = true,
 }: {
   category: Category
   owner: Profile | null
@@ -176,6 +180,8 @@ export function CategoryView({
   autoRefresh?: ConnectedProvider | null
   /** Cópia do Explorar: a ligação com a original, já sincronizada (migração 26). */
   link?: LinkView | null
+  /** Quem abre sem conta (lista pública): o Compartilhar fica sem o QR do link. */
+  signedIn?: boolean
 }) {
   const { actions } = useVitrine()
   const router = useRouter()
@@ -427,6 +433,8 @@ export function CategoryView({
   function selectView(next: EntryViewMode) {
     if (next === "tier") clearSelection()
     changeView(next)
+    // Os botões de exibição também voltam dos Números aos itens.
+    setTab("itens")
   }
 
   // ---- trilha: Coleções › pastas › Categoria › subpastas -------------------
@@ -560,18 +568,22 @@ export function CategoryView({
       />
     ) : null
 
-  // O "⋯": o que é raro fica aqui, para o topo ter poucas ações à vista.
+  // Os Números (o resumo da categoria) moram no ⋯; os botões de exibição voltam aos itens.
+  const numbersItem = (
+    <DropdownMenuItem onSelect={() => setTab("numeros")} disabled={tab === "numeros"}>
+      <BarChart3 /> Números
+    </DropdownMenuItem>
+  )
+
+  // O "⋯": o que é raro fica aqui, para o topo ter poucas ações à vista. Na
+  // lista de outra pessoa, só os Números.
   const moreMenu = canEdit ? (
     <MoreMenu label={`Mais opções de “${category.name}”`}>
       {/* As tags são desta categoria (migração 49). */}
       <DropdownMenuItem onSelect={() => setTagsOpen(true)}>
         <TagsIcon /> Tags
       </DropdownMenuItem>
-      {inbox ? null : (
-        <DropdownMenuItem onSelect={() => setSharing(true)}>
-          <Share2 /> Compartilhar (QR e link)
-        </DropdownMenuItem>
-      )}
+      {numbersItem}
       {/* O Mapa só mostra o que é meu. */}
       {locationFieldsOf(category.estrutura).length > 0 ? (
         <DropdownMenuItem asChild>
@@ -616,7 +628,19 @@ export function CategoryView({
         </>
       )}
     </MoreMenu>
-  ) : null
+  ) : (
+    <MoreMenu label={`Mais opções de “${category.name}”`}>{numbersItem}</MoreMenu>
+  )
+
+  // A imagem da lista: o que está na tela (modo, tamanho, subpasta e filtro).
+  const sizeLetter = GRID_SIZE_OPTIONS.find((option) => option.value === gridSize)?.letter ?? ""
+  const storyLabel = [
+    `${VIEW_MODES[view].label}${view === "list" ? "" : ` ${sizeLetter}`}`,
+    currentFolder ? `em “${currentFolder.name}”` : null,
+    active ? `${filtered.length} de ${itemCount(levelViews.length)}` : itemCount(levelViews.length),
+  ]
+    .filter(Boolean)
+    .join(" · ")
 
   return (
     <>
@@ -687,7 +711,9 @@ export function CategoryView({
                 </Button>
                 {moreMenu}
               </>
-            ) : null
+            ) : (
+              moreMenu
+            )
           }
         />
 
@@ -734,7 +760,7 @@ export function CategoryView({
             resultCount={tab === "numeros" ? statsViews.length : filtered.length}
             ratingEnabled={ratingEnabled}
             numbers={tab === "numeros"}
-            onNumbersChange={(on) => setTab(on ? "numeros" : "itens")}
+            onShare={inbox ? undefined : () => setSharing(true)}
           />
 
           {tab === "itens" && levelFolders.length > 0 ? (
@@ -749,6 +775,16 @@ export function CategoryView({
               view={cardView}
               gridSize={gridSize}
             />
+          ) : null}
+
+          {tab === "numeros" ? (
+            <div className="flex items-center gap-2.5 rounded-xl border border-line bg-bg-soft px-3 py-2">
+              <BarChart3 aria-hidden className="size-4 shrink-0 text-brand" />
+              <p className="min-w-0 flex-1 text-sm">Números de {itemCount(statsViews.length)}</p>
+              <Button variant="outline" size="sm" onClick={() => setTab("itens")}>
+                <ArrowLeft className="size-3.5" /> Voltar aos itens
+              </Button>
+            </div>
           ) : null}
 
           {tab === "numeros" ? (
@@ -974,6 +1010,16 @@ export function CategoryView({
             categoryId={category.id}
             name={category.name}
             visibility={restrictedBy?.visibility ?? visibility}
+            mine={canEdit}
+            signedIn={signedIn}
+            storySrc={storyHref(category.id, {
+              mode: view,
+              size: gridSize,
+              folderId: currentFolderId,
+              filter,
+              defaultSort,
+            })}
+            storyLabel={storyLabel}
           />
 
           <ConfirmDialog

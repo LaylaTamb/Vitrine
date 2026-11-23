@@ -201,6 +201,7 @@ async function VisitorCategoryPage({
         collectionFolders={[]}
         collectionsHref={profilePath(owner.username)}
         canEdit={false}
+        signedIn={false}
         initialFilter={categoryFilterFromParams(query, category)}
         initialTab={query.aba === "numeros" ? "numeros" : "itens"}
       />

@@ -6,6 +6,7 @@ import { z } from "zod"
 
 import { passwordProblem } from "@/lib/domain/auth"
 import { BIO_MAX, CARD_MAX_CATEGORIES } from "@/lib/domain/card"
+import { EMOJI_ICON_MAX_LENGTH, isEmojiIcon } from "@/lib/domain/emoji"
 import { SORT_KEYS, type SortKey } from "@/lib/domain/filter"
 import { VISIBILITIES } from "@/lib/domain/privacy"
 import { QR_TOKEN_PATTERN } from "@/lib/domain/qr"
@@ -92,7 +93,13 @@ export const sortKeySchema = z.enum(SORT_KEYS as [SortKey, ...SortKey[]])
 
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "Dê um nome à categoria.").max(80, "Nome muito longo."),
-  icon: z.string().trim().max(4, "O ícone é um emoji só.").nullable(),
+  // Um emoji só (vazio = sem ícone): letra, número ou texto não entram.
+  icon: z
+    .string()
+    .trim()
+    .max(EMOJI_ICON_MAX_LENGTH, "O ícone é um emoji só.")
+    .refine((value) => value === "" || isEmojiIcon(value), "O ícone precisa ser um emoji.")
+    .nullable(),
   color: z.string().nullable(),
   estrutura: estruturaSchema,
   /** `false` = lista simples, sem nota de estrelas. */

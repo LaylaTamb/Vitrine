@@ -7,6 +7,7 @@ import { z } from "zod"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { ok, fail, type ActionResult } from "@/lib/actions/result"
+import { emojiIconOrNull } from "@/lib/domain/emoji"
 import { isMissingColumn } from "@/lib/domain/errors"
 import { coerceCustomFields, normalizeName, parseEstrutura } from "@/lib/domain/fields"
 import { normalizeSort, type SortKey } from "@/lib/domain/filter"
@@ -378,7 +379,8 @@ export async function performImport(
         ...(quick === QUICK_FIELD_NAME ? {} : { quick_field: quick }),
         owner_id: ownerId,
         name: uniqueCategoryName(category.name.trim()),
-        icon: category.icon?.trim() || null,
+        // Só emoji (a regra do editor): o que não for, entra sem ícone.
+        icon: emojiIconOrNull(category.icon),
         color: normalizeCategoryColor(category.color),
         folder_id: category.folderId ? (folderIdMap.get(category.folderId) ?? null) : null,
         estrutura,

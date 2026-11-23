@@ -6,11 +6,11 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 
-function isAbort(error: unknown): boolean {
+export function isAbort(error: unknown): boolean {
   return (error as { name?: unknown })?.name === "AbortError"
 }
 
-function download(blob: Blob, name: string) {
+export function download(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
   link.href = url
@@ -24,7 +24,7 @@ function download(blob: Blob, name: string) {
  * arquivo (abre o compartilhar do sistema), mas ali o que se quer é colar a
  * imagem em algum lugar — então o computador copia, e o celular compartilha.
  */
-function isDesktop(): boolean {
+export function isDesktop(): boolean {
   return window.matchMedia("(hover: hover) and (pointer: fine)").matches
 }
 

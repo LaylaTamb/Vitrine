@@ -25,10 +25,11 @@ mais cria conta com e-mail e senha.
   ou em Configurações → Tags, agrupadas por categoria. Dá para organizar os itens em **subpastas**
   dentro da categoria e arrastar para pôr na ordem que quiser — ou para dentro
   de outra pasta.
-- **Várias formas de ver.** No botão **Exibição** da categoria: grade (em três
-  tamanhos), lista ou **tier list** (S, A, B…, montada pelas notas), e
-  **Números**, que resume a categoria: nota média, as notas por faixa, os
-  destaques, o resumo de cada campo e as tags mais usadas.
+- **Várias formas de ver.** Nos botões da barra da categoria, como nas pastas:
+  grade, lista ou **tier list** (S, A, B…, montada pelas notas), com o tamanho
+  P / M / G ao lado. No **⋯**, os **Números**, que resumem a categoria: nota
+  média, as notas por faixa, os destaques, o resumo de cada campo e as tags
+  mais usadas.
 - **Busca e filtros.** A barra de busca das Coleções acha pastas, categorias e
   itens — pelo nome, pelas tags ou pelo que está nos campos ("Pinheiros",
   "barato"). O botão **Filtros** das Coleções cruza todas as categorias de
@@ -40,8 +41,13 @@ mais cria conta com e-mail e senha.
 - **Favoritos.** Toque na estrela de qualquer categoria, em qualquer pasta. A
   aba **Favoritas** do seu perfil junta só elas — e elas continuam nas pastas
   delas.
-- **Compartilhar uma categoria.** No ⋯ dela, um QR e o link para mandar para
-  quem quiser (quem abre depende de quem vê a categoria).
+- **Compartilhar uma lista.** O botão **Compartilhar** da categoria gera uma
+  **imagem da lista do jeito que está na tela** (grade, lista ou tier list, no
+  tamanho e com o filtro escolhidos), no formato do story, com o QR para abrir
+  a lista no Vitrine. No celular vai direto para o Instagram, o WhatsApp…; no
+  computador, copia a imagem (ou baixe o PNG). Ali também ficam o link e o QR
+  (quem abre depende de quem vê a categoria). Vale para as suas listas e para
+  as de outras pessoas que você pode ver.
 - **Como usar.** O passo a passo fica em Configurações → Como usar.
 - **"A organizar".** A caixa de entrada para o que você salva às pressas
   (do celular, por exemplo). Depois é só mover para a categoria certa.

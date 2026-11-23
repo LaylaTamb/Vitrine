@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, SlidersHorizontal, X } from "lucide-react"
+import { Search, Share2, SlidersHorizontal, X } from "lucide-react"
 import { useState } from "react"
 
 import { MatchModeToggle } from "@/components/filter/match-mode-toggle"
@@ -14,18 +14,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { DisplayMenu } from "@/components/category/display-menu"
-import type { EntryViewMode } from "@/components/layout/view-toggle"
+import { GridSizeToggle } from "@/components/layout/grid-size-toggle"
+import { ViewToggle, type EntryViewMode } from "@/components/layout/view-toggle"
 import { sortOptionsFor, type CategoryFilter, type SortKey } from "@/lib/domain/filter"
 import { itemCount } from "@/lib/domain/format"
 import type { GridSize } from "@/lib/domain/grid-size"
 import type { Tag } from "@/lib/domain/types"
 
 /**
- * A barra da categoria, numa linha só: a busca; nota, ordem e tags num painel
- * atrás do botão Filtros (de baixo para cima, no celular); e o menu Exibição
- * (grade, lista, tier list, Números e o tamanho). Tudo aqui é memória do
- * cliente: digitar não dispara requisição nenhuma.
+ * A barra da categoria: a busca; nota, ordem e tags num painel atrás do botão
+ * Filtros (de baixo para cima, no celular); os botões de exibição (grade,
+ * lista, tier list) e o tamanho P / M / G, como nas pastas das Coleções; e o
+ * Compartilhar (a imagem da lista e o link). Os Números ficam no ⋯ do topo.
+ * Tudo aqui é memória do cliente: digitar não dispara requisição nenhuma.
  */
 export function FilterBar({
   filter,
@@ -41,7 +42,7 @@ export function FilterBar({
   resultCount,
   ratingEnabled = true,
   numbers,
-  onNumbersChange,
+  onShare,
 }: {
   filter: CategoryFilter
   onChange: (filter: CategoryFilter) => void
@@ -61,7 +62,8 @@ export function FilterBar({
   ratingEnabled?: boolean
   /** A aba Números está aberta: a ordem não muda nada lá. */
   numbers: boolean
-  onNumbersChange: (numbers: boolean) => void
+  /** Abre o Compartilhar (sem ele, o botão some: a "A organizar"). */
+  onShare?: () => void
 }) {
   const [open, setOpen] = useState(false)
   // O número no botão: a faixa de nota conta como uma regra; cada tag, outra.
@@ -82,8 +84,10 @@ export function FilterBar({
       </div>
 
       {hasPanel ? (
-        <Button variant="outline" size="lg" onClick={() => setOpen(true)}>
-          <SlidersHorizontal className="size-4" /> Filtros
+        <Button variant="outline" size="lg" onClick={() => setOpen(true)} aria-label="Filtros">
+          <SlidersHorizontal className="size-4" />
+          {/* No celular, só o ícone: a linha cabe os botões de exibição. */}
+          <span className="hidden sm:inline">Filtros</span>
           {rules > 0 ? (
             <span className="min-w-4 rounded-full bg-brand px-1 text-center text-[0.65rem] leading-4 font-medium text-background">
               {rules}
@@ -92,15 +96,23 @@ export function FilterBar({
         </Button>
       ) : null}
 
-      <DisplayMenu
-        view={view}
-        onViewChange={onViewChange}
+      {/* Nos Números, nenhum modo fica aceso: um toque volta aos itens. */}
+      <ViewToggle<EntryViewMode>
+        value={numbers ? null : view}
+        onChange={onViewChange}
         modes={viewModes}
-        numbers={numbers}
-        onNumbersChange={onNumbersChange}
-        gridSize={gridSize}
-        onGridSizeChange={onGridSizeChange}
       />
+      {/* O tamanho vale para a grade e as miniaturas do tier list (some na Lista). */}
+      {view !== "list" && !numbers ? (
+        <GridSizeToggle value={gridSize} onChange={onGridSizeChange} />
+      ) : null}
+
+      {onShare ? (
+        <Button size="lg" onClick={onShare} aria-label="Compartilhar">
+          <Share2 className="size-4" />
+          <span className="hidden sm:inline">Compartilhar</span>
+        </Button>
+      ) : null}
 
       {active ? (
         <Button variant="ghost" size="sm" onClick={onClear}>
