@@ -2,16 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  Bell,
-  Compass,
-  HeartHandshake,
-  House,
-  Plus,
-  QrCode,
-  Settings,
-  type LucideIcon,
-} from "lucide-react"
+import { Bell, HeartHandshake, House, Plus, QrCode, Settings, type LucideIcon } from "lucide-react"
 import { useState, type ReactNode } from "react"
 
 import { AddSheet } from "@/components/layout/add-sheet"
@@ -32,9 +23,10 @@ interface Me {
 
 /**
  * A navegação do app logado: no computador (e no tablet), a barra lateral com
- * os 5 lugares, o "＋ Adicionar" e as Configurações; no celular, as abas de
- * baixo (Início, Descobrir, ＋, Match e Perfil) — os Avisos ficam no sininho
- * do topo. `unread`: o número do sininho, lido no servidor (num `Suspense`).
+ * os 4 lugares, o QR, o "＋ Adicionar" e as Configurações; no celular, as abas
+ * de baixo (Início, Match, ＋, Avisos e Perfil). O antigo Descobrir é a aba
+ * Sugestões do Início. `unread`: o número dos Avisos, lido no servidor (num
+ * `Suspense`).
  */
 export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
   const pathname = usePathname()
@@ -63,12 +55,6 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
 
         <nav aria-label="Principal" className="flex flex-col gap-1">
           <SideItem href="/inicio" icon={House} label="Início" active={current === "inicio"} />
-          <SideItem
-            href="/explorar"
-            icon={Compass}
-            label="Descobrir"
-            active={current === "descobrir"}
-          />
           <SideItem
             href="/matches"
             icon={HeartHandshake}
@@ -116,12 +102,7 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
         }}
       >
         <TabItem href="/inicio" icon={House} label="Início" active={current === "inicio"} />
-        <TabItem
-          href="/explorar"
-          icon={Compass}
-          label="Descobrir"
-          active={current === "descobrir"}
-        />
+        <TabItem href="/matches" icon={HeartHandshake} label="Match" active={current === "match"} />
         <button
           type="button"
           onClick={() => setAdding(true)}
@@ -132,7 +113,13 @@ export function AppNav({ me, unread }: { me: Me; unread: ReactNode }) {
             <Plus className="size-6" />
           </span>
         </button>
-        <TabItem href="/matches" icon={HeartHandshake} label="Match" active={current === "match"} />
+        <TabItem
+          href="/avisos"
+          icon={Bell}
+          label="Avisos"
+          active={current === "avisos"}
+          badge={unread}
+        />
         {/* No celular, as Configurações moram no Perfil (a engrenagem do cartão). */}
         <TabItem
           href={profileHref}
@@ -190,12 +177,14 @@ function TabItem({
   icon: Icon,
   label,
   active,
+  badge,
   children,
 }: {
   href: string
   icon?: LucideIcon
   label: string
   active: boolean
+  badge?: ReactNode
   children?: ReactNode
 }) {
   return (
@@ -208,7 +197,10 @@ function TabItem({
       )}
     >
       {Icon ? (
-        <Icon aria-hidden className={cn("size-6", active && "text-brand")} />
+        <span className="relative">
+          <Icon aria-hidden className={cn("size-6", active && "text-brand")} />
+          {badge}
+        </span>
       ) : (
         <span className={cn("rounded-full", active && "ring-2 ring-brand")}>{children}</span>
       )}

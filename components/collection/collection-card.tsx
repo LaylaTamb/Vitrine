@@ -254,15 +254,19 @@ function CardFace({
   )
 }
 
-/** A capa: 1 foto inteira; 2 lado a lado; 3 com a primeira grande à esquerda. */
-export function CoverMosaic({ photos }: { photos: string[] }) {
+/**
+ * A capa: 1 foto inteira; 2 lado a lado; 3 com a primeira grande à esquerda.
+ * `className` troca a proporção (o feed das Sugestões usa `aspect-video`).
+ */
+export function CoverMosaic({ photos, className }: { photos: string[]; className?: string }) {
   const shown = photos.slice(0, 3)
   return (
     <span
       className={cn(
         "grid aspect-[4/3] gap-0.5 overflow-hidden bg-bg-soft",
         shown.length === 1 ? "grid-cols-1" : "grid-cols-2",
-        shown.length === 3 && "grid-rows-2"
+        shown.length === 3 && "grid-rows-2",
+        className
       )}
     >
       {shown.map((url, index) => (

@@ -18,13 +18,20 @@ export async function getFeed(followingIds: string[]): Promise<FeedEntry[]> {
   const { data, error } = await supabase
     .from("entries")
     .select(
-      "id, name, rating, image_url, image_display, created_at, category:categories(id, name, icon, rating_enabled), owner:profiles(id, username, display_name, avatar_url)"
+      // `!owner_id`: desde a migração 31 o item tem DUAS ligações com profiles
+      // (owner_id e match_owner_id). Sem dizer qual, o banco recusa a consulta.
+      "id, name, rating, image_url, image_display, created_at, category:categories(id, name, icon, rating_enabled), owner:profiles!owner_id(id, username, display_name, avatar_url)"
     )
     .in("owner_id", followingIds)
     .gte("created_at", since)
     .order("created_at", { ascending: false })
     .limit(FEED_LIMIT)
-  return error ? [] : parseFeedRows(data)
+  if (error) {
+    // O Início vazio escondia este erro: fica no log do servidor (Vercel).
+    console.error("getFeed:", error.message)
+    return []
+  }
+  return parseFeedRows(data)
 }
 
 /** As suas categorias, só o que o "Você está em…?" precisa. */

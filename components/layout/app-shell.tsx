@@ -6,8 +6,7 @@ import { AppNav } from "@/components/layout/app-nav"
 import { Navbar } from "@/components/layout/navbar"
 import { Wordmark } from "@/components/layout/wordmark"
 import { InstallBanner } from "@/components/pwa/install"
-import { NotificationsBell, UnreadBadge } from "@/components/social/notifications-bell"
-import { NotificationsLink } from "@/components/social/notifications-link"
+import { UnreadBadge } from "@/components/social/notifications-bell"
 import { defaultVisibilityOf } from "@/lib/domain/privacy"
 import type { Profile } from "@/lib/domain/types"
 import { displayNameOf } from "@/lib/queries/session"
@@ -25,7 +24,7 @@ export interface VisitorInfo {
  * fosse buscar sozinho, viraria mais um `await` em série.
  *
  * Com login: a barra lateral (computador) ou as abas de baixo e o topo com a
- * busca e o sininho (celular) — `AppNav`.
+ * busca e o QR (celular) — `AppNav`.
  *
  * `visitor`: página pública aberta sem login (`/v/...`, categoria pública) —
  * a barra de cima com Entrar e Criar conta, e um convite embaixo dela.
@@ -73,7 +72,7 @@ export function AppShell({
         }
       />
       <div className="min-w-0 flex-1">
-        {/* O topo do celular: a marca, a busca (o Descobrir), o QR de amizade e o sininho. */}
+        {/* O topo do celular: a marca, a busca (as Sugestões do Início) e o QR de amizade. Os Avisos ficam nas abas de baixo. */}
         <header
           className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-line px-4 md:hidden"
           style={{
@@ -90,8 +89,8 @@ export function AppShell({
           </Link>
           <div className="flex items-center">
             <Link
-              href="/explorar"
-              aria-label="Buscar no Descobrir"
+              href="/inicio?aba=sugestoes&buscar=1"
+              aria-label="Buscar pessoas e categorias"
               title="Buscar"
               className="rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -105,9 +104,6 @@ export function AppShell({
             >
               <QrCode className="size-5" />
             </Link>
-            <Suspense fallback={<NotificationsLink count={0} />}>
-              <NotificationsBell />
-            </Suspense>
           </div>
         </header>
         <main className="shell pb-28 md:pb-12">

@@ -70,22 +70,24 @@ mais cria conta com e-mail e senha.
 
 ### Gente
 
-- **Início.** O que as pessoas que você segue acabaram de catalogar, num
-  feed: quem, o quê e onde, com as fotos. (O app abre no seu perfil, nas suas
-  Coleções; o Início fica na barra.)
+- **Início.** Duas abas em cima: **Amigos**, o que as pessoas que você segue
+  acabaram de catalogar, num feed (quem, o quê e onde, com as fotos), e
+  **Sugestões**, para achar gente e categorias novas. (O app abre no seu
+  perfil, nas suas Coleções; o Início fica na barra.)
 - **Seguir e Amigos.** Siga quem quiser; quando os dois se seguem, vocês são
   **amigos** e passam a ver o que o outro deixou "para Amigos". Dá para
   remover seguidor e bloquear.
 - **QR pessoal.** Numa roda, todo mundo escaneia o seu QR e vira seu amigo na
   hora — o botão de QR fica na barra lateral (no celular, no topo).
-- **Avisos.** O sininho abre os avisos de novos seguidores, amizades,
+- **Avisos.** O sininho (na barra) abre os avisos de novos seguidores, amizades,
   convites de match e importações que terminaram — com **Seguir de volta** e
   **Aceitar** no próprio aviso.
 
-### Descobrir e comparar
+### Sugestões e comparar
 
-- **Descobrir.** Pessoas para seguir e as categorias públicas de outras
-  pessoas (com as fotos dos itens), numa busca só. **Pegue com os itens**:
+- **Sugestões.** Na segunda aba do Início: pessoas para seguir e as
+  categorias públicas de outras pessoas (com as fotos dos itens), numa busca
+  só (no celular, a lupa do topo abre direto nela). **Pegue com os itens**:
   você ganha uma cópia que continua recebendo as novidades de quem fez (até
   você desligar).
 - **Começar de um modelo.** Ao criar uma categoria, os modelos com nome
@@ -143,12 +145,12 @@ mais cria conta com e-mail e senha.
    nome, bio, destaques e redes. Depois, **Compartilhar** (o link, o story e
    o seu QR). A Steam e o Letterboxd se conectam nas **Configurações** (a
    engrenagem do perfil), em Apps e importação.
-6. **Ache seus amigos** no **Descobrir** ou pelo **Meu QR**, e siga quem
-   você conhece.
-7. **Explore e compare.** Veja o que os outros catalogam no **Descobrir** e,
+6. **Ache seus amigos** nas **Sugestões** do Início ou pelo **Meu QR**, e
+   siga quem você conhece.
+7. **Explore e compare.** Veja o que os outros catalogam nas **Sugestões** e,
    com amigos, abra um **Match**.
-8. **Volte quando quiser.** O **Início** mostra as novidades de quem você
-   segue; a busca das Coleções acha qualquer coisa; o **Mapa** mostra o que
+8. **Volte quando quiser.** O **Início**, na aba Amigos, mostra as novidades
+   de quem você segue; a busca das Coleções acha qualquer coisa; o **Mapa** mostra o que
    fica perto; a **estrela** junta as categorias que você mais abre.
 
 ---

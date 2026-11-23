@@ -15,14 +15,13 @@ export function HowTo() {
       <Topic title="Os lugares do app" open>
         <p>
           O app abre no seu <b>Perfil</b>, nas suas Coleções. Embaixo (no celular) ou na lateral (no
-          computador) ficam os cinco lugares:
+          computador) ficam os quatro lugares:
         </p>
         <ul>
           <li>
-            <b>Início</b>: o que as pessoas que você segue acabaram de catalogar.
-          </li>
-          <li>
-            <b>Descobrir</b>: achar pessoas e categorias de outras pessoas, numa busca só.
+            <b>Início</b>, com duas abas em cima: <b>Amigos</b>, o que as pessoas que você segue
+            acabaram de catalogar, e <b>Sugestões</b>, para achar pessoas e categorias de outras
+            pessoas, numa busca só (a lupa do topo, no celular, abre direto nela).
           </li>
           <li>
             <b>Match</b>: comparar gostos com amigos.
@@ -147,11 +146,11 @@ export function HowTo() {
         </ul>
       </Topic>
 
-      <Topic title="Descobrir e Match">
+      <Topic title="Sugestões e Match">
         <ul>
           <li>
-            No <b>Descobrir</b>, toque em <b>Pegar com os itens</b> numa categoria de outra pessoa:
-            você ganha uma cópia que continua recebendo as novidades dela.
+            Nas <b>Sugestões</b> do Início, toque em <b>Pegar com os itens</b> numa categoria de
+            outra pessoa: você ganha uma cópia que continua recebendo as novidades dela.
           </li>
           <li>
             No <b>Match</b>, chame até 7 amigos. Quando todos aceitam, vocês ganham uma lista só, a

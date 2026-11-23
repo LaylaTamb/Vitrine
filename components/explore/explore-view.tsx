@@ -30,14 +30,18 @@ interface Person {
   avatar_url: string | null
 }
 
-/** Quantas pessoas a fileira "Pessoas para seguir" mostra antes do "Ver todas". */
-const SUGGESTED_PEOPLE = 12
+/** Quantas pessoas "Pessoas para seguir" mostra antes do "Ver todas": 2×2 no celular, 4 numa linha. */
+const SUGGESTED_PEOPLE = 4
+
+/** Quantos temas viram atalho em cima (eles quebram linha, não rolam de lado). */
+const THEMES = 6
 
 /**
- * O Descobrir: o antigo Explorar e a antiga Pessoas numa tela, com uma busca
- * só. As pessoas chegam todas do servidor e a busca delas roda aqui; a primeira
- * lista de categorias (as mais copiadas) também chega pronta, e buscar ou
- * trocar a ordem pede a próxima ao banco.
+ * A aba Sugestões do Início (o antigo Descobrir): pessoas para seguir e as
+ * categorias públicas para pegar, numa busca só, em formato de feed. As
+ * pessoas chegam todas do servidor e a busca delas roda aqui; a primeira lista
+ * de categorias (as mais copiadas) também chega pronta, e buscar ou trocar a
+ * ordem pede a próxima ao banco.
  */
 export function ExploreView({
   initial,
@@ -46,6 +50,7 @@ export function ExploreView({
   people,
   following,
   followers,
+  autoFocus = false,
 }: {
   initial: ExploreCategory[]
   /** category_id → até 3 fotos (migração 40). */
@@ -57,6 +62,8 @@ export function ExploreView({
   /** Os ids de quem você segue e de quem segue você. */
   following: string[]
   followers: string[]
+  /** A lupa do topo do celular: já abre com o cursor na busca. */
+  autoFocus?: boolean
 }) {
   const [query, setQuery] = useState("")
   const [listing, setListing] = useState<Listing>("popular")
@@ -71,7 +78,7 @@ export function ExploreView({
   const followingSet = useMemo(() => new Set(following), [following])
   const followersSet = useMemo(() => new Set(followers), [followers])
   // Os temas saem da primeira lista (as em alta): não mudam enquanto você busca.
-  const themes = useMemo(() => exploreThemes(initial), [initial])
+  const themes = useMemo(() => exploreThemes(initial, THEMES), [initial])
   const searchingPeople = isSearching(query)
   const peopleHits = useMemo(
     () =>
@@ -137,7 +144,7 @@ export function ExploreView({
   )
 
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-8 pb-16">
       <div className="space-y-3">
         <div className="relative">
           <Search
@@ -149,15 +156,12 @@ export function ExploreView({
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar pessoas e categorias…"
             aria-label="Buscar pessoas e categorias"
+            autoFocus={autoFocus}
             className="h-12 pl-10 text-base"
           />
         </div>
         {themes.length > 0 ? (
-          <div
-            role="group"
-            aria-label="Temas"
-            className="flex gap-2 overflow-x-auto py-1 [scrollbar-width:none]"
-          >
+          <div role="group" aria-label="Temas" className="flex flex-wrap gap-2">
             <ThemeChip active={!query.trim()} onClick={() => setQuery("")}>
               Tudo
             </ThemeChip>
@@ -200,9 +204,9 @@ export function ExploreView({
         ) : allPeople ? (
           <ul className="grid gap-2 sm:grid-cols-2">{people.map(personRow)}</ul>
         ) : suggested.length > 0 ? (
-          <ul className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none]">
+          <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {suggested.map((person) => (
-              <li key={person.id} className="w-40 shrink-0">
+              <li key={person.id} className="min-w-0">
                 <PersonCard person={person} followsMe={followersSet.has(person.id)} />
               </li>
             ))}
@@ -219,11 +223,7 @@ export function ExploreView({
       <section aria-labelledby="descobrir-categorias" className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 id="descobrir-categorias" className="display text-2xl">
-            {query.trim()
-              ? "Categorias"
-              : listing === "popular"
-                ? "Categorias em alta"
-                : "Categorias novas"}
+            {query.trim() ? "Categorias" : "Categorias para pegar"}
           </h2>
           {query.trim() ? null : (
             <div
@@ -251,6 +251,11 @@ export function ExploreView({
           )}
         </div>
 
+        {/* No computador, o "Como funciona" do lado diz isto. */}
+        <p className="-mt-1 text-xs text-faint lg:hidden">
+          Pegar faz uma cópia sua, com os itens, que continua recebendo as novidades de quem fez.
+        </p>
+
         {error ? (
           <p className="rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-muted-foreground">
             {error}
@@ -267,10 +272,7 @@ export function ExploreView({
           />
         ) : (
           <ul
-            className={cn(
-              "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
-              loading && "opacity-60 transition-opacity"
-            )}
+            className={cn("grid gap-4", loading && "opacity-60 transition-opacity")}
             aria-busy={loading}
           >
             {results.map((category) => (
@@ -300,7 +302,7 @@ function ThemeChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors",
+        "max-w-full truncate rounded-full border px-3 py-1.5 text-sm transition-colors",
         active
           ? "border-brand-dim bg-brand-wash text-foreground"
           : "border-line text-muted-foreground hover:border-line-hi hover:text-foreground"
@@ -359,75 +361,70 @@ function ExploreCard({ category, photos }: { category: ExploreCategory; photos: 
     router.push(`/categoria/${result.data.categoryId}`)
   }
 
+  const owner = category.owner
+  const ownerName = owner.display_name || owner.username
+
+  // No formato do cartão do feed (Amigos): quem fez, a categoria, a capa e o Pegar.
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-surface">
-      {/* A capa abre a categoria (o nome, embaixo, é o link para o leitor de tela). */}
-      <Link href={href} tabIndex={-1} aria-hidden className="block">
-        {photos.length > 0 ? (
-          <CoverMosaic photos={photos} />
-        ) : (
-          <span className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-surface-hi to-bg-soft text-5xl leading-none">
-            {category.icon || "📁"}
-          </span>
-        )}
-      </Link>
-
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-start gap-2.5">
-          {photos.length > 0 ? (
-            <span aria-hidden className="mt-0.5 text-2xl leading-none">
-              {category.icon || "📁"}
+    <article className="space-y-4 rounded-2xl border border-line bg-surface p-4">
+      <div className="flex items-center gap-3">
+        <Link href={profilePath(owner.username)} className="shrink-0" tabIndex={-1} aria-hidden>
+          <Avatar name={ownerName} src={owner.avatar_url} size={40} />
+        </Link>
+        <div className="min-w-0 flex-1 text-sm leading-snug">
+          <p className="[overflow-wrap:anywhere]">
+            <Link href={profilePath(owner.username)} className="font-medium hover:text-brand">
+              {ownerName}
+            </Link>{" "}
+            <span className="text-muted-foreground">
+              ·{" "}
+              <Link href={href} className="hover:text-foreground">
+                {category.icon ? `${category.icon} ` : ""}
+                {category.name}
+              </Link>
             </span>
-          ) : null}
-          <div className="min-w-0 flex-1">
-            <Link
-              href={href}
-              className="display block truncate text-lg leading-snug text-foreground hover:text-brand"
-            >
-              {category.name}
-            </Link>
-            <p className="truncate text-xs text-muted-foreground">
-              <Link
-                href={profilePath(category.owner.username)}
-                className="hover:text-foreground hover:underline"
-              >
-                @{category.owner.username}
-              </Link>{" "}
-              · {itemCount(category.total)}
-            </p>
-            <p className="text-xs text-faint">{usedByLabel(category.uses)}</p>
-          </div>
-        </div>
-
-        {/* Sem fotos, os 3 melhores dizem do que se trata. */}
-        {photos.length === 0 && category.preview.length > 0 ? (
-          <ol className="space-y-1">
-            {category.preview.map((item, index) => (
-              <li key={`${item.name}-${index}`} className="flex items-center gap-2 text-sm">
-                <span className="w-4 shrink-0 text-xs text-faint tabular-nums">{index + 1}</span>
-                <span className="min-w-0 flex-1 truncate text-muted-foreground">{item.name}</span>
-                {category.ratingEnabled && item.rating !== null ? (
-                  <span className="flex shrink-0 items-center gap-0.5 text-xs text-brand">
-                    <Star aria-hidden className="size-3 fill-current" />
-                    <span className="sr-only">Nota </span>
-                    {formatRating(item.rating)}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        ) : null}
-
-        <div className="mt-auto flex items-center gap-2 pt-1">
-          <Button size="sm" className="flex-1" onClick={take} disabled={pending}>
-            <Download className="size-4" />
-            {pending ? "Copiando…" : takeLabel(category.total)}
-          </Button>
-          <Link href={href} className={buttonVariants({ variant: "ghost", size: "sm" })}>
-            Ver
-          </Link>
+          </p>
+          <p className="text-xs text-faint">
+            {itemCount(category.total)} · {usedByLabel(category.uses)}
+          </p>
         </div>
       </div>
-    </div>
+
+      {/* A capa abre a categoria (o nome, em cima, é o link para o leitor de tela). */}
+      {photos.length > 0 ? (
+        <Link href={href} tabIndex={-1} aria-hidden className="block overflow-hidden rounded-xl">
+          <CoverMosaic photos={photos} className="aspect-video" />
+        </Link>
+      ) : null}
+
+      {/* Sem fotos, os 3 melhores dizem do que se trata. */}
+      {photos.length === 0 && category.preview.length > 0 ? (
+        <ol className="space-y-1">
+          {category.preview.map((item, index) => (
+            <li key={`${item.name}-${index}`} className="flex items-center gap-2 text-sm">
+              <span className="w-4 shrink-0 text-xs text-faint tabular-nums">{index + 1}</span>
+              <span className="min-w-0 flex-1 truncate text-muted-foreground">{item.name}</span>
+              {category.ratingEnabled && item.rating !== null ? (
+                <span className="flex shrink-0 items-center gap-0.5 text-xs text-brand">
+                  <Star aria-hidden className="size-3 fill-current" />
+                  <span className="sr-only">Nota </span>
+                  {formatRating(item.rating)}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+
+      <div className="flex items-center gap-2">
+        <Button size="sm" className="flex-1" onClick={take} disabled={pending}>
+          <Download className="size-4" />
+          {pending ? "Copiando…" : takeLabel(category.total)}
+        </Button>
+        <Link href={href} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+          Ver
+        </Link>
+      </div>
+    </article>
   )
 }

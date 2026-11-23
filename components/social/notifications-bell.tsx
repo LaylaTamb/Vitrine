@@ -1,20 +1,12 @@
-import { NotificationsLink } from "@/components/social/notifications-link"
 import { getSessionUser } from "@/lib/queries/session"
 import { getUnreadCount } from "@/lib/queries/social"
 
 /**
- * O número do sininho, lido no servidor. A barra envolve isto num
- * `Suspense`: a página não espera a contagem — ela chega logo depois, no
- * mesmo HTML em streaming (nada de `useEffect` buscando na primeira pintura).
+ * O número de avisos não lidos, como selo no ícone dos Avisos (barra lateral e
+ * abas de baixo), lido no servidor. A barra envolve isto num `Suspense`: a
+ * página não espera a contagem — ela chega logo depois, no mesmo HTML em
+ * streaming (nada de `useEffect` buscando na primeira pintura).
  */
-export async function NotificationsBell() {
-  const user = await getSessionUser()
-  if (!user) return null
-  const count = await getUnreadCount(user.id)
-  return <NotificationsLink count={count} />
-}
-
-/** O mesmo número, como selo no ícone dos Avisos da barra lateral. */
 export async function UnreadBadge() {
   const user = await getSessionUser()
   if (!user) return null

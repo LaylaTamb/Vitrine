@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 
-/** `/usuarios` (Pessoas) — agora é o Descobrir. */
+/** `/usuarios` (Pessoas) — agora é a aba Sugestões do Início. */
 export default function Page() {
-  redirect("/explorar")
+  redirect("/inicio?aba=sugestoes")
 }

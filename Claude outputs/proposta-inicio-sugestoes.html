@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine — Início com Amigos e Sugestões (proposta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Os mesmos tokens do app (app/globals.css): só escuro. */
+:root {
+  --bg: #121214; --bg-soft: #16161a; --surface: #1b1b1f; --surface-hi: #232328;
+  --line: #2a2a31; --line-hi: #3a3a43;
+  --ink: #ececef; --muted: #9d9da8; --faint: #6e6e78;
+  --brand: #b98cc2; --brand-dim: #8e6c96; --brand-wash: rgb(185 140 194 / 0.14);
+  --brand-glow: rgb(185 140 194 / 0.3); --on-brand: #1a1220;
+  --display: "Fraunces", ui-serif, Georgia, serif;
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--brand-dim); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.i { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.i-lg { width: 22px; height: 22px; }
+.plaque { margin: 0; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); }
+.display { font-family: var(--display); font-style: italic; font-weight: 400; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.shell { max-width: 1240px; margin-inline: auto; padding-inline: 16px; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- página da proposta ---------- */
+.top { padding: 28px 0 8px; }
+.top h1 { margin: 6px 0 4px; font-size: clamp(30px, 5vw, 42px); line-height: 1.1; }
+.lead { margin: 0; max-width: 66ch; color: var(--muted); }
+.panel { display: grid; gap: 24px; padding: 20px 0 56px; }
+@media (min-width: 1180px) { .panel { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } }
+.toolbar { display: flex; justify-content: center; margin-bottom: 14px; }
+.notes { display: grid; gap: 14px; }
+.note { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.note h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.note ul, .note ol { margin: 0; padding-left: 18px; color: var(--muted); }
+.note li + li { margin-top: 6px; }
+.note b { color: var(--ink); font-weight: 500; }
+.note.fix { border-color: var(--brand-dim); background: var(--brand-wash); }
+
+/* ---------- peças ---------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid transparent; border-radius: 10px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-outline { background: transparent; border-color: var(--line-hi); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.seg button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--brand-wash); color: var(--brand); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font-size: 13px; }
+.chip[aria-pressed="true"] { border-color: var(--brand-dim); background: var(--brand-wash); color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.avatar { display: inline-grid; place-items: center; flex-shrink: 0; border-radius: 999px; color: #fff; font-weight: 600; }
+.photo { display: grid; place-items: center; overflow: hidden; border-radius: 12px; color: rgb(255 255 255 / 0.55); font-family: var(--display); font-style: italic; }
+
+/* ---------- o palco ---------- */
+.stage { position: relative; max-width: 100%; height: 820px; margin-inline: auto; overflow: hidden; border: 1px solid var(--line); border-radius: 26px; background: var(--bg); }
+.stage[data-device="phone"] { width: 375px; }
+.stage[data-device="desktop"] { width: 100%; max-width: 1100px; }
+@media (max-width: 560px) { .stage { height: 86dvh; min-height: 620px; border-radius: 18px; } .device-toggle { display: none !important; } }
+.app { position: absolute; inset: 0; display: flex; }
+.side { display: none; width: 200px; flex-shrink: 0; flex-direction: column; gap: 2px; padding: 20px 12px; border-right: 1px solid var(--line); }
+.stage[data-device="desktop"] .side { display: flex; }
+.word { margin: 0 10px 18px; font-family: var(--display); font-style: italic; font-size: 24px; }
+.side a { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; color: var(--muted); font-size: 14px; }
+.side a.on { background: var(--surface-hi); color: var(--ink); }
+.side a.gone { color: var(--faint); text-decoration: line-through; opacity: 0.6; }
+.side .btn { margin-top: 12px; height: 40px; }
+.main { position: relative; flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; }
+.phone-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--line); background: rgb(18 18 20 / 0.92); backdrop-filter: blur(12px); }
+.phone-top .word { margin: 0; font-size: 21px; }
+.phone-top .acts { display: flex; color: var(--muted); }
+.phone-top .acts span { padding: 8px; }
+.stage[data-device="desktop"] .phone-top, .stage[data-device="desktop"] .tabbar { display: none; }
+.tabbar { position: absolute; inset: auto 0 0; z-index: 6; display: flex; border-top: 1px solid var(--line); background: rgb(18 18 20 / 0.95); }
+.tabbar a { display: flex; flex: 1; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 10px; color: var(--faint); font-size: 10.5px; }
+.tabbar a.on { color: var(--ink); }
+.tabbar .add { display: grid; place-items: center; width: 44px; height: 44px; margin: 6px auto; border-radius: 15px; background: var(--brand); color: var(--on-brand); }
+.tabbar .new { color: var(--brand); }
+
+.content { display: grid; gap: 28px; padding: 0 16px 110px; }
+.stage[data-device="desktop"] .content { grid-template-columns: minmax(0, 580px) 240px; gap: 24px; justify-content: center; padding: 0 24px 40px; }
+.feed { min-width: 0; display: grid; gap: 16px; align-content: start; }
+.aside { display: none; align-content: start; gap: 14px; padding-top: 18px; }
+.stage[data-device="desktop"] .aside { display: grid; }
+
+/* o seletor do topo: fica preso embaixo do cabeçalho */
+.switch { position: sticky; top: 52px; z-index: 4; margin: 0 -16px; padding: 10px 16px; background: rgb(18 18 20 / 0.92); backdrop-filter: blur(12px); }
+.stage[data-device="desktop"] .switch { top: 0; margin: 0; padding: 18px 0 8px; }
+.switch .seg { display: flex; width: 100%; }
+.switch .seg button { flex: 1; justify-content: center; padding: 8px 12px; font-size: 14px; }
+.switch .seg .count { padding: 0 6px; border-radius: 999px; background: var(--brand); color: var(--on-brand); font-size: 11px; font-weight: 600; line-height: 17px; }
+
+/* Amigos */
+.stories { display: flex; gap: 12px; margin: 0; padding: 4px 0; list-style: none; }
+.stories li { display: flex; width: 60px; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.stories .ring { padding: 2px; border-radius: 999px; box-shadow: 0 0 0 2px var(--brand); }
+.here { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg-soft); font-size: 13px; }
+.here .btn { margin-left: auto; }
+.card { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.who { display: flex; align-items: center; gap: 12px; }
+.who p { margin: 0; min-width: 0; font-size: 13.5px; line-height: 1.35; }
+.who b { font-weight: 500; }
+.who small { display: block; color: var(--faint); font-size: 12px; }
+.three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.three .photo { position: relative; aspect-ratio: 4 / 5; font-size: 28px; }
+.three .rate { position: absolute; left: 6px; bottom: 6px; padding: 1px 6px; border-radius: 6px; background: rgb(18 18 20 / 0.85); color: var(--ink); font: 500 11.5px var(--sans); }
+.three .rate::before { content: "★ "; color: var(--brand); }
+.three p { margin: 6px 0 0; font-size: 13px; }
+.three .more { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(18 18 20 / 0.7); color: var(--ink); font: 500 18px var(--sans); }
+.one { display: flex; gap: 16px; }
+.one .photo { width: 104px; flex-shrink: 0; aspect-ratio: 4 / 5; font-size: 40px; }
+.one .name { margin: 4px 0 6px; font-size: 24px; line-height: 1.15; }
+.stars { color: var(--brand); letter-spacing: 2px; }
+.card-link { color: var(--muted); font-size: 13px; }
+
+/* Sugestões */
+.search { position: relative; }
+.search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+.search input { width: 100%; height: 46px; padding: 0 14px 0 40px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-soft); outline: none; font-size: 15px; }
+.search input::placeholder { color: var(--faint); }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.head h2 { margin: 0; font-size: 22px; }
+.head a { color: var(--muted); font-size: 13px; }
+.people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stage[data-device="desktop"] .people { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.person { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); text-align: center; }
+.person b { display: block; max-width: 100%; font-weight: 500; font-size: 13.5px; }
+.person small { display: block; max-width: 100%; color: var(--muted); font-size: 12px; }
+.person .btn { height: 30px; margin-top: 4px; }
+.cover { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; }
+.cover .photo { border-radius: 0; font-size: 34px; }
+.cover .photo:first-child { grid-row: span 2; font-size: 56px; }
+.top3 { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.top3 li { display: flex; gap: 8px; color: var(--muted); }
+.top3 i { width: 14px; color: var(--faint); font-style: normal; font-size: 12px; }
+.top3 span:last-child { margin-left: auto; color: var(--brand); font-size: 12px; }
+.acts-row { display: flex; gap: 8px; }
+.acts-row .btn-primary { flex: 1; }
+.mini { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.mini .row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.mini .row div { min-width: 0; flex: 1; }
+.mini .row small { display: block; color: var(--faint); font-size: 12px; }
+.mini .btn { height: 28px; padding: 0 10px; font-size: 12px; }
+.empty { display: grid; justify-items: center; gap: 8px; padding: 34px 20px; border: 1px dashed var(--line); border-radius: 18px; background: var(--bg-soft); text-align: center; }
+.empty p { margin: 0; max-width: 34ch; color: var(--muted); font-size: 13px; }
+.state { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/></symbol>
+  <symbol id="heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+  <symbol id="bell" viewBox="0 0 24 24"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="qr" viewBox="0 0 24 24"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></symbol>
+  <symbol id="cog" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+  <symbol id="download" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+</svg>
+
+<div class="shell">
+  <header class="top">
+    <p class="plaque">Proposta · Início</p>
+    <h1 class="display">Um Início só, com Amigos e Sugestões</h1>
+    <p class="lead">O Início e o Descobrir viram uma tela. Em cima, um seletor escolhe o que ver:
+      as novidades de quem você segue, ou sugestões de pessoas e categorias para pegar. Troque
+      as abas no seletor dentro da tela e veja no celular e no computador.</p>
+  </header>
+
+  <div class="panel">
+    <div>
+      <div class="toolbar device-toggle">
+        <div class="seg" role="group" aria-label="Tamanho da tela">
+          <button type="button" data-device="phone" aria-pressed="true">Celular</button>
+          <button type="button" data-device="desktop" aria-pressed="false">Computador</button>
+        </div>
+      </div>
+
+      <div class="stage" id="stage" data-device="phone">
+        <div class="app">
+          <!-- barra lateral (computador) -->
+          <nav class="side" aria-label="Principal">
+            <p class="word">Vitrine</p>
+            <a class="on" href="#"><svg class="i"><use href="#house"/></svg> Início</a>
+            <a class="gone" href="#" title="Sai: virou a aba Sugestões"><svg class="i"><use href="#compass"/></svg> Descobrir</a>
+            <a href="#"><svg class="i"><use href="#heart"/></svg> Match</a>
+            <a href="#"><svg class="i"><use href="#bell"/></svg> Avisos</a>
+            <a href="#"><span class="avatar" style="width:22px;height:22px;background:#7a6a9c;font-size:11px">L</span> Perfil</a>
+            <a href="#"><svg class="i"><use href="#qr"/></svg> QR de amizade</a>
+            <span class="btn btn-primary"><svg class="i"><use href="#plus"/></svg> Adicionar</span>
+            <a href="#" style="margin-top:auto"><svg class="i"><use href="#cog"/></svg> Configurações</a>
+          </nav>
+
+          <div class="main" id="main">
+            <!-- topo do celular -->
+            <div class="phone-top">
+              <p class="word">Vitrine</p>
+              <div class="acts">
+                <span title="Abre as Sugestões com a busca"><svg class="i i-lg"><use href="#search"/></svg></span>
+                <span><svg class="i i-lg"><use href="#qr"/></svg></span>
+              </div>
+            </div>
+
+            <div class="content">
+              <div class="feed">
+                <div class="switch">
+                  <div class="seg" role="tablist" aria-label="O que ver">
+                    <button type="button" role="tab" data-tab="amigos" aria-pressed="true"><svg class="i"><use href="#users"/></svg> Amigos <span class="count">3</span></button>
+                    <button type="button" role="tab" data-tab="sugestoes" aria-pressed="false"><svg class="i"><use href="#sparkles"/></svg> Sugestões</button>
+                  </div>
+                </div>
+
+                <!-- ============ AMIGOS ============ -->
+                <section data-panel="amigos" class="feed">
+                  <ul class="stories" aria-label="Quem tem novidade">
+                    <li><span class="ring"><span class="avatar" style="width:50px;height:50px;background:#9c6a7a">A</span></span>Ana</li>
+                    <li><span class="ring"><span class="avatar" style="width:50px;height:50px;background:#5f8a7a">B</span></span>Bruno</li>
+                    <li><span class="ring"><span class="avatar" style="width:50px;height:50px;background:#6a7a9c">C</span></span>Carol</li>
+                  </ul>
+
+                  <div class="here"><svg class="i" style="color:var(--brand)"><use href="#pin"/></svg> <span>Você está no <b>Café Girondino</b>?</span> <span class="btn btn-outline">Avaliar</span></div>
+
+                  <article class="card">
+                    <div class="who">
+                      <span class="avatar" style="width:40px;height:40px;background:#9c6a7a">A</span>
+                      <p><b>Ana Lima</b> <span class="muted">adicionou 5 itens em ☕ Cafés</span><small>há 12 min</small></p>
+                    </div>
+                    <div class="three">
+                      <div><div class="photo" style="background:linear-gradient(135deg,#5a4636,#2b2420)">G<span class="rate">4,5</span></div><p class="display truncate">Girondino</p></div>
+                      <div><div class="photo" style="background:linear-gradient(135deg,#3d4a3a,#1f2620)">S<span class="rate">5</span></div><p class="display truncate">Sofá Café</p></div>
+                      <div><div class="photo" style="background:linear-gradient(135deg,#4a3a4d,#241f27)">P<span class="more">+2</span></div><p class="display truncate">Por Um Punhado</p></div>
+                    </div>
+                    <a class="card-link" href="#">Ver categoria</a>
+                  </article>
+
+                  <article class="card">
+                    <div class="who">
+                      <span class="avatar" style="width:40px;height:40px;background:#5f8a7a">B</span>
+                      <p><b>Bruno</b> <span class="muted">adicionou em 🎬 Filmes</span><small>há 2 h</small></p>
+                    </div>
+                    <div class="one">
+                      <div class="photo" style="background:linear-gradient(135deg,#3a4256,#1d2029)">D</div>
+                      <div><p class="display name">Duna: Parte Dois</p><span class="stars">★★★★★</span> <span class="muted">5</span></div>
+                    </div>
+                    <a class="card-link" href="#">Ver categoria</a>
+                  </article>
+
+                  <article class="card">
+                    <div class="who">
+                      <span class="avatar" style="width:40px;height:40px;background:#6a7a9c">C</span>
+                      <p><b>Carol</b> <span class="muted">adicionou 3 itens em 📚 Livros</span><small>ontem</small></p>
+                    </div>
+                    <div class="three">
+                      <div><div class="photo" style="background:linear-gradient(135deg,#4d3a3a,#271f1f)">T<span class="rate">4</span></div><p class="display truncate">Torto Arado</p></div>
+                      <div><div class="photo" style="background:linear-gradient(135deg,#3a4d4a,#1f2726)">O<span class="rate">4,5</span></div><p class="display truncate">O Avesso da Pele</p></div>
+                      <div><div class="photo" style="background:linear-gradient(135deg,#4a4a3a,#26261f)">M</div><p class="display truncate">Mrs. Dalloway</p></div>
+                    </div>
+                    <a class="card-link" href="#">Ver categoria</a>
+                  </article>
+
+                  <div class="empty">
+                    <p class="plaque">Quando ninguém postou</p>
+                    <p>“Quem você segue não catalogou nada nos últimos 30 dias.” O botão leva direto para as Sugestões, sem sair da tela.</p>
+                    <button type="button" class="btn btn-primary" data-go="sugestoes"><svg class="i"><use href="#sparkles"/></svg> Ver sugestões</button>
+                  </div>
+                </section>
+
+                <!-- ============ SUGESTÕES ============ -->
+                <section data-panel="sugestoes" class="feed" hidden>
+                  <label class="search"><svg class="i"><use href="#search"/></svg><input placeholder="Buscar pessoas e categorias…" aria-label="Buscar pessoas e categorias"></label>
+                  <div class="chips" role="group" aria-label="Temas">
+                    <button class="chip" aria-pressed="true">Tudo</button>
+                    <button class="chip">☕ Cafés</button>
+                    <button class="chip">🎬 Filmes</button>
+                    <button class="chip">📚 Livros</button>
+                    <button class="chip">🍜 Restaurantes</button>
+                    <button class="chip">🎮 Jogos</button>
+                  </div>
+
+                  <div class="head"><h2 class="display">Pessoas para seguir</h2><a href="#">Ver todas (24)</a></div>
+                  <div class="people">
+                    <div class="person"><span class="avatar" style="width:54px;height:54px;background:#8a6a5f">D</span><b class="truncate">Davi Rocha</b><small class="truncate">@davi · segue você</small><span class="btn btn-primary">Seguir de volta</span></div>
+                    <div class="person"><span class="avatar" style="width:54px;height:54px;background:#5f6a8a">E</span><b class="truncate">Elisa</b><small class="truncate">@elisa.come</small><span class="btn btn-primary">Seguir</span></div>
+                    <div class="person"><span class="avatar" style="width:54px;height:54px;background:#7a8a5f">F</span><b class="truncate">Fernanda Alves</b><small class="truncate">@fe</small><span class="btn btn-primary">Seguir</span></div>
+                    <div class="person"><span class="avatar" style="width:54px;height:54px;background:#8a5f7a">G</span><b class="truncate">Gabi</b><small class="truncate">@gabs</small><span class="btn btn-primary">Seguir</span></div>
+                  </div>
+
+                  <div class="head"><h2 class="display">Categorias para pegar</h2>
+                    <div class="seg" role="group" aria-label="Ordem"><button aria-pressed="true">Mais copiadas</button><button aria-pressed="false">Mais novas</button></div>
+                  </div>
+
+                  <article class="card">
+                    <div class="who">
+                      <span class="avatar" style="width:40px;height:40px;background:#5f6a8a">E</span>
+                      <p><b>Elisa</b> <span class="muted">· 🍜 Ramen em SP</span><small>18 itens · pega por 7 pessoas</small></p>
+                    </div>
+                    <div class="cover">
+                      <div class="photo" style="background:linear-gradient(135deg,#5a3d33,#2a1f1b)">J</div>
+                      <div class="photo" style="background:linear-gradient(135deg,#4a4033,#25201b)">K</div>
+                      <div class="photo" style="background:linear-gradient(135deg,#3d3a52,#1f1e29)">A</div>
+                    </div>
+                    <div class="acts-row"><span class="btn btn-primary"><svg class="i"><use href="#download"/></svg> Pegar com os 18 itens</span><span class="btn btn-ghost">Ver</span></div>
+                  </article>
+
+                  <article class="card">
+                    <div class="who">
+                      <span class="avatar" style="width:40px;height:40px;background:#7a8a5f">F</span>
+                      <p><b>Fernanda Alves</b> <span class="muted">· 🎲 Jogos de tabuleiro</span><small>9 itens · pega por 3 pessoas</small></p>
+                    </div>
+                    <ol class="top3">
+                      <li><i>1</i><span>Azul</span><span>★ 5</span></li>
+                      <li><i>2</i><span>Wingspan</span><span>★ 4,5</span></li>
+                      <li><i>3</i><span>Cascadia</span><span>★ 4,5</span></li>
+                    </ol>
+                    <div class="acts-row"><span class="btn btn-primary"><svg class="i"><use href="#download"/></svg> Pegar com os 9 itens</span><span class="btn btn-ghost">Ver</span></div>
+                  </article>
+                </section>
+              </div>
+
+              <!-- coluna da direita (computador) -->
+              <aside class="aside">
+                <div class="mini" data-aside="amigos">
+                  <p class="plaque">Pessoas para seguir</p>
+                  <div class="row"><span class="avatar" style="width:32px;height:32px;background:#8a6a5f;font-size:13px">D</span><div><span class="truncate">Davi Rocha</span><small>segue você</small></div><span class="btn btn-primary">Seguir</span></div>
+                  <div class="row"><span class="avatar" style="width:32px;height:32px;background:#5f6a8a;font-size:13px">E</span><div><span class="truncate">Elisa</span><small>@elisa.come</small></div><span class="btn btn-primary">Seguir</span></div>
+                  <div class="row"><span class="avatar" style="width:32px;height:32px;background:#7a8a5f;font-size:13px">F</span><div><span class="truncate">Fernanda</span><small>@fe</small></div><span class="btn btn-primary">Seguir</span></div>
+                  <button type="button" class="btn btn-ghost" data-go="sugestoes" style="justify-content:flex-start;padding:0">Ver mais sugestões →</button>
+                </div>
+                <div class="mini" data-aside="sugestoes" hidden>
+                  <p class="plaque">Como funciona</p>
+                  <p class="muted" style="margin:0;font-size:13px">“Pegar” faz uma cópia sua da categoria, e ela continua recebendo as novidades de quem fez.</p>
+                </div>
+              </aside>
+            </div>
+
+            <!-- abas de baixo (celular) -->
+            <nav class="tabbar" aria-label="Principal">
+              <a class="on" href="#"><svg class="i i-lg"><use href="#house"/></svg>Início</a>
+              <a href="#"><svg class="i i-lg"><use href="#heart"/></svg>Match</a>
+              <span style="flex:1"><span class="add"><svg class="i i-lg"><use href="#plus"/></svg></span></span>
+              <a class="new" href="#" title="Novo aqui: o lugar que era do Descobrir"><svg class="i i-lg"><use href="#bell"/></svg>Avisos</a>
+              <a href="#"><span class="avatar" style="width:22px;height:22px;background:#7a6a9c;font-size:11px">L</span>Perfil</a>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note fix">
+        <h2>Já corrigido: o Início vazio</h2>
+        <p class="muted" style="margin:0">A consulta do feed não dizia qual ligação usar entre o item e o
+          perfil (desde a migração 31 existem duas: o dono e o dono no Match). O banco recusava, e a
+          tela mostrava “nada novo” no lugar do erro. Agora ela diz qual é, e se der erro de novo,
+          ele aparece no log da Vercel. Não precisa rodar SQL.</p>
+      </div>
+
+      <div class="note">
+        <h2>O que muda</h2>
+        <ul>
+          <li>O <b>Descobrir sai da barra</b>: vira a aba <b>Sugestões</b> do Início, com tudo o que tinha (busca, temas, pessoas para seguir, categorias para pegar).</li>
+          <li>O <b>seletor fica preso no topo</b> ao rolar. A aba escolhida vai na URL (<code>/inicio?aba=sugestoes</code>), então voltar e recarregar mantêm a aba.</li>
+          <li>As <b>Sugestões viram feed</b>: as categorias aparecem uma embaixo da outra, no mesmo cartão do feed (quem fez, a capa, o “Pegar”), em vez da grade de 3.</li>
+          <li><b>Pessoas para seguir</b> numa grade de 4 (2×2 no celular), sem rolar para o lado; o “Ver todas” abre a lista inteira.</li>
+          <li>A <b>lupa do topo</b> no celular abre as Sugestões com a busca. Links antigos para <code>/explorar</code> continuam funcionando e caem na aba Sugestões.</li>
+          <li>Quem segue ninguém (ou sem novidades) vê o botão <b>“Ver sugestões”</b>, que troca de aba ali mesmo.</li>
+        </ul>
+      </div>
+
+      <div class="note">
+        <h2>Para você decidir</h2>
+        <ol>
+          <li><b>“Amigos” ou “Seguindo”?</b> A aba mostra todo mundo que você segue. No app, amizade é quando os dois se seguem (é o que libera o nível Amigos). Posso chamar de “Seguindo”, ou manter “Amigos” e mostrar só quem também te segue.</li>
+          <li><b>O lugar livre na barra de baixo</b> do celular: proposta, os <b>Avisos</b> (o sininho sai do topo). Outra opção: ficar com 4 itens.</li>
+          <li>O número na aba Amigos (quantas pessoas têm novidade): mostrar ou não?</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById("stage")
+  const main = document.getElementById("main")
+
+  document.querySelectorAll("[data-device]").forEach((button) => {
+    if (button.tagName !== "BUTTON") return
+    button.addEventListener("click", () => {
+      stage.dataset.device = button.dataset.device
+      document.querySelectorAll(".device-toggle button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)))
+    })
+  })
+
+  function show(tab) {
+    document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tab === tab)))
+    document.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== tab))
+    document.querySelectorAll("[data-aside]").forEach((p) => (p.hidden = p.dataset.aside !== tab))
+    main.scrollTop = 0
+  }
+  document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => show(b.dataset.tab)))
+  document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.go)))
+  document.querySelector(".phone-top .acts span").addEventListener("click", () => {
+    show("sugestoes")
+    setTimeout(() => document.querySelector(".search input").focus(), 0)
+  })
+</script>
+</body>
+</html>

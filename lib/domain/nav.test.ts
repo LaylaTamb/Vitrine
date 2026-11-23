@@ -6,7 +6,7 @@ describe("navegação", () => {
   it("acende o lugar certo", () => {
     expect(navSectionOf("/", "marina")).toBe("perfil")
     expect(navSectionOf("/inicio", "marina")).toBe("inicio")
-    expect(navSectionOf("/explorar", "marina")).toBe("descobrir")
+    expect(navSectionOf("/explorar", "marina")).toBe("inicio")
     expect(navSectionOf("/matches", "marina")).toBe("match")
     expect(navSectionOf("/avisos", "marina")).toBe("avisos")
     expect(navSectionOf("/configuracoes", "marina")).toBe("config")
@@ -15,11 +15,11 @@ describe("navegação", () => {
     expect(navSectionOf("/qr", "marina")).toBe("qr")
   })
 
-  it("o seu perfil é Perfil; o de outra pessoa, Descobrir", () => {
+  it("o seu perfil é Perfil; o de outra pessoa, Início", () => {
     expect(navSectionOf("/v/marina", "marina")).toBe("perfil")
     expect(navSectionOf("/v/Marina/seguidores", "marina")).toBe("perfil")
-    expect(navSectionOf("/v/marinaa", "marina")).toBe("descobrir")
-    expect(navSectionOf("/v/ana", "marina")).toBe("descobrir")
+    expect(navSectionOf("/v/marinaa", "marina")).toBe("inicio")
+    expect(navSectionOf("/v/ana", "marina")).toBe("inicio")
   })
 
   it("prefixo parecido não conta", () => {

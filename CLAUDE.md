@@ -99,7 +99,8 @@ Rotas (nomes em pt-BR):
 
 - **Raiz:** `/` só redireciona para o seu perfil (as Coleções), levando a query junto: é onde o
   app abre (login, ícone do app instalado).
-- **Início:** `/inicio` (o feed de quem você segue).
+- **Início:** `/inicio`, com duas abas: Amigos (o feed de quem você segue) e Sugestões
+  (`?aba=sugestoes`, o antigo Descobrir: pessoas e categorias; `&buscar=1` já foca a busca).
 - **Categorias:** `/categoria/[categoryId]/[entryId]`. As Coleções moram na aba do seu perfil.
 - **Perfil:**
   - `/v/[username]` (perfil, seguidores, seguindo e `story/`, a imagem via `next/og`); o
@@ -107,15 +108,16 @@ Rotas (nomes em pt-BR):
     o Filtros em `?filtros=1`;
   - `/u/:username` redireciona para `/v/` (`next.config.ts`);
   - `/perfil` leva ao próprio perfil.
-- **Telas logadas:** `/explorar` (o Descobrir: pessoas e categorias), `/avisos`, `/matches` (e
+- **Telas logadas:** `/avisos`, `/matches` (e
   `/matches/[id]`, a lista de um match, com `story/` via `next/og`),
   `/importar`, `/lixeira`, `/qr`, `/compartilhar` (o share target do app instalável, e o "Item" do
   ＋ Adicionar) e `/configuracoes` (lista em grupos; cada
   seção, inclusive o Editar perfil, a Steam e as Tags, abre em `?secao=…`).
 - **Só redirecionam:** `/favoritos`, `/mapa`, `/filtro` (para as abas do perfil), `/tags` (para
-  as Configurações) e `/usuarios` (para o Descobrir).
+  as Configurações), `/explorar` e `/usuarios` (para as Sugestões do Início; as actions do
+  Descobrir continuam em `app/explorar/actions.ts`).
 - **Navegação** (com login): `AppNav` (`components/layout/app-nav.tsx`) — barra lateral a partir de
-  768px, abas de baixo no celular, o ＋ Adicionar; o item aceso sai de `navSectionOf`
+  768px, abas de baixo no celular (Início, Match, ＋, Avisos, Perfil), o ＋ Adicionar; o item aceso sai de `navSectionOf`
   (`lib/domain/nav.ts`). Sem login, a `Navbar` de cima.
 - **Auth e textos legais:** as telas de auth, `/auth/callback`, `/termos`, `/privacidade` e
   `/aceitar-termos`.
